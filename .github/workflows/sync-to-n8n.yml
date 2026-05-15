@@ -1,0 +1,63 @@
+name: Sync Workflows to n8n
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'workflows/**.json'
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Sync workflow JSONs to n8n
+        env:
+          N8N_URL: ${{ secrets.N8N_URL }}
+          N8N_API_KEY: ${{ secrets.N8N_API_KEY }}
+        run: |
+          set -e
+          ERRORS=0
+
+          for file in workflows/*.json; do
+            [ -f "$file" ] || continue
+
+            WORKFLOW_ID=$(jq -r '.id // empty' "$file")
+            WORKFLOW_NAME=$(jq -r '.name // "'$file'"' "$file")
+
+            if [ -z "$WORKFLOW_ID" ]; then
+              echo "CREATE: $WORKFLOW_NAME (no id found, creating new)"
+              RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+                "${N8N_URL}/api/v1/workflows" \
+                -H "X-N8N-API-KEY: ${N8N_API_KEY}" \
+                -H "Content-Type: application/json" \
+                -d @"$file")
+            else
+              echo "UPDATE: $WORKFLOW_NAME (id=$WORKFLOW_ID)"
+              RESPONSE=$(curl -s -w "\n%{http_code}" -X PUT \
+                "${N8N_URL}/api/v1/workflows/${WORKFLOW_ID}" \
+                -H "X-N8N-API-KEY: ${N8N_API_KEY}" \
+                -H "Content-Type: application/json" \
+                -d @"$file")
+            fi
+
+            HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+            BODY=$(echo "$RESPONSE" | head -n -1)
+
+            if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+              echo "  OK ($HTTP_CODE)"
+            else
+              echo "  FAILED ($HTTP_CODE): $BODY"
+              ERRORS=$((ERRORS + 1))
+            fi
+          done
+
+          if [ "$ERRORS" -gt 0 ]; then
+            echo "Sync completed with $ERRORS error(s)"
+            exit 1
+          fi
+
+          echo "All workflows synced successfully"
