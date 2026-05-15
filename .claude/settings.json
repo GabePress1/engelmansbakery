@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "n8n": {
+      "type": "sse",
+      "url": "https://engelmansbakery.app.n8n.cloud/mcp",
+      "headers": {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJlNzE3MzIzZS1jMzVjLTRmNzAtYmIxZC0yMzNhNjM0ZmNhNTQiLCJpc3MiOiJuOG4iLCJhdWQiOiJtY3Atc2VydmVyLWFwaSIsImp0aSI6IjMwOGZlZTc2LWI5ZjQtNDNmNy1iMWUxLWFkYWY5Mzk5MzM4OSIsImlhdCI6MTc3ODg4MjQzNH0.reBfODK_cTeW0-ptOxZ4jam5rBvmF5I4VLh7HvTr6no"
+      }
+    }
+  }
+}
