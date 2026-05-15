@@ -1,0 +1,15 @@
+{
+  "name": "BC-HubSpot",
+  "type": "WORKFLOW",
+  "enabled": true,
+  "trigger": {
+    "type": "SCHEDULED",
+    "schedule": {
+      "frequency": "WEEKLY",
+      "days": ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"],
+      "time": "08:00",
+      "timezone": "America/New_York"
+    }
+  },
+  "actions": []
+}
