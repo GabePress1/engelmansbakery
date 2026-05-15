@@ -1,15 +1,30 @@
 {
   "name": "BC-HubSpot",
-  "type": "WORKFLOW",
-  "enabled": true,
-  "trigger": {
-    "type": "SCHEDULED",
-    "schedule": {
-      "frequency": "WEEKLY",
-      "days": ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"],
-      "time": "08:00",
-      "timezone": "America/New_York"
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * 1-5"
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger-001",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300]
     }
+  ],
+  "connections": {},
+  "active": false,
+  "settings": {
+    "timezone": "America/New_York"
   },
-  "actions": []
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
 }
