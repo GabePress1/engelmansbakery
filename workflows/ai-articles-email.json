@@ -1,0 +1,98 @@
+{
+  "name": "AI Articles Daily Email",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * *"
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Daily at 8am",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://hn.algolia.com/api/v1/search",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "query", "value": "artificial intelligence" },
+            { "name": "tags", "value": "story" },
+            { "name": "hitsPerPage", "value": "10" },
+            { "name": "numericFilters", "value": "points>50" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "fetch-hn-articles",
+      "name": "Fetch AI Articles (Hacker News)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const hits = $input.first().json.hits;\n\n// Pick top 3 by points\nconst top3 = hits\n  .sort((a, b) => b.points - a.points)\n  .slice(0, 3);\n\nconst articlesHtml = top3\n  .map((article, i) => {\n    const url = article.url || `https://news.ycombinator.com/item?id=${article.objectID}`;\n    const author = article.author || 'Unknown';\n    const points = article.points || 0;\n    const comments = article.num_comments || 0;\n    return `\n      <div style=\"margin-bottom: 24px; padding: 16px; border-left: 4px solid #0066cc; background: #f9f9f9;\">\n        <p style=\"margin: 0 0 8px; font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 1px;\">Article ${i + 1}</p>\n        <h2 style=\"margin: 0 0 8px; font-size: 18px;\">\n          <a href=\"${url}\" style=\"color: #0066cc; text-decoration: none;\">${article.title}</a>\n        </h2>\n        <p style=\"margin: 0; font-size: 13px; color: #555;\">\n          By <strong>${author}</strong> &nbsp;|&nbsp; ⬆️ ${points} points &nbsp;|&nbsp; 💬 ${comments} comments\n        </p>\n        <p style=\"margin: 8px 0 0;\"><a href=\"${url}\" style=\"font-size: 13px; color: #0066cc;\">${url}</a></p>\n      </div>`;\n  })\n  .join('');\n\nconst today = new Date().toLocaleDateString('en-US', {\n  weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'\n});\n\nconst emailHtml = `\n<!DOCTYPE html>\n<html>\n<head><meta charset=\"utf-8\"></head>\n<body style=\"font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;\">\n  <h1 style=\"color: #0066cc; border-bottom: 2px solid #0066cc; padding-bottom: 12px;\">\n    🤖 Top AI Articles &mdash; ${today}\n  </h1>\n  <p style=\"color: #555;\">Here are today's top 3 AI stories from Hacker News:</p>\n  ${articlesHtml}\n  <hr style=\"margin-top: 32px; border: none; border-top: 1px solid #ddd;\">\n  <p style=\"font-size: 12px; color: #999; text-align: center;\">\n    Powered by Hacker News &mdash; <a href=\"https://news.ycombinator.com\" style=\"color: #999;\">news.ycombinator.com</a>\n  </p>\n</body>\n</html>`;\n\nreturn [{ json: { emailHtml, articleCount: top3.length, date: today } }];"
+      },
+      "id": "format-articles",
+      "name": "Format Top 3 Articles",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [720, 300]
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $vars.SENDER_EMAIL }}",
+        "toEmail": "={{ $vars.RECIPIENT_EMAIL }}",
+        "subject": "=🤖 Your Daily AI Articles — {{ $json.date }}",
+        "emailType": "html",
+        "message": "={{ $json.emailHtml }}",
+        "options": {}
+      },
+      "id": "send-email",
+      "name": "Send Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [960, 300],
+      "credentials": {
+        "smtp": {
+          "id": "smtp-credentials",
+          "name": "SMTP Account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Daily at 8am": {
+      "main": [
+        [{ "node": "Fetch AI Articles (Hacker News)", "type": "main", "index": 0 }]
+      ]
+    },
+    "Fetch AI Articles (Hacker News)": {
+      "main": [
+        [{ "node": "Format Top 3 Articles", "type": "main", "index": 0 }]
+      ]
+    },
+    "Format Top 3 Articles": {
+      "main": [
+        [{ "node": "Send Email", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateId": "ai-articles-email"
+  }
+}
