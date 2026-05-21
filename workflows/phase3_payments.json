@@ -1,0 +1,329 @@
+{
+  "name": "Phase 3 – BC Payments → Excel Log",
+  "nodes": [
+    {
+      "id": "p3-0001",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [0, 300],
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "cronExpression", "expression": "0 7 * * 1-5" }]
+        }
+      }
+    },
+    {
+      "id": "p3-0002",
+      "name": "Config",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [220, 300],
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cfg-1",
+              "name": "EXCEL_WORKBOOK_ID",
+              "value": "PASTE_YOUR_WORKBOOK_ID_HERE",
+              "type": "string"
+            },
+            {
+              "id": "cfg-2",
+              "name": "BC_BASE_URL",
+              "value": "PASTE_YOUR_BC_API_BASE_URL_HERE",
+              "type": "string"
+            },
+            {
+              "id": "cfg-3",
+              "name": "BC_COMPANY_ID",
+              "value": "PASTE_YOUR_BC_COMPANY_GUID_HERE",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "p3-0003",
+      "name": "Read Sync Log",
+      "type": "n8n-nodes-base.microsoftExcel",
+      "typeVersion": 2,
+      "position": [440, 300],
+      "credentials": { "microsoftExcelOAuth2Api": { "name": "Microsoft 365 - Engelmans" } },
+      "parameters": {
+        "operation": "getRows",
+        "workbook": {
+          "__rl": true,
+          "value": "={{ $('Config').first().json.EXCEL_WORKBOOK_ID }}",
+          "mode": "id"
+        },
+        "worksheet": {
+          "__rl": true,
+          "value": "sync_log",
+          "mode": "name"
+        },
+        "returnAll": true,
+        "options": { "dataStartRow": 2 }
+      }
+    },
+    {
+      "id": "p3-0004",
+      "name": "Set Window",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, 300],
+      "parameters": {
+        "jsCode": "const rows = $input.all();\n\nconst phase3 = rows\n  .filter(r => r.json.phase === 'phase3')\n  .sort((a, b) => new Date(b.json.run_date) - new Date(a.json.run_date));\n\nconst lastTimestamp = phase3.length > 0\n  ? phase3[0].json.last_bc_timestamp\n  : '2000-01-01T00:00:00Z';\n\nconst runDate = new Date().toISOString();\n\nreturn [{ json: { lastTimestamp, runDate } }];"
+      }
+    },
+    {
+      "id": "p3-0005",
+      "name": "Fetch Changed BC Payments",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [880, 300],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('Config').first().json.BC_BASE_URL }}/companies({{ $('Config').first().json.BC_COMPANY_ID }})/customerPayments",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{ "name": "Accept", "value": "application/json" }]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "$filter",
+              "value": "={{ `lastModifiedDateTime gt ${$('Set Window').first().json.lastTimestamp}` }}"
+            },
+            {
+              "name": "$select",
+              "value": "id,lineNumber,customerNumber,postingDate,documentNumber,description,amount,appliesToInvoiceId,lastModifiedDateTime"
+            },
+            { "name": "$top", "value": "500" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "p3-0006",
+      "name": "Expand Payments",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1100, 300],
+      "parameters": {
+        "jsCode": "const payments = $input.first().json.value || [];\nreturn payments.map(p => ({ json: p }));"
+      }
+    },
+    {
+      "id": "p3-0007",
+      "name": "Loop Over Payments",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [1320, 300],
+      "parameters": { "batchSize": 1, "options": {} }
+    },
+    {
+      "id": "p3-0008",
+      "name": "Upsert Payment Row",
+      "type": "n8n-nodes-base.microsoftExcel",
+      "typeVersion": 2,
+      "position": [1540, 200],
+      "credentials": { "microsoftExcelOAuth2Api": { "name": "Microsoft 365 - Engelmans" } },
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "workbook": {
+          "__rl": true,
+          "value": "={{ $('Config').first().json.EXCEL_WORKBOOK_ID }}",
+          "mode": "id"
+        },
+        "worksheet": {
+          "__rl": true,
+          "value": "payments",
+          "mode": "name"
+        },
+        "keyRow": 1,
+        "dataStartRow": 2,
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "payment_number": "={{ $json.documentNumber }}",
+            "customer_number": "={{ $json.customerNumber }}",
+            "amount": "={{ $json.amount }}",
+            "payment_date": "={{ $json.postingDate }}",
+            "applied_to_invoice": "={{ $json.appliesToInvoiceId }}",
+            "description": "={{ $json.description }}",
+            "last_synced": "={{ $('Set Window').first().json.runDate }}"
+          }
+        }
+      }
+    },
+    {
+      "id": "p3-0009",
+      "name": "Mark Invoice Paid in HubSpot",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1760, 200],
+      "parameters": {
+        "jsCode": "// Look up the HubSpot deal ID for the invoice this payment applies to\nconst payment = $('Loop Over Payments').first().json;\n\nif (!payment.appliesToInvoiceId) {\n  // Payment not tied to a specific invoice — skip HubSpot update\n  return [{ json: { ...payment, skipped: true } }];\n}\n\n// We'll pass it forward; the next node does the actual HubSpot update\nreturn [{ json: { ...payment, skipped: false } }];"
+      }
+    },
+    {
+      "id": "p3-0010",
+      "name": "Has Linked Invoice?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1980, 200],
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "cond1",
+              "leftValue": "={{ $json.skipped }}",
+              "rightValue": false,
+              "operator": { "type": "boolean", "operation": "equal" }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "p3-0011",
+      "name": "Find Deal in Invoices Sheet",
+      "type": "n8n-nodes-base.microsoftExcel",
+      "typeVersion": 2,
+      "position": [2200, 100],
+      "credentials": { "microsoftExcelOAuth2Api": { "name": "Microsoft 365 - Engelmans" } },
+      "parameters": {
+        "operation": "getRows",
+        "workbook": {
+          "__rl": true,
+          "value": "={{ $('Config').first().json.EXCEL_WORKBOOK_ID }}",
+          "mode": "id"
+        },
+        "worksheet": {
+          "__rl": true,
+          "value": "invoices",
+          "mode": "name"
+        },
+        "returnAll": true,
+        "options": { "dataStartRow": 2 }
+      }
+    },
+    {
+      "id": "p3-0012",
+      "name": "Update Deal to Closed Won",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2420, 100],
+      "parameters": {
+        "jsCode": "// Match the payment's invoice ID against the invoices sheet\nconst payment = $('Loop Over Payments').first().json;\nconst invoiceRows = $input.all();\n\nconst match = invoiceRows.find(\n  r => String(r.json.invoice_number) === String(payment.documentNumber)\n    || String(r.json.invoice_number) === String(payment.appliesToInvoiceId)\n);\n\nif (!match || !match.json.hubspot_deal_id) {\n  return [{ json: { ...payment, dealUpdated: false } }];\n}\n\nreturn [{ json: { ...payment, hubspotDealId: match.json.hubspot_deal_id, dealUpdated: true } }];"
+      }
+    },
+    {
+      "id": "p3-0013",
+      "name": "Has Deal ID?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [2640, 100],
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "cond2",
+              "leftValue": "={{ $json.dealUpdated }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "equal" }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "p3-0014",
+      "name": "Mark HubSpot Deal Paid",
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2,
+      "position": [2860, 40],
+      "credentials": { "hubspotApi": { "name": "HubSpot - Engelmans" } },
+      "parameters": {
+        "resource": "deal",
+        "operation": "update",
+        "dealId": "={{ $json.hubspotDealId }}",
+        "updateFields": {
+          "dealStage": "closedwon"
+        }
+      }
+    },
+    {
+      "id": "p3-0015",
+      "name": "Write Sync Log",
+      "type": "n8n-nodes-base.microsoftExcel",
+      "typeVersion": 2,
+      "position": [1320, 460],
+      "credentials": { "microsoftExcelOAuth2Api": { "name": "Microsoft 365 - Engelmans" } },
+      "parameters": {
+        "operation": "append",
+        "workbook": {
+          "__rl": true,
+          "value": "={{ $('Config').first().json.EXCEL_WORKBOOK_ID }}",
+          "mode": "id"
+        },
+        "worksheet": {
+          "__rl": true,
+          "value": "sync_log",
+          "mode": "name"
+        },
+        "keyRow": 1,
+        "dataStartRow": 2,
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "run_date": "={{ $('Set Window').first().json.runDate }}",
+            "phase": "phase3",
+            "records_processed": "={{ $('Expand Payments').all().length }}",
+            "last_bc_timestamp": "={{ $('Set Window').first().json.runDate }}"
+          }
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger":          { "main": [[{ "node": "Config",                    "type": "main", "index": 0 }]] },
+    "Config":                    { "main": [[{ "node": "Read Sync Log",             "type": "main", "index": 0 }]] },
+    "Read Sync Log":             { "main": [[{ "node": "Set Window",                "type": "main", "index": 0 }]] },
+    "Set Window":                { "main": [[{ "node": "Fetch Changed BC Payments", "type": "main", "index": 0 }]] },
+    "Fetch Changed BC Payments": { "main": [[{ "node": "Expand Payments",           "type": "main", "index": 0 }]] },
+    "Expand Payments":           { "main": [[{ "node": "Loop Over Payments",        "type": "main", "index": 0 }]] },
+    "Loop Over Payments": {
+      "main": [
+        [{ "node": "Upsert Payment Row",  "type": "main", "index": 0 }],
+        [{ "node": "Write Sync Log",      "type": "main", "index": 0 }]
+      ]
+    },
+    "Upsert Payment Row":        { "main": [[{ "node": "Mark Invoice Paid in HubSpot", "type": "main", "index": 0 }]] },
+    "Mark Invoice Paid in HubSpot": { "main": [[{ "node": "Has Linked Invoice?",   "type": "main", "index": 0 }]] },
+    "Has Linked Invoice?": {
+      "main": [
+        [{ "node": "Find Deal in Invoices Sheet", "type": "main", "index": 0 }],
+        [{ "node": "Loop Over Payments",          "type": "main", "index": 0 }]
+      ]
+    },
+    "Find Deal in Invoices Sheet": { "main": [[{ "node": "Update Deal to Closed Won", "type": "main", "index": 0 }]] },
+    "Update Deal to Closed Won":   { "main": [[{ "node": "Has Deal ID?",              "type": "main", "index": 0 }]] },
+    "Has Deal ID?": {
+      "main": [
+        [{ "node": "Mark HubSpot Deal Paid", "type": "main", "index": 0 }],
+        [{ "node": "Loop Over Payments",     "type": "main", "index": 0 }]
+      ]
+    },
+    "Mark HubSpot Deal Paid": { "main": [[{ "node": "Loop Over Payments", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "pinData": {}
+}

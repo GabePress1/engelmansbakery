@@ -1,20 +1,20 @@
 {
-  "name": "Phase 1 – BC → HubSpot Companies",
+  "name": "Phase 2 – BC → HubSpot Deals (Invoices)",
   "nodes": [
     {
-      "id": "p1-0001",
+      "id": "p2-0001",
       "name": "Schedule Trigger",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1,
       "position": [0, 300],
       "parameters": {
         "rule": {
-          "interval": [{ "field": "cronExpression", "expression": "0 6 * * 1-5" }]
+          "interval": [{ "field": "cronExpression", "expression": "30 6 * * 1-5" }]
         }
       }
     },
     {
-      "id": "p1-0002",
+      "id": "p2-0002",
       "name": "Config",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3,
@@ -47,7 +47,7 @@
       }
     },
     {
-      "id": "p1-0003",
+      "id": "p2-0003",
       "name": "Read Sync Log",
       "type": "n8n-nodes-base.microsoftExcel",
       "typeVersion": 2,
@@ -70,21 +70,44 @@
       }
     },
     {
-      "id": "p1-0004",
+      "id": "p2-0004",
       "name": "Set Window",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [660, 300],
       "parameters": {
-        "jsCode": "const rows = $input.all();\n\n// Find the most recent phase1 run\nconst phase1 = rows\n  .filter(r => r.json.phase === 'phase1')\n  .sort((a, b) => new Date(b.json.run_date) - new Date(a.json.run_date));\n\nconst lastTimestamp = phase1.length > 0\n  ? phase1[0].json.last_bc_timestamp\n  : '2000-01-01T00:00:00Z'; // first ever run = full pull\n\nconst runDate = new Date().toISOString();\n\nreturn [{ json: { lastTimestamp, runDate } }];"
+        "jsCode": "const rows = $input.all();\n\nconst phase2 = rows\n  .filter(r => r.json.phase === 'phase2')\n  .sort((a, b) => new Date(b.json.run_date) - new Date(a.json.run_date));\n\nconst lastTimestamp = phase2.length > 0\n  ? phase2[0].json.last_bc_timestamp\n  : '2000-01-01T00:00:00Z';\n\nconst runDate = new Date().toISOString();\n\nreturn [{ json: { lastTimestamp, runDate } }];"
       }
     },
     {
-      "id": "p1-0005",
-      "name": "Read Customers Sheet",
+      "id": "p2-0005",
+      "name": "Read Invoices Sheet",
       "type": "n8n-nodes-base.microsoftExcel",
       "typeVersion": 2,
       "position": [880, 300],
+      "credentials": { "microsoftExcelOAuth2Api": { "name": "Microsoft 365 - Engelmans" } },
+      "parameters": {
+        "operation": "getRows",
+        "workbook": {
+          "__rl": true,
+          "value": "={{ $('Config').first().json.EXCEL_WORKBOOK_ID }}",
+          "mode": "id"
+        },
+        "worksheet": {
+          "__rl": true,
+          "value": "invoices",
+          "mode": "name"
+        },
+        "returnAll": true,
+        "options": { "dataStartRow": 2 }
+      }
+    },
+    {
+      "id": "p2-0006",
+      "name": "Read Customers Sheet",
+      "type": "n8n-nodes-base.microsoftExcel",
+      "typeVersion": 2,
+      "position": [880, 480],
       "credentials": { "microsoftExcelOAuth2Api": { "name": "Microsoft 365 - Engelmans" } },
       "parameters": {
         "operation": "getRows",
@@ -103,14 +126,14 @@
       }
     },
     {
-      "id": "p1-0006",
-      "name": "Fetch Changed BC Customers",
+      "id": "p2-0007",
+      "name": "Fetch Changed BC Invoices",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [1100, 300],
       "parameters": {
         "method": "GET",
-        "url": "={{ $('Config').first().json.BC_BASE_URL }}/companies({{ $('Config').first().json.BC_COMPANY_ID }})/customers",
+        "url": "={{ $('Config').first().json.BC_BASE_URL }}/companies({{ $('Config').first().json.BC_COMPANY_ID }})/salesInvoices",
         "authentication": "genericCredentialType",
         "genericAuthType": "oAuth2Api",
         "sendHeaders": true,
@@ -126,7 +149,7 @@
             },
             {
               "name": "$select",
-              "value": "id,number,displayName,email,phoneNumber,addressLine1,city,state,postalCode,country,lastModifiedDateTime"
+              "value": "id,number,customerNumber,customerName,invoiceDate,dueDate,amount,amountIncludingTax,status,currencyCode,lastModifiedDateTime"
             },
             { "name": "$top", "value": "500" }
           ]
@@ -134,35 +157,35 @@
       }
     },
     {
-      "id": "p1-0007",
-      "name": "Expand Customers",
+      "id": "p2-0008",
+      "name": "Expand Invoices",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [1320, 300],
       "parameters": {
-        "jsCode": "// Expand the BC value[] array into individual n8n items\nconst customers = $input.first().json.value || [];\nreturn customers.map(c => ({ json: c }));"
+        "jsCode": "const invoices = $input.first().json.value || [];\nreturn invoices.map(i => ({ json: i }));"
       }
     },
     {
-      "id": "p1-0008",
-      "name": "Loop Over Customers",
+      "id": "p2-0009",
+      "name": "Loop Over Invoices",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
       "position": [1540, 300],
       "parameters": { "batchSize": 1, "options": {} }
     },
     {
-      "id": "p1-0009",
-      "name": "Look Up HubSpot ID",
+      "id": "p2-0010",
+      "name": "Look Up Deal + Company",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [1760, 200],
       "parameters": {
-        "jsCode": "// Read the customers sheet data fetched once before the loop\nconst customer = $input.first().json;\nconst sheetRows = $('Read Customers Sheet').all();\n\nconst match = sheetRows.find(\n  r => String(r.json.erp_account_number) === String(customer.number)\n);\n\nreturn [{\n  json: {\n    ...customer,\n    hubspotCompanyId: match ? match.json.hubspot_company_id : null,\n    isNew: !match\n  }\n}];"
+        "jsCode": "const invoice = $input.first().json;\n\n// Check if this invoice is already in the invoices sheet\nconst invoiceRows = $('Read Invoices Sheet').all();\nconst invoiceMatch = invoiceRows.find(\n  r => String(r.json.invoice_number) === String(invoice.number)\n);\n\n// Look up the parent company's HubSpot ID from the customers sheet\nconst customerRows = $('Read Customers Sheet').all();\nconst customerMatch = customerRows.find(\n  r => String(r.json.erp_account_number) === String(invoice.customerNumber)\n);\n\nreturn [{\n  json: {\n    ...invoice,\n    hubspotDealId: invoiceMatch ? invoiceMatch.json.hubspot_deal_id : null,\n    hubspotCompanyId: customerMatch ? customerMatch.json.hubspot_company_id : null,\n    isNew: !invoiceMatch\n  }\n}];"
       }
     },
     {
-      "id": "p1-0010",
+      "id": "p2-0011",
       "name": "New or Existing?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
@@ -181,29 +204,28 @@
       }
     },
     {
-      "id": "p1-0011",
-      "name": "Create HubSpot Company",
+      "id": "p2-0012",
+      "name": "Create HubSpot Deal",
       "type": "n8n-nodes-base.hubspot",
       "typeVersion": 2,
       "position": [2200, 100],
       "credentials": { "hubspotApi": { "name": "HubSpot - Engelmans" } },
       "parameters": {
-        "resource": "company",
+        "resource": "deal",
         "operation": "create",
         "additionalFields": {
-          "name": "={{ $json.displayName }}",
-          "phone": "={{ $json.phoneNumber }}",
-          "address": "={{ $json.addressLine1 }}",
-          "city": "={{ $json.city }}",
-          "state": "={{ $json.state }}",
-          "zip": "={{ $json.postalCode }}",
-          "country": "={{ $json.country }}"
+          "dealName": "={{ `Invoice ${$json.number} – ${$json.customerName}` }}",
+          "amount": "={{ $json.amountIncludingTax }}",
+          "closeDate": "={{ $json.dueDate }}",
+          "dealStage": "closedwon",
+          "pipeline": "default",
+          "associatedCompany": "={{ $json.hubspotCompanyId }}"
         }
       }
     },
     {
-      "id": "p1-0012",
-      "name": "Write New Customer Row",
+      "id": "p2-0013",
+      "name": "Write New Invoice Row",
       "type": "n8n-nodes-base.microsoftExcel",
       "typeVersion": 2,
       "position": [2420, 100],
@@ -217,7 +239,7 @@
         },
         "worksheet": {
           "__rl": true,
-          "value": "customers",
+          "value": "invoices",
           "mode": "name"
         },
         "keyRow": 1,
@@ -225,42 +247,38 @@
         "columns": {
           "mappingMode": "defineBelow",
           "value": {
-            "erp_account_number": "={{ $('Loop Over Customers').first().json.number }}",
-            "hubspot_company_id": "={{ $json.id }}",
-            "name": "={{ $('Loop Over Customers').first().json.displayName }}",
-            "email": "={{ $('Loop Over Customers').first().json.email }}",
-            "phone": "={{ $('Loop Over Customers').first().json.phoneNumber }}",
-            "city": "={{ $('Loop Over Customers').first().json.city }}",
+            "invoice_number": "={{ $('Loop Over Invoices').first().json.number }}",
+            "customer_number": "={{ $('Loop Over Invoices').first().json.customerNumber }}",
+            "hubspot_deal_id": "={{ $json.id }}",
+            "amount": "={{ $('Loop Over Invoices').first().json.amountIncludingTax }}",
+            "due_date": "={{ $('Loop Over Invoices').first().json.dueDate }}",
+            "status": "={{ $('Loop Over Invoices').first().json.status }}",
             "last_synced": "={{ $('Set Window').first().json.runDate }}"
           }
         }
       }
     },
     {
-      "id": "p1-0013",
-      "name": "Update HubSpot Company",
+      "id": "p2-0014",
+      "name": "Update HubSpot Deal",
       "type": "n8n-nodes-base.hubspot",
       "typeVersion": 2,
       "position": [2200, 320],
       "credentials": { "hubspotApi": { "name": "HubSpot - Engelmans" } },
       "parameters": {
-        "resource": "company",
+        "resource": "deal",
         "operation": "update",
-        "companyId": "={{ $json.hubspotCompanyId }}",
+        "dealId": "={{ $json.hubspotDealId }}",
         "updateFields": {
-          "name": "={{ $json.displayName }}",
-          "phone": "={{ $json.phoneNumber }}",
-          "address": "={{ $json.addressLine1 }}",
-          "city": "={{ $json.city }}",
-          "state": "={{ $json.state }}",
-          "zip": "={{ $json.postalCode }}",
-          "country": "={{ $json.country }}"
+          "amount": "={{ $json.amountIncludingTax }}",
+          "closeDate": "={{ $json.dueDate }}",
+          "dealStage": "={{ $json.status === 'Paid' ? 'closedwon' : 'contractsent' }}"
         }
       }
     },
     {
-      "id": "p1-0014",
-      "name": "Update Customer Row",
+      "id": "p2-0015",
+      "name": "Update Invoice Row",
       "type": "n8n-nodes-base.microsoftExcel",
       "typeVersion": 2,
       "position": [2420, 320],
@@ -274,7 +292,7 @@
         },
         "worksheet": {
           "__rl": true,
-          "value": "customers",
+          "value": "invoices",
           "mode": "name"
         },
         "keyRow": 1,
@@ -282,19 +300,19 @@
         "columns": {
           "mappingMode": "defineBelow",
           "value": {
-            "erp_account_number": "={{ $('Loop Over Customers').first().json.number }}",
-            "hubspot_company_id": "={{ $('Look Up HubSpot ID').first().json.hubspotCompanyId }}",
-            "name": "={{ $('Loop Over Customers').first().json.displayName }}",
-            "email": "={{ $('Loop Over Customers').first().json.email }}",
-            "phone": "={{ $('Loop Over Customers').first().json.phoneNumber }}",
-            "city": "={{ $('Loop Over Customers').first().json.city }}",
+            "invoice_number": "={{ $('Loop Over Invoices').first().json.number }}",
+            "customer_number": "={{ $('Loop Over Invoices').first().json.customerNumber }}",
+            "hubspot_deal_id": "={{ $('Look Up Deal + Company').first().json.hubspotDealId }}",
+            "amount": "={{ $('Loop Over Invoices').first().json.amountIncludingTax }}",
+            "due_date": "={{ $('Loop Over Invoices').first().json.dueDate }}",
+            "status": "={{ $('Loop Over Invoices').first().json.status }}",
             "last_synced": "={{ $('Set Window').first().json.runDate }}"
           }
         }
       }
     },
     {
-      "id": "p1-0015",
+      "id": "p2-0016",
       "name": "Write Sync Log",
       "type": "n8n-nodes-base.microsoftExcel",
       "typeVersion": 2,
@@ -318,8 +336,8 @@
           "mappingMode": "defineBelow",
           "value": {
             "run_date": "={{ $('Set Window').first().json.runDate }}",
-            "phase": "phase1",
-            "records_processed": "={{ $('Expand Customers').all().length }}",
+            "phase": "phase2",
+            "records_processed": "={{ $('Expand Invoices').all().length }}",
             "last_bc_timestamp": "={{ $('Set Window').first().json.runDate }}"
           }
         }
@@ -327,30 +345,36 @@
     }
   ],
   "connections": {
-    "Schedule Trigger":        { "main": [[{ "node": "Config",                   "type": "main", "index": 0 }]] },
-    "Config":                  { "main": [[{ "node": "Read Sync Log",            "type": "main", "index": 0 }]] },
-    "Read Sync Log":           { "main": [[{ "node": "Set Window",               "type": "main", "index": 0 }]] },
-    "Set Window":              { "main": [[{ "node": "Read Customers Sheet",      "type": "main", "index": 0 }]] },
-    "Read Customers Sheet":    { "main": [[{ "node": "Fetch Changed BC Customers","type": "main", "index": 0 }]] },
-    "Fetch Changed BC Customers": { "main": [[{ "node": "Expand Customers",      "type": "main", "index": 0 }]] },
-    "Expand Customers":        { "main": [[{ "node": "Loop Over Customers",      "type": "main", "index": 0 }]] },
-    "Loop Over Customers": {
+    "Schedule Trigger":     { "main": [[{ "node": "Config",                    "type": "main", "index": 0 }]] },
+    "Config":               { "main": [[{ "node": "Read Sync Log",             "type": "main", "index": 0 }]] },
+    "Read Sync Log":        { "main": [[{ "node": "Set Window",                "type": "main", "index": 0 }]] },
+    "Set Window": {
       "main": [
-        [{ "node": "Look Up HubSpot ID", "type": "main", "index": 0 }],
-        [{ "node": "Write Sync Log",     "type": "main", "index": 0 }]
+        [{ "node": "Read Invoices Sheet",  "type": "main", "index": 0 }],
+        [{ "node": "Read Customers Sheet", "type": "main", "index": 0 }]
       ]
     },
-    "Look Up HubSpot ID":  { "main": [[{ "node": "New or Existing?",       "type": "main", "index": 0 }]] },
+    "Read Invoices Sheet":  { "main": [[{ "node": "Fetch Changed BC Invoices", "type": "main", "index": 0 }]] },
+    "Read Customers Sheet": { "main": [[{ "node": "Fetch Changed BC Invoices", "type": "main", "index": 0 }]] },
+    "Fetch Changed BC Invoices": { "main": [[{ "node": "Expand Invoices",      "type": "main", "index": 0 }]] },
+    "Expand Invoices":      { "main": [[{ "node": "Loop Over Invoices",        "type": "main", "index": 0 }]] },
+    "Loop Over Invoices": {
+      "main": [
+        [{ "node": "Look Up Deal + Company", "type": "main", "index": 0 }],
+        [{ "node": "Write Sync Log",         "type": "main", "index": 0 }]
+      ]
+    },
+    "Look Up Deal + Company": { "main": [[{ "node": "New or Existing?",       "type": "main", "index": 0 }]] },
     "New or Existing?": {
       "main": [
-        [{ "node": "Create HubSpot Company", "type": "main", "index": 0 }],
-        [{ "node": "Update HubSpot Company", "type": "main", "index": 0 }]
+        [{ "node": "Create HubSpot Deal", "type": "main", "index": 0 }],
+        [{ "node": "Update HubSpot Deal", "type": "main", "index": 0 }]
       ]
     },
-    "Create HubSpot Company": { "main": [[{ "node": "Write New Customer Row", "type": "main", "index": 0 }]] },
-    "Write New Customer Row":  { "main": [[{ "node": "Loop Over Customers",   "type": "main", "index": 0 }]] },
-    "Update HubSpot Company":  { "main": [[{ "node": "Update Customer Row",   "type": "main", "index": 0 }]] },
-    "Update Customer Row":     { "main": [[{ "node": "Loop Over Customers",   "type": "main", "index": 0 }]] }
+    "Create HubSpot Deal":  { "main": [[{ "node": "Write New Invoice Row", "type": "main", "index": 0 }]] },
+    "Write New Invoice Row": { "main": [[{ "node": "Loop Over Invoices",   "type": "main", "index": 0 }]] },
+    "Update HubSpot Deal":  { "main": [[{ "node": "Update Invoice Row",    "type": "main", "index": 0 }]] },
+    "Update Invoice Row":   { "main": [[{ "node": "Loop Over Invoices",    "type": "main", "index": 0 }]] }
   },
   "settings": { "executionOrder": "v1" },
   "pinData": {}
