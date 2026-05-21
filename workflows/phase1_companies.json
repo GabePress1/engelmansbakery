@@ -1,0 +1,279 @@
+{
+  "name": "Phase 1 – BC → HubSpot Companies (Excel-gated)",
+  "nodes": [
+    {
+      "id": "a1b2c3d4-0001-0001-0001-000000000001",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [0, 300],
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "cronExpression", "expression": "0 6 * * 1-5" }]
+        }
+      }
+    },
+    {
+      "id": "a1b2c3d4-0001-0001-0001-000000000002",
+      "name": "Read Last Timestamp",
+      "type": "n8n-nodes-base.microsoftExcel",
+      "typeVersion": 2,
+      "position": [220, 300],
+      "credentials": { "microsoftExcelOAuth2Api": { "name": "Microsoft 365 - Engelmans" } },
+      "parameters": {
+        "operation": "getRows",
+        "workbookRRID": "={{ $vars.EXCEL_WORKBOOK_ID }}",
+        "worksheetId": "sync_log",
+        "returnAll": false,
+        "limit": 1,
+        "options": {
+          "dataStartRow": 2,
+          "returnFirstMatch": false
+        }
+      }
+    },
+    {
+      "id": "a1b2c3d4-0001-0001-0001-000000000003",
+      "name": "Set Timestamp Window",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 300],
+      "parameters": {
+        "jsCode": "const rows = $input.all();\n\n// Find the most recent phase1 entry\nconst phase1Rows = rows.filter(r => r.json.phase === 'phase1');\nphase1Rows.sort((a, b) => new Date(b.json.run_date) - new Date(a.json.run_date));\n\nconst lastTs = phase1Rows.length > 0\n  ? phase1Rows[0].json.last_bc_timestamp\n  : '2000-01-01T00:00:00Z'; // full pull if no prior run\n\nconst runDate = new Date().toISOString();\n\nreturn [{ json: { lastTimestamp: lastTs, runDate } }];"
+      }
+    },
+    {
+      "id": "a1b2c3d4-0001-0001-0001-000000000004",
+      "name": "Fetch Changed BC Customers",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [660, 300],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $vars.BC_BASE_URL }}/companies({{ $vars.BC_COMPANY_ID }})/customers",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{ "name": "Accept", "value": "application/json" }]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "$filter", "value": "={{ `lastModifiedDateTime gt ${$json.lastTimestamp}` }}" },
+            { "name": "$select", "value": "id,number,displayName,email,phoneNumber,addressLine1,city,state,postalCode,country,lastModifiedDateTime" },
+            { "name": "$top", "value": "500" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "a1b2c3d4-0001-0001-0001-000000000005",
+      "name": "Any Customers Changed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [880, 300],
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": false },
+          "conditions": [
+            {
+              "id": "cond1",
+              "leftValue": "={{ $json.value.length }}",
+              "rightValue": 0,
+              "operator": { "type": "number", "operation": "gt" }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "a1b2c3d4-0001-0001-0001-000000000006",
+      "name": "Split Into Customers",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [1100, 200],
+      "parameters": { "batchSize": 1, "options": {} }
+    },
+    {
+      "id": "a1b2c3d4-0001-0001-0001-000000000007",
+      "name": "Read HubSpot ID Cache",
+      "type": "n8n-nodes-base.microsoftExcel",
+      "typeVersion": 2,
+      "position": [1320, 200],
+      "credentials": { "microsoftExcelOAuth2Api": { "name": "Microsoft 365 - Engelmans" } },
+      "parameters": {
+        "operation": "getRows",
+        "workbookRRID": "={{ $vars.EXCEL_WORKBOOK_ID }}",
+        "worksheetId": "hubspot_id_cache",
+        "returnAll": true,
+        "options": { "dataStartRow": 2 }
+      }
+    },
+    {
+      "id": "a1b2c3d4-0001-0001-0001-000000000008",
+      "name": "Look Up HubSpot ID",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1540, 200],
+      "parameters": {
+        "jsCode": "const customer = $('Split Into Customers').first().json;\nconst cacheRows = $input.all();\n\nconst match = cacheRows.find(r => String(r.json.erp_account_number) === String(customer.number));\n\nreturn [{\n  json: {\n    ...customer,\n    hubspotId: match ? match.json.hubspot_id : null,\n    isNew: !match\n  }\n}];"
+      }
+    },
+    {
+      "id": "a1b2c3d4-0001-0001-0001-000000000009",
+      "name": "New or Existing?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1760, 200],
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "cond2",
+              "leftValue": "={{ $json.isNew }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "equal" }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "a1b2c3d4-0001-0001-0001-000000000010",
+      "name": "Create HubSpot Company",
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2,
+      "position": [1980, 100],
+      "credentials": { "hubspotApi": { "name": "HubSpot - Engelmans" } },
+      "parameters": {
+        "resource": "company",
+        "operation": "create",
+        "additionalFields": {
+          "name": "={{ $json.displayName }}",
+          "phone": "={{ $json.phoneNumber }}",
+          "address": "={{ $json.addressLine1 }}",
+          "city": "={{ $json.city }}",
+          "state": "={{ $json.state }}",
+          "zip": "={{ $json.postalCode }}",
+          "country": "={{ $json.country }}",
+          "erp_account_number__c": "={{ $json.number }}"
+        }
+      }
+    },
+    {
+      "id": "a1b2c3d4-0001-0001-0001-000000000011",
+      "name": "Update HubSpot Company",
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2,
+      "position": [1980, 320],
+      "credentials": { "hubspotApi": { "name": "HubSpot - Engelmans" } },
+      "parameters": {
+        "resource": "company",
+        "operation": "update",
+        "companyId": "={{ $json.hubspotId }}",
+        "updateFields": {
+          "name": "={{ $json.displayName }}",
+          "phone": "={{ $json.phoneNumber }}",
+          "address": "={{ $json.addressLine1 }}",
+          "city": "={{ $json.city }}",
+          "state": "={{ $json.state }}",
+          "zip": "={{ $json.postalCode }}",
+          "country": "={{ $json.country }}"
+        }
+      }
+    },
+    {
+      "id": "a1b2c3d4-0001-0001-0001-000000000012",
+      "name": "Write New ID to Cache",
+      "type": "n8n-nodes-base.microsoftExcel",
+      "typeVersion": 2,
+      "position": [2200, 100],
+      "credentials": { "microsoftExcelOAuth2Api": { "name": "Microsoft 365 - Engelmans" } },
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "workbookRRID": "={{ $vars.EXCEL_WORKBOOK_ID }}",
+        "worksheetId": "hubspot_id_cache",
+        "keyRow": 1,
+        "dataStartRow": 2,
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "erp_account_number": "={{ $('Split Into Customers').first().json.number }}",
+            "hubspot_id": "={{ $json.id }}"
+          }
+        }
+      }
+    },
+    {
+      "id": "a1b2c3d4-0001-0001-0001-000000000013",
+      "name": "Merge Create + Update",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [2420, 200],
+      "parameters": { "mode": "passThrough", "output": "input1" }
+    },
+    {
+      "id": "a1b2c3d4-0001-0001-0001-000000000014",
+      "name": "Track Max Timestamp",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2640, 200],
+      "parameters": {
+        "jsCode": "// Accumulate the highest lastModifiedDateTime seen across the loop\nconst current = $input.first().json.lastModifiedDateTime || '';\nconst stored = $vars.RUNNING_MAX_TS || '';\nconst newMax = current > stored ? current : stored;\n$vars.RUNNING_MAX_TS = newMax;\nreturn $input.all();"
+      }
+    },
+    {
+      "id": "a1b2c3d4-0001-0001-0001-000000000015",
+      "name": "Write Sync Log",
+      "type": "n8n-nodes-base.microsoftExcel",
+      "typeVersion": 2,
+      "position": [1100, 460],
+      "credentials": { "microsoftExcelOAuth2Api": { "name": "Microsoft 365 - Engelmans" } },
+      "parameters": {
+        "operation": "append",
+        "workbookRRID": "={{ $vars.EXCEL_WORKBOOK_ID }}",
+        "worksheetId": "sync_log",
+        "keyRow": 1,
+        "dataStartRow": 2,
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "run_date": "={{ $('Set Timestamp Window').first().json.runDate }}",
+            "phase": "phase1",
+            "records_processed": "={{ $('Fetch Changed BC Customers').first().json.value.length }}",
+            "last_bc_timestamp": "={{ $vars.RUNNING_MAX_TS || $('Set Timestamp Window').first().json.lastTimestamp }}"
+          }
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": { "main": [[{ "node": "Read Last Timestamp", "type": "main", "index": 0 }]] },
+    "Read Last Timestamp": { "main": [[{ "node": "Set Timestamp Window", "type": "main", "index": 0 }]] },
+    "Set Timestamp Window": { "main": [[{ "node": "Fetch Changed BC Customers", "type": "main", "index": 0 }]] },
+    "Fetch Changed BC Customers": { "main": [[{ "node": "Any Customers Changed?", "type": "main", "index": 0 }]] },
+    "Any Customers Changed?": {
+      "main": [
+        [{ "node": "Split Into Customers", "type": "main", "index": 0 }],
+        [{ "node": "Write Sync Log", "type": "main", "index": 0 }]
+      ]
+    },
+    "Split Into Customers": { "main": [[{ "node": "Read HubSpot ID Cache", "type": "main", "index": 0 }]] },
+    "Read HubSpot ID Cache": { "main": [[{ "node": "Look Up HubSpot ID", "type": "main", "index": 0 }]] },
+    "Look Up HubSpot ID": { "main": [[{ "node": "New or Existing?", "type": "main", "index": 0 }]] },
+    "New or Existing?": {
+      "main": [
+        [{ "node": "Create HubSpot Company", "type": "main", "index": 0 }],
+        [{ "node": "Update HubSpot Company", "type": "main", "index": 0 }]
+      ]
+    },
+    "Create HubSpot Company": { "main": [[{ "node": "Write New ID to Cache", "type": "main", "index": 0 }]] },
+    "Write New ID to Cache": { "main": [[{ "node": "Merge Create + Update", "type": "main", "index": 0 }]] },
+    "Update HubSpot Company": { "main": [[{ "node": "Merge Create + Update", "type": "main", "index": 1 }]] },
+    "Merge Create + Update": { "main": [[{ "node": "Track Max Timestamp", "type": "main", "index": 0 }]] },
+    "Track Max Timestamp": { "main": [[{ "node": "Split Into Customers", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "pinData": {}
+}
