@@ -23,24 +23,9 @@
         "mode": "manual",
         "assignments": {
           "assignments": [
-            {
-              "id": "cfg-1",
-              "name": "EXCEL_WORKBOOK_ID",
-              "value": "PASTE_YOUR_WORKBOOK_ID_HERE",
-              "type": "string"
-            },
-            {
-              "id": "cfg-2",
-              "name": "BC_BASE_URL",
-              "value": "PASTE_YOUR_BC_API_BASE_URL_HERE",
-              "type": "string"
-            },
-            {
-              "id": "cfg-3",
-              "name": "BC_COMPANY_ID",
-              "value": "PASTE_YOUR_BC_COMPANY_GUID_HERE",
-              "type": "string"
-            }
+            { "id": "cfg-1", "name": "EXCEL_WORKBOOK_ID", "value": "PASTE_YOUR_WORKBOOK_ID_HERE", "type": "string" },
+            { "id": "cfg-2", "name": "BC_BASE_URL",        "value": "PASTE_YOUR_BC_API_BASE_URL_HERE", "type": "string" },
+            { "id": "cfg-3", "name": "BC_COMPANY_ID",      "value": "PASTE_YOUR_BC_COMPANY_GUID_HERE", "type": "string" }
           ]
         },
         "options": {}
@@ -55,16 +40,8 @@
       "credentials": { "microsoftExcelOAuth2Api": { "name": "Microsoft 365 - Engelmans" } },
       "parameters": {
         "operation": "getRows",
-        "workbook": {
-          "__rl": true,
-          "value": "={{ $('Config').first().json.EXCEL_WORKBOOK_ID }}",
-          "mode": "id"
-        },
-        "worksheet": {
-          "__rl": true,
-          "value": "sync_log",
-          "mode": "name"
-        },
+        "workbook":   { "__rl": true, "value": "={{ $('Config').first().json.EXCEL_WORKBOOK_ID }}", "mode": "id" },
+        "worksheet":  { "__rl": true, "value": "sync_log", "mode": "name" },
         "returnAll": true,
         "options": { "dataStartRow": 2 }
       }
@@ -76,28 +53,20 @@
       "typeVersion": 2,
       "position": [660, 300],
       "parameters": {
-        "jsCode": "const rows = $input.all();\n\n// Find the most recent phase1 run\nconst phase1 = rows\n  .filter(r => r.json.phase === 'phase1')\n  .sort((a, b) => new Date(b.json.run_date) - new Date(a.json.run_date));\n\nconst lastTimestamp = phase1.length > 0\n  ? phase1[0].json.last_bc_timestamp\n  : '2000-01-01T00:00:00Z'; // first ever run = full pull\n\nconst runDate = new Date().toISOString();\n\nreturn [{ json: { lastTimestamp, runDate } }];"
+        "jsCode": "const rows = $input.all();\nconst phase1 = rows\n  .filter(r => r.json.phase === 'phase1')\n  .sort((a, b) => new Date(b.json.run_date) - new Date(a.json.run_date));\nconst lastTimestamp = phase1.length > 0 ? phase1[0].json.last_bc_timestamp : '2000-01-01T00:00:00Z';\nreturn [{ json: { lastTimestamp, runDate: new Date().toISOString() } }];"
       }
     },
     {
       "id": "p1-0005",
-      "name": "Read Customers Sheet",
+      "name": "Read Customer Sheet",
       "type": "n8n-nodes-base.microsoftExcel",
       "typeVersion": 2,
       "position": [880, 300],
       "credentials": { "microsoftExcelOAuth2Api": { "name": "Microsoft 365 - Engelmans" } },
       "parameters": {
         "operation": "getRows",
-        "workbook": {
-          "__rl": true,
-          "value": "={{ $('Config').first().json.EXCEL_WORKBOOK_ID }}",
-          "mode": "id"
-        },
-        "worksheet": {
-          "__rl": true,
-          "value": "customers",
-          "mode": "name"
-        },
+        "workbook":   { "__rl": true, "value": "={{ $('Config').first().json.EXCEL_WORKBOOK_ID }}", "mode": "id" },
+        "worksheet":  { "__rl": true, "value": "Customer", "mode": "name" },
         "returnAll": true,
         "options": { "dataStartRow": 2 }
       }
@@ -126,7 +95,7 @@
             },
             {
               "name": "$select",
-              "value": "id,number,displayName,email,phoneNumber,addressLine1,city,state,postalCode,country,lastModifiedDateTime"
+              "value": "id,number,displayName,email,phoneNumber,addressLine1,city,state,postalCode,country,salespersonCode,paymentTermsId,paymentMethodId,creditLimit,blocked,balance,balanceDue,lastModifiedDateTime"
             },
             { "name": "$top", "value": "500" }
           ]
@@ -140,7 +109,7 @@
       "typeVersion": 2,
       "position": [1320, 300],
       "parameters": {
-        "jsCode": "// Expand the BC value[] array into individual n8n items\nconst customers = $input.first().json.value || [];\nreturn customers.map(c => ({ json: c }));"
+        "jsCode": "const customers = $input.first().json.value || [];\nreturn customers.map(c => ({ json: c }));"
       }
     },
     {
@@ -158,7 +127,7 @@
       "typeVersion": 2,
       "position": [1760, 200],
       "parameters": {
-        "jsCode": "// Read the customers sheet data fetched once before the loop\nconst customer = $input.first().json;\nconst sheetRows = $('Read Customers Sheet').all();\n\nconst match = sheetRows.find(\n  r => String(r.json.erp_account_number) === String(customer.number)\n);\n\nreturn [{\n  json: {\n    ...customer,\n    hubspotCompanyId: match ? match.json.hubspot_company_id : null,\n    isNew: !match\n  }\n}];"
+        "jsCode": "const customer = $input.first().json;\nconst sheetRows = $('Read Customer Sheet').all();\nconst match = sheetRows.find(r => String(r.json.erp_account_number) === String(customer.number));\nreturn [{\n  json: {\n    ...customer,\n    hubspotId: match ? match.json.hubspot_id : null,\n    isNew: !match\n  }\n}];"
       }
     },
     {
@@ -191,13 +160,20 @@
         "resource": "company",
         "operation": "create",
         "additionalFields": {
-          "name": "={{ $json.displayName }}",
-          "phone": "={{ $json.phoneNumber }}",
-          "address": "={{ $json.addressLine1 }}",
-          "city": "={{ $json.city }}",
-          "state": "={{ $json.state }}",
-          "zip": "={{ $json.postalCode }}",
-          "country": "={{ $json.country }}"
+          "name":            "={{ $json.displayName }}",
+          "phone":           "={{ $json.phoneNumber }}",
+          "address":         "={{ $json.addressLine1 }}",
+          "city":            "={{ $json.city }}",
+          "state":           "={{ $json.state }}",
+          "zip":             "={{ $json.postalCode }}",
+          "country":         "={{ $json.country }}",
+          "payment_terms":   "={{ $json.paymentTermsId }}",
+          "payment_method":  "={{ $json.paymentMethodId }}",
+          "credit_limit":    "={{ $json.creditLimit }}",
+          "blocked":         "={{ $json.blocked }}",
+          "balance":         "={{ $json.balance }}",
+          "balance_due":     "={{ $json.balanceDue }}",
+          "salesperson":     "={{ $json.salespersonCode }}"
         }
       }
     },
@@ -210,28 +186,26 @@
       "credentials": { "microsoftExcelOAuth2Api": { "name": "Microsoft 365 - Engelmans" } },
       "parameters": {
         "operation": "append",
-        "workbook": {
-          "__rl": true,
-          "value": "={{ $('Config').first().json.EXCEL_WORKBOOK_ID }}",
-          "mode": "id"
-        },
-        "worksheet": {
-          "__rl": true,
-          "value": "customers",
-          "mode": "name"
-        },
+        "workbook":  { "__rl": true, "value": "={{ $('Config').first().json.EXCEL_WORKBOOK_ID }}", "mode": "id" },
+        "worksheet": { "__rl": true, "value": "Customer", "mode": "name" },
         "keyRow": 1,
         "dataStartRow": 2,
         "columns": {
           "mappingMode": "defineBelow",
           "value": {
             "erp_account_number": "={{ $('Loop Over Customers').first().json.number }}",
-            "hubspot_company_id": "={{ $json.id }}",
-            "name": "={{ $('Loop Over Customers').first().json.displayName }}",
-            "email": "={{ $('Loop Over Customers').first().json.email }}",
-            "phone": "={{ $('Loop Over Customers').first().json.phoneNumber }}",
-            "city": "={{ $('Loop Over Customers').first().json.city }}",
-            "last_synced": "={{ $('Set Window').first().json.runDate }}"
+            "hubspot_id":         "={{ $json.id }}",
+            "Name":               "={{ $('Loop Over Customers').first().json.displayName }}",
+            "Owner":              "={{ $('Loop Over Customers').first().json.salespersonCode }}",
+            "Payment_Terms":      "={{ $('Loop Over Customers').first().json.paymentTermsId }}",
+            "Payment_Method":     "={{ $('Loop Over Customers').first().json.paymentMethodId }}",
+            "Credit_Limit":       "={{ $('Loop Over Customers').first().json.creditLimit }}",
+            "Blocked":            "={{ $('Loop Over Customers').first().json.blocked }}",
+            "Balance":            "={{ $('Loop Over Customers').first().json.balance }}",
+            "Balance_Due":        "={{ $('Loop Over Customers').first().json.balanceDue }}",
+            "Route":              "",
+            "Calender":           "",
+            "last_synced":        "={{ $('Set Window').first().json.runDate }}"
           }
         }
       }
@@ -246,15 +220,22 @@
       "parameters": {
         "resource": "company",
         "operation": "update",
-        "companyId": "={{ $json.hubspotCompanyId }}",
+        "companyId": "={{ $json.hubspotId }}",
         "updateFields": {
-          "name": "={{ $json.displayName }}",
-          "phone": "={{ $json.phoneNumber }}",
-          "address": "={{ $json.addressLine1 }}",
-          "city": "={{ $json.city }}",
-          "state": "={{ $json.state }}",
-          "zip": "={{ $json.postalCode }}",
-          "country": "={{ $json.country }}"
+          "name":            "={{ $json.displayName }}",
+          "phone":           "={{ $json.phoneNumber }}",
+          "address":         "={{ $json.addressLine1 }}",
+          "city":            "={{ $json.city }}",
+          "state":           "={{ $json.state }}",
+          "zip":             "={{ $json.postalCode }}",
+          "country":         "={{ $json.country }}",
+          "payment_terms":   "={{ $json.paymentTermsId }}",
+          "payment_method":  "={{ $json.paymentMethodId }}",
+          "credit_limit":    "={{ $json.creditLimit }}",
+          "blocked":         "={{ $json.blocked }}",
+          "balance":         "={{ $json.balance }}",
+          "balance_due":     "={{ $json.balanceDue }}",
+          "salesperson":     "={{ $json.salespersonCode }}"
         }
       }
     },
@@ -267,28 +248,24 @@
       "credentials": { "microsoftExcelOAuth2Api": { "name": "Microsoft 365 - Engelmans" } },
       "parameters": {
         "operation": "appendOrUpdate",
-        "workbook": {
-          "__rl": true,
-          "value": "={{ $('Config').first().json.EXCEL_WORKBOOK_ID }}",
-          "mode": "id"
-        },
-        "worksheet": {
-          "__rl": true,
-          "value": "customers",
-          "mode": "name"
-        },
+        "workbook":  { "__rl": true, "value": "={{ $('Config').first().json.EXCEL_WORKBOOK_ID }}", "mode": "id" },
+        "worksheet": { "__rl": true, "value": "Customer", "mode": "name" },
         "keyRow": 1,
         "dataStartRow": 2,
         "columns": {
           "mappingMode": "defineBelow",
           "value": {
             "erp_account_number": "={{ $('Loop Over Customers').first().json.number }}",
-            "hubspot_company_id": "={{ $('Look Up HubSpot ID').first().json.hubspotCompanyId }}",
-            "name": "={{ $('Loop Over Customers').first().json.displayName }}",
-            "email": "={{ $('Loop Over Customers').first().json.email }}",
-            "phone": "={{ $('Loop Over Customers').first().json.phoneNumber }}",
-            "city": "={{ $('Loop Over Customers').first().json.city }}",
-            "last_synced": "={{ $('Set Window').first().json.runDate }}"
+            "hubspot_id":         "={{ $('Look Up HubSpot ID').first().json.hubspotId }}",
+            "Name":               "={{ $('Loop Over Customers').first().json.displayName }}",
+            "Owner":              "={{ $('Loop Over Customers').first().json.salespersonCode }}",
+            "Payment_Terms":      "={{ $('Loop Over Customers').first().json.paymentTermsId }}",
+            "Payment_Method":     "={{ $('Loop Over Customers').first().json.paymentMethodId }}",
+            "Credit_Limit":       "={{ $('Loop Over Customers').first().json.creditLimit }}",
+            "Blocked":            "={{ $('Loop Over Customers').first().json.blocked }}",
+            "Balance":            "={{ $('Loop Over Customers').first().json.balance }}",
+            "Balance_Due":        "={{ $('Loop Over Customers').first().json.balanceDue }}",
+            "last_synced":        "={{ $('Set Window').first().json.runDate }}"
           }
         }
       }
@@ -302,45 +279,37 @@
       "credentials": { "microsoftExcelOAuth2Api": { "name": "Microsoft 365 - Engelmans" } },
       "parameters": {
         "operation": "append",
-        "workbook": {
-          "__rl": true,
-          "value": "={{ $('Config').first().json.EXCEL_WORKBOOK_ID }}",
-          "mode": "id"
-        },
-        "worksheet": {
-          "__rl": true,
-          "value": "sync_log",
-          "mode": "name"
-        },
+        "workbook":  { "__rl": true, "value": "={{ $('Config').first().json.EXCEL_WORKBOOK_ID }}", "mode": "id" },
+        "worksheet": { "__rl": true, "value": "sync_log", "mode": "name" },
         "keyRow": 1,
         "dataStartRow": 2,
         "columns": {
           "mappingMode": "defineBelow",
           "value": {
-            "run_date": "={{ $('Set Window').first().json.runDate }}",
-            "phase": "phase1",
-            "records_processed": "={{ $('Expand Customers').all().length }}",
-            "last_bc_timestamp": "={{ $('Set Window').first().json.runDate }}"
+            "run_date":           "={{ $('Set Window').first().json.runDate }}",
+            "phase":              "phase1",
+            "records_processed":  "={{ $('Expand Customers').all().length }}",
+            "last_bc_timestamp":  "={{ $('Set Window').first().json.runDate }}"
           }
         }
       }
     }
   ],
   "connections": {
-    "Schedule Trigger":        { "main": [[{ "node": "Config",                   "type": "main", "index": 0 }]] },
-    "Config":                  { "main": [[{ "node": "Read Sync Log",            "type": "main", "index": 0 }]] },
-    "Read Sync Log":           { "main": [[{ "node": "Set Window",               "type": "main", "index": 0 }]] },
-    "Set Window":              { "main": [[{ "node": "Read Customers Sheet",      "type": "main", "index": 0 }]] },
-    "Read Customers Sheet":    { "main": [[{ "node": "Fetch Changed BC Customers","type": "main", "index": 0 }]] },
-    "Fetch Changed BC Customers": { "main": [[{ "node": "Expand Customers",      "type": "main", "index": 0 }]] },
-    "Expand Customers":        { "main": [[{ "node": "Loop Over Customers",      "type": "main", "index": 0 }]] },
+    "Schedule Trigger":          { "main": [[{ "node": "Config",                     "type": "main", "index": 0 }]] },
+    "Config":                    { "main": [[{ "node": "Read Sync Log",              "type": "main", "index": 0 }]] },
+    "Read Sync Log":             { "main": [[{ "node": "Set Window",                 "type": "main", "index": 0 }]] },
+    "Set Window":                { "main": [[{ "node": "Read Customer Sheet",        "type": "main", "index": 0 }]] },
+    "Read Customer Sheet":       { "main": [[{ "node": "Fetch Changed BC Customers", "type": "main", "index": 0 }]] },
+    "Fetch Changed BC Customers":{ "main": [[{ "node": "Expand Customers",           "type": "main", "index": 0 }]] },
+    "Expand Customers":          { "main": [[{ "node": "Loop Over Customers",        "type": "main", "index": 0 }]] },
     "Loop Over Customers": {
       "main": [
         [{ "node": "Look Up HubSpot ID", "type": "main", "index": 0 }],
         [{ "node": "Write Sync Log",     "type": "main", "index": 0 }]
       ]
     },
-    "Look Up HubSpot ID":  { "main": [[{ "node": "New or Existing?",       "type": "main", "index": 0 }]] },
+    "Look Up HubSpot ID":    { "main": [[{ "node": "New or Existing?",        "type": "main", "index": 0 }]] },
     "New or Existing?": {
       "main": [
         [{ "node": "Create HubSpot Company", "type": "main", "index": 0 }],

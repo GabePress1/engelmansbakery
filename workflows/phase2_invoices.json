@@ -1,5 +1,5 @@
 {
-  "name": "Phase 2 – BC → HubSpot Deals (Invoices)",
+  "name": "Phase 2 – BC Invoices → Excel Log",
   "nodes": [
     {
       "id": "p2-0001",
@@ -23,24 +23,9 @@
         "mode": "manual",
         "assignments": {
           "assignments": [
-            {
-              "id": "cfg-1",
-              "name": "EXCEL_WORKBOOK_ID",
-              "value": "PASTE_YOUR_WORKBOOK_ID_HERE",
-              "type": "string"
-            },
-            {
-              "id": "cfg-2",
-              "name": "BC_BASE_URL",
-              "value": "PASTE_YOUR_BC_API_BASE_URL_HERE",
-              "type": "string"
-            },
-            {
-              "id": "cfg-3",
-              "name": "BC_COMPANY_ID",
-              "value": "PASTE_YOUR_BC_COMPANY_GUID_HERE",
-              "type": "string"
-            }
+            { "id": "cfg-1", "name": "EXCEL_WORKBOOK_ID", "value": "PASTE_YOUR_WORKBOOK_ID_HERE", "type": "string" },
+            { "id": "cfg-2", "name": "BC_BASE_URL",        "value": "PASTE_YOUR_BC_API_BASE_URL_HERE", "type": "string" },
+            { "id": "cfg-3", "name": "BC_COMPANY_ID",      "value": "PASTE_YOUR_BC_COMPANY_GUID_HERE", "type": "string" }
           ]
         },
         "options": {}
@@ -55,16 +40,8 @@
       "credentials": { "microsoftExcelOAuth2Api": { "name": "Microsoft 365 - Engelmans" } },
       "parameters": {
         "operation": "getRows",
-        "workbook": {
-          "__rl": true,
-          "value": "={{ $('Config').first().json.EXCEL_WORKBOOK_ID }}",
-          "mode": "id"
-        },
-        "worksheet": {
-          "__rl": true,
-          "value": "sync_log",
-          "mode": "name"
-        },
+        "workbook":  { "__rl": true, "value": "={{ $('Config').first().json.EXCEL_WORKBOOK_ID }}", "mode": "id" },
+        "worksheet": { "__rl": true, "value": "sync_log", "mode": "name" },
         "returnAll": true,
         "options": { "dataStartRow": 2 }
       }
@@ -76,61 +53,15 @@
       "typeVersion": 2,
       "position": [660, 300],
       "parameters": {
-        "jsCode": "const rows = $input.all();\n\nconst phase2 = rows\n  .filter(r => r.json.phase === 'phase2')\n  .sort((a, b) => new Date(b.json.run_date) - new Date(a.json.run_date));\n\nconst lastTimestamp = phase2.length > 0\n  ? phase2[0].json.last_bc_timestamp\n  : '2000-01-01T00:00:00Z';\n\nconst runDate = new Date().toISOString();\n\nreturn [{ json: { lastTimestamp, runDate } }];"
+        "jsCode": "const rows = $input.all();\nconst phase2 = rows\n  .filter(r => r.json.phase === 'phase2')\n  .sort((a, b) => new Date(b.json.run_date) - new Date(a.json.run_date));\nconst lastTimestamp = phase2.length > 0 ? phase2[0].json.last_bc_timestamp : '2000-01-01T00:00:00Z';\nreturn [{ json: { lastTimestamp, runDate: new Date().toISOString() } }];"
       }
     },
     {
       "id": "p2-0005",
-      "name": "Read Invoices Sheet",
-      "type": "n8n-nodes-base.microsoftExcel",
-      "typeVersion": 2,
-      "position": [880, 300],
-      "credentials": { "microsoftExcelOAuth2Api": { "name": "Microsoft 365 - Engelmans" } },
-      "parameters": {
-        "operation": "getRows",
-        "workbook": {
-          "__rl": true,
-          "value": "={{ $('Config').first().json.EXCEL_WORKBOOK_ID }}",
-          "mode": "id"
-        },
-        "worksheet": {
-          "__rl": true,
-          "value": "invoices",
-          "mode": "name"
-        },
-        "returnAll": true,
-        "options": { "dataStartRow": 2 }
-      }
-    },
-    {
-      "id": "p2-0006",
-      "name": "Read Customers Sheet",
-      "type": "n8n-nodes-base.microsoftExcel",
-      "typeVersion": 2,
-      "position": [880, 480],
-      "credentials": { "microsoftExcelOAuth2Api": { "name": "Microsoft 365 - Engelmans" } },
-      "parameters": {
-        "operation": "getRows",
-        "workbook": {
-          "__rl": true,
-          "value": "={{ $('Config').first().json.EXCEL_WORKBOOK_ID }}",
-          "mode": "id"
-        },
-        "worksheet": {
-          "__rl": true,
-          "value": "customers",
-          "mode": "name"
-        },
-        "returnAll": true,
-        "options": { "dataStartRow": 2 }
-      }
-    },
-    {
-      "id": "p2-0007",
       "name": "Fetch Changed BC Invoices",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [1100, 300],
+      "position": [880, 300],
       "parameters": {
         "method": "GET",
         "url": "={{ $('Config').first().json.BC_BASE_URL }}/companies({{ $('Config').first().json.BC_COMPANY_ID }})/salesInvoices",
@@ -149,7 +80,7 @@
             },
             {
               "name": "$select",
-              "value": "id,number,customerNumber,customerName,invoiceDate,dueDate,amount,amountIncludingTax,status,currencyCode,lastModifiedDateTime"
+              "value": "id,number,customerNumber,customerName,invoiceDate,dueDate,amountIncludingTax,status,lastModifiedDateTime"
             },
             { "name": "$top", "value": "500" }
           ]
@@ -157,186 +88,67 @@
       }
     },
     {
-      "id": "p2-0008",
+      "id": "p2-0006",
       "name": "Expand Invoices",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1320, 300],
+      "position": [1100, 300],
       "parameters": {
         "jsCode": "const invoices = $input.first().json.value || [];\nreturn invoices.map(i => ({ json: i }));"
       }
     },
     {
-      "id": "p2-0009",
+      "id": "p2-0007",
       "name": "Loop Over Invoices",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
-      "position": [1540, 300],
+      "position": [1320, 300],
       "parameters": { "batchSize": 1, "options": {} }
     },
     {
-      "id": "p2-0010",
-      "name": "Look Up Deal + Company",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [1760, 200],
-      "parameters": {
-        "jsCode": "const invoice = $input.first().json;\n\n// Check if this invoice is already in the invoices sheet\nconst invoiceRows = $('Read Invoices Sheet').all();\nconst invoiceMatch = invoiceRows.find(\n  r => String(r.json.invoice_number) === String(invoice.number)\n);\n\n// Look up the parent company's HubSpot ID from the customers sheet\nconst customerRows = $('Read Customers Sheet').all();\nconst customerMatch = customerRows.find(\n  r => String(r.json.erp_account_number) === String(invoice.customerNumber)\n);\n\nreturn [{\n  json: {\n    ...invoice,\n    hubspotDealId: invoiceMatch ? invoiceMatch.json.hubspot_deal_id : null,\n    hubspotCompanyId: customerMatch ? customerMatch.json.hubspot_company_id : null,\n    isNew: !invoiceMatch\n  }\n}];"
-      }
-    },
-    {
-      "id": "p2-0011",
-      "name": "New or Existing?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [1980, 200],
-      "parameters": {
-        "conditions": {
-          "conditions": [
-            {
-              "id": "cond1",
-              "leftValue": "={{ $json.isNew }}",
-              "rightValue": true,
-              "operator": { "type": "boolean", "operation": "equal" }
-            }
-          ]
-        }
-      }
-    },
-    {
-      "id": "p2-0012",
-      "name": "Create HubSpot Deal",
-      "type": "n8n-nodes-base.hubspot",
-      "typeVersion": 2,
-      "position": [2200, 100],
-      "credentials": { "hubspotApi": { "name": "HubSpot - Engelmans" } },
-      "parameters": {
-        "resource": "deal",
-        "operation": "create",
-        "additionalFields": {
-          "dealName": "={{ `Invoice ${$json.number} – ${$json.customerName}` }}",
-          "amount": "={{ $json.amountIncludingTax }}",
-          "closeDate": "={{ $json.dueDate }}",
-          "dealStage": "closedwon",
-          "pipeline": "default",
-          "associatedCompany": "={{ $json.hubspotCompanyId }}"
-        }
-      }
-    },
-    {
-      "id": "p2-0013",
-      "name": "Write New Invoice Row",
+      "id": "p2-0008",
+      "name": "Upsert Invoice Row",
       "type": "n8n-nodes-base.microsoftExcel",
       "typeVersion": 2,
-      "position": [2420, 100],
-      "credentials": { "microsoftExcelOAuth2Api": { "name": "Microsoft 365 - Engelmans" } },
-      "parameters": {
-        "operation": "append",
-        "workbook": {
-          "__rl": true,
-          "value": "={{ $('Config').first().json.EXCEL_WORKBOOK_ID }}",
-          "mode": "id"
-        },
-        "worksheet": {
-          "__rl": true,
-          "value": "invoices",
-          "mode": "name"
-        },
-        "keyRow": 1,
-        "dataStartRow": 2,
-        "columns": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "invoice_number": "={{ $('Loop Over Invoices').first().json.number }}",
-            "customer_number": "={{ $('Loop Over Invoices').first().json.customerNumber }}",
-            "hubspot_deal_id": "={{ $json.id }}",
-            "amount": "={{ $('Loop Over Invoices').first().json.amountIncludingTax }}",
-            "due_date": "={{ $('Loop Over Invoices').first().json.dueDate }}",
-            "status": "={{ $('Loop Over Invoices').first().json.status }}",
-            "last_synced": "={{ $('Set Window').first().json.runDate }}"
-          }
-        }
-      }
-    },
-    {
-      "id": "p2-0014",
-      "name": "Update HubSpot Deal",
-      "type": "n8n-nodes-base.hubspot",
-      "typeVersion": 2,
-      "position": [2200, 320],
-      "credentials": { "hubspotApi": { "name": "HubSpot - Engelmans" } },
-      "parameters": {
-        "resource": "deal",
-        "operation": "update",
-        "dealId": "={{ $json.hubspotDealId }}",
-        "updateFields": {
-          "amount": "={{ $json.amountIncludingTax }}",
-          "closeDate": "={{ $json.dueDate }}",
-          "dealStage": "={{ $json.status === 'Paid' ? 'closedwon' : 'contractsent' }}"
-        }
-      }
-    },
-    {
-      "id": "p2-0015",
-      "name": "Update Invoice Row",
-      "type": "n8n-nodes-base.microsoftExcel",
-      "typeVersion": 2,
-      "position": [2420, 320],
+      "position": [1540, 200],
       "credentials": { "microsoftExcelOAuth2Api": { "name": "Microsoft 365 - Engelmans" } },
       "parameters": {
         "operation": "appendOrUpdate",
-        "workbook": {
-          "__rl": true,
-          "value": "={{ $('Config').first().json.EXCEL_WORKBOOK_ID }}",
-          "mode": "id"
-        },
-        "worksheet": {
-          "__rl": true,
-          "value": "invoices",
-          "mode": "name"
-        },
+        "workbook":  { "__rl": true, "value": "={{ $('Config').first().json.EXCEL_WORKBOOK_ID }}", "mode": "id" },
+        "worksheet": { "__rl": true, "value": "Invoice", "mode": "name" },
         "keyRow": 1,
         "dataStartRow": 2,
         "columns": {
           "mappingMode": "defineBelow",
           "value": {
-            "invoice_number": "={{ $('Loop Over Invoices').first().json.number }}",
-            "customer_number": "={{ $('Loop Over Invoices').first().json.customerNumber }}",
-            "hubspot_deal_id": "={{ $('Look Up Deal + Company').first().json.hubspotDealId }}",
-            "amount": "={{ $('Loop Over Invoices').first().json.amountIncludingTax }}",
-            "due_date": "={{ $('Loop Over Invoices').first().json.dueDate }}",
-            "status": "={{ $('Loop Over Invoices').first().json.status }}",
-            "last_synced": "={{ $('Set Window').first().json.runDate }}"
+            "invoice_number":  "={{ $json.number }}",
+            "customer_number": "={{ $json.customerNumber }}",
+            "amount":          "={{ $json.amountIncludingTax }}",
+            "due_date":        "={{ $json.dueDate }}",
+            "status":          "={{ $json.status }}",
+            "last_synced":     "={{ $('Set Window').first().json.runDate }}"
           }
         }
       }
     },
     {
-      "id": "p2-0016",
+      "id": "p2-0009",
       "name": "Write Sync Log",
       "type": "n8n-nodes-base.microsoftExcel",
       "typeVersion": 2,
-      "position": [1540, 460],
+      "position": [1320, 460],
       "credentials": { "microsoftExcelOAuth2Api": { "name": "Microsoft 365 - Engelmans" } },
       "parameters": {
         "operation": "append",
-        "workbook": {
-          "__rl": true,
-          "value": "={{ $('Config').first().json.EXCEL_WORKBOOK_ID }}",
-          "mode": "id"
-        },
-        "worksheet": {
-          "__rl": true,
-          "value": "sync_log",
-          "mode": "name"
-        },
+        "workbook":  { "__rl": true, "value": "={{ $('Config').first().json.EXCEL_WORKBOOK_ID }}", "mode": "id" },
+        "worksheet": { "__rl": true, "value": "sync_log", "mode": "name" },
         "keyRow": 1,
         "dataStartRow": 2,
         "columns": {
           "mappingMode": "defineBelow",
           "value": {
-            "run_date": "={{ $('Set Window').first().json.runDate }}",
-            "phase": "phase2",
+            "run_date":          "={{ $('Set Window').first().json.runDate }}",
+            "phase":             "phase2",
             "records_processed": "={{ $('Expand Invoices').all().length }}",
             "last_bc_timestamp": "={{ $('Set Window').first().json.runDate }}"
           }
@@ -345,36 +157,19 @@
     }
   ],
   "connections": {
-    "Schedule Trigger":     { "main": [[{ "node": "Config",                    "type": "main", "index": 0 }]] },
-    "Config":               { "main": [[{ "node": "Read Sync Log",             "type": "main", "index": 0 }]] },
-    "Read Sync Log":        { "main": [[{ "node": "Set Window",                "type": "main", "index": 0 }]] },
-    "Set Window": {
-      "main": [
-        [{ "node": "Read Invoices Sheet",  "type": "main", "index": 0 }],
-        [{ "node": "Read Customers Sheet", "type": "main", "index": 0 }]
-      ]
-    },
-    "Read Invoices Sheet":  { "main": [[{ "node": "Fetch Changed BC Invoices", "type": "main", "index": 0 }]] },
-    "Read Customers Sheet": { "main": [[{ "node": "Fetch Changed BC Invoices", "type": "main", "index": 0 }]] },
-    "Fetch Changed BC Invoices": { "main": [[{ "node": "Expand Invoices",      "type": "main", "index": 0 }]] },
-    "Expand Invoices":      { "main": [[{ "node": "Loop Over Invoices",        "type": "main", "index": 0 }]] },
+    "Schedule Trigger":       { "main": [[{ "node": "Config",                   "type": "main", "index": 0 }]] },
+    "Config":                 { "main": [[{ "node": "Read Sync Log",            "type": "main", "index": 0 }]] },
+    "Read Sync Log":          { "main": [[{ "node": "Set Window",               "type": "main", "index": 0 }]] },
+    "Set Window":             { "main": [[{ "node": "Fetch Changed BC Invoices","type": "main", "index": 0 }]] },
+    "Fetch Changed BC Invoices": { "main": [[{ "node": "Expand Invoices",       "type": "main", "index": 0 }]] },
+    "Expand Invoices":        { "main": [[{ "node": "Loop Over Invoices",       "type": "main", "index": 0 }]] },
     "Loop Over Invoices": {
       "main": [
-        [{ "node": "Look Up Deal + Company", "type": "main", "index": 0 }],
-        [{ "node": "Write Sync Log",         "type": "main", "index": 0 }]
+        [{ "node": "Upsert Invoice Row", "type": "main", "index": 0 }],
+        [{ "node": "Write Sync Log",     "type": "main", "index": 0 }]
       ]
     },
-    "Look Up Deal + Company": { "main": [[{ "node": "New or Existing?",       "type": "main", "index": 0 }]] },
-    "New or Existing?": {
-      "main": [
-        [{ "node": "Create HubSpot Deal", "type": "main", "index": 0 }],
-        [{ "node": "Update HubSpot Deal", "type": "main", "index": 0 }]
-      ]
-    },
-    "Create HubSpot Deal":  { "main": [[{ "node": "Write New Invoice Row", "type": "main", "index": 0 }]] },
-    "Write New Invoice Row": { "main": [[{ "node": "Loop Over Invoices",   "type": "main", "index": 0 }]] },
-    "Update HubSpot Deal":  { "main": [[{ "node": "Update Invoice Row",    "type": "main", "index": 0 }]] },
-    "Update Invoice Row":   { "main": [[{ "node": "Loop Over Invoices",    "type": "main", "index": 0 }]] }
+    "Upsert Invoice Row": { "main": [[{ "node": "Loop Over Invoices", "type": "main", "index": 0 }]] }
   },
   "settings": { "executionOrder": "v1" },
   "pinData": {}
