@@ -1,0 +1,270 @@
+{
+  "name": "HubSpot Dedup – Remove Duplicate Companies",
+  "nodes": [
+    {
+      "id": "dd-001",
+      "name": "Run Manually",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 300],
+      "parameters": {}
+    },
+    {
+      "id": "dd-002",
+      "name": "Config",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [220, 300],
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cfg-1",
+              "name": "HUBSPOT_TOKEN",
+              "value": "PASTE_YOUR_HUBSPOT_PRIVATE_APP_TOKEN_HERE",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "dd-003",
+      "name": "Initialize",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 300],
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global');\nstore.allCompanies = [];\nstore.nextCursor = null;\nstore.fetchDone = false;\nreturn [{ json: { initialized: true, startedAt: new Date().toISOString() } }];"
+      }
+    },
+    {
+      "id": "dd-004",
+      "name": "Build Fetch Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, 300],
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst body = {\n  properties: ['name', 'erp_account_number'],\n  filterGroups: [{\n    filters: [{\n      propertyName: 'erp_account_number',\n      operator: 'HAS_PROPERTY'\n    }]\n  }],\n  limit: 100\n};\nif (store.nextCursor) {\n  body.after = store.nextCursor;\n}\nreturn [{ json: body }];"
+      }
+    },
+    {
+      "id": "dd-005",
+      "name": "Fetch HubSpot Page",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [880, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/companies/search",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ 'Bearer ' + $('Config').first().json.HUBSPOT_TOKEN }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}"
+      }
+    },
+    {
+      "id": "dd-006",
+      "name": "Accumulate Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1100, 300],
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst response = $input.first().json;\nconst results = response.results || [];\n\n// Store only id/name/erp — intentionally exclude 'url' (HubSpot returns\n// /contacts/<portalId>/record/0-2/<id> as its app URL for ALL company records;\n// object type 0-2 = companies, not contacts — but we drop it to avoid confusion).\nconst cleaned = results.map(r => ({\n  id: r.id,\n  name: r.properties?.name,\n  erp_account_number: r.properties?.erp_account_number,\n  createdAt: r.createdAt\n}));\nstore.allCompanies = (store.allCompanies || []).concat(cleaned);\n\nconst nextCursor = response.paging?.next?.after;\n// Stop when: no cursor returned  OR  results were empty.\n// HubSpot sometimes returns a cursor even on the final page with 0 results,\n// which would cause an infinite loop if we only check for cursor presence.\nif (nextCursor && results.length > 0) {\n  store.nextCursor = nextCursor;\n  store.fetchDone = false;\n} else {\n  store.nextCursor = null;\n  store.fetchDone = true;\n}\n\nreturn [{ json: {\n  fetched: store.allCompanies.length,\n  thisPage: results.length,\n  done: store.fetchDone\n} }];"
+      }
+    },
+    {
+      "id": "dd-007",
+      "name": "Fetching Done?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1320, 300],
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "cond1",
+              "leftValue": "={{ $json.done }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "equal" }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "dd-008",
+      "name": "Wait 1s",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [1540, 440],
+      "parameters": {
+        "resume": "timeInterval",
+        "amount": 1,
+        "unit": "seconds"
+      }
+    },
+    {
+      "id": "dd-009",
+      "name": "Find Duplicates",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1540, 160],
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst companies = store.allCompanies || [];\n\n// Group by erp_account_number\nconst byErp = {};\nfor (const c of companies) {\n  const key = c.erp_account_number;\n  if (!key) continue;\n  if (!byErp[key]) byErp[key] = [];\n  byErp[key].push(c);\n}\n\n// Keep the lowest numeric HubSpot ID (oldest record); archive the rest.\nconst toArchive = [];\nconst groups = [];\nfor (const [erpNum, group] of Object.entries(byErp)) {\n  if (group.length < 2) continue;\n  group.sort((a, b) => parseInt(a.id) - parseInt(b.id));\n  const keep = group[0];\n  const dupes = group.slice(1);\n  groups.push({\n    erp: erpNum,\n    keepId: keep.id,\n    keepName: keep.name,\n    dupeCount: dupes.length\n  });\n  for (const d of dupes) toArchive.push(d.id);\n}\n\nstore.toArchive = toArchive;\nreturn [{ json: {\n  totalCompanies: companies.length,\n  duplicateGroups: groups.length,\n  toArchive: toArchive.length,\n  groups\n} }];"
+      }
+    },
+    {
+      "id": "dd-010",
+      "name": "Any Duplicates?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1760, 160],
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "cond2",
+              "leftValue": "={{ $json.toArchive }}",
+              "rightValue": 0,
+              "operator": { "type": "number", "operation": "gt" }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "dd-011",
+      "name": "Expand Archive IDs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1980, 60],
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst ids = store.toArchive || [];\nreturn ids.map(id => ({ json: { id } }));"
+      }
+    },
+    {
+      "id": "dd-012",
+      "name": "Chunk Archive Batches",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [2200, 60],
+      "parameters": { "batchSize": 100, "options": {} }
+    },
+    {
+      "id": "dd-013",
+      "name": "Build Archive Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2420, -40],
+      "parameters": {
+        "jsCode": "const inputs = $input.all().map(item => ({ id: item.json.id }));\nreturn [{ json: { inputs } }];"
+      }
+    },
+    {
+      "id": "dd-014",
+      "name": "Archive Batch",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [2640, -40],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/companies/batch/archive",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ 'Bearer ' + $('Config').first().json.HUBSPOT_TOKEN }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "response": {
+            "response": { "neverError": true }
+          }
+        }
+      }
+    },
+    {
+      "id": "dd-015",
+      "name": "Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2860, 160],
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst archived = (store.toArchive || []).length;\nreturn [{ json: {\n  message: archived > 0\n    ? `Done. Archived ${archived} duplicate company records.`\n    : 'Done. No duplicate ERP account numbers found.',\n  totalScanned: (store.allCompanies || []).length,\n  duplicatesArchived: archived\n} }];"
+      }
+    }
+  ],
+  "connections": {
+    "Run Manually": {
+      "main": [[{ "node": "Config", "type": "main", "index": 0 }]]
+    },
+    "Config": {
+      "main": [[{ "node": "Initialize", "type": "main", "index": 0 }]]
+    },
+    "Initialize": {
+      "main": [[{ "node": "Build Fetch Request", "type": "main", "index": 0 }]]
+    },
+    "Build Fetch Request": {
+      "main": [[{ "node": "Fetch HubSpot Page", "type": "main", "index": 0 }]]
+    },
+    "Fetch HubSpot Page": {
+      "main": [[{ "node": "Accumulate Results", "type": "main", "index": 0 }]]
+    },
+    "Accumulate Results": {
+      "main": [[{ "node": "Fetching Done?", "type": "main", "index": 0 }]]
+    },
+    "Fetching Done?": {
+      "main": [
+        [{ "node": "Find Duplicates", "type": "main", "index": 0 }],
+        [{ "node": "Wait 1s", "type": "main", "index": 0 }]
+      ]
+    },
+    "Wait 1s": {
+      "main": [[{ "node": "Build Fetch Request", "type": "main", "index": 0 }]]
+    },
+    "Find Duplicates": {
+      "main": [[{ "node": "Any Duplicates?", "type": "main", "index": 0 }]]
+    },
+    "Any Duplicates?": {
+      "main": [
+        [{ "node": "Expand Archive IDs", "type": "main", "index": 0 }],
+        [{ "node": "Summary", "type": "main", "index": 0 }]
+      ]
+    },
+    "Expand Archive IDs": {
+      "main": [[{ "node": "Chunk Archive Batches", "type": "main", "index": 0 }]]
+    },
+    "Chunk Archive Batches": {
+      "main": [
+        [{ "node": "Build Archive Payload", "type": "main", "index": 0 }],
+        [{ "node": "Summary", "type": "main", "index": 0 }]
+      ]
+    },
+    "Build Archive Payload": {
+      "main": [[{ "node": "Archive Batch", "type": "main", "index": 0 }]]
+    },
+    "Archive Batch": {
+      "main": [[{ "node": "Chunk Archive Batches", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" }
+}
