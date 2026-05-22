@@ -479,6 +479,21 @@
       "parameters": {
         "jsCode": "const store = $getWorkflowStaticData('global');\nconst customers = store.currentChunkCustomers || [];\nconst odataFilter = customers\n  .map(c => `No eq '${String(c.number).replace(/'/g, \"''\")}'`)\n  .join(' or ');\nreturn [{ json: { odataFilter } }];"
       }
+    },
+    {
+      "id": "p1v11-cal-wait",
+      "name": "Wait Before BC Fetch",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        2576,
+        -48
+      ],
+      "parameters": {
+        "resume": "timeInterval",
+        "amount": 2,
+        "unit": "seconds"
+      }
     }
   ],
   "connections": {
@@ -691,7 +706,7 @@
       "main": [
         [
           {
-            "node": "HTTP Request - Get Calendar & Balance",
+            "node": "Wait Before BC Fetch",
             "type": "main",
             "index": 0
           }
@@ -703,6 +718,17 @@
         [
           {
             "node": "Search HubSpot Companies",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Before BC Fetch": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request - Get Calendar & Balance",
             "type": "main",
             "index": 0
           }
