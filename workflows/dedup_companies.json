@@ -81,7 +81,7 @@
       "typeVersion": 2,
       "position": [1100, 300],
       "parameters": {
-        "jsCode": "const store = $getWorkflowStaticData('global');\nconst response = $input.first().json;\nconst results = response.results || [];\n\nconst cleaned = results.map(r => ({\n  id: r.id,\n  name: r.properties?.name,\n  erp_account_number: r.properties?.erp_account_number,\n  createdAt: r.createdAt\n}));\nstore.allCompanies = (store.allCompanies || []).concat(cleaned);\n\nconst nextCursor = response.paging?.next?.after;\nstore.nextCursor = (nextCursor && results.length > 0) ? nextCursor : null;\n\nreturn [{ json: {\n  fetched: store.allCompanies.length,\n  thisPage: results.length\n} }];"
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst response = $input.first().json;\nconst results = response.results || [];\n\nconst cleaned = results.map(r => ({\n  id: r.id,\n  name: r.properties?.name,\n  erp_account_number: r.properties?.erp_account_number,\n  createdAt: r.createdAt\n}));\nstore.allCompanies = (store.allCompanies || []).concat(cleaned);\n\nconst nextCursor = response.paging?.next?.after;\nstore.nextCursor = (nextCursor && results.length > 0) ? nextCursor : null;\n\n// hasMore=1 means cursor exists → keep looping\n// hasMore=0 means no cursor → HubSpot has no more pages → stop\nconst hasMore = store.nextCursor !== null ? 1 : 0;\n\nreturn [{ json: {\n  fetched: store.allCompanies.length,\n  thisPage: results.length,\n  hasMore\n} }];"
       }
     },
     {
@@ -95,7 +95,7 @@
           "conditions": [
             {
               "id": "cond1",
-              "leftValue": "={{ $json.thisPage }}",
+              "leftValue": "={{ $json.hasMore }}",
               "rightValue": 0,
               "operator": { "type": "number", "operation": "gt" }
             }
