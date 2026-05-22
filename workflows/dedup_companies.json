@@ -81,7 +81,7 @@
       "typeVersion": 2,
       "position": [1100, 300],
       "parameters": {
-        "jsCode": "const store = $getWorkflowStaticData('global');\nconst response = $input.first().json;\nconst results = response.results || [];\n\n// Store only id/name/erp — intentionally exclude 'url' (HubSpot returns\n// /contacts/<portalId>/record/0-2/<id> as its app URL for ALL company records;\n// object type 0-2 = companies, not contacts — but we drop it to avoid confusion).\nconst cleaned = results.map(r => ({\n  id: r.id,\n  name: r.properties?.name,\n  erp_account_number: r.properties?.erp_account_number,\n  createdAt: r.createdAt\n}));\nstore.allCompanies = (store.allCompanies || []).concat(cleaned);\n\nconst nextCursor = response.paging?.next?.after;\n// Stop when: no cursor returned  OR  results were empty.\n// HubSpot sometimes returns a cursor even on the final page with 0 results,\n// which would cause an infinite loop if we only check for cursor presence.\nif (nextCursor && results.length > 0) {\n  store.nextCursor = nextCursor;\n  store.fetchDone = false;\n} else {\n  store.nextCursor = null;\n  store.fetchDone = true;\n}\n\nreturn [{ json: {\n  fetched: store.allCompanies.length,\n  thisPage: results.length,\n  done: store.fetchDone\n} }];"
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst response = $input.first().json;\nconst results = response.results || [];\n\nconst cleaned = results.map(r => ({\n  id: r.id,\n  name: r.properties?.name,\n  erp_account_number: r.properties?.erp_account_number,\n  createdAt: r.createdAt\n}));\nstore.allCompanies = (store.allCompanies || []).concat(cleaned);\n\nconst nextCursor = response.paging?.next?.after;\nstore.nextCursor = (nextCursor && results.length > 0) ? nextCursor : null;\n\nreturn [{ json: {\n  fetched: store.allCompanies.length,\n  thisPage: results.length\n} }];"
       }
     },
     {
@@ -95,9 +95,9 @@
           "conditions": [
             {
               "id": "cond1",
-              "leftValue": "={{ $json.done }}",
-              "rightValue": true,
-              "operator": { "type": "boolean", "operation": "equal" }
+              "leftValue": "={{ $json.thisPage }}",
+              "rightValue": 0,
+              "operator": { "type": "number", "operation": "gt" }
             }
           ]
         }
@@ -233,8 +233,8 @@
     },
     "Fetching Done?": {
       "main": [
-        [{ "node": "Find Duplicates", "type": "main", "index": 0 }],
-        [{ "node": "Wait 1s", "type": "main", "index": 0 }]
+        [{ "node": "Wait 1s", "type": "main", "index": 0 }],
+        [{ "node": "Find Duplicates", "type": "main", "index": 0 }]
       ]
     },
     "Wait 1s": {
