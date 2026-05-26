@@ -1,6 +1,11 @@
 {
+  "updatedAt": "2026-05-26T20:56:38.703Z",
+  "createdAt": "2026-05-26T12:20:26.876Z",
+  "id": "zRJLFdizOFLIwEas",
   "name": "Phase 1 \u2013 BC \u2192 HubSpot Companies v1.2",
   "description": "",
+  "active": false,
+  "isArchived": false,
   "nodes": [
     {
       "parameters": {
@@ -13,24 +18,24 @@
           ]
         }
       },
-      "id": "p1-0001",
+      "id": "6ed576bb-5021-462e-a3ea-5a67b699cbfd",
       "name": "Schedule Trigger",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1,
       "position": [
         0,
-        -168
+        -176
       ]
     },
     {
       "parameters": {},
-      "id": "e3519675-6bf9-426e-ba94-cc5971935a04",
+      "id": "bc694dfe-6e90-4df2-9f1e-2d9b7c0f1863",
       "name": "When clicking 'Execute workflow'",
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
       "position": [
         0,
-        24
+        32
       ]
     },
     {
@@ -65,7 +70,7 @@
         },
         "options": {}
       },
-      "id": "p1-0002",
+      "id": "b2e3fd3f-ab24-46a1-8fe4-756048c29743",
       "name": "Keys",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
@@ -102,7 +107,7 @@
         },
         "options": {}
       },
-      "id": "p1-0016",
+      "id": "59964791-72ac-4d34-9618-86d9355c9330",
       "name": "Get BC Token",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
@@ -115,7 +120,7 @@
       "parameters": {
         "jsCode": "const store = $getWorkflowStaticData('global');\nconst lastTimestamp = store.lastPhase1Run || '2000-01-01T00:00:00Z';\nconst runDate = new Date().toISOString();\nstore.lastPhase1Run = runDate;\n// Reset the created-this-run set so dedup guard starts fresh each execution\nstore.createdThisRun = {};\nreturn [{ json: { lastTimestamp, runDate } }];"
       },
-      "id": "p1-0004",
+      "id": "9fd36271-7bfb-451a-a08f-217ddc4643c7",
       "name": "Set Window",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -161,7 +166,7 @@
           "timeout": 60000
         }
       },
-      "id": "p1-0006",
+      "id": "5e36acb5-2ab1-4134-a3af-f85558942d57",
       "name": "Fetch Changed BC Customers",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
@@ -174,7 +179,7 @@
       "parameters": {
         "jsCode": "const customers = $input.first().json.value || [];\nif (customers.length === 0) return [{ json: { skipped: true, count: 0 } }];\nreturn customers.map(c => ({ json: c }));"
       },
-      "id": "p1-0007",
+      "id": "3dbe34cf-c1cf-487d-8b1e-a0587224227e",
       "name": "Expand Customers",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -185,9 +190,9 @@
     },
     {
       "parameters": {
-        "jsCode": "const customers = $input.all().map(i => i.json);\nif (customers[0]?.skipped) return $input.all();\n\nconst chunkSize = 100;\nconst chunks = [];\nfor (let i = 0; i < customers.length; i += chunkSize) {\n  const slice = customers.slice(i, i + chunkSize);\n  chunks.push({ json: {\n    chunkCustomers: slice,\n    searchPayload: {\n      filterGroups: [{ filters: [{ propertyName: 'erp_account_number', operator: 'IN', values: slice.map(c => String(c.number)) }] }],\n      properties: ['hs_object_id', 'name', 'erp_account_number', 'relationship', 'division'],\n      limit: 100\n    }\n  }});\n}\nreturn chunks;"
+        "jsCode": "const customers = $input.all().map(i => i.json);\nif (customers[0]?.skipped) return $input.all();\n\nconst chunkSize = 100;\nconst chunks = [];\nfor (let i = 0; i < customers.length; i += chunkSize) {\n  const slice = customers.slice(i, i + chunkSize);\n  chunks.push({ json: {\n    chunkCustomers: slice,\n    searchPayload: {\n      filterGroups: [{ filters: [{ propertyName: 'erp_account_number', operator: 'IN', values: slice.map(c => String(c.number)) }] }],\n      properties: ['hs_object_id', 'name', 'erp_account_number'],\n      limit: 100\n    }\n  }});\n}\nreturn chunks;"
       },
-      "id": "p1-0019",
+      "id": "a46730f6-04b4-4a4f-ad53-87dca94acea5",
       "name": "Build HubSpot Search Payload",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -216,7 +221,7 @@
         "jsonBody": "={{ JSON.stringify($json.searchPayload) }}",
         "options": {}
       },
-      "id": "p1-0020",
+      "id": "8f56c818-6e8e-4b4a-9baf-4cd27c438a2b",
       "name": "Search HubSpot Companies",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
@@ -251,7 +256,7 @@
         "jsonBody": "={{ JSON.stringify({ inputs: $json.toUpdate }) }}",
         "options": {}
       },
-      "id": "p1-0022",
+      "id": "88c77ed5-d225-4124-92a8-dc91f0f89943",
       "name": "Batch Update Chunk",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
@@ -287,7 +292,7 @@
         "jsonBody": "={{ JSON.stringify({ inputs: $('Process Chunk').first().json.toCreate }) }}",
         "options": {}
       },
-      "id": "p1-0023",
+      "id": "cb76097a-d655-4ae6-b0eb-497ba0b9667b",
       "name": "Batch Create Chunk",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
@@ -307,7 +312,7 @@
       "parameters": {
         "jsCode": "const total = $('Expand Customers').all().filter(i => !i.json.skipped).length;\nreturn [{ json: { message: 'Phase 1 complete', totalCustomers: total } }];"
       },
-      "id": "p1-0024",
+      "id": "03333850-9d77-48b7-bec6-500d9688363a",
       "name": "Sync Summary",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -320,7 +325,7 @@
       "parameters": {
         "options": {}
       },
-      "id": "p1-0025",
+      "id": "f7ac9f8b-d2a7-4a6b-a8bc-1d2611a769cf",
       "name": "Loop Chunks",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
@@ -333,21 +338,21 @@
       "parameters": {
         "amount": 1
       },
-      "id": "p1-0026",
+      "id": "ad339fee-a9d0-40a3-bcdc-c064508e250f",
       "name": "Wait 1s",
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
         4032,
-        24
+        32
       ],
-      "webhookId": "rate-limit-wait"
+      "webhookId": "9c9eac12-a8e2-489b-ba2d-b1b0184b2f6a"
     },
     {
       "parameters": {
-        "jsCode": "const hsResults = $input.first().json.results || [];\nconst store = $getWorkflowStaticData('global');\nconst chunkCustomers  = store.currentChunkCustomers || [];\nconst shipToMap       = store.shipToMap    || {};\nconst balanceMap      = store.balanceMap   || {};\nconst createdThisRun  = store.createdThisRun || {};\n\nconst routeMap = {\n  'RT 1':  'Route 1',  'RT 2':  'Route 2',  'RT 3':  'Route 3',\n  'RT 4':  'Route 4',  'RT 5':  'Route 5',  'RT 6':  'Route 6',\n  'RT 7':  'Route 7',  'RT 8':  'Route 8',  'RT 9':  'Route 9',\n  'RT 10': 'Route 10', 'RT 11': 'Route 11', 'RT 12': 'Route 12',\n  'RT 13': 'Route 13', 'RT 15': '15 - Greenville',\n  'RT 16': 'Route 16 - Boxed', 'RT 20': 'Route 20 - Supervisor',\n  'RT 21': 'Route 21 - Distribution'\n};\n\nconst paymentMethodMap = {\n  'ACH':   'ACH Upon Due Date',\n  'CCA':   'CCA',\n  'CCW':   'Credit Card Weekly',\n  'Check': 'Check',\n  'COD':   'Cash on Delivery',\n  'CCM':   'Credit Card Monthly',\n  'CCP':   'Credit Card Payment Plan'\n};\n\nconst hsMap = {};\nfor (const r of hsResults) {\n  const erpNum = r.properties?.erp_account_number;\n  const rel    = (r.properties?.relationship || '').trim();\n  const divs   = (r.properties?.division || '').split(';').map(d => d.trim());\n  const isOurs = rel === 'Customer' && divs.includes(\"Engelman's Bakery\");\n  if (erpNum && isOurs) hsMap[String(erpNum)] = r.id;\n}\n\nfunction buildProps(c) {\n  const erpNum = String(c.number);\n  const ship   = shipToMap[erpNum]  || {};\n  const bal    = balanceMap[erpNum] || {};\n  const bcBlocked = c.blocked && c.blocked.trim() && c.blocked.trim() !== '_x0020_';\n  const blocked = bcBlocked ? 'Blocked' : null;\n  const rawRoute = bal.route ? String(bal.route).trim() : null;\n  const route = rawRoute ? (routeMap[rawRoute] || null) : null;\n\n  const raw = {\n    erp_account_number:       erpNum,\n    name:                     c.displayName  || null,\n    phone:                    c.phoneNumber  || null,\n    billing_street_address:   c.addressLine1 || null,\n    billing_street_address_2: c.addressLine2 || null,\n    billing_city:             c.city         || null,\n    billing_state:            c.state        || null,\n    billing_zip_code:         (c.postalCode != null && String(c.postalCode).trim() !== '') ? String(c.postalCode).trim() : null,\n    country:                  c.country      || null,\n    address:                  ship.address   || null,\n    address2:                 ship.address2  || null,\n    city:                     ship.city      || null,\n    zip:                      ship.zip       || null,\n    balance:                  bal.balance     != null ? bal.balance     : null,\n    balance_due:              bal.balance_due != null ? bal.balance_due : null,\n    route,\n    days_of_delivery:         bal.calendar    || null,\n    payment_terms_code:       c.paymentTerm?.code   || null,\n    payment_method_code:      c.paymentMethod?.code || null,\n    credit_limit:             c.creditLimit != null ? c.creditLimit : null,\n    blocked\n  };\n  const props = {};\n  for (const [k, v] of Object.entries(raw)) {\n    if (v !== null && v !== undefined && v !== '') props[k] = v;\n  }\n  return props;\n}\n\nconst toUpdate = [], toCreate = [];\nfor (const c of chunkCustomers) {\n  const erpNum = String(c.number);\n  const props  = buildProps(c);\n  if (hsMap[erpNum]) {\n    toUpdate.push({ id: hsMap[erpNum], properties: props });\n  } else if (!createdThisRun[erpNum]) {\n    toCreate.push({ properties: { ...props, relationship: 'Customer', division: \"Engelman's Bakery\" } });\n    createdThisRun[erpNum] = true;\n  }\n}\nstore.createdThisRun = createdThisRun;\n\nreturn [{ json: { toUpdate, toCreate } }];"
+        "jsCode": "const hsResults = $input.first().json.results || [];\nconst store = $getWorkflowStaticData('global');\nconst chunkCustomers  = store.currentChunkCustomers || [];\nconst shipToMap       = store.shipToMap    || {};\nconst balanceMap      = store.balanceMap   || {};\nconst createdThisRun  = store.createdThisRun || {};\n\nconst routeMap = {\n  'RT 1':  'Route 1',  'RT 2':  'Route 2',  'RT 3':  'Route 3',\n  'RT 4':  'Route 4',  'RT 5':  'Route 5',  'RT 6':  'Route 6',\n  'RT 7':  'Route 7',  'RT 8':  'Route 8',  'RT 9':  'Route 9',\n  'RT 10': 'Route 10', 'RT 11': 'Route 11', 'RT 12': 'Route 12',\n  'RT 13': 'Route 13', 'RT 15': '15 - Greenville',\n  'RT 16': 'Route 16 - Boxed', 'RT 20': 'Route 20 - Supervisor',\n  'RT 21': 'Route 21 - Distribution'\n};\n\nconst hsMap = {};\nfor (const r of hsResults) {\n  const erpNum = r.properties?.erp_account_number;\n  if (erpNum) hsMap[String(erpNum)] = r.id;\n}\n\nfunction buildProps(c) {\n  const erpNum = String(c.number);\n  const ship   = shipToMap[erpNum]  || {};\n  const bal    = balanceMap[erpNum] || {};\n  const bcBlocked = c.blocked && c.blocked.trim() && c.blocked.trim() !== '_x0020_';\n  const blocked = bcBlocked ? 'Blocked' : null;\n  const rawRoute = bal.route ? String(bal.route).trim() : null;\n  const route = rawRoute ? (routeMap[rawRoute] || null) : null;\n\n  const raw = {\n    erp_account_number:       erpNum,\n    name:                     c.displayName  || null,\n    phone:                    c.phoneNumber  || null,\n    billing_street_address:   c.addressLine1 || null,\n    billing_street_address_2: c.addressLine2 || null,\n    billing_city:             c.city         || null,\n    billing_state:            c.state        || null,\n    billing_zip_code:         (c.postalCode != null && String(c.postalCode).trim() !== '') ? String(c.postalCode).trim() : null,\n    country:                  c.country      || null,\n    address:                  ship.address   || null,\n    address2:                 ship.address2  || null,\n    city:                     ship.city      || null,\n    zip:                      ship.zip       || null,\n    balance:                  bal.balance     != null ? bal.balance     : null,\n    balance_due:              bal.balance_due != null ? bal.balance_due : null,\n    route,\n    days_of_delivery:         bal.calendar    || null,\n    payment_terms_code:       c.paymentTerm?.code   || null,\n    payment_method_code:      c.paymentMethod?.code || null,\n    credit_limit:             c.creditLimit != null ? c.creditLimit : null,\n    blocked\n  };\n  const props = {};\n  for (const [k, v] of Object.entries(raw)) {\n    if (v !== null && v !== undefined && v !== '') props[k] = v;\n  }\n  return props;\n}\n\nconst toUpdate = [], toCreate = [];\nfor (const c of chunkCustomers) {\n  const erpNum = String(c.number);\n  const props  = buildProps(c);\n  if (hsMap[erpNum]) {\n    toUpdate.push({ id: hsMap[erpNum], properties: props });\n  } else if (!createdThisRun[erpNum]) {\n    toCreate.push({ properties: { ...props, relationship: 'Customer', division: \"Engelman's Bakery\" } });\n    createdThisRun[erpNum] = true;\n  }\n}\nstore.createdThisRun = createdThisRun;\n\nreturn [{ json: { toUpdate, toCreate } }];"
       },
-      "id": "p1-0029",
+      "id": "c0987fd8-5a14-4aa4-a2a8-f6afec6f6809",
       "name": "Process Chunk",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -360,7 +365,7 @@
       "parameters": {
         "jsCode": "const chunk = $input.first().json;\nconst store = $getWorkflowStaticData('global');\nstore.currentChunkCustomers = chunk.chunkCustomers;\n// Pass only searchPayload forward so Search HubSpot node gets a clean item\nreturn [{ json: { searchPayload: chunk.searchPayload } }];"
       },
-      "id": "p1-0030",
+      "id": "b9a53a3d-42ae-4ea5-a315-3f17c50fdf71",
       "name": "Save Chunk",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -396,7 +401,7 @@
         },
         "options": {}
       },
-      "id": "bb3bbed5-0bc2-4a62-9fea-e36b0aa23229",
+      "id": "1f6e3702-8df9-4189-a41c-e782d60200d7",
       "name": "HTTP Request - Get All Ship-to Addresses",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
@@ -409,7 +414,7 @@
       "parameters": {
         "jsCode": "// Build a map of customerNumber \u2192 first ship-to address\nconst rows = $input.first().json.value || [];\nconst store = $getWorkflowStaticData('global');\nconst shipToMap = {};\nfor (const row of rows) {\n  const custNo = String(row.HFSCustomerNo || '').trim();\n  if (custNo && !shipToMap[custNo]) {\n    shipToMap[custNo] = {\n      address:  row.Address   || null,\n      address2: row.Address_2 || null,\n      city:     row.City      || null,\n      zip:      row.Post_Code || null\n    };\n  }\n}\nstore.shipToMap = shipToMap;\nreturn [{ json: { shipToLoaded: Object.keys(shipToMap).length } }];"
       },
-      "id": "p1-0031",
+      "id": "0eef1cc5-4eef-4e96-8822-d234a1517e77",
       "name": "Store Ship-to Data",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -445,12 +450,12 @@
         },
         "options": {}
       },
-      "id": "f47a7981-cb57-4e7f-a10f-710d651a0b4d",
+      "id": "40d9acd1-b025-498c-8beb-8e6c9ff74e04",
       "name": "HTTP Request - Get Calendar & Balance",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        2688,
+        2752,
         -48
       ]
     },
@@ -458,7 +463,7 @@
       "parameters": {
         "jsCode": "const rows = $input.first().json.value || [];\nconst store = $getWorkflowStaticData('global');\nconst balanceMap = {};\n\nfunction calendarToDays(code) {\n  if (!code) return null;\n  const days = [];\n  let i = 0;\n  while (i < code.length) {\n    if (code.slice(i, i+2) === 'TH') { days.push('Thursday');  i += 2; }\n    else if (code[i] === 'M')         { days.push('Monday');    i++; }\n    else if (code[i] === 'T')         { days.push('Tuesday');   i++; }\n    else if (code[i] === 'W')         { days.push('Wednesday'); i++; }\n    else if (code[i] === 'F')         { days.push('Friday');    i++; }\n    else if (code[i] === 'S')         { days.push('Saturday');  i++; }\n    else                              { i++; }\n  }\n  return days.length > 0 ? days.join(';') : null;\n}\n\nfor (const row of rows) {\n  const custNo = String(row.No || '').trim();\n  if (!custNo) continue;\n  balanceMap[custNo] = {\n    balance:     row.Balance_LCY     ?? null,\n    balance_due: row.Balance_Due_LCY ?? null,\n    route:       (row.Shipping_Agent_Code || '').trim() || null,\n    calendar:    calendarToDays(row.Base_Calendar_Code)\n  };\n}\nstore.balanceMap = balanceMap;\n\n// Rebuild searchPayload so Search HubSpot Companies has what it needs\nconst customers = store.currentChunkCustomers || [];\nconst searchPayload = {\n  filterGroups: [{ filters: [{ propertyName: 'erp_account_number', operator: 'IN', values: customers.map(c => String(c.number)) }] }],\n  properties: ['hs_object_id', 'name', 'erp_account_number'],\n  limit: 100\n};\n\nreturn [{ json: { balancesLoaded: Object.keys(balanceMap).length, searchPayload } }];"
       },
-      "id": "p1v11-cal-store",
+      "id": "55a878af-b46f-40fe-b0d9-2e10fa103ecd",
       "name": "Store Calendar & Balance Data",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -468,20 +473,24 @@
       ]
     },
     {
-      "id": "p1v11-cal-filter",
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst customers = store.currentChunkCustomers || [];\nconst odataFilter = customers\n  .map(c => `No eq '${String(c.number).replace(/'/g, \"''\")}'`)\n  .join(' or ');\nreturn [{ json: { odataFilter } }];"
+      },
+      "id": "e0cdac18-2177-4334-942d-950c159bc2a4",
       "name": "Build Calendar Filter",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2464,
+        2400,
         -48
-      ],
-      "parameters": {
-        "jsCode": "const store = $getWorkflowStaticData('global');\nconst customers = store.currentChunkCustomers || [];\nconst odataFilter = customers\n  .map(c => `No eq '${String(c.number).replace(/'/g, \"''\")}'`)\n  .join(' or ');\nreturn [{ json: { odataFilter } }];"
-      }
+      ]
     },
     {
-      "id": "p1v11-cal-wait",
+      "parameters": {
+        "amount": 2,
+        "unit": "seconds"
+      },
+      "id": "d703702f-337a-4ed1-9595-04705576bf5a",
       "name": "Wait Before BC Fetch",
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1,
@@ -489,11 +498,7 @@
         2576,
         -48
       ],
-      "parameters": {
-        "resume": "timeInterval",
-        "amount": 2,
-        "unit": "seconds"
-      }
+      "webhookId": "7bd160c3-fecd-47a0-bfa0-4d6a1bcab3cd"
     }
   ],
   "connections": {
@@ -736,5 +741,40 @@
       ]
     }
   },
-  "settings": {}
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "bb854470-d6d8-48b7-a9b7-327a83d5433e",
+  "activeVersionId": null,
+  "versionCounter": 11,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-05-26T12:20:26.882Z",
+      "createdAt": "2026-05-26T12:20:26.882Z",
+      "role": "workflow:owner",
+      "workflowId": "zRJLFdizOFLIwEas",
+      "projectId": "w449YKCiGtDqy2aw",
+      "project": {
+        "updatedAt": "2026-05-12T18:28:44.589Z",
+        "createdAt": "2026-05-12T18:28:44.589Z",
+        "id": "w449YKCiGtDqy2aw",
+        "name": "My project",
+        "type": "team",
+        "icon": {
+          "type": "icon",
+          "value": "layers"
+        },
+        "description": null,
+        "creatorId": "e717323e-c35c-4f70-bb1d-233a634fca54"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
 }
