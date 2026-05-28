@@ -1,176 +1,338 @@
 {
-  "name": "Phase 2 – BC Invoices → Excel Log",
+  "updatedAt": "2026-05-28T22:11:04.153Z",
+  "createdAt": "2026-05-21T20:43:06.268Z",
+  "id": "1k1nsxZm6DYVZ5OR",
+  "name": "Phase 2 \u2013 BC Invoices \u2192 Excel Log",
+  "description": null,
+  "active": false,
+  "isArchived": false,
   "nodes": [
     {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "30 6 * * 1-5"
+            }
+          ]
+        }
+      },
       "id": "p2-0001",
       "name": "Schedule Trigger",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1,
-      "position": [0, 300],
-      "parameters": {
-        "rule": {
-          "interval": [{ "field": "cronExpression", "expression": "30 6 * * 1-5" }]
-        }
-      }
+      "position": [
+        0,
+        304
+      ]
     },
     {
+      "parameters": {
+        "options": {}
+      },
       "id": "p2-0002",
       "name": "Config",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3,
-      "position": [220, 300],
-      "parameters": {
-        "mode": "manual",
-        "assignments": {
-          "assignments": [
-            { "id": "cfg-1", "name": "EXCEL_WORKBOOK_ID", "value": "PASTE_YOUR_WORKBOOK_ID_HERE", "type": "string" },
-            { "id": "cfg-2", "name": "BC_BASE_URL",        "value": "PASTE_YOUR_BC_API_BASE_URL_HERE", "type": "string" },
-            { "id": "cfg-3", "name": "BC_COMPANY_ID",      "value": "PASTE_YOUR_BC_COMPANY_GUID_HERE", "type": "string" }
-          ]
-        },
-        "options": {}
-      }
+      "position": [
+        224,
+        304
+      ]
     },
     {
+      "parameters": {
+        "operation": "getRows"
+      },
       "id": "p2-0003",
       "name": "Read Sync Log",
       "type": "n8n-nodes-base.microsoftExcel",
       "typeVersion": 2,
-      "position": [440, 300],
-      "credentials": { "microsoftExcelOAuth2Api": { "name": "Microsoft 365 - Engelmans" } },
-      "parameters": {
-        "operation": "getRows",
-        "workbook":  { "__rl": true, "value": "={{ $('Config').first().json.EXCEL_WORKBOOK_ID }}", "mode": "id" },
-        "worksheet": { "__rl": true, "value": "sync_log", "mode": "name" },
-        "returnAll": true,
-        "options": { "dataStartRow": 2 }
+      "position": [
+        448,
+        304
+      ],
+      "credentials": {
+        "microsoftExcelOAuth2Api": {
+          "id": "d83FC38P89vxV79V",
+          "name": "Microsoft Excel OAuth2 API"
+        }
       }
     },
     {
+      "parameters": {
+        "jsCode": "const rows = $input.all();\nconst phase2 = rows\n  .filter(r => r.json.phase === 'phase2')\n  .sort((a, b) => new Date(b.json.run_date) - new Date(a.json.run_date));\nconst lastTimestamp = phase2.length > 0 ? phase2[0].json.last_bc_timestamp : '2000-01-01T00:00:00Z';\nreturn [{ json: { lastTimestamp, runDate: new Date().toISOString() } }];"
+      },
       "id": "p2-0004",
       "name": "Set Window",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [660, 300],
-      "parameters": {
-        "jsCode": "const rows = $input.all();\nconst phase2 = rows\n  .filter(r => r.json.phase === 'phase2')\n  .sort((a, b) => new Date(b.json.run_date) - new Date(a.json.run_date));\nconst lastTimestamp = phase2.length > 0 ? phase2[0].json.last_bc_timestamp : '2000-01-01T00:00:00Z';\nreturn [{ json: { lastTimestamp, runDate: new Date().toISOString() } }];"
-      }
+      "position": [
+        688,
+        304
+      ]
     },
     {
-      "id": "p2-0005",
-      "name": "Fetch Changed BC Invoices",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4,
-      "position": [880, 300],
       "parameters": {
-        "method": "GET",
         "url": "={{ $('Config').first().json.BC_BASE_URL }}/companies({{ $('Config').first().json.BC_COMPANY_ID }})/salesInvoices",
         "authentication": "genericCredentialType",
         "genericAuthType": "oAuth2Api",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [{ "name": "Accept", "value": "application/json" }]
-        },
         "sendQuery": true,
         "queryParameters": {
           "parameters": [
             {
-              "name": "$filter",
-              "value": "={{ `lastModifiedDateTime gt ${$('Set Window').first().json.lastTimestamp}` }}"
-            },
-            {
               "name": "$select",
               "value": "id,number,customerNumber,customerName,invoiceDate,dueDate,amountIncludingTax,status,lastModifiedDateTime"
             },
-            { "name": "$top", "value": "500" }
+            {
+              "name": "$top",
+              "value": "5000"
+            },
+            {
+              "name": "$orderby",
+              "value": "invoiceDate asc"
+            }
           ]
-        }
-      }
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "p2-0005",
+      "name": "Fetch All BC Invoices",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        880,
+        304
+      ]
     },
     {
+      "parameters": {
+        "jsCode": "const invoices = $input.first().json.value || [];\nreturn invoices.map(i => ({ json: i }));"
+      },
       "id": "p2-0006",
       "name": "Expand Invoices",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1100, 300],
+      "position": [
+        1104,
+        304
+      ]
+    },
+    {
+      "id": "e23fc5b7-8790-4eb4-9627-a286f6d081d0",
+      "name": "Group First & Last 10",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1216,
+        304
+      ],
       "parameters": {
-        "jsCode": "const invoices = $input.first().json.value || [];\nreturn invoices.map(i => ({ json: i }));"
+        "jsCode": "const invoices = $input.all().map(i => i.json);\n// Invoices arrive sorted asc by invoiceDate from BC\nconst byCustomer = {};\nfor (const inv of invoices) {\n  const cust = String(inv.customerNumber || 'UNKNOWN');\n  if (!byCustomer[cust]) byCustomer[cust] = [];\n  byCustomer[cust].push(inv);\n}\nconst result = [];\nconst seen = new Set();\nfor (const invList of Object.values(byCustomer)) {\n  const first1  = invList.slice(0, 1);\n  const last10  = invList.slice(-10);\n  for (const inv of [...first1, ...last10]) {\n    if (!seen.has(inv.number)) {\n      seen.add(inv.number);\n      result.push({ json: inv });\n    }\n  }\n}\nreturn result;"
       }
     },
     {
+      "parameters": {
+        "options": {}
+      },
       "id": "p2-0007",
       "name": "Loop Over Invoices",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
-      "position": [1320, 300],
-      "parameters": { "batchSize": 1, "options": {} }
+      "position": [
+        1552,
+        304
+      ]
     },
     {
+      "parameters": {
+        "operation": "appendOrUpdate"
+      },
       "id": "p2-0008",
       "name": "Upsert Invoice Row",
       "type": "n8n-nodes-base.microsoftExcel",
       "typeVersion": 2,
-      "position": [1540, 200],
-      "credentials": { "microsoftExcelOAuth2Api": { "name": "Microsoft 365 - Engelmans" } },
-      "parameters": {
-        "operation": "appendOrUpdate",
-        "workbook":  { "__rl": true, "value": "={{ $('Config').first().json.EXCEL_WORKBOOK_ID }}", "mode": "id" },
-        "worksheet": { "__rl": true, "value": "Invoice", "mode": "name" },
-        "keyRow": 1,
-        "dataStartRow": 2,
-        "columns": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "invoice_number":  "={{ $json.number }}",
-            "customer_number": "={{ $json.customerNumber }}",
-            "amount":          "={{ $json.amountIncludingTax }}",
-            "due_date":        "={{ $json.dueDate }}",
-            "status":          "={{ $json.status }}",
-            "last_synced":     "={{ $('Set Window').first().json.runDate }}"
-          }
+      "position": [
+        1776,
+        208
+      ],
+      "credentials": {
+        "microsoftExcelOAuth2Api": {
+          "id": "d83FC38P89vxV79V",
+          "name": "Microsoft Excel OAuth2 API"
         }
       }
     },
     {
+      "parameters": {
+        "operation": "append"
+      },
       "id": "p2-0009",
       "name": "Write Sync Log",
       "type": "n8n-nodes-base.microsoftExcel",
       "typeVersion": 2,
-      "position": [1320, 460],
-      "credentials": { "microsoftExcelOAuth2Api": { "name": "Microsoft 365 - Engelmans" } },
-      "parameters": {
-        "operation": "append",
-        "workbook":  { "__rl": true, "value": "={{ $('Config').first().json.EXCEL_WORKBOOK_ID }}", "mode": "id" },
-        "worksheet": { "__rl": true, "value": "sync_log", "mode": "name" },
-        "keyRow": 1,
-        "dataStartRow": 2,
-        "columns": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "run_date":          "={{ $('Set Window').first().json.runDate }}",
-            "phase":             "phase2",
-            "records_processed": "={{ $('Expand Invoices').all().length }}",
-            "last_bc_timestamp": "={{ $('Set Window').first().json.runDate }}"
-          }
+      "position": [
+        1552,
+        464
+      ],
+      "credentials": {
+        "microsoftExcelOAuth2Api": {
+          "id": "d83FC38P89vxV79V",
+          "name": "Microsoft Excel OAuth2 API"
         }
       }
     }
   ],
   "connections": {
-    "Schedule Trigger":       { "main": [[{ "node": "Config",                   "type": "main", "index": 0 }]] },
-    "Config":                 { "main": [[{ "node": "Read Sync Log",            "type": "main", "index": 0 }]] },
-    "Read Sync Log":          { "main": [[{ "node": "Set Window",               "type": "main", "index": 0 }]] },
-    "Set Window":             { "main": [[{ "node": "Fetch Changed BC Invoices","type": "main", "index": 0 }]] },
-    "Fetch Changed BC Invoices": { "main": [[{ "node": "Expand Invoices",       "type": "main", "index": 0 }]] },
-    "Expand Invoices":        { "main": [[{ "node": "Loop Over Invoices",       "type": "main", "index": 0 }]] },
-    "Loop Over Invoices": {
+    "Schedule Trigger": {
       "main": [
-        [{ "node": "Upsert Invoice Row", "type": "main", "index": 0 }],
-        [{ "node": "Write Sync Log",     "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
-    "Upsert Invoice Row": { "main": [[{ "node": "Loop Over Invoices", "type": "main", "index": 0 }]] }
+    "Config": {
+      "main": [
+        [
+          {
+            "node": "Read Sync Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Sync Log": {
+      "main": [
+        [
+          {
+            "node": "Set Window",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Window": {
+      "main": [
+        [
+          {
+            "node": "Fetch All BC Invoices",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch All BC Invoices": {
+      "main": [
+        [
+          {
+            "node": "Expand Invoices",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Expand Invoices": {
+      "main": [
+        [
+          {
+            "node": "Group First & Last 10",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Group First & Last 10": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Invoices",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Invoices": {
+      "main": [
+        [
+          {
+            "node": "Write Sync Log",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Upsert Invoice Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert Invoice Row": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Invoices",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   },
-  "settings": { "executionOrder": "v1" },
-  "pinData": {}
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "38c61b67-ed93-4eca-b303-d85da1354c64",
+  "activeVersionId": null,
+  "versionCounter": 5,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-05-22T15:00:36.295Z",
+      "createdAt": "2026-05-22T15:00:36.295Z",
+      "role": "workflow:owner",
+      "workflowId": "1k1nsxZm6DYVZ5OR",
+      "projectId": "w449YKCiGtDqy2aw",
+      "project": {
+        "updatedAt": "2026-05-12T18:28:44.589Z",
+        "createdAt": "2026-05-12T18:28:44.589Z",
+        "id": "w449YKCiGtDqy2aw",
+        "name": "My project",
+        "type": "team",
+        "icon": {
+          "type": "icon",
+          "value": "layers"
+        },
+        "description": null,
+        "creatorId": "e717323e-c35c-4f70-bb1d-233a634fca54"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
 }
