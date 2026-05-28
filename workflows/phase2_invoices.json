@@ -1,11 +1,5 @@
 {
-  "updatedAt": "2026-05-28T22:11:04.153Z",
-  "createdAt": "2026-05-21T20:43:06.268Z",
-  "id": "1k1nsxZm6DYVZ5OR",
   "name": "Phase 2 \u2013 BC Invoices \u2192 Excel Log",
-  "description": null,
-  "active": false,
-  "isArchived": false,
   "nodes": [
     {
       "parameters": {
@@ -24,8 +18,19 @@
       "typeVersion": 1,
       "position": [
         0,
-        304
+        0
       ]
+    },
+    {
+      "id": "ebe40ae7-9328-4c95-a27b-5b687f75ab5f",
+      "name": "When clicking 'Execute workflow'",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        200
+      ],
+      "parameters": {}
     },
     {
       "parameters": {
@@ -37,39 +42,7 @@
       "typeVersion": 3,
       "position": [
         224,
-        304
-      ]
-    },
-    {
-      "parameters": {
-        "operation": "getRows"
-      },
-      "id": "p2-0003",
-      "name": "Read Sync Log",
-      "type": "n8n-nodes-base.microsoftExcel",
-      "typeVersion": 2,
-      "position": [
-        448,
-        304
-      ],
-      "credentials": {
-        "microsoftExcelOAuth2Api": {
-          "id": "d83FC38P89vxV79V",
-          "name": "Microsoft Excel OAuth2 API"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "jsCode": "const rows = $input.all();\nconst phase2 = rows\n  .filter(r => r.json.phase === 'phase2')\n  .sort((a, b) => new Date(b.json.run_date) - new Date(a.json.run_date));\nconst lastTimestamp = phase2.length > 0 ? phase2[0].json.last_bc_timestamp : '2000-01-01T00:00:00Z';\nreturn [{ json: { lastTimestamp, runDate: new Date().toISOString() } }];"
-      },
-      "id": "p2-0004",
-      "name": "Set Window",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        688,
-        304
+        100
       ]
     },
     {
@@ -110,8 +83,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        880,
-        304
+        448,
+        100
       ]
     },
     {
@@ -123,72 +96,21 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1104,
-        304
+        672,
+        100
       ]
     },
     {
-      "id": "e23fc5b7-8790-4eb4-9627-a286f6d081d0",
+      "id": "9b254e0b-0ec5-4e64-9115-f060ddf19d09",
       "name": "Group First & Last 10",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1216,
-        304
+        896,
+        100
       ],
       "parameters": {
-        "jsCode": "const invoices = $input.all().map(i => i.json);\n// Invoices arrive sorted asc by invoiceDate from BC\nconst byCustomer = {};\nfor (const inv of invoices) {\n  const cust = String(inv.customerNumber || 'UNKNOWN');\n  if (!byCustomer[cust]) byCustomer[cust] = [];\n  byCustomer[cust].push(inv);\n}\nconst result = [];\nconst seen = new Set();\nfor (const invList of Object.values(byCustomer)) {\n  const first1  = invList.slice(0, 1);\n  const last10  = invList.slice(-10);\n  for (const inv of [...first1, ...last10]) {\n    if (!seen.has(inv.number)) {\n      seen.add(inv.number);\n      result.push({ json: inv });\n    }\n  }\n}\nreturn result;"
-      }
-    },
-    {
-      "parameters": {
-        "options": {}
-      },
-      "id": "p2-0007",
-      "name": "Loop Over Invoices",
-      "type": "n8n-nodes-base.splitInBatches",
-      "typeVersion": 3,
-      "position": [
-        1552,
-        304
-      ]
-    },
-    {
-      "parameters": {
-        "operation": "appendOrUpdate"
-      },
-      "id": "p2-0008",
-      "name": "Upsert Invoice Row",
-      "type": "n8n-nodes-base.microsoftExcel",
-      "typeVersion": 2,
-      "position": [
-        1776,
-        208
-      ],
-      "credentials": {
-        "microsoftExcelOAuth2Api": {
-          "id": "d83FC38P89vxV79V",
-          "name": "Microsoft Excel OAuth2 API"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "operation": "append"
-      },
-      "id": "p2-0009",
-      "name": "Write Sync Log",
-      "type": "n8n-nodes-base.microsoftExcel",
-      "typeVersion": 2,
-      "position": [
-        1552,
-        464
-      ],
-      "credentials": {
-        "microsoftExcelOAuth2Api": {
-          "id": "d83FC38P89vxV79V",
-          "name": "Microsoft Excel OAuth2 API"
-        }
+        "jsCode": "const invoices = $input.all().map(i => i.json);\n// Invoices arrive sorted oldest \u2192 newest from BC\nconst byCustomer = {};\nfor (const inv of invoices) {\n  const cust = String(inv.customerNumber || 'UNKNOWN');\n  if (!byCustomer[cust]) byCustomer[cust] = [];\n  byCustomer[cust].push(inv);\n}\nconst result = [];\nconst seen = new Set();\nfor (const invList of Object.values(byCustomer)) {\n  const first1 = invList.slice(0, 1);\n  const last10 = invList.slice(-10);\n  for (const inv of [...first1, ...last10]) {\n    if (!seen.has(inv.number)) {\n      seen.add(inv.number);\n      result.push({ json: inv });\n    }\n  }\n}\nreturn result;"
       }
     }
   ],
@@ -204,29 +126,18 @@
         ]
       ]
     },
+    "When clicking 'Execute workflow'": {
+      "main": [
+        [
+          {
+            "node": "Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "Config": {
-      "main": [
-        [
-          {
-            "node": "Read Sync Log",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Read Sync Log": {
-      "main": [
-        [
-          {
-            "node": "Set Window",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Set Window": {
       "main": [
         [
           {
@@ -258,81 +169,8 @@
           }
         ]
       ]
-    },
-    "Group First & Last 10": {
-      "main": [
-        [
-          {
-            "node": "Loop Over Invoices",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Loop Over Invoices": {
-      "main": [
-        [
-          {
-            "node": "Write Sync Log",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Upsert Invoice Row",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Upsert Invoice Row": {
-      "main": [
-        [
-          {
-            "node": "Loop Over Invoices",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
     }
   },
-  "settings": {
-    "executionOrder": "v1",
-    "binaryMode": "separate"
-  },
-  "staticData": null,
-  "meta": null,
-  "pinData": {},
-  "versionId": "38c61b67-ed93-4eca-b303-d85da1354c64",
-  "activeVersionId": null,
-  "versionCounter": 5,
-  "triggerCount": 0,
-  "shared": [
-    {
-      "updatedAt": "2026-05-22T15:00:36.295Z",
-      "createdAt": "2026-05-22T15:00:36.295Z",
-      "role": "workflow:owner",
-      "workflowId": "1k1nsxZm6DYVZ5OR",
-      "projectId": "w449YKCiGtDqy2aw",
-      "project": {
-        "updatedAt": "2026-05-12T18:28:44.589Z",
-        "createdAt": "2026-05-12T18:28:44.589Z",
-        "id": "w449YKCiGtDqy2aw",
-        "name": "My project",
-        "type": "team",
-        "icon": {
-          "type": "icon",
-          "value": "layers"
-        },
-        "description": null,
-        "creatorId": "e717323e-c35c-4f70-bb1d-233a634fca54"
-      }
-    }
-  ],
-  "tags": [],
-  "activeVersion": null
+  "settings": {},
+  "staticData": null
 }
