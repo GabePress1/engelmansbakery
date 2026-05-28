@@ -1,0 +1,387 @@
+{
+  "name": "Phase 2 \u2013 Customer Invoice Analytics",
+  "nodes": [
+    {
+      "id": "50b86001-6cc6-4d24-9449-6c8f6d510e7b",
+      "name": "When clicking 'Execute workflow'",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "k1",
+              "name": "Tenant_ID",
+              "value": "PASTE_YOUR_TENANT_ID_HERE",
+              "type": "string"
+            },
+            {
+              "id": "k2",
+              "name": "client_ID",
+              "value": "PASTE_YOUR_CLIENT_ID_HERE",
+              "type": "string"
+            },
+            {
+              "id": "k3",
+              "name": "Secret_ID",
+              "value": "PASTE_YOUR_BC_CLIENT_SECRET_HERE",
+              "type": "string"
+            },
+            {
+              "id": "k4",
+              "name": "Company_ID",
+              "value": "PASTE_YOUR_BC_COMPANY_ID_HERE",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "32bc389b-df3d-4376-98f6-d2394e34742f",
+      "name": "Keys",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://login.microsoftonline.com/{{ $json.Tenant_ID }}/oauth2/v2.0/token",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "grant_type",
+              "value": "client_credentials"
+            },
+            {
+              "name": "client_id",
+              "value": "={{ $json.client_ID }}"
+            },
+            {
+              "name": "client_secret",
+              "value": "={{ $json.Secret_ID }}"
+            },
+            {
+              "name": "scope",
+              "value": "https://api.businesscentral.dynamics.com/.default"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ee0e2cf8-a425-416c-8d27-c0c71c7675a6",
+      "name": "Get BC Token",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        448,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.businesscentral.dynamics.com/v2.0/{{ $('Keys').first().json.Tenant_ID }}/production/api/v2.0/companies({{ $('Keys').first().json.Company_ID }})/customers",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "$select",
+              "value": "number,displayName"
+            },
+            {
+              "name": "$top",
+              "value": "5500"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Get BC Token').first().json.access_token }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "b7516b60-e346-42b6-9c50-6ffcf77d3b92",
+      "name": "Fetch All BC Customers",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        672,
+        0
+      ]
+    },
+    {
+      "id": "ab46bf9f-339c-4ba4-a24b-757508861cf1",
+      "name": "Initialize Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global');\nstore.analyticsResults = [];\nstore.currentBatch = [];\nconst customers = $input.first().json.value || [];\nreturn customers.map(c => ({ json: c }));"
+      }
+    },
+    {
+      "id": "607aa722-7ab8-4d41-9934-5c9192a5934e",
+      "name": "Loop Customers",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1120,
+        0
+      ],
+      "parameters": {
+        "batchSize": 100,
+        "options": {}
+      }
+    },
+    {
+      "id": "3721cd52-1940-4f2d-b90a-87691928bbd0",
+      "name": "Output Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        -160
+      ],
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst results = store.analyticsResults || [];\nstore.analyticsResults = [];\nif (results.length === 0) return [{ json: { message: 'No results' } }];\nreturn results.map(r => ({ json: r }));"
+      }
+    },
+    {
+      "id": "903a0925-b584-4128-b85a-c1049b3a86d9",
+      "name": "Build Invoice Filter",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1344,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const batchItems = $input.all();\nconst store = $getWorkflowStaticData('global');\nstore.currentBatch = batchItems.map(i => i.json);\nconst filter = batchItems\n  .map(item => `customerNumber eq '${String(item.json.number).replace(/'/g, \"''\")}'`)\n  .join(' or ');\nreturn [{ json: { invoiceFilter: filter } }];"
+      }
+    },
+    {
+      "parameters": {
+        "amount": 2,
+        "unit": "seconds",
+        "path": "88a34843-5080-4a4a-a816-1cf360d97424"
+      },
+      "id": "59c2b37c-a89d-4b5a-9060-a3ca1aca95f8",
+      "name": "Wait 2s",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        1568,
+        0
+      ],
+      "webhookId": "88a34843-5080-4a4a-a816-1cf360d97424"
+    },
+    {
+      "id": "eaa985ff-b82c-4f00-93a3-615a8b1931a8",
+      "name": "Fetch Invoices for Batch",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1792,
+        0
+      ],
+      "parameters": {
+        "url": "=https://api.businesscentral.dynamics.com/v2.0/{{ $('Keys').first().json.Tenant_ID }}/production/api/v2.0/companies({{ $('Keys').first().json.Company_ID }})/salesInvoices",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "$filter",
+              "value": "={{ $json.invoiceFilter }}"
+            },
+            {
+              "name": "$select",
+              "value": "number,customerNumber,customerName,invoiceDate,totalAmountIncludingTax"
+            },
+            {
+              "name": "$orderby",
+              "value": "invoiceDate desc"
+            },
+            {
+              "name": "$top",
+              "value": "1500"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Get BC Token').first().json.access_token }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "65a0338d-c0c4-42fe-abbe-4efa73e4ae9a",
+      "name": "Calculate Metrics",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2016,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const invoiceData = $input.first().json.value || [];\nconst store = $getWorkflowStaticData('global');\nconst currentBatch = store.currentBatch || [];\n\nconst byCustomer = {};\nfor (const inv of invoiceData) {\n  const cust = String(inv.customerNumber || '');\n  if (!byCustomer[cust]) byCustomer[cust] = [];\n  byCustomer[cust].push(inv);\n}\n// invoiceData is sorted desc, so byCustomer[x][0] = most recent invoice\n\nconst results = store.analyticsResults || [];\n\nfor (const customer of currentBatch) {\n  const custNo   = String(customer.number || '');\n  const custName = customer.displayName || '';\n  const invList  = (byCustomer[custNo] || []).slice(0, 10); // last 10\n\n  if (invList.length === 0) {\n    results.push({ customerNumber: custNo, customerName: custName,\n      lastInvoiceDate: null, avgOrderSize: null, avgDaysBetweenOrders: null, invoiceCount: 0 });\n    continue;\n  }\n\n  const lastInvoiceDate = invList[0].invoiceDate;\n\n  const avgOrderSize = Math.round(\n    (invList.reduce((s, i) => s + (Number(i.totalAmountIncludingTax) || 0), 0) / invList.length) * 100\n  ) / 100;\n\n  const sortedAsc = [...invList].sort((a, b) => new Date(a.invoiceDate) - new Date(b.invoiceDate));\n  let avgDaysBetweenOrders = null;\n  if (sortedAsc.length >= 2) {\n    const gaps = [];\n    for (let i = 1; i < sortedAsc.length; i++) {\n      const days = (new Date(sortedAsc[i].invoiceDate) - new Date(sortedAsc[i-1].invoiceDate))\n                   / (1000 * 60 * 60 * 24);\n      gaps.push(days);\n    }\n    avgDaysBetweenOrders = Math.round((gaps.reduce((s, g) => s + g, 0) / gaps.length) * 10) / 10;\n  }\n\n  results.push({ customerNumber: custNo, customerName: custName,\n    lastInvoiceDate, avgOrderSize, avgDaysBetweenOrders, invoiceCount: invList.length });\n}\n\nstore.analyticsResults = results;\nreturn [{ json: { batchProcessed: currentBatch.length, totalSoFar: results.length } }];"
+      }
+    }
+  ],
+  "connections": {
+    "When clicking 'Execute workflow'": {
+      "main": [
+        [
+          {
+            "node": "Keys",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Keys": {
+      "main": [
+        [
+          {
+            "node": "Get BC Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get BC Token": {
+      "main": [
+        [
+          {
+            "node": "Fetch All BC Customers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch All BC Customers": {
+      "main": [
+        [
+          {
+            "node": "Initialize Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Initialize Results": {
+      "main": [
+        [
+          {
+            "node": "Loop Customers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Customers": {
+      "main": [
+        [
+          {
+            "node": "Output Results",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Invoice Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Invoice Filter": {
+      "main": [
+        [
+          {
+            "node": "Wait 2s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 2s": {
+      "main": [
+        [
+          {
+            "node": "Fetch Invoices for Batch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Invoices for Batch": {
+      "main": [
+        [
+          {
+            "node": "Calculate Metrics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Metrics": {
+      "main": [
+        [
+          {
+            "node": "Loop Customers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {},
+  "staticData": null
+}
