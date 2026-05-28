@@ -18,7 +18,7 @@
       "typeVersion": 1,
       "position": [
         0,
-        0
+        -160
       ]
     },
     {
@@ -28,28 +28,93 @@
       "typeVersion": 1,
       "position": [
         0,
-        200
+        40
       ],
       "parameters": {}
     },
     {
       "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "k1",
+              "name": "Tenant_ID",
+              "value": "PASTE_YOUR_TENANT_ID_HERE",
+              "type": "string"
+            },
+            {
+              "id": "k2",
+              "name": "client_ID",
+              "value": "PASTE_YOUR_CLIENT_ID_HERE",
+              "type": "string"
+            },
+            {
+              "id": "k3",
+              "name": "Secret_ID",
+              "value": "PASTE_YOUR_BC_CLIENT_SECRET_HERE",
+              "type": "string"
+            },
+            {
+              "id": "k4",
+              "name": "Company_ID",
+              "value": "PASTE_YOUR_BC_COMPANY_ID_HERE",
+              "type": "string"
+            }
+          ]
+        },
         "options": {}
       },
-      "id": "p2-0002",
-      "name": "Config",
+      "id": "32bc389b-df3d-4376-98f6-d2394e34742f",
+      "name": "Keys",
       "type": "n8n-nodes-base.set",
-      "typeVersion": 3,
+      "typeVersion": 3.4,
       "position": [
         224,
-        100
+        -48
       ]
     },
     {
       "parameters": {
-        "url": "={{ $('Config').first().json.BC_BASE_URL }}/companies({{ $('Config').first().json.BC_COMPANY_ID }})/salesInvoices",
+        "method": "POST",
+        "url": "=https://login.microsoftonline.com/{{ $json.Tenant_ID }}/oauth2/v2.0/token",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "grant_type",
+              "value": "client_credentials"
+            },
+            {
+              "name": "client_id",
+              "value": "={{ $json.client_ID }}"
+            },
+            {
+              "name": "client_secret",
+              "value": "={{ $json.Secret_ID }}"
+            },
+            {
+              "name": "scope",
+              "value": "https://api.businesscentral.dynamics.com/.default"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ee0e2cf8-a425-416c-8d27-c0c71c7675a6",
+      "name": "Get BC Token",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        448,
+        -48
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.businesscentral.dynamics.com/v2.0/{{ $('Keys').first().json.Tenant_ID }}/production/api/v2.0/companies({{ $('Keys').first().json.Company_ID }})/salesInvoices",
         "authentication": "genericCredentialType",
-        "genericAuthType": "oAuth2Api",
+        "genericAuthType": "httpHeaderAuth",
         "sendQuery": true,
         "queryParameters": {
           "parameters": [
@@ -71,6 +136,10 @@
         "headerParameters": {
           "parameters": [
             {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Get BC Token').first().json.access_token }}"
+            },
+            {
               "name": "Accept",
               "value": "application/json"
             }
@@ -83,8 +152,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        448,
-        100
+        672,
+        -48
       ]
     },
     {
@@ -96,8 +165,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        672,
-        100
+        896,
+        -48
       ]
     },
     {
@@ -106,8 +175,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        896,
-        100
+        1120,
+        -48
       ],
       "parameters": {
         "jsCode": "const invoices = $input.all().map(i => i.json);\n// Invoices arrive sorted oldest \u2192 newest from BC\nconst byCustomer = {};\nfor (const inv of invoices) {\n  const cust = String(inv.customerNumber || 'UNKNOWN');\n  if (!byCustomer[cust]) byCustomer[cust] = [];\n  byCustomer[cust].push(inv);\n}\nconst result = [];\nconst seen = new Set();\nfor (const invList of Object.values(byCustomer)) {\n  const first1 = invList.slice(0, 1);\n  const last10 = invList.slice(-10);\n  for (const inv of [...first1, ...last10]) {\n    if (!seen.has(inv.number)) {\n      seen.add(inv.number);\n      result.push({ json: inv });\n    }\n  }\n}\nreturn result;"
@@ -119,7 +188,7 @@
       "main": [
         [
           {
-            "node": "Config",
+            "node": "Keys",
             "type": "main",
             "index": 0
           }
@@ -130,14 +199,25 @@
       "main": [
         [
           {
-            "node": "Config",
+            "node": "Keys",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Config": {
+    "Keys": {
+      "main": [
+        [
+          {
+            "node": "Get BC Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get BC Token": {
       "main": [
         [
           {
