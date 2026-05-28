@@ -118,7 +118,7 @@
           "parameters": [
             {
               "name": "$select",
-              "value": "id,number,customerNumber,customerName,invoiceDate,dueDate,amountIncludingTax,status,lastModifiedDateTime"
+              "value": "id,number,customerNumber,customerName,invoiceDate,dueDate,shipmentDate,totalAmountIncludingTax,status,lastModifiedDateTime"
             },
             {
               "name": "$top",
