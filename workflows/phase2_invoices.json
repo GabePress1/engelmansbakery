@@ -113,8 +113,6 @@
     {
       "parameters": {
         "url": "=https://api.businesscentral.dynamics.com/v2.0/{{ $('Keys').first().json.Tenant_ID }}/production/api/v2.0/companies({{ $('Keys').first().json.Company_ID }})/salesInvoices",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
         "sendQuery": true,
         "queryParameters": {
           "parameters": [
