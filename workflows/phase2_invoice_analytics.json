@@ -1,5 +1,5 @@
 {
-  "name": "Phase 2 \u2013 Customer Invoice Analytics",
+  "name": "Phase 2 – Customer Invoice Analytics",
   "nodes": [
     {
       "parameters": {},
@@ -7,39 +7,16 @@
       "name": "When clicking 'Execute workflow'",
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
-      "position": [
-        0,
-        0
-      ]
+      "position": [0, 0]
     },
     {
       "parameters": {
         "assignments": {
           "assignments": [
-            {
-              "id": "k1",
-              "name": "Tenant_ID",
-              "value": "PASTE_YOUR_TENANT_ID_HERE",
-              "type": "string"
-            },
-            {
-              "id": "k2",
-              "name": "client_ID",
-              "value": "PASTE_YOUR_CLIENT_ID_HERE",
-              "type": "string"
-            },
-            {
-              "id": "k3",
-              "name": "Secret_ID",
-              "value": "PASTE_YOUR_BC_CLIENT_SECRET_HERE",
-              "type": "string"
-            },
-            {
-              "id": "k4",
-              "name": "Company_ID",
-              "value": "PASTE_YOUR_BC_COMPANY_ID_HERE",
-              "type": "string"
-            }
+            { "id": "k1", "name": "Tenant_ID",  "value": "PASTE_YOUR_TENANT_ID_HERE",        "type": "string" },
+            { "id": "k2", "name": "client_ID",  "value": "PASTE_YOUR_CLIENT_ID_HERE",        "type": "string" },
+            { "id": "k3", "name": "Secret_ID",  "value": "PASTE_YOUR_BC_CLIENT_SECRET_HERE", "type": "string" },
+            { "id": "k4", "name": "Company_ID", "value": "PASTE_YOUR_BC_COMPANY_ID_HERE",    "type": "string" }
           ]
         },
         "options": {}
@@ -48,10 +25,7 @@
       "name": "Keys",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [
-        224,
-        0
-      ]
+      "position": [224, 0]
     },
     {
       "parameters": {
@@ -61,22 +35,10 @@
         "contentType": "form-urlencoded",
         "bodyParameters": {
           "parameters": [
-            {
-              "name": "grant_type",
-              "value": "client_credentials"
-            },
-            {
-              "name": "client_id",
-              "value": "={{ $json.client_ID }}"
-            },
-            {
-              "name": "client_secret",
-              "value": "={{ $json.Secret_ID }}"
-            },
-            {
-              "name": "scope",
-              "value": "https://api.businesscentral.dynamics.com/.default"
-            }
+            { "name": "grant_type",    "value": "client_credentials" },
+            { "name": "client_id",     "value": "={{ $json.client_ID }}" },
+            { "name": "client_secret", "value": "={{ $json.Secret_ID }}" },
+            { "name": "scope",         "value": "https://api.businesscentral.dynamics.com/.default" }
           ]
         },
         "options": {}
@@ -85,10 +47,7 @@
       "name": "Get BC Token",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [
-        448,
-        0
-      ]
+      "position": [448, 0]
     },
     {
       "parameters": {
@@ -98,10 +57,7 @@
       "name": "Initialize HS Fetch",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [
-        672,
-        0
-      ]
+      "position": [672, 0]
     },
     {
       "parameters": {
@@ -111,10 +67,7 @@
       "name": "Build HS Search Payload",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [
-        896,
-        0
-      ]
+      "position": [896, 0]
     },
     {
       "parameters": {
@@ -124,12 +77,7 @@
         "nodeCredentialType": "hubspotAppToken",
         "sendHeaders": true,
         "headerParameters": {
-          "parameters": [
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            }
-          ]
+          "parameters": [{ "name": "Content-Type", "value": "application/json" }]
         },
         "sendBody": true,
         "specifyBody": "json",
@@ -140,15 +88,9 @@
       "name": "Search HubSpot Companies",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [
-        1120,
-        0
-      ],
+      "position": [1120, 0],
       "credentials": {
-        "hubspotAppToken": {
-          "id": "Tn5sRx1iMiIl1pkn",
-          "name": "BC to HubSpot"
-        }
+        "hubspotAppToken": { "id": "Tn5sRx1iMiIl1pkn", "name": "BC to HubSpot" }
       }
     },
     {
@@ -159,31 +101,13 @@
       "name": "Accumulate HS Results",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [
-        1344,
-        0
-      ]
+      "position": [1344, 0]
     },
     {
       "parameters": {
         "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 1
-          },
-          "conditions": [
-            {
-              "id": "c1",
-              "leftValue": "={{ $json.hasMore }}",
-              "rightValue": 0,
-              "operator": {
-                "type": "number",
-                "operation": "gt"
-              }
-            }
-          ],
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 1 },
+          "conditions": [{ "id": "c1", "leftValue": "={{ $json.hasMore }}", "rightValue": 0, "operator": { "type": "number", "operation": "gt" } }],
           "combinator": "and"
         },
         "options": {}
@@ -192,23 +116,15 @@
       "name": "More HS Pages?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [
-        1568,
-        0
-      ]
+      "position": [1568, 0]
     },
     {
-      "parameters": {
-        "amount": 1
-      },
+      "parameters": { "amount": 1 },
       "id": "bbb7454c-b1f5-48fa-90c4-f4e6ad72dc6a",
       "name": "Wait HS Pagination",
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
-      "position": [
-        1760,
-        -64
-      ],
+      "position": [1760, -64],
       "webhookId": "4f69c2df-74bf-4cb4-9d64-198c90468cd3"
     },
     {
@@ -219,24 +135,15 @@
       "name": "Expand HS Companies",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [
-        1792,
-        128
-      ]
+      "position": [1792, 128]
     },
     {
-      "parameters": {
-        "batchSize": 100,
-        "options": {}
-      },
+      "parameters": { "batchSize": 100, "options": {} },
       "id": "cd5361b3-efa5-409b-9499-b0b9c19a5b85",
       "name": "Loop 2 Batches",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
-      "position": [
-        2016,
-        128
-      ]
+      "position": [2016, 128]
     },
     {
       "parameters": {
@@ -246,10 +153,7 @@
       "name": "Sync Complete",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [
-        2016,
-        -80
-      ]
+      "position": [2016, -80]
     },
     {
       "parameters": {
@@ -259,24 +163,15 @@
       "name": "Build Invoice Filter",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [
-        2240,
-        128
-      ]
+      "position": [2240, 128]
     },
     {
-      "parameters": {
-        "amount": 2,
-        "unit": "seconds"
-      },
+      "parameters": { "amount": 2, "unit": "seconds" },
       "id": "59c2b37c-a89d-4b5a-9060-a3ca1aca95f8",
       "name": "Wait 2s",
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1,
-      "position": [
-        2464,
-        128
-      ],
+      "position": [2464, 128],
       "webhookId": "88a34843-5080-4a4a-a816-1cf360d97424"
     },
     {
@@ -285,35 +180,17 @@
         "sendQuery": true,
         "queryParameters": {
           "parameters": [
-            {
-              "name": "$filter",
-              "value": "={{ $json.invoiceFilter }}"
-            },
-            {
-              "name": "$select",
-              "value": "number,customerNumber,postingDate,totalAmountIncludingTax"
-            },
-            {
-              "name": "$orderby",
-              "value": "postingDate desc"
-            },
-            {
-              "name": "$top",
-              "value": "1500"
-            }
+            { "name": "$filter",  "value": "={{ $json.invoiceFilter }}" },
+            { "name": "$select",  "value": "number,customerNumber,postingDate,totalAmountIncludingTax" },
+            { "name": "$orderby", "value": "postingDate desc" },
+            { "name": "$top",     "value": "1500" }
           ]
         },
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            {
-              "name": "Authorization",
-              "value": "=Bearer {{ $('Get BC Token').first().json.access_token }}"
-            },
-            {
-              "name": "Accept",
-              "value": "application/json"
-            }
+            { "name": "Authorization", "value": "=Bearer {{ $('Get BC Token').first().json.access_token }}" },
+            { "name": "Accept",        "value": "application/json" }
           ]
         },
         "options": {}
@@ -322,44 +199,23 @@
       "name": "Fetch Invoices for Batch",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [
-        2688,
-        128
-      ]
+      "position": [2688, 128]
     },
     {
       "parameters": {
-        "jsCode": "const lastInvData  = $('Fetch Invoices for Batch').first().json.value || [];\nconst firstInvData = $input.first().json.value || [];\nconst store        = $getWorkflowStaticData('global');\nconst currentBatch = store.currentBatch || [];\n\nconst DAY = 24 * 60 * 60 * 1000;\nconst today = new Date();\ntoday.setUTCHours(0, 0, 0, 0);\nconst todayMs = today.getTime();\n\n// Build customer \u2192 last 10 invoices map (desc sorted from BC)\nconst byCustomer = {};\nfor (const inv of lastInvData) {\n  const cust = String(inv.customerNumber || '');\n  if (!byCustomer[cust]) byCustomer[cust] = [];\n  byCustomer[cust].push(inv);\n}\n\n// Build customer \u2192 first invoice map (asc sorted from BC \u2014 first record per customer is earliest)\nconst firstByCustomer = {};\nfor (const inv of firstInvData) {\n  const cust = String(inv.customerNumber || '');\n  if (!firstByCustomer[cust]) firstByCustomer[cust] = inv; // first seen = oldest (asc order)\n}\n\nconst toUpdate = [];\nfor (const hsCompany of currentBatch) {\n  const erpNum = String(hsCompany.properties?.erp_account_number || '').trim();\n  const hsId   = hsCompany.id;\n  if (!erpNum || !hsId) continue;\n\n  const invList = (byCustomer[erpNum] || []).slice(0, 10);\n  if (invList.length === 0) {\n    // No invoices in BC \u2192 mark as Not Ordered in HubSpot\n    toUpdate.push({ id: hsId, properties: { ordering_status: 'Not Ordered' } });\n    continue;\n  }\n\n  // 1. Last invoice date (ms epoch at UTC midnight)\n  const lastInvoiceDateMs = new Date(invList[0].postingDate + 'T00:00:00Z').getTime();\n\n  // 2. First invoice date\n  const firstInv = firstByCustomer[erpNum];\n  const firstInvoiceDateMs = firstInv\n    ? new Date(firstInv.postingDate + 'T00:00:00Z').getTime()\n    : lastInvoiceDateMs;\n\n  // 3. Avg order size\n  const avgOrderSize = Math.round(\n    (invList.reduce((s, i) => s + (Number(i.totalAmountIncludingTax) || 0), 0) / invList.length) * 100\n  ) / 100;\n\n  // 4. Avg days between orders\n  let avgDaysBetweenOrders = null;\n  const sortedAsc = [...invList].sort((a, b) => new Date(a.postingDate) - new Date(b.postingDate));\n  if (sortedAsc.length >= 2) {\n    const gaps = [];\n    for (let i = 1; i < sortedAsc.length; i++) {\n      gaps.push((new Date(sortedAsc[i].postingDate) - new Date(sortedAsc[i-1].postingDate)) / DAY);\n    }\n    avgDaysBetweenOrders = Math.round((gaps.reduce((s, g) => s + g, 0) / gaps.length) * 10) / 10;\n  }\n\n  // 5. Risk Day and Lost Day \u2014 whole days so timestamps land at midnight UTC\n  let riskDayMs, lostDayMs;\n  if (avgDaysBetweenOrders !== null) {\n    const riskDays = Math.max(Math.round(avgDaysBetweenOrders * 2), 5);\n    const lostDays = Math.max(Math.round(avgDaysBetweenOrders * 3), 7);\n    riskDayMs = lastInvoiceDateMs + riskDays * DAY;\n    lostDayMs = lastInvoiceDateMs + lostDays * DAY;\n  } else {\n    riskDayMs = lastInvoiceDateMs + 14 * DAY;\n    lostDayMs = lastInvoiceDateMs + 28 * DAY;\n  }\n\n  // 6. Ordering status\n  let orderingStatus;\n  if      (todayMs >= lostDayMs) orderingStatus = 'Potentially Lost';\n  else if (todayMs >= riskDayMs) orderingStatus = 'Outside Ordering Pattern';\n  else                            orderingStatus = 'Actively Ordering';\n\n  // 7. Status date = when customer entered this tier\n  let statusDateMs;\n  if      (orderingStatus === 'Potentially Lost')         statusDateMs = lostDayMs;\n  else if (orderingStatus === 'Outside Ordering Pattern') statusDateMs = riskDayMs;\n  else                                                    statusDateMs = lastInvoiceDateMs;\n\n  const props = {\n    first_invoice_date:           firstInvoiceDateMs,\n    last_invoice_date:            lastInvoiceDateMs,\n    avg_order_size:               avgOrderSize,\n    ordering_status:              orderingStatus,\n    ordering_status_date_changed: statusDateMs\n  };\n  if (avgDaysBetweenOrders !== null) props.avg_days_between_orders = avgDaysBetweenOrders;\n  toUpdate.push({ id: hsId, properties: props });\n}\n\nreturn [{ json: { toUpdate, updateCount: toUpdate.length } }];"
+        "jsCode": "const invData      = $input.first().json.value || [];\nconst store        = $getWorkflowStaticData('global');\nconst currentBatch = store.currentBatch || [];\n\nconst DAY = 24 * 60 * 60 * 1000;\nconst today = new Date();\ntoday.setUTCHours(0, 0, 0, 0);\nconst todayMs = today.getTime();\n\n// Build customer → last 10 invoices map (desc sorted from BC)\nconst byCustomer = {};\nfor (const inv of invData) {\n  const cust = String(inv.customerNumber || '');\n  if (!byCustomer[cust]) byCustomer[cust] = [];\n  byCustomer[cust].push(inv);\n}\n\nconst toUpdate = [];\nfor (const hsCompany of currentBatch) {\n  const erpNum = String(hsCompany.properties?.erp_account_number || '').trim();\n  const hsId   = hsCompany.id;\n  if (!erpNum || !hsId) continue;\n\n  const invList = (byCustomer[erpNum] || []).slice(0, 10);\n  if (invList.length === 0) {\n    toUpdate.push({ id: hsId, properties: { ordering_status: 'Not Ordered' } });\n    continue;\n  }\n\n  // 1. Last invoice date (ms epoch at UTC midnight)\n  const lastInvoiceDateMs = new Date(invList[0].postingDate + 'T00:00:00Z').getTime();\n\n  // 2. Avg order size\n  const avgOrderSize = Math.round(\n    (invList.reduce((s, i) => s + (Number(i.totalAmountIncludingTax) || 0), 0) / invList.length) * 100\n  ) / 100;\n\n  // 3. Avg days between orders\n  let avgDaysBetweenOrders = null;\n  const sortedAsc = [...invList].sort((a, b) => new Date(a.postingDate) - new Date(b.postingDate));\n  if (sortedAsc.length >= 2) {\n    const gaps = [];\n    for (let i = 1; i < sortedAsc.length; i++) {\n      gaps.push((new Date(sortedAsc[i].postingDate) - new Date(sortedAsc[i-1].postingDate)) / DAY);\n    }\n    avgDaysBetweenOrders = Math.round((gaps.reduce((s, g) => s + g, 0) / gaps.length) * 10) / 10;\n  }\n\n  // 4. Risk Day and Lost Day — whole days so timestamps land at midnight UTC\n  let riskDayMs, lostDayMs;\n  if (avgDaysBetweenOrders !== null) {\n    const riskDays = Math.max(Math.round(avgDaysBetweenOrders * 2), 5);\n    const lostDays = Math.max(Math.round(avgDaysBetweenOrders * 3), 7);\n    riskDayMs = lastInvoiceDateMs + riskDays * DAY;\n    lostDayMs = lastInvoiceDateMs + lostDays * DAY;\n  } else {\n    riskDayMs = lastInvoiceDateMs + 14 * DAY;\n    lostDayMs = lastInvoiceDateMs + 28 * DAY;\n  }\n\n  // 5. Ordering status\n  let orderingStatus;\n  if      (todayMs >= lostDayMs) orderingStatus = 'Potentially Lost';\n  else if (todayMs >= riskDayMs) orderingStatus = 'Outside Ordering Pattern';\n  else                            orderingStatus = 'Actively Ordering';\n\n  // 6. Status date = when customer entered this tier\n  let statusDateMs;\n  if      (orderingStatus === 'Potentially Lost')         statusDateMs = lostDayMs;\n  else if (orderingStatus === 'Outside Ordering Pattern') statusDateMs = riskDayMs;\n  else                                                    statusDateMs = lastInvoiceDateMs;\n\n  const props = {\n    last_invoice_date:            lastInvoiceDateMs,\n    avg_order_size:               avgOrderSize,\n    ordering_status:              orderingStatus,\n    ordering_status_date_changed: statusDateMs\n  };\n  if (avgDaysBetweenOrders !== null) props.avg_days_between_orders = avgDaysBetweenOrders;\n  toUpdate.push({ id: hsId, properties: props });\n}\n\nreturn [{ json: { toUpdate, updateCount: toUpdate.length } }];"
       },
       "id": "284888a5-4d3a-4e5f-9598-30f78ed7fedf",
       "name": "Calculate Metrics",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [
-        3360,
-        128
-      ]
+      "position": [2912, 128]
     },
     {
       "parameters": {
         "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 1
-          },
-          "conditions": [
-            {
-              "id": "c1",
-              "leftValue": "={{ $json.updateCount }}",
-              "rightValue": 0,
-              "operator": {
-                "type": "number",
-                "operation": "gt"
-              }
-            }
-          ],
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 1 },
+          "conditions": [{ "id": "c1", "leftValue": "={{ $json.updateCount }}", "rightValue": 0, "operator": { "type": "number", "operation": "gt" } }],
           "combinator": "and"
         },
         "options": {}
@@ -368,10 +224,7 @@
       "name": "Has Updates?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [
-        3360,
-        128
-      ]
+      "position": [3136, 128]
     },
     {
       "parameters": {
@@ -381,12 +234,7 @@
         "nodeCredentialType": "hubspotAppToken",
         "sendHeaders": true,
         "headerParameters": {
-          "parameters": [
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            }
-          ]
+          "parameters": [{ "name": "Content-Type", "value": "application/json" }]
         },
         "sendBody": true,
         "specifyBody": "json",
@@ -397,311 +245,85 @@
       "name": "Batch Update HubSpot",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [
-        3584,
-        0
-      ],
+      "position": [3360, 0],
       "credentials": {
-        "hubspotAppToken": {
-          "id": "Tn5sRx1iMiIl1pkn",
-          "name": "BC to HubSpot"
-        }
+        "hubspotAppToken": { "id": "Tn5sRx1iMiIl1pkn", "name": "BC to HubSpot" }
       },
       "continueOnFail": true
     },
     {
-      "parameters": {
-        "amount": 1
-      },
+      "parameters": { "amount": 1 },
       "id": "42c74f52-0edc-4566-803f-7796be683d9e",
       "name": "Wait After Batch",
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
-      "position": [
-        3808,
-        0
-      ],
+      "position": [3584, 0],
       "webhookId": "508f02af-a9e1-4a8c-b80b-adb1f652f369"
-    },
-    {
-      "id": "7806962a-e6f6-4edb-bfc3-d9852eed2dc8",
-      "name": "Fetch First Invoices for Batch",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        3136,
-        128
-      ],
-      "parameters": {
-        "url": "=https://api.businesscentral.dynamics.com/v2.0/{{ $('Keys').first().json.Tenant_ID }}/production/api/v2.0/companies({{ $('Keys').first().json.Company_ID }})/salesInvoices",
-        "sendQuery": true,
-        "queryParameters": {
-          "parameters": [
-            {
-              "name": "$filter",
-              "value": "={{ $('Build Invoice Filter').first().json.invoiceFilter }}"
-            },
-            {
-              "name": "$select",
-              "value": "number,customerNumber,postingDate,totalAmountIncludingTax"
-            },
-            {
-              "name": "$orderby",
-              "value": "postingDate asc"
-            },
-            {
-              "name": "$top",
-              "value": "500"
-            }
-          ]
-        },
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Authorization",
-              "value": "=Bearer {{ $('Get BC Token').first().json.access_token }}"
-            },
-            {
-              "name": "Accept",
-              "value": "application/json"
-            }
-          ]
-        },
-        "options": {}
-      }
     }
   ],
   "connections": {
     "When clicking 'Execute workflow'": {
-      "main": [
-        [
-          {
-            "node": "Keys",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{ "node": "Keys", "type": "main", "index": 0 }]]
     },
     "Keys": {
-      "main": [
-        [
-          {
-            "node": "Get BC Token",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{ "node": "Get BC Token", "type": "main", "index": 0 }]]
     },
     "Get BC Token": {
-      "main": [
-        [
-          {
-            "node": "Initialize HS Fetch",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{ "node": "Initialize HS Fetch", "type": "main", "index": 0 }]]
     },
     "Initialize HS Fetch": {
-      "main": [
-        [
-          {
-            "node": "Build HS Search Payload",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{ "node": "Build HS Search Payload", "type": "main", "index": 0 }]]
     },
     "Build HS Search Payload": {
-      "main": [
-        [
-          {
-            "node": "Search HubSpot Companies",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{ "node": "Search HubSpot Companies", "type": "main", "index": 0 }]]
     },
     "Search HubSpot Companies": {
-      "main": [
-        [
-          {
-            "node": "Accumulate HS Results",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{ "node": "Accumulate HS Results", "type": "main", "index": 0 }]]
     },
     "Accumulate HS Results": {
-      "main": [
-        [
-          {
-            "node": "More HS Pages?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{ "node": "More HS Pages?", "type": "main", "index": 0 }]]
     },
     "More HS Pages?": {
       "main": [
-        [
-          {
-            "node": "Wait HS Pagination",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Expand HS Companies",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        [{ "node": "Wait HS Pagination",  "type": "main", "index": 0 }],
+        [{ "node": "Expand HS Companies", "type": "main", "index": 0 }]
       ]
     },
     "Wait HS Pagination": {
-      "main": [
-        [
-          {
-            "node": "Build HS Search Payload",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{ "node": "Build HS Search Payload", "type": "main", "index": 0 }]]
     },
     "Expand HS Companies": {
-      "main": [
-        [
-          {
-            "node": "Loop 2 Batches",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{ "node": "Loop 2 Batches", "type": "main", "index": 0 }]]
     },
     "Loop 2 Batches": {
       "main": [
-        [
-          {
-            "node": "Sync Complete",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Build Invoice Filter",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        [{ "node": "Sync Complete",       "type": "main", "index": 0 }],
+        [{ "node": "Build Invoice Filter", "type": "main", "index": 0 }]
       ]
     },
     "Build Invoice Filter": {
-      "main": [
-        [
-          {
-            "node": "Wait 2s",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{ "node": "Wait 2s", "type": "main", "index": 0 }]]
     },
     "Wait 2s": {
-      "main": [
-        [
-          {
-            "node": "Fetch Invoices for Batch",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{ "node": "Fetch Invoices for Batch", "type": "main", "index": 0 }]]
     },
     "Fetch Invoices for Batch": {
-      "main": [
-        [
-          {
-            "node": "Fetch First Invoices for Batch",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{ "node": "Calculate Metrics", "type": "main", "index": 0 }]]
     },
     "Calculate Metrics": {
-      "main": [
-        [
-          {
-            "node": "Has Updates?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{ "node": "Has Updates?", "type": "main", "index": 0 }]]
     },
     "Has Updates?": {
       "main": [
-        [
-          {
-            "node": "Batch Update HubSpot",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Loop 2 Batches",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        [{ "node": "Batch Update HubSpot", "type": "main", "index": 0 }],
+        [{ "node": "Loop 2 Batches",       "type": "main", "index": 0 }]
       ]
     },
     "Batch Update HubSpot": {
-      "main": [
-        [
-          {
-            "node": "Wait After Batch",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{ "node": "Wait After Batch", "type": "main", "index": 0 }]]
     },
     "Wait After Batch": {
-      "main": [
-        [
-          {
-            "node": "Loop 2 Batches",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Fetch First Invoices for Batch": {
-      "main": [
-        [
-          {
-            "node": "Calculate Metrics",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{ "node": "Loop 2 Batches", "type": "main", "index": 0 }]]
     }
   },
   "settings": {},
