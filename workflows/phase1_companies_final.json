@@ -426,7 +426,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        3808,
+        4032,
         80
       ]
     },
@@ -439,7 +439,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4032,
+        4256,
         80
       ]
     },
@@ -471,7 +471,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        4256,
+        4480,
         80
       ]
     },
@@ -500,7 +500,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        4480,
+        4704,
         -48
       ],
       "credentials": {
@@ -517,7 +517,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        3360,
+        3808,
         80
       ],
       "parameters": {
@@ -733,7 +733,7 @@
         ],
         [
           {
-            "node": "Refresh BC Token",
+            "node": "Build Calendar Filter",
             "type": "main",
             "index": 0
           }
@@ -744,7 +744,7 @@
       "main": [
         [
           {
-            "node": "HTTP Request - Get Calendar & Balance",
+            "node": "Refresh BC Token",
             "type": "main",
             "index": 0
           }
@@ -806,7 +806,7 @@
       "main": [
         [
           {
-            "node": "Build Calendar Filter",
+            "node": "HTTP Request - Get Calendar & Balance",
             "type": "main",
             "index": 0
           }
