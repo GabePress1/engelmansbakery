@@ -78,7 +78,7 @@
     },
     {
       "parameters": {
-        "url": "https://api.businesscentral.dynamics.com/v2.0/PASTE_YOUR_TENANT_ID_HERE/Production/ODataV4/Company('Live-EB')/ShiptoAddressList",
+        "url": "=https://api.businesscentral.dynamics.com/v2.0/{{ $('Keys').first().json.Tenant_ID }}/Production/ODataV4/Company('Live-EB')/ShiptoAddressList",
         "sendQuery": true,
         "queryParameters": {
           "parameters": [
@@ -258,7 +258,7 @@
     },
     {
       "parameters": {
-        "url": "https://api.businesscentral.dynamics.com/v2.0/PASTE_YOUR_TENANT_ID_HERE/Production/ODataV4/Company('Live-EB')/Customer",
+        "url": "=https://api.businesscentral.dynamics.com/v2.0/{{ $('Keys').first().json.Tenant_ID }}/Production/ODataV4/Company('Live-EB')/Customer",
         "sendQuery": true,
         "queryParameters": {
           "parameters": [
