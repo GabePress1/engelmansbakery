@@ -1,5 +1,5 @@
 {
-  "name": "Phase 1 – BC → HubSpot Companies Final",
+  "name": "Phase 1 \u2013 BC \u2192 HubSpot Companies Final",
   "nodes": [
     {
       "parameters": {
@@ -16,7 +16,10 @@
       "name": "Schedule Trigger",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1,
-      "position": [0, -160]
+      "position": [
+        0,
+        -160
+      ]
     },
     {
       "parameters": {},
@@ -24,16 +27,39 @@
       "name": "When clicking 'Execute workflow'",
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
-      "position": [0, 40]
+      "position": [
+        0,
+        40
+      ]
     },
     {
       "parameters": {
         "assignments": {
           "assignments": [
-            { "id": "k1", "name": "Tenant_ID",  "value": "PASTE_YOUR_TENANT_ID_HERE",        "type": "string" },
-            { "id": "k2", "name": "client_ID",  "value": "PASTE_YOUR_CLIENT_ID_HERE",        "type": "string" },
-            { "id": "k3", "name": "Secret_ID",  "value": "PASTE_YOUR_BC_CLIENT_SECRET_HERE", "type": "string" },
-            { "id": "k4", "name": "Company_ID", "value": "PASTE_YOUR_BC_COMPANY_ID_HERE",    "type": "string" }
+            {
+              "id": "k1",
+              "name": "Tenant_ID",
+              "value": "PASTE_YOUR_TENANT_ID_HERE",
+              "type": "string"
+            },
+            {
+              "id": "k2",
+              "name": "client_ID",
+              "value": "PASTE_YOUR_CLIENT_ID_HERE",
+              "type": "string"
+            },
+            {
+              "id": "k3",
+              "name": "Secret_ID",
+              "value": "PASTE_YOUR_BC_CLIENT_SECRET_HERE",
+              "type": "string"
+            },
+            {
+              "id": "k4",
+              "name": "Company_ID",
+              "value": "PASTE_YOUR_BC_COMPANY_ID_HERE",
+              "type": "string"
+            }
           ]
         },
         "options": {}
@@ -42,7 +68,10 @@
       "name": "Keys",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [224, -48]
+      "position": [
+        224,
+        -48
+      ]
     },
     {
       "parameters": {
@@ -52,10 +81,22 @@
         "contentType": "form-urlencoded",
         "bodyParameters": {
           "parameters": [
-            { "name": "grant_type",    "value": "client_credentials" },
-            { "name": "client_id",     "value": "={{ $json.client_ID }}" },
-            { "name": "client_secret", "value": "={{ $json.Secret_ID }}" },
-            { "name": "scope",         "value": "https://api.businesscentral.dynamics.com/.default" }
+            {
+              "name": "grant_type",
+              "value": "client_credentials"
+            },
+            {
+              "name": "client_id",
+              "value": "={{ $json.client_ID }}"
+            },
+            {
+              "name": "client_secret",
+              "value": "={{ $json.Secret_ID }}"
+            },
+            {
+              "name": "scope",
+              "value": "https://api.businesscentral.dynamics.com/.default"
+            }
           ]
         },
         "options": {}
@@ -64,7 +105,10 @@
       "name": "Get BC Token",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [448, -48]
+      "position": [
+        448,
+        -48
+      ]
     },
     {
       "parameters": {
@@ -74,7 +118,10 @@
       "name": "Set Window",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [672, -48]
+      "position": [
+        672,
+        -48
+      ]
     },
     {
       "parameters": {
@@ -82,14 +129,23 @@
         "sendQuery": true,
         "queryParameters": {
           "parameters": [
-            { "name": "$select", "value": "HFSCustomerNo,Code,Address,Address_2,City,Post_Code" },
-            { "name": "$top",    "value": "5000" }
+            {
+              "name": "$select",
+              "value": "HFSCustomerNo,Code,Address,Address_2,City,Post_Code"
+            },
+            {
+              "name": "$top",
+              "value": "5000"
+            }
           ]
         },
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Authorization", "value": "=Bearer {{ $('Get BC Token').first().json.access_token }}" }
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Get BC Token').first().json.access_token }}"
+            }
           ]
         },
         "options": {}
@@ -98,7 +154,10 @@
       "name": "HTTP Request - Get All Ship-to Addresses",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [896, -48]
+      "position": [
+        896,
+        -48
+      ]
     },
     {
       "parameters": {
@@ -108,7 +167,10 @@
       "name": "Store Ship-to Data",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1120, -48]
+      "position": [
+        1120,
+        -48
+      ]
     },
     {
       "parameters": {
@@ -116,26 +178,49 @@
         "sendQuery": true,
         "queryParameters": {
           "parameters": [
-            { "name": "$filter", "value": "={{ `lastModifiedDateTime gt ${$('Set Window').first().json.lastTimestamp}` }}" },
-            { "name": "$select", "value": "id,number,displayName,addressLine1,addressLine2,city,state,postalCode,country,salespersonCode,creditLimit,blocked,lastModifiedDateTime" },
-            { "name": "$expand", "value": "paymentTerm($select=code),paymentMethod($select=code)" },
-            { "name": "$top",    "value": "5000" }
+            {
+              "name": "$filter",
+              "value": "={{ `lastModifiedDateTime gt ${$('Set Window').first().json.lastTimestamp}` }}"
+            },
+            {
+              "name": "$select",
+              "value": "id,number,displayName,addressLine1,addressLine2,city,state,postalCode,country,salespersonCode,creditLimit,blocked,lastModifiedDateTime"
+            },
+            {
+              "name": "$expand",
+              "value": "paymentTerm($select=code),paymentMethod($select=code)"
+            },
+            {
+              "name": "$top",
+              "value": "5000"
+            }
           ]
         },
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Authorization", "value": "=Bearer {{ $('Get BC Token').first().json.access_token }}" },
-            { "name": "Accept",        "value": "application/json" }
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Get BC Token').first().json.access_token }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
           ]
         },
-        "options": { "timeout": 60000 }
+        "options": {
+          "timeout": 60000
+        }
       },
       "id": "b7516b60-e346-42b6-9c50-6ffcf77d3b92",
       "name": "Fetch Changed BC Customers",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [1344, -48]
+      "position": [
+        1344,
+        -48
+      ]
     },
     {
       "parameters": {
@@ -145,7 +230,10 @@
       "name": "Store BC Customer Data",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1568, -48]
+      "position": [
+        1568,
+        -48
+      ]
     },
     {
       "parameters": {
@@ -155,7 +243,10 @@
       "name": "Initialize HS Fetch",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1792, -48]
+      "position": [
+        1792,
+        -48
+      ]
     },
     {
       "parameters": {
@@ -165,7 +256,10 @@
       "name": "Build HS Search Payload",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2016, -48]
+      "position": [
+        2016,
+        -48
+      ]
     },
     {
       "parameters": {
@@ -175,7 +269,12 @@
         "nodeCredentialType": "hubspotAppToken",
         "sendHeaders": true,
         "headerParameters": {
-          "parameters": [{ "name": "Content-Type", "value": "application/json" }]
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
         },
         "sendBody": true,
         "specifyBody": "json",
@@ -186,9 +285,15 @@
       "name": "Search HubSpot Companies",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [2240, -48],
+      "position": [
+        2240,
+        -48
+      ],
       "credentials": {
-        "hubspotAppToken": { "id": "CREDENTIAL_ID", "name": "BC to HubSpot" }
+        "hubspotAppToken": {
+          "id": "CREDENTIAL_ID",
+          "name": "BC to HubSpot"
+        }
       }
     },
     {
@@ -199,14 +304,29 @@
       "name": "Accumulate HS Results",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2464, -48]
+      "position": [
+        2464,
+        -48
+      ]
     },
     {
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
           "conditions": [
-            { "id": "c1", "leftValue": "={{ $json.hasMore }}", "rightValue": 0, "operator": { "type": "number", "operation": "gt" } }
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.hasMore }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
           ],
           "combinator": "and"
         },
@@ -216,7 +336,10 @@
       "name": "More HS Pages?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [2688, -48]
+      "position": [
+        2688,
+        -48
+      ]
     },
     {
       "parameters": {
@@ -226,15 +349,24 @@
       "name": "Expand HS Companies",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2912, 80]
+      "position": [
+        2912,
+        80
+      ]
     },
     {
-      "parameters": { "batchSize": 100, "options": {} },
+      "parameters": {
+        "batchSize": 100,
+        "options": {}
+      },
       "id": "c0f8d45d-4a56-4bd5-9c9d-02109fa7d54e",
       "name": "Loop 2 Batches",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
-      "position": [3136, 80]
+      "position": [
+        3136,
+        80
+      ]
     },
     {
       "parameters": {
@@ -244,7 +376,10 @@
       "name": "Sync Summary",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [3136, -100]
+      "position": [
+        3136,
+        -100
+      ]
     },
     {
       "parameters": {
@@ -254,7 +389,10 @@
       "name": "Build Calendar Filter",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [3360, 80]
+      "position": [
+        3584,
+        80
+      ]
     },
     {
       "parameters": {
@@ -262,14 +400,23 @@
         "sendQuery": true,
         "queryParameters": {
           "parameters": [
-            { "name": "$select", "value": "No,Balance_LCY,Balance_Due_LCY,Shipping_Agent_Code,Base_Calendar_Code" },
-            { "name": "$filter", "value": "={{ $json.odataFilter }}" }
+            {
+              "name": "$select",
+              "value": "No,Balance_LCY,Balance_Due_LCY,Shipping_Agent_Code,Base_Calendar_Code"
+            },
+            {
+              "name": "$filter",
+              "value": "={{ $json.odataFilter }}"
+            }
           ]
         },
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Authorization", "value": "=Bearer {{ $('Get BC Token').first().json.access_token }}" }
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Refresh BC Token').first().json.access_token }}"
+            }
           ]
         },
         "options": {}
@@ -278,7 +425,10 @@
       "name": "HTTP Request - Get Calendar & Balance",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [3584, 80]
+      "position": [
+        3808,
+        80
+      ]
     },
     {
       "parameters": {
@@ -288,14 +438,29 @@
       "name": "Process Batch",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [3808, 80]
+      "position": [
+        4032,
+        80
+      ]
     },
     {
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
           "conditions": [
-            { "id": "c1", "leftValue": "={{ $json.updateCount }}", "rightValue": 0, "operator": { "type": "number", "operation": "gt" } }
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.updateCount }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
           ],
           "combinator": "and"
         },
@@ -305,7 +470,10 @@
       "name": "Has Updates?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [4032, 80]
+      "position": [
+        4256,
+        80
+      ]
     },
     {
       "parameters": {
@@ -315,7 +483,12 @@
         "nodeCredentialType": "hubspotAppToken",
         "sendHeaders": true,
         "headerParameters": {
-          "parameters": [{ "name": "Content-Type", "value": "application/json" }]
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
         },
         "sendBody": true,
         "specifyBody": "json",
@@ -326,85 +499,319 @@
       "name": "Batch Update HubSpot",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [4256, -48],
+      "position": [
+        4480,
+        -48
+      ],
       "credentials": {
-        "hubspotAppToken": { "id": "CREDENTIAL_ID", "name": "BC to HubSpot" }
+        "hubspotAppToken": {
+          "id": "CREDENTIAL_ID",
+          "name": "BC to HubSpot"
+        }
       },
       "continueOnFail": true
+    },
+    {
+      "id": "f79713d9-4044-470b-82df-9eb703c39446",
+      "name": "Refresh BC Token",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        3360,
+        80
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://login.microsoftonline.com/{{ $('Keys').first().json.Tenant_ID }}/oauth2/v2.0/token",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "grant_type",
+              "value": "client_credentials"
+            },
+            {
+              "name": "client_id",
+              "value": "={{ $('Keys').first().json.client_ID }}"
+            },
+            {
+              "name": "client_secret",
+              "value": "={{ $('Keys').first().json.Secret_ID }}"
+            },
+            {
+              "name": "scope",
+              "value": "https://api.businesscentral.dynamics.com/.default"
+            }
+          ]
+        },
+        "options": {}
+      }
     }
   ],
   "connections": {
     "Schedule Trigger": {
-      "main": [[{ "node": "Keys", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Keys",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "When clicking 'Execute workflow'": {
-      "main": [[{ "node": "Keys", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Keys",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Keys": {
-      "main": [[{ "node": "Get BC Token", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Get BC Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Get BC Token": {
-      "main": [[{ "node": "Set Window", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Set Window",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Set Window": {
-      "main": [[{ "node": "HTTP Request - Get All Ship-to Addresses", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "HTTP Request - Get All Ship-to Addresses",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "HTTP Request - Get All Ship-to Addresses": {
-      "main": [[{ "node": "Store Ship-to Data", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Store Ship-to Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Store Ship-to Data": {
-      "main": [[{ "node": "Fetch Changed BC Customers", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Fetch Changed BC Customers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Fetch Changed BC Customers": {
-      "main": [[{ "node": "Store BC Customer Data", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Store BC Customer Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Store BC Customer Data": {
-      "main": [[{ "node": "Initialize HS Fetch", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Initialize HS Fetch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Initialize HS Fetch": {
-      "main": [[{ "node": "Build HS Search Payload", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Build HS Search Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Build HS Search Payload": {
-      "main": [[{ "node": "Search HubSpot Companies", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Search HubSpot Companies",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Search HubSpot Companies": {
-      "main": [[{ "node": "Accumulate HS Results", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Accumulate HS Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Accumulate HS Results": {
-      "main": [[{ "node": "More HS Pages?", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "More HS Pages?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "More HS Pages?": {
       "main": [
-        [{ "node": "Build HS Search Payload", "type": "main", "index": 0 }],
-        [{ "node": "Expand HS Companies",     "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Build HS Search Payload",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Expand HS Companies",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Expand HS Companies": {
-      "main": [[{ "node": "Loop 2 Batches", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Loop 2 Batches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Loop 2 Batches": {
       "main": [
-        [{ "node": "Sync Summary",        "type": "main", "index": 0 }],
-        [{ "node": "Build Calendar Filter","type": "main", "index": 0 }]
+        [
+          {
+            "node": "Sync Summary",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Refresh BC Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Build Calendar Filter": {
-      "main": [[{ "node": "HTTP Request - Get Calendar & Balance", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "HTTP Request - Get Calendar & Balance",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "HTTP Request - Get Calendar & Balance": {
-      "main": [[{ "node": "Process Batch", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Process Batch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Process Batch": {
-      "main": [[{ "node": "Has Updates?", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Has Updates?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Has Updates?": {
       "main": [
-        [{ "node": "Batch Update HubSpot", "type": "main", "index": 0 }],
-        [{ "node": "Loop 2 Batches",       "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Batch Update HubSpot",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Loop 2 Batches",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Batch Update HubSpot": {
-      "main": [[{ "node": "Loop 2 Batches", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Loop 2 Batches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Refresh BC Token": {
+      "main": [
+        [
+          {
+            "node": "Build Calendar Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {},
