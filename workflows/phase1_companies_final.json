@@ -406,7 +406,7 @@
             },
             {
               "name": "$filter",
-              "value": "={{ $json.odataFilter }}"
+              "value": "={{ $('Build Calendar Filter').first().json.odataFilter }}"
             }
           ]
         },
