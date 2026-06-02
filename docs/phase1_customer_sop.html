@@ -255,6 +255,124 @@
 </table>
 <p style="font-size:12px; color:#555; margin-top:-8px;">Source C runs for <strong>every customer</strong> on every run, regardless of whether the customer was recently modified in BC.</p>
 
+<!-- ══════════════════════════════════ STEP BY STEP ══════════════════════════════════ -->
+<h2>Step-by-Step Flow</h2>
+
+<div class="stage-label">Stage 1 — Setup (Runs Once Per Execution)</div>
+
+<div class="step">
+  <div class="step-num">1</div>
+  <div class="step-body">
+    <strong>Keys</strong>
+    <span>Loads BC credentials: Tenant ID, Client ID, Client Secret, and Company ID. All downstream BC calls reference this node — credentials only need to be updated here.</span>
+  </div>
+</div>
+<div class="step">
+  <div class="step-num">2</div>
+  <div class="step-body">
+    <strong>Get BC Token</strong>
+    <span>Calls Microsoft Azure AD to obtain a Bearer token for the BC API. Valid for 60 minutes and used for the initial BC calls before the batch loop begins.</span>
+  </div>
+</div>
+<div class="step">
+  <div class="step-num">3</div>
+  <div class="step-body">
+    <strong>Set Window</strong>
+    <span>Reads the timestamp of the last successful run from n8n's persistent memory. Saves today's timestamp for the next run. This window controls which BC customers are treated as "changed" and returned by the customer fetch.</span>
+  </div>
+</div>
+<div class="step">
+  <div class="step-num">4</div>
+  <div class="step-body">
+    <strong>HTTP Request — Get All Ship-to Addresses</strong>
+    <span>Fetches up to 5,000 ship-to (delivery) addresses from the BC OData page <code>ShiptoAddressList</code>. Retrieved in full every run because ship-to changes are not reflected in the customer's modified date.</span>
+  </div>
+</div>
+<div class="step">
+  <div class="step-num">5</div>
+  <div class="step-body">
+    <strong>Store Ship-to Data</strong>
+    <span>Builds an in-memory lookup of ERP number → first ship-to address. Only the first ship-to record per customer is kept. Stored in memory for use during batch processing.</span>
+  </div>
+</div>
+<div class="step">
+  <div class="step-num">6</div>
+  <div class="step-body">
+    <strong>Fetch Changed BC Customers</strong>
+    <span>Calls the BC Standard API v2.0 <code>/customers</code> endpoint filtered to only customers whose <code>lastModifiedDateTime</code> is newer than the last run timestamp. Returns name, billing address, payment terms, payment method, credit limit, blocked status, and salesperson code.</span>
+  </div>
+</div>
+<div class="step">
+  <div class="step-num">7</div>
+  <div class="step-body">
+    <strong>Store BC Customer Data</strong>
+    <span>Stores the changed customer records in memory, keyed by ERP number. This becomes the <em>customerMap</em> used in Process Batch. Customers not modified since the last run will not appear here.</span>
+  </div>
+</div>
+
+<div class="stage-label">Stage 2 — Loop 1: Collect All HubSpot Companies</div>
+
+<div class="step">
+  <div class="step-num">8</div>
+  <div class="step-body">
+    <strong>Initialize HS Fetch → Build HS Search Payload → Search HubSpot Companies → Accumulate HS Results → More HS Pages?</strong>
+    <span>
+      Paginates through HubSpot's CRM search API (200 companies per page) collecting all companies that match <em>all three</em> criteria:
+      <ul style="margin:4px 0 0 16px; line-height:1.7;">
+        <li>Relationship = <strong>Customer</strong></li>
+        <li>Division includes <strong>Engelman's Bakery</strong></li>
+        <li>ERP Account Number field <strong>has a value</strong></li>
+      </ul>
+      Repeats until all pages are collected, then continues to Stage 3.
+    </span>
+  </div>
+</div>
+
+<div class="stage-label">Stage 3 — Loop 2: Process Each Batch of 100</div>
+
+<div class="step">
+  <div class="step-num">9</div>
+  <div class="step-body">
+    <strong>Expand HS Companies → Loop 2 Batches</strong>
+    <span>Splits all collected HubSpot companies into groups of 100. Processes one group at a time. When all batches are complete, exits to Sync Summary.</span>
+  </div>
+</div>
+<div class="step">
+  <div class="step-num">10</div>
+  <div class="step-body">
+    <strong>Build Calendar Filter</strong>
+    <span>Constructs a BC OData filter for the 100 ERP numbers in the current batch — e.g., <code>No eq '10001' or No eq '10002' or ...</code> — so only the relevant customers are returned by the BC API.</span>
+  </div>
+</div>
+<div class="step">
+  <div class="step-num">11</div>
+  <div class="step-body">
+    <strong>Refresh BC Token</strong>
+    <span>Fetches a brand-new BC API token before every batch. BC tokens expire after exactly 60 minutes; because the full workflow can run longer than that, refreshing every batch ensures no batch ever fails due to an expired token.</span>
+  </div>
+</div>
+<div class="step">
+  <div class="step-num">12</div>
+  <div class="step-body">
+    <strong>HTTP Request — Get Calendar &amp; Balance</strong>
+    <span>Fetches live balance, route, and delivery schedule data for every ERP number in the batch from the BC OData <code>Customer</code> page. Runs for <em>every</em> customer on every run — not just recently modified ones.</span>
+  </div>
+</div>
+<div class="step">
+  <div class="step-num">13</div>
+  <div class="step-body">
+    <strong>Process Batch</strong>
+    <span>Core logic: combines data from all three BC sources and maps it to HubSpot properties. Applies route translation, delivery calendar parsing, payment method label mapping, and salesperson-to-Company-Owner assignment. Only fields with a value (or fields that must be cleared) are included in the update payload.</span>
+  </div>
+</div>
+<div class="step">
+  <div class="step-num">14</div>
+  <div class="step-body">
+    <strong>Has Updates? → Batch Update HubSpot → Loop back</strong>
+    <span>If any companies in the batch have changes, sends a single PATCH batch request to the HubSpot CRM API updating up to 100 companies at once. Then loops back to step 9 for the next batch of 100.</span>
+  </div>
+</div>
+
 <!-- ══════════════════════════════════ MAPPING ══════════════════════════════════ -->
 <h2>BC → HubSpot Field Mapping</h2>
 
