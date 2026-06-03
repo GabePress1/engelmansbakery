@@ -105,7 +105,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const store = $getWorkflowStaticData('global');\nconst payload = {\n  filterGroups: [{ filters: [\n    { propertyName: 'relationship',        operator: 'EQ',             value: 'Customer' },\n    { propertyName: 'division_multiselect', operator: 'CONTAINS_TOKEN', value: \"Engelman's Bakery\" },\n    { propertyName: 'erp_account_number',  operator: 'HAS_PROPERTY' }\n  ]}],\n  properties: ['hs_object_id', 'erp_account_number', 'name', 'ordering_status'],\n  limit: 100\n};\nif (store.hsCursor) payload.after = store.hsCursor;\nreturn [{ json: payload }];"
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst payload = {\n  filterGroups: [{ filters: [\n    { propertyName: 'relationship',        operator: 'EQ',             value: 'Customer' },\n    { propertyName: 'division_multiselect', operator: 'CONTAINS_TOKEN', value: \"Engelman's Bakery\" },\n    { propertyName: 'erp_account_number',  operator: 'HAS_PROPERTY' }\n  ]}],\n  properties: ['hs_object_id', 'erp_account_number', 'name', 'ordering_status'],\n  limit: 200\n};\nif (store.hsCursor) payload.after = store.hsCursor;\nreturn [{ json: payload }];"
       },
       "id": "170164b5-3a26-4ed2-8d71-211b006c5459",
       "name": "Build HS Search Payload",
@@ -196,20 +196,6 @@
         1568,
         0
       ]
-    },
-    {
-      "parameters": {
-        "amount": 1
-      },
-      "id": "bbb7454c-b1f5-48fa-90c4-f4e6ad72dc6a",
-      "name": "Wait HS Pagination",
-      "type": "n8n-nodes-base.wait",
-      "typeVersion": 1.1,
-      "position": [
-        1760,
-        -64
-      ],
-      "webhookId": "4f69c2df-74bf-4cb4-9d64-198c90468cd3"
     },
     {
       "parameters": {
@@ -546,7 +532,7 @@
       "main": [
         [
           {
-            "node": "Wait HS Pagination",
+            "node": "Build HS Search Payload",
             "type": "main",
             "index": 0
           }
@@ -554,17 +540,6 @@
         [
           {
             "node": "Expand HS Companies",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Wait HS Pagination": {
-      "main": [
-        [
-          {
-            "node": "Build HS Search Payload",
             "type": "main",
             "index": 0
           }
