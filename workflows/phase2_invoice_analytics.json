@@ -425,7 +425,7 @@
           "parameters": [
             {
               "name": "$filter",
-              "value": "={{ `(${$('Build Invoice Filter').first().json.invoiceFilter}) and postingDate ge '${new Date().getFullYear()}-01-01'` }}"
+              "value": "={{ `(${$('Build Invoice Filter').first().json.invoiceFilter}) and postingDate ge ${new Date().getFullYear()}-01-01` }}"
             },
             {
               "name": "$select",

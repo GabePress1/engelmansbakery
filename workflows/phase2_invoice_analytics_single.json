@@ -260,7 +260,7 @@
           "parameters": [
             {
               "name": "$filter",
-              "value": "={{ `customerNumber eq '${$('Customer ERP').first().json.erp_number}' and postingDate ge '${new Date().getFullYear()}-01-01'` }}"
+              "value": "={{ `customerNumber eq '${$('Customer ERP').first().json.erp_number}' and postingDate ge ${new Date().getFullYear()}-01-01` }}"
             },
             {
               "name": "$select",
