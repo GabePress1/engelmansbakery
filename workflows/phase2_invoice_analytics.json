@@ -315,7 +315,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const invData      = $('Fetch Invoices for Batch').first().json.value || [];\nconst ytdData      = $('Fetch YTD Invoices').first().json.value || [];\nconst firstInvData = $('Fetch First Invoices for Batch').first().json.value || [];\nconst dealsData    = $('Fetch Won Deals').first().json.results || [];\nconst store        = $getWorkflowStaticData('global');\nconst currentBatch = store.currentBatch || [];\n\nconst DAY = 24 * 60 * 60 * 1000;\nconst today = new Date();\ntoday.setUTCHours(0, 0, 0, 0);\nconst todayMs = today.getTime();\n\n// Last-invoice map (desc from BC)\nconst byCustomer = {};\nfor (const inv of invData) {\n  const cust = String(inv.customerNumber || '');\n  if (!byCustomer[cust]) byCustomer[cust] = [];\n  byCustomer[cust].push(inv);\n}\n\n// YTD totals\nconst ytdByCustomer = {};\nfor (const inv of ytdData) {\n  const cust = String(inv.customerNumber || '');\n  ytdByCustomer[cust] = (ytdByCustomer[cust] || 0) + (Number(inv.totalAmountIncludingTax) || 0);\n}\n\n// First invoice map (asc from BC \u2014 first seen per customer = oldest)\nconst firstByCustomer = {};\nfor (const inv of firstInvData) {\n  const cust = String(inv.customerNumber || '');\n  if (!firstByCustomer[cust]) firstByCustomer[cust] = inv;\n}\n\n// Most-recent Closed Won deal close date per ERP\nconst wonDealByErp = {};\nfor (const deal of dealsData) {\n  const erp     = String(deal.properties?.erp_account_number || '').trim();\n  const closeMs = deal.properties?.closedate\n    ? new Date(deal.properties.closedate).getTime() : null;\n  if (!erp || !closeMs) continue;\n  if (!wonDealByErp[erp] || closeMs > wonDealByErp[erp]) wonDealByErp[erp] = closeMs;\n}\n\nconst toUpdate = [];\nfor (const hsCompany of currentBatch) {\n  const erpNum         = String(hsCompany.properties?.erp_account_number || '').trim();\n  const hsId           = hsCompany.id;\n  const previousStatus = hsCompany.properties?.ordering_status || null;\n  if (!erpNum || !hsId) continue;\n\n  const ytdSales = Math.round((ytdByCustomer[erpNum] || 0) * 100) / 100;\n\n  // \u2500\u2500 First Invoice Date \u2500\u2500\n  const currentFirstInvMs = hsCompany.properties?.first_invoice_date\n    ? Number(hsCompany.properties.first_invoice_date) : null;\n  const wonDealCloseMs = wonDealByErp[erpNum] || null;\n  let firstInvoiceDateMs = null;\n\n  if (wonDealCloseMs && currentFirstInvMs && wonDealCloseMs > currentFirstInvMs) {\n    // Re-onboarding: first invoice at/after the won deal close date\n    const afterDeal = (byCustomer[erpNum] || [])\n      .filter(i => new Date(i.postingDate + 'T00:00:00Z').getTime() >= wonDealCloseMs)\n      .sort((a, b) => new Date(a.postingDate) - new Date(b.postingDate));\n    if (afterDeal.length > 0) {\n      firstInvoiceDateMs = new Date(afterDeal[0].postingDate + 'T00:00:00Z').getTime();\n    }\n  } else if (!currentFirstInvMs) {\n    // Blank \u2014 set from oldest BC invoice\n    const firstInv = firstByCustomer[erpNum];\n    if (firstInv) {\n      firstInvoiceDateMs = new Date(firstInv.postingDate + 'T00:00:00Z').getTime();\n    }\n  }\n\n  // \u2500\u2500 Ordering Status \u2500\u2500\n  const invList = (byCustomer[erpNum] || []).slice(0, 10);\n  if (invList.length === 0) {\n    const props = { ordering_status: 'Not Ordered', actual_sales_ytd: ytdSales };\n    if ('Not Ordered' !== previousStatus) props.ordering_status_date_changed = null;\n    if (firstInvoiceDateMs !== null) props.first_invoice_date = firstInvoiceDateMs;\n    toUpdate.push({ id: hsId, properties: props });\n    continue;\n  }\n\n  const lastInvoiceDateMs = new Date(invList[0].postingDate + 'T00:00:00Z').getTime();\n\n  const avgOrderSize = Math.round(\n    (invList.reduce((s, i) => s + (Number(i.totalAmountIncludingTax) || 0), 0) / invList.length) * 100\n  ) / 100;\n\n  let avgDaysBetweenOrders = null;\n  const sortedAsc = [...invList].sort((a, b) => new Date(a.postingDate) - new Date(b.postingDate));\n  if (sortedAsc.length >= 2) {\n    const gaps = [];\n    for (let i = 1; i < sortedAsc.length; i++) {\n      gaps.push((new Date(sortedAsc[i].postingDate) - new Date(sortedAsc[i-1].postingDate)) / DAY);\n    }\n    avgDaysBetweenOrders = Math.round((gaps.reduce((s, g) => s + g, 0) / gaps.length) * 10) / 10;\n  }\n\n  let riskDayMs, lostDayMs;\n  if (avgDaysBetweenOrders !== null) {\n    const riskDays = Math.max(Math.round(avgDaysBetweenOrders * 2), 5);\n    const lostDays = Math.max(Math.round(avgDaysBetweenOrders * 3), 7);\n    riskDayMs = lastInvoiceDateMs + riskDays * DAY;\n    lostDayMs = lastInvoiceDateMs + lostDays * DAY;\n  } else {\n    riskDayMs = lastInvoiceDateMs + 14 * DAY;\n    lostDayMs = lastInvoiceDateMs + 28 * DAY;\n  }\n\n  let orderingStatus;\n  if      (todayMs >= lostDayMs) orderingStatus = 'Potentially Lost';\n  else if (todayMs >= riskDayMs) orderingStatus = 'Outside Ordering Pattern';\n  else                            orderingStatus = 'Actively Ordering';\n\n  let statusDateMs;\n  if      (orderingStatus === 'Potentially Lost')         statusDateMs = lostDayMs;\n  else if (orderingStatus === 'Outside Ordering Pattern') statusDateMs = riskDayMs;\n  else                                                    statusDateMs = lastInvoiceDateMs;\n\n  const props = {\n    last_invoice_date: lastInvoiceDateMs,\n    avg_order_size:    avgOrderSize,\n    ordering_status:   orderingStatus,\n    actual_sales_ytd:  ytdSales\n  };\n  if (avgDaysBetweenOrders !== null) props.avg_days_between_orders = avgDaysBetweenOrders;\n  if (orderingStatus !== previousStatus) props.ordering_status_date_changed = statusDateMs;\n  if (firstInvoiceDateMs !== null) props.first_invoice_date = firstInvoiceDateMs;\n\n  toUpdate.push({ id: hsId, properties: props });\n}\n\nreturn [{ json: { toUpdate, updateCount: toUpdate.length } }];"
+        "jsCode": "const invData   = $('Fetch Invoices for Batch').first().json.value || [];\nconst ytdData   = $('Fetch YTD Invoices').first().json.value || [];\nconst dealsData = $('Fetch Won Deals').first().json.results || [];\nconst store        = $getWorkflowStaticData('global');\nconst currentBatch = store.currentBatch || [];\n\nconst DAY = 24 * 60 * 60 * 1000;\nconst today = new Date();\ntoday.setUTCHours(0, 0, 0, 0);\nconst todayMs  = today.getTime();\nconst cutoffMs = new Date('2026-01-01T00:00:00Z').getTime();\n\n// Last-invoice map (desc from BC)\nconst byCustomer = {};\nfor (const inv of invData) {\n  const cust = String(inv.customerNumber || '');\n  if (!byCustomer[cust]) byCustomer[cust] = [];\n  byCustomer[cust].push(inv);\n}\n\n// YTD totals\nconst ytdByCustomer = {};\nfor (const inv of ytdData) {\n  const cust = String(inv.customerNumber || '');\n  ytdByCustomer[cust] = (ytdByCustomer[cust] || 0) + (Number(inv.totalAmountIncludingTax) || 0);\n}\n\n// Most-recent Closed Won deal close date per ERP (only those >= 2026-01-01)\nconst wonDealByErp = {};\nfor (const deal of dealsData) {\n  const erp     = String(deal.properties?.erp_account_number || '').trim();\n  const closeMs = deal.properties?.closedate\n    ? new Date(deal.properties.closedate).getTime() : null;\n  if (!erp || !closeMs || closeMs < cutoffMs) continue;\n  if (!wonDealByErp[erp] || closeMs > wonDealByErp[erp]) wonDealByErp[erp] = closeMs;\n}\n\nconst toUpdate = [];\nfor (const hsCompany of currentBatch) {\n  const erpNum         = String(hsCompany.properties?.erp_account_number || '').trim();\n  const hsId           = hsCompany.id;\n  const previousStatus = hsCompany.properties?.ordering_status || null;\n  if (!erpNum || !hsId) continue;\n\n  const ytdSales = Math.round((ytdByCustomer[erpNum] || 0) * 100) / 100;\n\n  // \u2500\u2500 First Invoice Date \u2500\u2500\n  const currentFirstInvMs = hsCompany.properties?.first_invoice_date\n    ? Number(hsCompany.properties.first_invoice_date) : null;\n  const wonDealCloseMs = wonDealByErp[erpNum] || null;\n\n  let firstInvoiceDateMs = null;\n  const shouldUpdate = wonDealCloseMs !== null\n    && (currentFirstInvMs === null || wonDealCloseMs > currentFirstInvMs);\n\n  if (shouldUpdate) {\n    // Find first invoice at/after the won deal close date\n    const afterDeal = (byCustomer[erpNum] || [])\n      .filter(i => new Date(i.postingDate + 'T00:00:00Z').getTime() >= wonDealCloseMs)\n      .sort((a, b) => new Date(a.postingDate) - new Date(b.postingDate));\n    if (afterDeal.length > 0) {\n      firstInvoiceDateMs = new Date(afterDeal[0].postingDate + 'T00:00:00Z').getTime();\n    }\n  }\n\n  // \u2500\u2500 Ordering Status \u2500\u2500\n  const invList = (byCustomer[erpNum] || []).slice(0, 10);\n  if (invList.length === 0) {\n    const props = { ordering_status: 'Not Ordered', actual_sales_ytd: ytdSales };\n    if ('Not Ordered' !== previousStatus) props.ordering_status_date_changed = null;\n    if (firstInvoiceDateMs !== null) props.first_invoice_date = firstInvoiceDateMs;\n    toUpdate.push({ id: hsId, properties: props });\n    continue;\n  }\n\n  const lastInvoiceDateMs = new Date(invList[0].postingDate + 'T00:00:00Z').getTime();\n\n  const avgOrderSize = Math.round(\n    (invList.reduce((s, i) => s + (Number(i.totalAmountIncludingTax) || 0), 0) / invList.length) * 100\n  ) / 100;\n\n  let avgDaysBetweenOrders = null;\n  const sortedAsc = [...invList].sort((a, b) => new Date(a.postingDate) - new Date(b.postingDate));\n  if (sortedAsc.length >= 2) {\n    const gaps = [];\n    for (let i = 1; i < sortedAsc.length; i++) {\n      gaps.push((new Date(sortedAsc[i].postingDate) - new Date(sortedAsc[i-1].postingDate)) / DAY);\n    }\n    avgDaysBetweenOrders = Math.round((gaps.reduce((s, g) => s + g, 0) / gaps.length) * 10) / 10;\n  }\n\n  let riskDayMs, lostDayMs;\n  if (avgDaysBetweenOrders !== null) {\n    const riskDays = Math.max(Math.round(avgDaysBetweenOrders * 2), 5);\n    const lostDays = Math.max(Math.round(avgDaysBetweenOrders * 3), 7);\n    riskDayMs = lastInvoiceDateMs + riskDays * DAY;\n    lostDayMs = lastInvoiceDateMs + lostDays * DAY;\n  } else {\n    riskDayMs = lastInvoiceDateMs + 14 * DAY;\n    lostDayMs = lastInvoiceDateMs + 28 * DAY;\n  }\n\n  let orderingStatus;\n  if      (todayMs >= lostDayMs) orderingStatus = 'Potentially Lost';\n  else if (todayMs >= riskDayMs) orderingStatus = 'Outside Ordering Pattern';\n  else                            orderingStatus = 'Actively Ordering';\n\n  let statusDateMs;\n  if      (orderingStatus === 'Potentially Lost')         statusDateMs = lostDayMs;\n  else if (orderingStatus === 'Outside Ordering Pattern') statusDateMs = riskDayMs;\n  else                                                    statusDateMs = lastInvoiceDateMs;\n\n  const props = {\n    last_invoice_date: lastInvoiceDateMs,\n    avg_order_size:    avgOrderSize,\n    ordering_status:   orderingStatus,\n    actual_sales_ytd:  ytdSales\n  };\n  if (avgDaysBetweenOrders !== null) props.avg_days_between_orders = avgDaysBetweenOrders;\n  if (orderingStatus !== previousStatus) props.ordering_status_date_changed = statusDateMs;\n  if (firstInvoiceDateMs !== null) props.first_invoice_date = firstInvoiceDateMs;\n\n  toUpdate.push({ id: hsId, properties: props });\n}\n\nreturn [{ json: { toUpdate, updateCount: toUpdate.length } }];"
       },
       "id": "284888a5-4d3a-4e5f-9598-30f78ed7fedf",
       "name": "Calculate Metrics",
@@ -430,54 +430,6 @@
             {
               "name": "$select",
               "value": "customerNumber,postingDate,totalAmountIncludingTax"
-            }
-          ]
-        },
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Authorization",
-              "value": "=Bearer {{ $('Get BC Token').first().json.access_token }}"
-            },
-            {
-              "name": "Accept",
-              "value": "application/json"
-            }
-          ]
-        },
-        "options": {}
-      }
-    },
-    {
-      "id": "bf046535-7a25-463e-8297-96eae74710c1",
-      "name": "Fetch First Invoices for Batch",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4,
-      "position": [
-        3136,
-        128
-      ],
-      "parameters": {
-        "url": "=https://api.businesscentral.dynamics.com/v2.0/{{ $('Keys').first().json.Tenant_ID }}/production/api/v2.0/companies({{ $('Keys').first().json.Company_ID }})/salesInvoices",
-        "sendQuery": true,
-        "queryParameters": {
-          "parameters": [
-            {
-              "name": "$filter",
-              "value": "={{ $('Build Invoice Filter').first().json.invoiceFilter }}"
-            },
-            {
-              "name": "$select",
-              "value": "customerNumber,postingDate"
-            },
-            {
-              "name": "$orderby",
-              "value": "postingDate asc"
-            },
-            {
-              "name": "$top",
-              "value": "100"
             }
           ]
         },
@@ -747,17 +699,6 @@
       ]
     },
     "Fetch YTD Invoices": {
-      "main": [
-        [
-          {
-            "node": "Fetch First Invoices for Batch",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Fetch First Invoices for Batch": {
       "main": [
         [
           {
