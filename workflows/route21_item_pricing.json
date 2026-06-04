@@ -1,0 +1,233 @@
+{
+  "name": "Route 21 – BC Item Pricing",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 4 * * *"
+            }
+          ]
+        }
+      },
+      "id": "b2c3d4e5-0002-4002-8002-000000000001",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [0, -160]
+    },
+    {
+      "parameters": {},
+      "id": "b2c3d4e5-0002-4002-8002-000000000002",
+      "name": "When clicking 'Execute workflow'",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 40]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            { "id": "k1", "name": "Tenant_ID",  "value": "PASTE_YOUR_TENANT_ID_HERE",       "type": "string" },
+            { "id": "k2", "name": "client_ID",  "value": "PASTE_YOUR_CLIENT_ID_HERE",       "type": "string" },
+            { "id": "k3", "name": "Secret_ID",  "value": "PASTE_YOUR_BC_CLIENT_SECRET_HERE", "type": "string" },
+            { "id": "k4", "name": "Company_ID", "value": "PASTE_YOUR_BC_COMPANY_ID_HERE",   "type": "string" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b2c3d4e5-0002-4002-8002-000000000003",
+      "name": "Keys",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [224, -48]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://login.microsoftonline.com/{{ $json.Tenant_ID }}/oauth2/v2.0/token",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            { "name": "grant_type",    "value": "client_credentials" },
+            { "name": "client_id",     "value": "={{ $json.client_ID }}" },
+            { "name": "client_secret", "value": "={{ $json.Secret_ID }}" },
+            { "name": "scope",         "value": "https://api.businesscentral.dynamics.com/.default" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b2c3d4e5-0002-4002-8002-000000000004",
+      "name": "Get BC Token",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [448, -48]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.businesscentral.dynamics.com/v2.0/{{ $('Keys').first().json.Tenant_ID }}/Production/ODataV4/Company('Live-EB')/Customer",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "$select", "value": "No,Name,Shipping_Agent_Code" },
+            { "name": "$filter", "value": "Shipping_Agent_Code eq 'RT 21'" },
+            { "name": "$top",    "value": "5000" }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $('Get BC Token').first().json.access_token }}" }
+          ]
+        },
+        "options": { "timeout": 60000 }
+      },
+      "id": "b2c3d4e5-0002-4002-8002-000000000005",
+      "name": "Fetch RT 21 Customers",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [672, -48]
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.first().json.value || [];\nconst store = $getWorkflowStaticData('global');\nconst customerNos = rows.map(r => String(r.No).trim()).filter(Boolean);\nstore.rt21CustomerNos = customerNos;\nstore.rt21CustomerMap = {};\nfor (const r of rows) store.rt21CustomerMap[String(r.No).trim()] = r.Name || '';\nstore.allPricing = [];\nstore.pricingCursor = 0;\nreturn [{ json: { customerCount: customerNos.length, customerNos } }];"
+      },
+      "id": "b2c3d4e5-0002-4002-8002-000000000006",
+      "name": "Store RT 21 Customers",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [896, -48]
+    },
+    {
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst allNos = store.rt21CustomerNos || [];\nconst cursor = store.pricingCursor || 0;\nconst batchNos = allNos.slice(cursor, cursor + 15);\nif (batchNos.length === 0) return [{ json: { hasMore: 0, batchFilter: '', batchNos: [] } }];\nconst orParts = batchNos.map(no => `(Sales_Type eq 'Customer' and Sales_Code eq '${no.replace(/'/g, \"''\")}')`).join(' or ');\nreturn [{ json: { hasMore: 1, batchFilter: orParts, batchNos } }];"
+      },
+      "id": "b2c3d4e5-0002-4002-8002-000000000007",
+      "name": "Build Pricing Batch",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1120, -48]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.hasMore }}",
+              "rightValue": 0,
+              "operator": { "type": "number", "operation": "gt" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "b2c3d4e5-0002-4002-8002-000000000008",
+      "name": "Has More Customers?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1344, -48]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://login.microsoftonline.com/{{ $('Keys').first().json.Tenant_ID }}/oauth2/v2.0/token",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            { "name": "grant_type",    "value": "client_credentials" },
+            { "name": "client_id",     "value": "={{ $('Keys').first().json.client_ID }}" },
+            { "name": "client_secret", "value": "={{ $('Keys').first().json.Secret_ID }}" },
+            { "name": "scope",         "value": "https://api.businesscentral.dynamics.com/.default" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b2c3d4e5-0002-4002-8002-000000000009",
+      "name": "Refresh BC Token",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1568, -160]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.businesscentral.dynamics.com/v2.0/{{ $('Keys').first().json.Tenant_ID }}/Production/ODataV4/Company('Live-EB')/Sales_Price",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "$select",
+              "value": "Sales_Type,Sales_Code,Item_No,Item_Description,Unit_of_Measure_Code,Minimum_Quantity,Unit_Price,Starting_Date,Ending_Date,Currency_Code"
+            },
+            {
+              "name": "$filter",
+              "value": "={{ $('Build Pricing Batch').first().json.batchFilter }}"
+            },
+            {
+              "name": "$top",
+              "value": "5000"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $('Refresh BC Token').first().json.access_token }}" }
+          ]
+        },
+        "options": { "timeout": 60000 }
+      },
+      "id": "b2c3d4e5-0002-4002-8002-000000000010",
+      "name": "Fetch Sales Prices",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [1792, -160]
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.first().json.value || [];\nconst store = $getWorkflowStaticData('global');\nconst customerMap = store.rt21CustomerMap || {};\nconst enriched = rows.map(r => ({\n  customer_no:          r.Sales_Code,\n  customer_name:        customerMap[r.Sales_Code] || '',\n  item_no:              r.Item_No,\n  item_description:     r.Item_Description,\n  unit_of_measure:      r.Unit_of_Measure_Code,\n  minimum_quantity:     r.Minimum_Quantity,\n  unit_price:           r.Unit_Price,\n  currency_code:        r.Currency_Code || 'USD',\n  starting_date:        r.Starting_Date,\n  ending_date:          r.Ending_Date\n}));\nif (!store.allPricing) store.allPricing = [];\nstore.allPricing.push(...enriched);\nstore.pricingCursor = (store.pricingCursor || 0) + ($('Build Pricing Batch').first().json.batchNos || []).length;\nreturn [{ json: { batchRecords: enriched.length, totalSoFar: store.allPricing.length } }];"
+      },
+      "id": "b2c3d4e5-0002-4002-8002-000000000011",
+      "name": "Accumulate Pricing",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2016, -160]
+    },
+    {
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst allPricing = store.allPricing || [];\nif (allPricing.length === 0) {\n  return [{ json: { message: 'Route 21 Item Pricing complete - no records found', totalRecords: 0 } }];\n}\nconst byCustomer = {};\nfor (const p of allPricing) {\n  if (!byCustomer[p.customer_no]) byCustomer[p.customer_no] = { customer_no: p.customer_no, customer_name: p.customer_name, items: [] };\n  byCustomer[p.customer_no].items.push({\n    item_no:          p.item_no,\n    item_description: p.item_description,\n    unit_of_measure:  p.unit_of_measure,\n    min_qty:          p.minimum_quantity,\n    unit_price:       p.unit_price,\n    currency:         p.currency_code,\n    start_date:       p.starting_date,\n    end_date:         p.ending_date\n  });\n}\nstore.allPricing = [];\nstore.pricingCursor = 0;\nreturn Object.values(byCustomer).map(c => ({ json: c }));"
+      },
+      "id": "b2c3d4e5-0002-4002-8002-000000000012",
+      "name": "Summarize by Customer",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2240, 80]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger":                 { "main": [[{ "node": "Keys",                    "type": "main", "index": 0 }]] },
+    "When clicking 'Execute workflow'": { "main": [[{ "node": "Keys",                    "type": "main", "index": 0 }]] },
+    "Keys":                             { "main": [[{ "node": "Get BC Token",             "type": "main", "index": 0 }]] },
+    "Get BC Token":                     { "main": [[{ "node": "Fetch RT 21 Customers",    "type": "main", "index": 0 }]] },
+    "Fetch RT 21 Customers":            { "main": [[{ "node": "Store RT 21 Customers",    "type": "main", "index": 0 }]] },
+    "Store RT 21 Customers":            { "main": [[{ "node": "Build Pricing Batch",      "type": "main", "index": 0 }]] },
+    "Build Pricing Batch":              { "main": [[{ "node": "Has More Customers?",      "type": "main", "index": 0 }]] },
+    "Has More Customers?": {
+      "main": [
+        [{ "node": "Refresh BC Token",      "type": "main", "index": 0 }],
+        [{ "node": "Summarize by Customer", "type": "main", "index": 0 }]
+      ]
+    },
+    "Refresh BC Token":   { "main": [[{ "node": "Fetch Sales Prices",       "type": "main", "index": 0 }]] },
+    "Fetch Sales Prices": { "main": [[{ "node": "Accumulate Pricing",       "type": "main", "index": 0 }]] },
+    "Accumulate Pricing": { "main": [[{ "node": "Build Pricing Batch",      "type": "main", "index": 0 }]] }
+  },
+  "settings": {},
+  "staticData": null
+}
