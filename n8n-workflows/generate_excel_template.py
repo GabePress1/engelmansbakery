@@ -1,5 +1,5 @@
 import openpyxl
-from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side, numbers
 from openpyxl.utils import get_column_letter
 import os
 
@@ -15,64 +15,51 @@ thin_border = Border(
     bottom=Side(style="thin"),
 )
 
-# --- PricingData Sheet ---
-ws_pricing = wb.active
-ws_pricing.title = "PricingData"
+def style_header_row(ws, headers):
+    for col_idx, (header, width) in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col_idx, value=header)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = header_alignment
+        cell.border = thin_border
+        ws.column_dimensions[get_column_letter(col_idx)].width = width
+    ws.auto_filter.ref = f"A1:{get_column_letter(len(headers))}1"
+    ws.freeze_panes = "A2"
 
-pricing_headers = [
-    ("Item No.", 14),
+# --- InvoiceLines Sheet ---
+ws_inv = wb.active
+ws_inv.title = "InvoiceLines"
+ws_inv.sheet_properties.tabColor = "2F5496"
+
+invoice_headers = [
+    ("Item No", 14),
     ("Description", 35),
-    ("Category", 14),
-    ("Unit Cost", 14),
-    ("List Price", 14),
-    ("Sales Price", 14),
-    ("Sales Type", 18),
-    ("Sales Code", 16),
-    ("Min. Quantity", 14),
-    ("UOM", 10),
-    ("Price Start Date", 16),
-    ("Price End Date", 16),
-    ("Inventory", 12),
-    ("Blocked", 10),
-    ("Last Modified", 20),
-    ("Report Date", 14),
+    ("Invoice No", 16),
+    ("Customer No", 14),
+    ("Customer Name", 30),
+    ("Quantity", 12),
+    ("Unit Price", 14),
+    ("Amount", 14),
+    ("Sales Order No", 16),
+    ("PO Number", 16),
+    ("Posting Date", 14),
+    ("Requested Delivery", 18),
 ]
+style_header_row(ws_inv, invoice_headers)
 
-for col_idx, (header, width) in enumerate(pricing_headers, 1):
-    cell = ws_pricing.cell(row=1, column=col_idx, value=header)
-    cell.font = header_font
-    cell.fill = header_fill
-    cell.alignment = header_alignment
-    cell.border = thin_border
-    ws_pricing.column_dimensions[get_column_letter(col_idx)].width = width
+# --- OpenSalesOrders Sheet ---
+ws_so = wb.create_sheet("OpenSalesOrders")
+ws_so.sheet_properties.tabColor = "548235"
 
-ws_pricing.auto_filter.ref = f"A1:{get_column_letter(len(pricing_headers))}1"
-ws_pricing.freeze_panes = "A2"
-ws_pricing.sheet_properties.tabColor = "2F5496"
-
-# --- DailyLog Sheet ---
-ws_log = wb.create_sheet("DailyLog")
-
-log_headers = [
-    ("Report Date", 16),
-    ("Total Rows", 12),
-    ("Unique Items", 14),
-    ("Avg List Price", 16),
-    ("Blocked Items", 14),
+so_headers = [
+    ("Order No", 14),
+    ("Customer No", 14),
+    ("Customer Name", 30),
+    ("PO Number", 16),
     ("Status", 12),
+    ("Requested Delivery", 18),
 ]
-
-for col_idx, (header, width) in enumerate(log_headers, 1):
-    cell = ws_log.cell(row=1, column=col_idx, value=header)
-    cell.font = header_font
-    cell.fill = header_fill
-    cell.alignment = header_alignment
-    cell.border = thin_border
-    ws_log.column_dimensions[get_column_letter(col_idx)].width = width
-
-ws_log.auto_filter.ref = f"A1:{get_column_letter(len(log_headers))}1"
-ws_log.freeze_panes = "A2"
-ws_log.sheet_properties.tabColor = "548235"
+style_header_row(ws_so, so_headers)
 
 output_path = os.path.join(os.path.dirname(__file__), "Route21_Pricing_Report.xlsx")
 wb.save(output_path)

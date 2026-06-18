@@ -1,119 +1,100 @@
-# BC - Hub Route 21 Pricing to Excel (Daily) — Setup Guide
+# Route 21 – BC Item Pricing → Excel (Daily) — Setup Guide
 
-## Overview
+## What This Workflow Does
 
-This n8n workflow pulls Route 21 pricing data from Business Central daily at 6 AM and writes it to an Excel workbook on SharePoint/OneDrive.
+Runs daily at 6 AM. Pulls item pricing and order data from Business Central (same BC instance and credentials as your existing "Route 21 – BC Item Pricing This Year" workflow) and writes it to an Excel file on SharePoint/OneDrive.
 
-### Workflow Flow
+### Flow
 
 ```
-Daily 6AM Trigger
-  → BC - Get Route 21 Items (HTTP Request to BC OData API)
-  → Extract Item Data (Code node — normalizes the response)
-  → BC - Get Sales Prices (HTTP Request — fetches active prices per item)
-  → Merge Item + Pricing Data (Code node — combines items + prices)
-  → Clear Old PricingData Sheet (deletes stale sheet, continues on fail)
-  → Create Fresh PricingData Sheet
-  → Write Pricing to Excel (appends all rows to PricingData sheet)
-  → Build Summary Row (Code node — counts, averages)
-  → Append to DailyLog Sheet (running log of each daily refresh)
+Schedule Trigger (6 AM daily) or Manual Trigger
+  → Keys (BC + Azure AD credentials — same as your existing workflow)
+  ├→ Get BC Token (BC OData API auth)
+  │   → Set Date Range (Jan 1 this year → today)
+  │     ├→ Fetch All Invoice Lines (YTD)  ─┐
+  │     ├→ Fetch All Invoice Headers (YTD) ─┤→ Build Invoice Rows
+  │     └→ Fetch Open Sales Orders ────────→ Build Sales Order Rows
+  └→ Get Graph Token (Microsoft Graph auth for SharePoint)
+      → Configure SharePoint IDs
+
+  Build Invoice Rows → Clear InvoiceLines Sheet → Write Invoice Rows to Excel ─┐
+  Build Sales Order Rows → Clear SalesOrders Sheet → Write SO Rows to Excel ───┤→ Summary
 ```
 
-### Excel Workbook Sheets
+### Excel Sheets
 
-| Sheet | Purpose |
-|---|---|
-| **PricingData** | Replaced daily with full Route 21 pricing snapshot |
-| **DailyLog** | Append-only log — one row per day with summary stats |
-
-### Columns Written to PricingData
-
-| Column | Source |
-|---|---|
-| Item No. | BC Item number |
-| Description | BC Item displayName |
-| Category | itemCategoryCode |
-| Unit Cost | Item card unit cost |
-| List Price | Item card unit price |
-| Sales Price | From Sales Prices table (if any) |
-| Sales Type | Customer / Customer Price Group / All Customers |
-| Sales Code | The specific customer or group code |
-| Min. Quantity | Minimum quantity for this price |
-| UOM | Unit of measure code |
-| Price Start Date | When this price became active |
-| Price End Date | When this price expires (blank = no end) |
-| Inventory | Current inventory level |
-| Blocked | Yes / No |
-| Last Modified | Last modification timestamp |
-| Report Date | Date the report was generated |
-
----
-
-## Setup Steps
-
-### 1. Import the Workflow
-
-1. Open your n8n instance
-2. Go to **Workflows → Import from File**
-3. Select `BC_Hub_Route21_Pricing_to_Excel.json`
-
-### 2. Create the Excel Workbook on SharePoint
-
-1. Upload `Route21_Pricing_Report.xlsx` (included in this repo) to your SharePoint document library
-2. Note the **workbook ID** — you can find it via Microsoft Graph Explorer:
-   ```
-   GET https://graph.microsoft.com/v1.0/sites/{site-id}/drive/root:/Route21_Pricing_Report.xlsx
-   ```
-   The `id` field in the response is your workbook ID.
-
-### 3. Set Environment Variables in n8n
-
-Go to **Settings → Environment Variables** in n8n and add:
-
-| Variable | Value | Example |
+| Sheet | Refreshed | Contents |
 |---|---|---|
-| `BC_BASE_URL` | Your Business Central API base URL | `https://api.businesscentral.dynamics.com/v2.0/{tenant-id}/{environment}` |
-| `BC_COMPANY_ID` | Your BC company GUID | `a1b2c3d4-e5f6-7890-abcd-ef1234567890` |
-| `SHAREPOINT_WORKBOOK_ID` | The SharePoint file ID for the Excel workbook | `01ABCDEF...` |
+| **InvoiceLines** | Replaced daily | All posted invoice line items YTD |
+| **OpenSalesOrders** | Replaced daily | Current open/released sales orders |
 
-### 4. Configure Credentials
+### InvoiceLines Columns
 
-#### Business Central OAuth2
-1. In n8n, go to **Credentials → New → Microsoft Dynamics 365 Business Central OAuth2 API**
-2. Enter your Azure AD App Registration details:
-   - Client ID
-   - Client Secret
-   - Tenant ID
-3. Set the required API permissions: `Financials.ReadWrite.All` or `API.ReadWrite.All`
-4. Update the credential ID in nodes **"BC - Get Route 21 Items"** and **"BC - Get Sales Prices"**
+| Column | BC Source |
+|---|---|
+| Item No | `Posted_Sales_Invoice_Lines_Excel.No` |
+| Description | `Posted_Sales_Invoice_Lines_Excel.Description` |
+| Invoice No | `Posted_Sales_Invoice_Lines_Excel.Document_No` |
+| Customer No | `Sell_to_Customer_No` |
+| Customer Name | `Sell_to_Customer_Name` |
+| Quantity | `Quantity` |
+| Unit Price | `Unit_Price` |
+| Amount | `Amount` |
+| Sales Order No | `Order_No` |
+| PO Number | `Posted_Sales_Invoice_Excel.External_Document_No` |
+| Posting Date | `ERC_Posting_Date` |
+| Requested Delivery | `Requested_Delivery_Date_SOD` |
 
-#### Microsoft Excel OAuth2
-1. In n8n, go to **Credentials → New → Microsoft Excel OAuth2 API**
-2. Use the same or a separate Azure AD App Registration
-3. Required permissions: `Files.ReadWrite.All`, `Sites.ReadWrite.All`
-4. Update the credential ID in all Excel nodes
+### OpenSalesOrders Columns
 
-### 5. Adjust the Item Filter (if needed)
-
-The default filter pulls items where `itemCategoryCode eq 'ROUTE21'`. If your BC uses a different category code or filtering field for Route 21 items, update the URL in the **"BC - Get Route 21 Items"** node.
-
-Common alternatives:
-- Filter by location: `locationCode eq 'ROUTE21'`
-- Filter by dimension: requires a different API endpoint
-- Filter by item attribute: use `/itemAttributes` endpoint
-
-### 6. Activate the Workflow
-
-Toggle the workflow to **Active**. It will run daily at 6:00 AM (server time). You can also click **Execute Workflow** to test manually.
+| Column | BC Source |
+|---|---|
+| Order No | `Sales_Order_Excel.No` |
+| Customer No | `Sell_to_Customer_No` |
+| Customer Name | `Sell_to_Customer_Name` |
+| PO Number | `External_Document_No` |
+| Status | `Status` (Open / Released) |
+| Requested Delivery | `Requested_Delivery_Date` |
 
 ---
 
-## Troubleshooting
+## Setup
 
-| Issue | Fix |
-|---|---|
-| 401 Unauthorized from BC | Re-authorize the BC OAuth2 credential; check token hasn't expired |
-| Empty data returned | Verify the item category filter matches your BC setup |
-| Excel write fails | Confirm the workbook ID is correct and the credential has Files.ReadWrite.All |
-| "Sheet not found" on first run | The workflow handles this — `Clear Old PricingData Sheet` has `continueOnFail: true` |
-| Pagination not working | BC defaults to 100 records; the `Prefer: odata.maxpagesize=1000` header increases this |
+### 1. Add Graph API Permission to Your Azure AD App
+
+Your existing app registration (`db88be9e-de13-4205-b0c1-472007c60c36`) already has BC permissions. Add:
+
+- **Microsoft Graph → Application permissions → Files.ReadWrite.All**
+- Grant admin consent
+
+This lets the workflow write to SharePoint Excel files using client credentials.
+
+### 2. Upload the Excel Template to SharePoint
+
+1. Upload `Route21_Pricing_Report.xlsx` to your SharePoint document library
+2. Get the IDs you need via [Graph Explorer](https://developer.microsoft.com/en-us/graph/graph-explorer):
+
+```
+# Find your site ID
+GET https://graph.microsoft.com/v1.0/sites/{your-sharepoint-host}:/sites/{site-name}
+
+# List drives (document libraries)
+GET https://graph.microsoft.com/v1.0/sites/{site-id}/drives
+
+# Find the file item ID
+GET https://graph.microsoft.com/v1.0/drives/{drive-id}/root/children
+```
+
+### 3. Configure the Workflow
+
+Open the **"Configure SharePoint IDs"** node and replace the three placeholder values:
+
+```javascript
+const SHAREPOINT_SITE_ID = 'YOUR_SHAREPOINT_SITE_ID';     // from step 2
+const DRIVE_ID           = 'YOUR_DRIVE_ID';                // from step 2
+const EXCEL_FILE_ITEM_ID = 'YOUR_EXCEL_FILE_ITEM_ID';      // from step 2
+```
+
+### 4. Activate
+
+Toggle the workflow to **Active**. Test with the manual trigger first.
