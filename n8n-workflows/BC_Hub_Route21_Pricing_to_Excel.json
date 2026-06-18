@@ -1,0 +1,369 @@
+{
+  "name": "BC - Hub Route 21 Pricing to Excel (Daily)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 6 * * *"
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Daily 6AM Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{$env.BC_BASE_URL}}/api/v2.0/companies({{$env.BC_COMPANY_ID}})/items?$filter=itemCategoryCode eq 'ROUTE21' and lastModifiedDateTime ge {{$today.toISOString().split('T')[0]}}T00:00:00Z&$select=number,displayName,unitPrice,unitCost,lastModifiedDateTime,itemCategoryCode,inventory,blocked",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftDynamics365BusinessCentralOAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "odata.maxpagesize=1000"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          },
+          "pagination": {
+            "pagination": {
+              "paginationMode": "responseContainsNextURL",
+              "nextURL": "={{$response.body['@odata.nextLink']}}",
+              "paginationCompleteWhen": "receiveSpecificStatusCodes",
+              "statusCodesWhenComplete": "204"
+            }
+          }
+        }
+      },
+      "id": "bc-get-items",
+      "name": "BC - Get Route 21 Items",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [250, 0],
+      "credentials": {
+        "microsoftDynamics365BusinessCentralOAuth2Api": {
+          "id": "YOUR_BC_CREDENTIAL_ID",
+          "name": "Business Central OAuth2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{$env.BC_BASE_URL}}/api/v2.0/companies({{$env.BC_COMPANY_ID}})/salesPrices?$filter=itemNumber eq '{{$json.number}}' and startingDate le {{new Date().toISOString().split('T')[0]}} and (endingDate ge {{new Date().toISOString().split('T')[0]}} or endingDate eq '0001-01-01')&$select=itemNumber,salesType,salesCode,unitPrice,startingDate,endingDate,minimumQuantity,unitOfMeasureCode",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftDynamics365BusinessCentralOAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "bc-get-prices",
+      "name": "BC - Get Sales Prices",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [750, 0],
+      "credentials": {
+        "microsoftDynamics365BusinessCentralOAuth2Api": {
+          "id": "YOUR_BC_CREDENTIAL_ID",
+          "name": "Business Central OAuth2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.first().json.value || $input.first().json;\nconst output = [];\n\nfor (const item of (Array.isArray(items) ? items : [items])) {\n  output.push({\n    json: {\n      itemNumber: item.number,\n      displayName: item.displayName,\n      unitPrice: item.unitPrice,\n      unitCost: item.unitCost,\n      itemCategory: item.itemCategoryCode,\n      inventory: item.inventory,\n      blocked: item.blocked,\n      lastModified: item.lastModifiedDateTime\n    }\n  });\n}\n\nreturn output;"
+      },
+      "id": "extract-items",
+      "name": "Extract Item Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [500, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $('Extract Item Data').item.json;\nconst pricesRaw = $input.first().json.value || $input.first().json;\nconst prices = Array.isArray(pricesRaw) ? pricesRaw : [pricesRaw];\n\nconst today = new Date().toISOString().split('T')[0];\n\nif (!prices || prices.length === 0 || !prices[0].itemNumber) {\n  return [{\n    json: {\n      'Item No.': item.itemNumber,\n      'Description': item.displayName,\n      'Category': item.itemCategory,\n      'Unit Cost': item.unitCost,\n      'List Price': item.unitPrice,\n      'Sales Price': '',\n      'Sales Type': '',\n      'Sales Code': '',\n      'Min. Quantity': '',\n      'UOM': '',\n      'Price Start Date': '',\n      'Price End Date': '',\n      'Inventory': item.inventory,\n      'Blocked': item.blocked ? 'Yes' : 'No',\n      'Last Modified': item.lastModified,\n      'Report Date': today\n    }\n  }];\n}\n\nconst output = [];\nfor (const price of prices) {\n  output.push({\n    json: {\n      'Item No.': item.itemNumber,\n      'Description': item.displayName,\n      'Category': item.itemCategory,\n      'Unit Cost': item.unitCost,\n      'List Price': item.unitPrice,\n      'Sales Price': price.unitPrice,\n      'Sales Type': price.salesType,\n      'Sales Code': price.salesCode,\n      'Min. Quantity': price.minimumQuantity,\n      'UOM': price.unitOfMeasureCode,\n      'Price Start Date': price.startingDate,\n      'Price End Date': price.endingDate === '0001-01-01' ? '' : price.endingDate,\n      'Inventory': item.inventory,\n      'Blocked': item.blocked ? 'Yes' : 'No',\n      'Last Modified': item.lastModified,\n      'Report Date': today\n    }\n  });\n}\n\nreturn output;"
+      },
+      "id": "merge-pricing",
+      "name": "Merge Item + Pricing Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1000, 0]
+    },
+    {
+      "parameters": {
+        "operation": "deleteWorksheet",
+        "workbook": {
+          "__rl": true,
+          "value": "={{$env.SHAREPOINT_WORKBOOK_ID}}",
+          "mode": "id"
+        },
+        "worksheet": {
+          "__rl": true,
+          "value": "PricingData",
+          "mode": "name"
+        }
+      },
+      "id": "clear-old-sheet",
+      "name": "Clear Old PricingData Sheet",
+      "type": "n8n-nodes-base.microsoftExcel",
+      "typeVersion": 2,
+      "position": [1250, -150],
+      "credentials": {
+        "microsoftExcelOAuth2Api": {
+          "id": "YOUR_EXCEL_CREDENTIAL_ID",
+          "name": "Microsoft Excel OAuth2"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "operation": "addWorksheet",
+        "workbook": {
+          "__rl": true,
+          "value": "={{$env.SHAREPOINT_WORKBOOK_ID}}",
+          "mode": "id"
+        },
+        "additionalFields": {
+          "name": "PricingData"
+        }
+      },
+      "id": "create-new-sheet",
+      "name": "Create Fresh PricingData Sheet",
+      "type": "n8n-nodes-base.microsoftExcel",
+      "typeVersion": 2,
+      "position": [1500, -150],
+      "credentials": {
+        "microsoftExcelOAuth2Api": {
+          "id": "YOUR_EXCEL_CREDENTIAL_ID",
+          "name": "Microsoft Excel OAuth2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "workbook": {
+          "__rl": true,
+          "value": "={{$env.SHAREPOINT_WORKBOOK_ID}}",
+          "mode": "id"
+        },
+        "worksheet": {
+          "__rl": true,
+          "value": "PricingData",
+          "mode": "name"
+        },
+        "dataMode": "autoMapInputData",
+        "options": {}
+      },
+      "id": "write-to-excel",
+      "name": "Write Pricing to Excel",
+      "type": "n8n-nodes-base.microsoftExcel",
+      "typeVersion": 2,
+      "position": [1750, 0],
+      "credentials": {
+        "microsoftExcelOAuth2Api": {
+          "id": "YOUR_EXCEL_CREDENTIAL_ID",
+          "name": "Microsoft Excel OAuth2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $('Merge Item + Pricing Data').all();\n\nconst summary = {\n  totalItems: items.length,\n  uniqueItems: [...new Set(items.map(i => i.json['Item No.']))].length,\n  reportDate: new Date().toISOString().split('T')[0],\n  avgListPrice: items.length > 0 ? (items.reduce((sum, i) => sum + (parseFloat(i.json['List Price']) || 0), 0) / items.length).toFixed(2) : 0,\n  blockedItems: items.filter(i => i.json['Blocked'] === 'Yes').length\n};\n\nreturn [{\n  json: {\n    'Report Date': summary.reportDate,\n    'Total Rows': summary.totalItems,\n    'Unique Items': summary.uniqueItems,\n    'Avg List Price': summary.avgListPrice,\n    'Blocked Items': summary.blockedItems,\n    'Status': 'Updated'\n  }\n}];"
+      },
+      "id": "build-summary",
+      "name": "Build Summary Row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2000, -150]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "workbook": {
+          "__rl": true,
+          "value": "={{$env.SHAREPOINT_WORKBOOK_ID}}",
+          "mode": "id"
+        },
+        "worksheet": {
+          "__rl": true,
+          "value": "DailyLog",
+          "mode": "name"
+        },
+        "dataMode": "autoMapInputData",
+        "options": {}
+      },
+      "id": "write-summary",
+      "name": "Append to DailyLog Sheet",
+      "type": "n8n-nodes-base.microsoftExcel",
+      "typeVersion": 2,
+      "position": [2250, -150],
+      "credentials": {
+        "microsoftExcelOAuth2Api": {
+          "id": "YOUR_EXCEL_CREDENTIAL_ID",
+          "name": "Microsoft Excel OAuth2"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Daily 6AM Trigger": {
+      "main": [
+        [
+          {
+            "node": "BC - Get Route 21 Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BC - Get Route 21 Items": {
+      "main": [
+        [
+          {
+            "node": "Extract Item Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Item Data": {
+      "main": [
+        [
+          {
+            "node": "BC - Get Sales Prices",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BC - Get Sales Prices": {
+      "main": [
+        [
+          {
+            "node": "Merge Item + Pricing Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Item + Pricing Data": {
+      "main": [
+        [
+          {
+            "node": "Clear Old PricingData Sheet",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Write Pricing to Excel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clear Old PricingData Sheet": {
+      "main": [
+        [
+          {
+            "node": "Create Fresh PricingData Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Fresh PricingData Sheet": {
+      "main": [
+        [
+          {
+            "node": "Write Pricing to Excel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write Pricing to Excel": {
+      "main": [
+        [
+          {
+            "node": "Build Summary Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Summary Row": {
+      "main": [
+        [
+          {
+            "node": "Append to DailyLog Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "Business Central"
+    },
+    {
+      "name": "Route 21"
+    },
+    {
+      "name": "Pricing"
+    },
+    {
+      "name": "Daily Report"
+    }
+  ],
+  "pinData": {}
+}
