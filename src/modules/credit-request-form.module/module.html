@@ -1,0 +1,99 @@
+<div class="cr-form-wrapper"
+     id="credit-request-module"
+     data-webhook-url="{{ module.webhook_url }}"
+     data-items-endpoint="{{ module.items_endpoint_url }}">
+
+  <h2 class="cr-form__title">{{ module.form_title }}</h2>
+
+  <form id="credit-request-form" novalidate>
+
+    <!-- Section 1: Account Information -->
+    <fieldset class="cr-form__section">
+      <legend>Account Information</legend>
+      <div class="cr-form__row">
+        <div class="cr-form__field">
+          <label for="cr-account-number">Account # <span class="cr-required">*</span></label>
+          <input type="text" id="cr-account-number" name="accountNumber" required
+                 placeholder="Enter ERP Account Number">
+          <span class="cr-form__error" data-error="accountNumber"></span>
+        </div>
+        <div class="cr-form__field">
+          <label for="cr-account-name">Account Name</label>
+          <input type="text" id="cr-account-name" name="accountName"
+                 placeholder="Enter Account Name">
+        </div>
+      </div>
+    </fieldset>
+
+    <!-- Section 2: Contact Information -->
+    <fieldset class="cr-form__section">
+      <legend>Contact Information</legend>
+      <div class="cr-form__row">
+        <div class="cr-form__field">
+          <label for="cr-first-name">First Name <span class="cr-required">*</span></label>
+          <input type="text" id="cr-first-name" name="firstName" required
+                 placeholder="First Name">
+          <span class="cr-form__error" data-error="firstName"></span>
+        </div>
+        <div class="cr-form__field">
+          <label for="cr-last-name">Last Name <span class="cr-required">*</span></label>
+          <input type="text" id="cr-last-name" name="lastName" required
+                 placeholder="Last Name">
+          <span class="cr-form__error" data-error="lastName"></span>
+        </div>
+      </div>
+      <div class="cr-form__row cr-form__row--single">
+        <div class="cr-form__field">
+          <label for="cr-email">Email <span class="cr-required">*</span></label>
+          <input type="email" id="cr-email" name="email" required
+                 placeholder="email@example.com">
+          <span class="cr-form__error" data-error="email"></span>
+        </div>
+      </div>
+    </fieldset>
+
+    <!-- Section 3: Product Lines -->
+    <fieldset class="cr-form__section cr-form__section--products">
+      <legend>Product Lines</legend>
+      <div id="cr-product-lines">
+        <!-- Product lines rendered by module.js -->
+      </div>
+      <div class="cr-form__product-actions">
+        <button type="button" id="cr-add-product" class="cr-btn cr-btn--secondary">
+          + Add Product Line
+        </button>
+        <span id="cr-product-count" class="cr-form__product-count">1 of 10</span>
+      </div>
+    </fieldset>
+
+    <!-- Section 4: Overall Notes -->
+    <fieldset class="cr-form__section">
+      <legend>Additional Notes</legend>
+      <div class="cr-form__field">
+        <label for="cr-ticket-notes">Reason / Notes</label>
+        <textarea id="cr-ticket-notes" name="ticketNotes" rows="4"
+                  placeholder="Optional notes for the overall credit request"></textarea>
+      </div>
+    </fieldset>
+
+    <!-- Submit -->
+    <div class="cr-form__actions">
+      <button type="submit" id="cr-submit" class="cr-btn cr-btn--primary">
+        Submit Credit Request
+      </button>
+      <div id="cr-loading" class="cr-form__loading" style="display:none;">
+        <span class="cr-spinner"></span> Submitting...
+      </div>
+    </div>
+
+  </form>
+
+  <!-- Feedback Messages -->
+  <div id="cr-success" class="cr-form__message cr-form__message--success" style="display:none;">
+    {{ module.success_message }}
+  </div>
+  <div id="cr-error" class="cr-form__message cr-form__message--error" style="display:none;">
+    {{ module.error_message }}
+  </div>
+
+</div>

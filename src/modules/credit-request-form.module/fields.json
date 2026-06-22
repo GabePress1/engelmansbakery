@@ -1,0 +1,42 @@
+[
+  {
+    "name": "form_title",
+    "label": "Form Title",
+    "type": "text",
+    "default": "Credit Request Form",
+    "required": false,
+    "help_text": "The heading displayed above the form."
+  },
+  {
+    "name": "webhook_url",
+    "label": "Webhook URL",
+    "type": "text",
+    "default": "",
+    "required": true,
+    "help_text": "The full URL of the n8n webhook endpoint that processes credit request submissions."
+  },
+  {
+    "name": "items_endpoint_url",
+    "label": "Items Endpoint URL",
+    "type": "text",
+    "default": "",
+    "required": true,
+    "help_text": "The full URL of the n8n endpoint that returns active F* items from Business Central."
+  },
+  {
+    "name": "success_message",
+    "label": "Success Message",
+    "type": "text",
+    "default": "Your credit request has been submitted successfully.",
+    "required": false,
+    "help_text": "Message displayed after a successful form submission."
+  },
+  {
+    "name": "error_message",
+    "label": "Error Message",
+    "type": "text",
+    "default": "There was an error submitting your request. Please try again.",
+    "required": false,
+    "help_text": "Message displayed when form submission fails."
+  }
+]

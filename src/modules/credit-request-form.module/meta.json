@@ -1,0 +1,18 @@
+{
+  "label": "Credit Request Form",
+  "css_assets": [],
+  "external_js": [],
+  "global": false,
+  "help_text": "A credit request form that submits to an n8n webhook and pulls product data from Business Central via n8n proxy.",
+  "host_template_types": ["PAGE"],
+  "icon": "",
+  "is_available_for_new_content": true,
+  "js_assets": [],
+  "other_assets": [],
+  "smart_type": "NOT_SMART",
+  "content_tags": [
+    { "name": "FORM", "source": "USER" },
+    { "name": "CREDIT_REQUEST", "source": "USER" }
+  ],
+  "categories": ["forms"]
+}
