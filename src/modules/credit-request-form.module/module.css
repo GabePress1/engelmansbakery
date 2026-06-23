@@ -92,6 +92,10 @@
   transition: border-color 0.2s;
 }
 
+.cr-form__field textarea {
+  resize: vertical;
+}
+
 .cr-form__field input:focus,
 .cr-form__field select:focus,
 .cr-form__field textarea:focus {
