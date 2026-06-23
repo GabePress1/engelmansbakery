@@ -57,9 +57,10 @@
       </div>
       <div class="cr-form__row cr-form__row--single">
         <div class="cr-form__field">
-          <label for="cr-invoice-number">Invoice Number</label>
-          <input type="text" id="cr-invoice-number" name="invoiceNumber"
-                 placeholder="Enter Invoice Number (optional)">
+          <label for="cr-invoice-number">Invoice Number <span class="cr-required">*</span></label>
+          <input type="text" id="cr-invoice-number" name="invoiceNumber" required
+                 placeholder="Enter Invoice Number">
+          <span class="cr-form__error" data-error="invoiceNumber"></span>
         </div>
       </div>
     </fieldset>

@@ -1,27 +1,16 @@
 (function () {
   var ISSUE_CLASSIFICATIONS = [
-    "Baking (Color, Time, Temp)",
     "Damaged",
-    "Delivery",
-    "Foreign Material",
-    "Mixing",
-    "Molding",
-    "On Route",
-    "Packaging",
-    "Proofing",
-    "Sesame",
-    "Shaping",
+    "Moldy",
+    "Allergen/Food Safety",
+    "Stale",
     "Shelf Life",
     "Shortage",
-    "Size (Weight, Length, Width)",
-    "Slicing",
-    "Topping (Seed, Glaze)",
-    "Trays",
-    "3rd Party Bread",
-    "3rd Party Pastry",
-    "FIFO Issue / Rotation Issue",
-    "Other",
-    "Allergen"
+    "Incorrect Price",
+    "Wrong Substitution",
+    "Mispick",
+    "Wrong Specification",
+    "Order Error"
   ];
 
   var MAX_LINES = 10;
@@ -145,6 +134,11 @@
           '<div class="cr-form__field">' +
             "<label>Reason / Notes</label>" +
             '<textarea class="cr-product-notes" rows="2" placeholder="Optional notes for this line"></textarea>' +
+          "</div>" +
+          '<div class="cr-form__field cr-form__field--full">' +
+            '<label>Photos / Attachments <span class="cr-required">*</span></label>' +
+            '<input type="file" class="cr-product-photos" multiple accept="image/*,.pdf" required>' +
+            '<span class="cr-form__error" data-error="photos"></span>' +
           "</div>" +
         "</div>" +
       "</div>"
@@ -273,6 +267,11 @@
       markError(accountNum, "Account number is required.");
     }
 
+    var invoiceNum = document.getElementById("cr-invoice-number");
+    if (!invoiceNum.value.trim()) {
+      markError(invoiceNum, "Invoice number is required.");
+    }
+
     var firstName = document.getElementById("cr-first-name");
     if (!firstName.value.trim()) {
       markError(firstName, "First name is required.");
@@ -316,6 +315,11 @@
       if (!classification.value) {
         markError(classification, "Select a classification.");
       }
+
+      var photos = line.querySelector(".cr-product-photos");
+      if (!photos.files || photos.files.length === 0) {
+        markError(photos, "At least one photo is required.");
+      }
     }
 
     if (firstError) {
@@ -339,6 +343,11 @@
       totalCredit += creditAmt;
 
       var searchInput = line.querySelector(".cr-product-search");
+      var photoFiles = line.querySelector(".cr-product-photos").files;
+      var photoNames = [];
+      for (var f = 0; f < photoFiles.length; f++) {
+        photoNames.push(photoFiles[f].name);
+      }
       productLines.push({
         lineNumber: i + 1,
         productNumber: searchInput.getAttribute("data-product-number") || "",
@@ -346,7 +355,8 @@
         quantity: parseInt(line.querySelector(".cr-product-qty").value, 10) || 0,
         creditAmount: creditAmt,
         issueClassification: line.querySelector(".cr-product-classification").value,
-        notes: line.querySelector(".cr-product-notes").value.trim()
+        notes: line.querySelector(".cr-product-notes").value.trim(),
+        photoFileNames: photoNames
       });
     }
 
@@ -391,10 +401,20 @@
 
     var payload = buildPayload();
 
+    var formData = new FormData();
+    formData.append("data", JSON.stringify(payload));
+
+    var allLines = productContainer.querySelectorAll(".cr-product-line");
+    for (var li = 0; li < allLines.length; li++) {
+      var fileInput = allLines[li].querySelector(".cr-product-photos");
+      for (var fi = 0; fi < fileInput.files.length; fi++) {
+        formData.append("photos_line_" + (li + 1), fileInput.files[fi]);
+      }
+    }
+
     fetch(webhookUrl, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
+      body: formData
     })
       .then(function (res) {
         if (!res.ok) {
