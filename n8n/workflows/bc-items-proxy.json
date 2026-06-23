@@ -95,7 +95,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const items = ($input.first().json.value || [])\n  .map(i => ({ number: i.number, displayName: i.displayName }))\n  .sort((a, b) => a.number.localeCompare(b.number));\nreturn [{ json: { items } }];"
+        "jsCode": "const items = ($input.first().json.value || [])\n  .filter(i => !i.number.startsWith('F5'))\n  .map(i => ({ number: i.number, displayName: i.displayName }))\n  .sort((a, b) => a.number.localeCompare(b.number));\nreturn [{ json: { items } }];"
       },
       "id": "cr-proxy-005",
       "name": "Transform Items",
