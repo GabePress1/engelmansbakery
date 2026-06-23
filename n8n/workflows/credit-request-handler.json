@@ -178,7 +178,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const store = $getWorkflowStaticData('global');\nconst response = $input.first().json;\nconst original = store.payload;\n\nlet contactId;\nif (response.statusCode === 409 || (response.body && response.body.status === 'error' && response.body.message && response.body.message.includes('already exists'))) {\n  const existingId = response.body?.message?.match(/Existing ID: (\\d+)/)?.[1];\n  if (existingId) {\n    contactId = existingId;\n  } else {\n    // Search for contact by email as fallback\n    store.needContactSearch = true;\n    return [{ json: { email: original.contact.email } }];\n  }\n} else {\n  contactId = response.id || (response.body && response.body.id);\n}\n\nstore.contactId = contactId;\n\nconst lines = original.productLines;\nconst linesSummary = lines.map((l, i) =>\n  `Line ${i+1}: ${l.productNumber} (${l.productDescription || ''}) × ${l.quantity} — ${l.issueClassification} — $${parseFloat(l.creditAmount).toFixed(2)}${l.notes ? ' — ' + l.notes : ''}`\n).join('\\n');\n\nconst summary = `Credit Request — Acct #${original.account.accountNumber} (${original.account.accountName || store.companyName})\\n${linesSummary}\\nTotal Credit Requested: $${original.totalCreditRequested.toFixed(2)}${original.ticketNotes ? '\\nNotes: ' + original.ticketNotes : ''}`;\n\nstore.creditSummary = summary;\n\nreturn [{ json: {\n  subject: `Credit Request — Acct #${original.account.accountNumber}`,\n  credit_summary: summary,\n  total_credit_requested: original.totalCreditRequested,\n  hs_pipeline: 'CREDIT_REQUESTS_PIPELINE_ID',\n  hs_pipeline_stage: 'CREDIT_REQUESTS_OPEN_STAGE_ID'\n} }];"
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst response = $input.first().json;\nconst original = store.payload;\n\nlet contactId;\nif (response.statusCode === 409 || (response.body && response.body.status === 'error' && response.body.message && response.body.message.includes('already exists'))) {\n  const existingId = response.body?.message?.match(/Existing ID: (\\d+)/)?.[1];\n  if (existingId) {\n    contactId = existingId;\n  } else {\n    // Search for contact by email as fallback\n    store.needContactSearch = true;\n    return [{ json: { email: original.contact.email } }];\n  }\n} else {\n  contactId = response.id || (response.body && response.body.id);\n}\n\nstore.contactId = contactId;\n\nconst lines = original.productLines;\nconst linesSummary = lines.map((l, i) =>\n  `Line ${i+1}: ${l.productNumber} (${l.productDescription || ''}) × ${l.quantity} — ${l.issueClassification} — $${parseFloat(l.creditAmount).toFixed(2)}${l.notes ? ' — ' + l.notes : ''}`\n).join('\\n');\n\nconst summary = `Credit Request — Acct #${original.account.accountNumber} (${original.account.accountName || store.companyName})\\n${linesSummary}\\nTotal Credit Requested: $${original.totalCreditRequested.toFixed(2)}${original.ticketNotes ? '\\nNotes: ' + original.ticketNotes : ''}`;\n\nstore.creditSummary = summary;\n\nreturn [{ json: {\n  subject: `Credit Request — Acct #${original.account.accountNumber}`,\n  credit_summary: summary,\n  total_credit_requested: original.totalCreditRequested,\n  hs_pipeline: '912400389',\n  hs_pipeline_stage: '1385996039'\n} }];"
       },
       "id": "cr-handler-010",
       "name": "Build Ticket",
@@ -306,7 +306,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://api.hubapi.com/crm/v3/objects/ITEMS_OBJECT_TYPE_ID",
+        "url": "https://api.hubapi.com/crm/v3/objects/2-48651243",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "hubspotAppToken",
         "sendHeaders": true,
@@ -317,7 +317,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ properties: { item_number: $json.productNumber, item_description: $json.productDescription || '', quantity: String($json.quantity), credit_amount: String($json.creditAmount), issue_classification: $json.issueClassification, line_notes: $json.notes || '', hs_pipeline: 'PRODUCT_COMPLAINTS_PIPELINE_ID', hs_pipeline_stage: 'PRODUCT_COMPLAINTS_OPEN_STAGE_ID' } }) }}",
+        "jsonBody": "={{ JSON.stringify({ properties: { item_number: $json.productNumber, item_description: $json.productDescription || '', quantity: String($json.quantity), credit_amount: String($json.creditAmount), issue_classification: $json.issueClassification, line_notes: $json.notes || '', hs_pipeline: '912368291', hs_pipeline_stage: '1386096010' } }) }}",
         "options": {}
       },
       "id": "cr-handler-017",
@@ -335,7 +335,7 @@
     {
       "parameters": {
         "method": "PUT",
-        "url": "=https://api.hubapi.com/crm/v4/objects/ITEMS_OBJECT_TYPE_ID/{{ $json.id }}/associations/tickets/{{ $('Store Ticket ID').first().json.ticketId }}",
+        "url": "=https://api.hubapi.com/crm/v4/objects/2-48651243/{{ $json.id }}/associations/tickets/{{ $('Store Ticket ID').first().json.ticketId }}",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "hubspotAppToken",
         "sendHeaders": true,
@@ -346,7 +346,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "=[{\"associationCategory\":\"HUBSPOT_DEFINED\",\"associationTypeId\":ITEM_TO_TICKET_ASSOC_TYPE_ID}]",
+        "jsonBody": "=[{\"associationCategory\":\"USER_DEFINED\",\"associationTypeId\":35}]",
         "options": {}
       },
       "id": "cr-handler-018",
