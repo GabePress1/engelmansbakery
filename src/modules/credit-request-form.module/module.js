@@ -116,16 +116,11 @@
           '<button type="button" class="cr-btn cr-btn--remove cr-remove-line">Remove</button>' +
         "</div>" +
         '<div class="cr-product-line__grid">' +
-          '<div class="cr-form__field">' +
+          '<div class="cr-form__field cr-form__field--search">' +
             '<label>Item No. <span class="cr-required">*</span></label>' +
-            '<select class="cr-product-select" required>' +
-              buildProductOptions() +
-            "</select>" +
+            '<input type="text" class="cr-product-search" required placeholder="Search by item # or name">' +
+            '<datalist class="cr-product-datalist" style="display:none;"></datalist>' +
             '<span class="cr-form__error" data-error="productNumber"></span>' +
-          "</div>" +
-          '<div class="cr-form__field">' +
-            "<label>Description</label>" +
-            '<input type="text" class="cr-product-description" readonly placeholder="Auto-fills when item is selected">' +
           "</div>" +
           '<div class="cr-form__field">' +
             '<label>Quantity <span class="cr-required">*</span></label>' +
@@ -163,12 +158,53 @@
     var lineEl = temp.firstChild;
     productContainer.appendChild(lineEl);
 
-    lineEl.querySelector(".cr-product-select").addEventListener("change", onProductChange);
+    var searchInput = lineEl.querySelector(".cr-product-search");
+    searchInput.addEventListener("input", function() {
+      onProductSearch(searchInput);
+    });
+    searchInput.addEventListener("change", function() {
+      onProductSearchChange(searchInput);
+    });
+
     lineEl.querySelector(".cr-remove-line").addEventListener("click", function () {
       removeProductLine(lineEl);
     });
 
     updateProductUI();
+  }
+
+  function onProductSearch(input) {
+    var query = input.value.toLowerCase();
+    var filtered = bcItems.filter(function(item) {
+      return item.number.toLowerCase().includes(query) ||
+             item.displayName.toLowerCase().includes(query);
+    });
+
+    var datalist = input.parentElement.querySelector(".cr-product-datalist");
+    datalist.innerHTML = "";
+    for (var i = 0; i < filtered.length; i++) {
+      var option = document.createElement("option");
+      option.value = filtered[i].number + " — " + filtered[i].displayName;
+      option.setAttribute("data-number", filtered[i].number);
+      option.setAttribute("data-display", filtered[i].displayName);
+      datalist.appendChild(option);
+    }
+  }
+
+  function onProductSearchChange(input) {
+    var value = input.value.trim();
+    var matchedItem = bcItems.find(function(item) {
+      return item.number === value ||
+             (item.number + " — " + item.displayName) === value;
+    });
+
+    if (matchedItem) {
+      input.setAttribute("data-product-number", matchedItem.number);
+      input.setAttribute("data-product-description", matchedItem.displayName);
+    } else {
+      input.removeAttribute("data-product-number");
+      input.removeAttribute("data-product-description");
+    }
   }
 
   function removeProductLine(lineEl) {
@@ -264,9 +300,9 @@
     for (var i = 0; i < lines.length; i++) {
       var line = lines[i];
 
-      var productSelect = line.querySelector(".cr-product-select");
-      if (!productSelect.value) {
-        markError(productSelect, "Select a product.");
+      var productSearch = line.querySelector(".cr-product-search");
+      if (!productSearch.value || !productSearch.getAttribute("data-product-number")) {
+        markError(productSearch, "Select a valid product.");
       }
 
       var qty = line.querySelector(".cr-product-qty");
@@ -307,10 +343,11 @@
       var creditAmt = parseFloat(line.querySelector(".cr-product-credit").value) || 0;
       totalCredit += creditAmt;
 
+      var searchInput = line.querySelector(".cr-product-search");
       productLines.push({
         lineNumber: i + 1,
-        productNumber: line.querySelector(".cr-product-select").value,
-        productDescription: line.querySelector(".cr-product-description").value,
+        productNumber: searchInput.getAttribute("data-product-number") || "",
+        productDescription: searchInput.getAttribute("data-product-description") || "",
         quantity: parseInt(line.querySelector(".cr-product-qty").value, 10) || 0,
         creditAmount: creditAmt,
         issueClassification: line.querySelector(".cr-product-classification").value,
@@ -322,12 +359,14 @@
       submittedAt: new Date().toISOString(),
       account: {
         accountNumber: document.getElementById("cr-account-number").value.trim(),
-        accountName: document.getElementById("cr-account-name").value.trim()
+        accountName: document.getElementById("cr-account-name").value.trim(),
+        invoiceNumber: document.getElementById("cr-invoice-number").value.trim()
       },
       contact: {
         firstName: document.getElementById("cr-first-name").value.trim(),
         lastName: document.getElementById("cr-last-name").value.trim(),
-        email: document.getElementById("cr-email").value.trim()
+        email: document.getElementById("cr-email").value.trim(),
+        phone: document.getElementById("cr-phone").value.trim()
       },
       productLines: productLines,
       ticketNotes: document.getElementById("cr-ticket-notes").value.trim(),
