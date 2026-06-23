@@ -109,6 +109,7 @@
   }
 
   function createProductLineHtml(index) {
+    var dataListId = "cr-datalist-" + index;
     return (
       '<div class="cr-product-line" data-line="' + index + '">' +
         '<div class="cr-product-line__header">' +
@@ -118,8 +119,8 @@
         '<div class="cr-product-line__grid">' +
           '<div class="cr-form__field cr-form__field--search">' +
             '<label>Item No. <span class="cr-required">*</span></label>' +
-            '<input type="text" class="cr-product-search" required placeholder="Search by item # or name">' +
-            '<datalist class="cr-product-datalist" style="display:none;"></datalist>' +
+            '<input type="text" class="cr-product-search" required placeholder="Search by item # or name" list="' + dataListId + '">' +
+            '<datalist id="' + dataListId + '" class="cr-product-datalist"></datalist>' +
             '<span class="cr-form__error" data-error="productNumber"></span>' +
           "</div>" +
           '<div class="cr-form__field">' +
@@ -174,19 +175,21 @@
   }
 
   function onProductSearch(input) {
-    var query = input.value.toLowerCase();
+    var query = input.value.toLowerCase().trim();
+    if (!query) return;
+
     var filtered = bcItems.filter(function(item) {
       return item.number.toLowerCase().includes(query) ||
              item.displayName.toLowerCase().includes(query);
     });
 
-    var datalist = input.parentElement.querySelector(".cr-product-datalist");
+    var dataListId = input.getAttribute("list");
+    var datalist = document.getElementById(dataListId);
     datalist.innerHTML = "";
+
     for (var i = 0; i < filtered.length; i++) {
       var option = document.createElement("option");
       option.value = filtered[i].number + " — " + filtered[i].displayName;
-      option.setAttribute("data-number", filtered[i].number);
-      option.setAttribute("data-display", filtered[i].displayName);
       datalist.appendChild(option);
     }
   }
