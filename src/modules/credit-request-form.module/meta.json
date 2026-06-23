@@ -14,5 +14,5 @@
     { "name": "FORM", "source": "USER" },
     { "name": "CREDIT_REQUEST", "source": "USER" }
   ],
-  "categories": ["forms"]
+  "categories": ["FORMS_AND_BUTTONS"]
 }
