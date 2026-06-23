@@ -54,7 +54,7 @@
           "responseCode": 400,
           "responseHeaders": {
             "entries": [
-              { "name": "Access-Control-Allow-Origin", "value": "https://www.engelmansbakery.com" }
+              { "name": "Access-Control-Allow-Origin", "value": "*" }
             ]
           }
         }
@@ -123,7 +123,7 @@
           "responseCode": 404,
           "responseHeaders": {
             "entries": [
-              { "name": "Access-Control-Allow-Origin", "value": "https://www.engelmansbakery.com" }
+              { "name": "Access-Control-Allow-Origin", "value": "*" }
             ]
           }
         }
@@ -368,7 +368,7 @@
         "options": {
           "responseHeaders": {
             "entries": [
-              { "name": "Access-Control-Allow-Origin", "value": "https://www.engelmansbakery.com" }
+              { "name": "Access-Control-Allow-Origin", "value": "*" }
             ]
           }
         }
