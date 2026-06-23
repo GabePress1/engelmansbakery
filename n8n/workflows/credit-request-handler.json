@@ -317,7 +317,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ properties: { item_number: $json.productNumber, item_description: $json.productDescription || '', quantity: String($json.quantity), credit_amount: String($json.creditAmount), issue_classification: $json.issueClassification, line_notes: $json.notes || '', hs_pipeline: '912368291', hs_pipeline_stage: '1386096010' } }) }}",
+        "jsonBody": "={{ JSON.stringify({ properties: { item_no_: $json.productNumber, item_description: $json.productDescription || '', quantity: String($json.quantity), credit_amount: String($json.creditAmount), issue_classification: $json.issueClassification, line_notes: $json.notes || '', hs_pipeline: '912368291', hs_pipeline_stage: '1386096010' } }) }}",
         "options": {}
       },
       "id": "cr-handler-017",
