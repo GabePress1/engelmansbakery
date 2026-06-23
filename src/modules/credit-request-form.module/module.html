@@ -7,25 +7,7 @@
 
   <form id="credit-request-form" novalidate>
 
-    <!-- Section 1: Account Information -->
-    <fieldset class="cr-form__section">
-      <legend>Account Information</legend>
-      <div class="cr-form__row">
-        <div class="cr-form__field">
-          <label for="cr-account-number">Account # <span class="cr-required">*</span></label>
-          <input type="text" id="cr-account-number" name="accountNumber" required
-                 placeholder="Enter ERP Account Number">
-          <span class="cr-form__error" data-error="accountNumber"></span>
-        </div>
-        <div class="cr-form__field">
-          <label for="cr-account-name">Account Name</label>
-          <input type="text" id="cr-account-name" name="accountName"
-                 placeholder="Enter Account Name">
-        </div>
-      </div>
-    </fieldset>
-
-    <!-- Section 2: Contact Information -->
+    <!-- Section 1: Contact Information -->
     <fieldset class="cr-form__section">
       <legend>Contact Information</legend>
       <div class="cr-form__row">
@@ -53,6 +35,31 @@
           <label for="cr-phone">Phone</label>
           <input type="tel" id="cr-phone" name="phone"
                  placeholder="(555) 123-4567">
+        </div>
+      </div>
+    </fieldset>
+
+    <!-- Section 2: Account Information -->
+    <fieldset class="cr-form__section">
+      <legend>Account Information</legend>
+      <div class="cr-form__row">
+        <div class="cr-form__field">
+          <label for="cr-account-number">Account # <span class="cr-required">*</span></label>
+          <input type="text" id="cr-account-number" name="accountNumber" required
+                 placeholder="Enter ERP Account Number">
+          <span class="cr-form__error" data-error="accountNumber"></span>
+        </div>
+        <div class="cr-form__field">
+          <label for="cr-account-name">Account Name</label>
+          <input type="text" id="cr-account-name" name="accountName"
+                 placeholder="Enter Account Name">
+        </div>
+      </div>
+      <div class="cr-form__row cr-form__row--single">
+        <div class="cr-form__field">
+          <label for="cr-invoice-number">Invoice Number</label>
+          <input type="text" id="cr-invoice-number" name="invoiceNumber"
+                 placeholder="Enter Invoice Number (optional)">
         </div>
       </div>
     </fieldset>
