@@ -85,7 +85,7 @@
   padding: 10px 12px;
   border: 1px solid var(--cr-border);
   border-radius: 4px;
-  font-size: 14px;
+  font-size: 15px;
   font-family: var(--cr-font);
   color: var(--cr-text);
   background: var(--cr-bg);
@@ -121,10 +121,10 @@
 }
 
 .cr-form__field input::placeholder,
-.cr-form__field select:invalid,
 .cr-form__field textarea::placeholder {
   color: #999999;
-  opacity: 0.8;
+  font-size: 15px;
+  opacity: 1;
 }
 
 /* Error states */
