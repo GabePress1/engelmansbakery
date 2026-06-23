@@ -126,7 +126,7 @@
             '<span class="cr-form__error" data-error="creditAmount"></span>' +
           "</div>" +
           '<div class="cr-form__field">' +
-            '<label>Issue Classification <span class="cr-required">*</span></label>' +
+            '<label>Complaint Type <span class="cr-required">*</span></label>' +
             '<select class="cr-product-classification" required>' +
               buildClassificationOptions() +
             "</select>" +

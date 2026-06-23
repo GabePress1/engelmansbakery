@@ -16,7 +16,7 @@
   --cr-font: inherit;
 
   max-width: 860px;
-  margin: 0 auto;
+  margin: 40px auto 0;
   padding: 24px;
   font-family: var(--cr-font);
   color: var(--cr-text);
@@ -104,6 +104,20 @@
   background: #f0f0f0;
   color: var(--cr-text-light);
   cursor: default;
+}
+
+.cr-form__field input[type="number"] {
+  font-size: 15px;
+}
+
+.cr-form__field input[type="number"]::-webkit-outer-spin-button,
+.cr-form__field input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.cr-form__field input[type="number"] {
+  -moz-appearance: textfield;
 }
 
 /* Error states */
