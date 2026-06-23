@@ -131,7 +131,7 @@
             "</select>" +
             '<span class="cr-form__error" data-error="classification"></span>' +
           "</div>" +
-          '<div class="cr-form__field">' +
+          '<div class="cr-form__field cr-form__field--full">' +
             "<label>Reason / Notes</label>" +
             '<textarea class="cr-product-notes" rows="2" placeholder="Optional notes for this line"></textarea>' +
           "</div>" +
