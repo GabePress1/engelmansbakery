@@ -120,6 +120,13 @@
   -moz-appearance: textfield;
 }
 
+.cr-form__field input::placeholder,
+.cr-form__field select:invalid,
+.cr-form__field textarea::placeholder {
+  color: #999999;
+  opacity: 0.8;
+}
+
 /* Error states */
 .cr-form__field--error input,
 .cr-form__field--error select,
