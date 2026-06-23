@@ -151,6 +151,16 @@
     );
   }
 
+  function populateDatalist(datalistId) {
+    var datalist = document.getElementById(datalistId);
+    datalist.innerHTML = "";
+    for (var i = 0; i < bcItems.length; i++) {
+      var option = document.createElement("option");
+      option.value = bcItems[i].number + " — " + bcItems[i].displayName;
+      datalist.appendChild(option);
+    }
+  }
+
   function addProductLine() {
     if (lineCount >= MAX_LINES) return;
     lineCount++;
@@ -159,11 +169,13 @@
     var lineEl = temp.firstChild;
     productContainer.appendChild(lineEl);
 
+    populateDatalist("cr-datalist-" + lineCount);
+
     var searchInput = lineEl.querySelector(".cr-product-search");
-    searchInput.addEventListener("input", function() {
-      onProductSearch(searchInput);
-    });
     searchInput.addEventListener("change", function() {
+      onProductSearchChange(searchInput);
+    });
+    searchInput.addEventListener("blur", function() {
       onProductSearchChange(searchInput);
     });
 
@@ -172,26 +184,6 @@
     });
 
     updateProductUI();
-  }
-
-  function onProductSearch(input) {
-    var query = input.value.toLowerCase().trim();
-    if (!query) return;
-
-    var filtered = bcItems.filter(function(item) {
-      return item.number.toLowerCase().includes(query) ||
-             item.displayName.toLowerCase().includes(query);
-    });
-
-    var dataListId = input.getAttribute("list");
-    var datalist = document.getElementById(dataListId);
-    datalist.innerHTML = "";
-
-    for (var i = 0; i < filtered.length; i++) {
-      var option = document.createElement("option");
-      option.value = filtered[i].number + " — " + filtered[i].displayName;
-      datalist.appendChild(option);
-    }
   }
 
   function onProductSearchChange(input) {
