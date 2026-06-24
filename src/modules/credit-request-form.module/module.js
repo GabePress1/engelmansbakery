@@ -1,16 +1,13 @@
 (function () {
   var ISSUE_CLASSIFICATIONS = [
-    "Damaged",
-    "Moldy",
-    "Allergen/Food Safety",
-    "Stale",
-    "Shelf Life",
+    "Resale Product",
+    "Service Quality",
+    "Product Quality",
+    "Foreign Object",
     "Shortage",
-    "Incorrect Price",
-    "Wrong Substitution",
+    "Rejected Substitution",
     "Mispick",
-    "Wrong Specification",
-    "Order Error"
+    "Office Error"
   ];
 
   var MAX_LINES = 10;
