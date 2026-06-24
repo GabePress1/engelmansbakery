@@ -399,7 +399,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ properties: { item_name: $('Validate Payload').first().json.account.accountNumber + ' - ' + $json.productNumber, item_no_: $json.productNumber, item_description: $json.productDescription || '', quantity: String($json.quantity), credit_amount: String($json.creditAmount), complaint_type: $json.issueClassification, line_notes: $json.notes || '', photosdocumentation: ($json.uploadedPhotoUrls || []).join('\\n'), hs_pipeline: '912368291', hs_pipeline_stage: '1386096010' } }) }}",
+        "jsonBody": "={{ JSON.stringify({ properties: { item_name: $('Validate Payload').first().json.account.accountNumber + ' - ' + (() => { const d = new Date($('Validate Payload').first().json.submittedAt); return String(d.getFullYear()).slice(2) + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); })() + ' - ' + $json.productNumber, item_no_: $json.productNumber, item_description: $json.productDescription || '', quantity: String($json.quantity), credit_amount: String($json.creditAmount), complaint_type: $json.issueClassification, line_notes: $json.notes || '', photosdocumentation: ($json.uploadedPhotoUrls || []).join('\\n'), hs_pipeline: '912368291', hs_pipeline_stage: '1386096010' } }) }}",
         "options": {}
       },
       "id": "cr-handler-017",
