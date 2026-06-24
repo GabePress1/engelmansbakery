@@ -1,13 +1,27 @@
 (function () {
   var ISSUE_CLASSIFICATIONS = [
-    "Resale Product",
-    "Service Quality",
-    "Product Quality",
-    "Foreign Object",
+    "Baking (Color, Time, Temp)",
+    "Damaged",
+    "Delivery",
+    "Foreign Material",
+    "Mixing",
+    "Molding",
+    "On Route",
+    "Packaging",
+    "Proofing",
+    "Sesame",
+    "Shaping",
+    "Shelf Life",
     "Shortage",
-    "Rejected Substitution",
-    "Mispick",
-    "Office Error"
+    "Size (Weight, Length, Width)",
+    "Slicing",
+    "Topping (Seed, Glaze)",
+    "Trays",
+    "3rd Party Bread",
+    "3rd Party Pastry",
+    "FIFO Issue / Rotation Issue",
+    "Other",
+    "Allergen"
   ];
 
   var MAX_LINES = 10;
