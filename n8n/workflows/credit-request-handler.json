@@ -147,7 +147,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://api.hubapi.com/crm/v3/objects/contacts",
+        "url": "https://api.hubapi.com/crm/v3/objects/contacts/batch/upsert",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "hubspotAppToken",
         "sendHeaders": true,
@@ -158,13 +158,11 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ properties: { email: $json.email, firstname: $json.firstname, lastname: $json.lastname } }) }}",
-        "options": {
-          "response": { "response": { "fullResponse": true } }
-        }
+        "jsonBody": "={{ JSON.stringify({ inputs: [{ idProperty: 'email', id: $json.email, properties: { email: $json.email, firstname: $json.firstname, lastname: $json.lastname } }] }) }}",
+        "options": {}
       },
       "id": "cr-handler-009",
-      "name": "Create Contact",
+      "name": "Create or Update Contact",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [1320, -400],
@@ -173,12 +171,11 @@
           "id": "vxGS6a3iorMrt7wb",
           "name": "HubSpot Service Key Production"
         }
-      },
-      "onError": "continueRegularOutput"
+      }
     },
     {
       "parameters": {
-        "jsCode": "const store = $getWorkflowStaticData('global');\nconst response = $input.first().json;\nconst original = store.payload;\n\nlet contactId;\nif (response.statusCode === 409 || (response.body && response.body.status === 'error' && response.body.message && response.body.message.includes('already exists'))) {\n  const existingId = response.body?.message?.match(/Existing ID: (\\d+)/)?.[1];\n  if (existingId) {\n    contactId = existingId;\n  } else {\n    store.needContactSearch = true;\n    return [{ json: { email: original.contact.email } }];\n  }\n} else {\n  contactId = response.id || (response.body && response.body.id);\n}\n\nstore.contactId = contactId;\n\nconst lines = original.productLines;\nconst linesSummary = lines.map((l, i) =>\n  `Line ${i+1}: ${l.productNumber} (${l.productDescription || ''}) × ${l.quantity} — ${l.issueClassification} — $${parseFloat(l.creditAmount).toFixed(2)}${l.notes ? ' — ' + l.notes : ''}`\n).join('\\n');\n\nconst summary = `Credit Request — Acct #${original.account.accountNumber} (${original.account.accountName || store.companyName})\\n${linesSummary}\\nTotal Credit Requested: $${original.totalCreditRequested.toFixed(2)}${original.ticketNotes ? '\\nNotes: ' + original.ticketNotes : ''}`;\n\nstore.creditSummary = summary;\n\nconst allPhotos = lines.flatMap(l => (l.photoFileNames || []).map(f => `Line ${l.lineNumber}: ${f}`)).join('\\n');\n\nconst now = new Date(original.submittedAt);\nconst yy = String(now.getFullYear()).slice(2);\nconst mm = String(now.getMonth() + 1).padStart(2, '0');\nconst dd = String(now.getDate()).padStart(2, '0');\nconst submissionDate = `${yy}-${mm}-${dd}`;\n\nreturn [{ json: {\n  subject: `${original.account.accountNumber} - ${submissionDate}`,\n  credit_summary: summary,\n  total_credit_requested: original.totalCreditRequested,\n  hs_pipeline: '912400389',\n  hs_pipeline_stage: '1385996039',\n  ebc_complaint_type: original.productLines[0].issueClassification,\n  photosdocumentation: allPhotos\n} }];"
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst response = $input.first().json;\nconst original = store.payload;\n\nconst contactId = response.results[0].id;\nstore.contactId = contactId;\n\nconst lines = original.productLines;\nconst linesSummary = lines.map((l, i) =>\n  `Line ${i+1}: ${l.productNumber} (${l.productDescription || ''}) × ${l.quantity} — ${l.issueClassification} — $${parseFloat(l.creditAmount).toFixed(2)}${l.notes ? ' — ' + l.notes : ''}`\n).join('\\n');\n\nconst summary = `Credit Request — Acct #${original.account.accountNumber} (${original.account.accountName || store.companyName})\\n${linesSummary}\\nTotal Credit Requested: $${original.totalCreditRequested.toFixed(2)}${original.ticketNotes ? '\\nNotes: ' + original.ticketNotes : ''}`;\n\nstore.creditSummary = summary;\n\nconst allPhotos = lines.flatMap(l => (l.photoFileNames || []).map(f => `Line ${l.lineNumber}: ${f}`)).join('\\n');\n\nconst now = new Date(original.submittedAt);\nconst yy = String(now.getFullYear()).slice(2);\nconst mm = String(now.getMonth() + 1).padStart(2, '0');\nconst dd = String(now.getDate()).padStart(2, '0');\nconst submissionDate = `${yy}-${mm}-${dd}`;\n\nreturn [{ json: {\n  subject: `${original.account.accountNumber} - ${submissionDate}`,\n  credit_summary: summary,\n  total_credit_requested: original.totalCreditRequested,\n  hs_pipeline: '912400389',\n  hs_pipeline_stage: '1385996039',\n  photosdocumentation: allPhotos\n} }];"
       },
       "id": "cr-handler-010",
       "name": "Build Ticket",
@@ -403,9 +400,9 @@
       ]
     },
     "Prepare Contact": {
-      "main": [[{ "node": "Create Contact", "type": "main", "index": 0 }]]
+      "main": [[{ "node": "Create or Update Contact", "type": "main", "index": 0 }]]
     },
-    "Create Contact": {
+    "Create or Update Contact": {
       "main": [[{ "node": "Build Ticket", "type": "main", "index": 0 }]]
     },
     "Build Ticket": {
