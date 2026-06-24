@@ -1,27 +1,16 @@
 (function () {
   var ISSUE_CLASSIFICATIONS = [
-    "Baking (Color, Time, Temp)",
     "Damaged",
-    "Delivery",
-    "Foreign Material",
-    "Mixing",
-    "Molding",
-    "On Route",
-    "Packaging",
-    "Proofing",
-    "Sesame",
-    "Shaping",
+    "Moldy",
+    "Allergen/Food Safety",
+    "Stale",
     "Shelf Life",
     "Shortage",
-    "Size (Weight, Length, Width)",
-    "Slicing",
-    "Topping (Seed, Glaze)",
-    "Trays",
-    "3rd Party Bread",
-    "3rd Party Pastry",
-    "FIFO Issue / Rotation Issue",
-    "Other",
-    "Allergen"
+    "Incorrect Price",
+    "Wrong Substitution",
+    "Mispick",
+    "Wrong Specification",
+    "Order Error"
   ];
 
   var MAX_LINES = 10;
