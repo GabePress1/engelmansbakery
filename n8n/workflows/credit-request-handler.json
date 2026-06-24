@@ -1,5 +1,5 @@
 {
-  "name": "Credit Request – Form Handler",
+  "name": "Credit Request \u2013 Form Handler",
   "nodes": [
     {
       "parameters": {
@@ -12,7 +12,10 @@
       "name": "Webhook",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [0, 0],
+      "position": [
+        0,
+        0
+      ],
       "webhookId": "credit-request-handler"
     },
     {
@@ -23,18 +26,28 @@
       "name": "Validate Payload",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [220, 0]
+      "position": [
+        220,
+        0
+      ]
     },
     {
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": true, "leftValue": "" },
+          "options": {
+            "caseSensitive": true,
+            "leftValue": ""
+          },
           "conditions": [
             {
               "id": "v1",
               "leftValue": "={{ $json.validationError }}",
               "rightValue": true,
-              "operator": { "type": "boolean", "operation": "equals", "singleValue": true }
+              "operator": {
+                "type": "boolean",
+                "operation": "equals",
+                "singleValue": true
+              }
             }
           ],
           "combinator": "and"
@@ -44,7 +57,10 @@
       "name": "Validation OK?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [440, 0]
+      "position": [
+        440,
+        0
+      ]
     },
     {
       "parameters": {
@@ -54,7 +70,10 @@
           "responseCode": 400,
           "responseHeaders": {
             "entries": [
-              { "name": "Access-Control-Allow-Origin", "value": "*" }
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
             ]
           }
         }
@@ -63,7 +82,10 @@
       "name": "Validation Error Response",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [660, 200]
+      "position": [
+        660,
+        200
+      ]
     },
     {
       "parameters": {
@@ -74,7 +96,10 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Content-Type", "value": "application/json" }
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
           ]
         },
         "sendBody": true,
@@ -86,7 +111,10 @@
       "name": "Search Company",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [660, -200],
+      "position": [
+        660,
+        -200
+      ],
       "credentials": {
         "hubspotAppToken": {
           "id": "vxGS6a3iorMrt7wb",
@@ -97,13 +125,19 @@
     {
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": true, "leftValue": "" },
+          "options": {
+            "caseSensitive": true,
+            "leftValue": ""
+          },
           "conditions": [
             {
               "id": "c1",
               "leftValue": "={{ $json.total }}",
               "rightValue": 0,
-              "operator": { "type": "number", "operation": "gt" }
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
             }
           ],
           "combinator": "and"
@@ -113,7 +147,10 @@
       "name": "Company Found?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [880, -200]
+      "position": [
+        880,
+        -200
+      ]
     },
     {
       "parameters": {
@@ -123,7 +160,10 @@
           "responseCode": 404,
           "responseHeaders": {
             "entries": [
-              { "name": "Access-Control-Allow-Origin", "value": "*" }
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
             ]
           }
         }
@@ -132,7 +172,10 @@
       "name": "Account Not Found Response",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [1100, 0]
+      "position": [
+        1100,
+        0
+      ]
     },
     {
       "parameters": {
@@ -142,7 +185,10 @@
       "name": "Prepare Contact",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1100, -400]
+      "position": [
+        1100,
+        -400
+      ]
     },
     {
       "parameters": {
@@ -153,7 +199,10 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Content-Type", "value": "application/json" }
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
           ]
         },
         "sendBody": true,
@@ -165,7 +214,10 @@
       "name": "Upsert Contact",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [1320, -400],
+      "position": [
+        1320,
+        -400
+      ],
       "credentials": {
         "hubspotAppToken": {
           "id": "vxGS6a3iorMrt7wb",
@@ -175,13 +227,16 @@
     },
     {
       "parameters": {
-        "jsCode": "const store = $getWorkflowStaticData('global');\nconst response = $input.first().json;\nconst original = store.payload;\n\nconst contactId = response.results[0].id;\nstore.contactId = contactId;\n\nconst lines = original.productLines;\nconst linesSummary = lines.map((l, i) =>\n  `Line ${i+1}: ${l.productNumber} (${l.productDescription || ''}) × ${l.quantity} — ${l.issueClassification} — $${parseFloat(l.creditAmount).toFixed(2)}${l.notes ? ' — ' + l.notes : ''}`\n).join('\\n');\n\nconst summary = `Credit Request — Acct #${original.account.accountNumber} (${original.account.accountName || store.companyName})\\n${linesSummary}\\nTotal Credit Requested: $${original.totalCreditRequested.toFixed(2)}${original.ticketNotes ? '\\nNotes: ' + original.ticketNotes : ''}`;\n\nstore.creditSummary = summary;\n\nconst allPhotos = lines.flatMap(l => (l.photoFileNames || []).map(f => `Line ${l.lineNumber}: ${f}`)).join('\\n');\n\nconst now = new Date(original.submittedAt);\nconst yy = String(now.getFullYear()).slice(2);\nconst mm = String(now.getMonth() + 1).padStart(2, '0');\nconst dd = String(now.getDate()).padStart(2, '0');\nconst submissionDate = `${yy}-${mm}-${dd}`;\n\nreturn [{ json: {\n  subject: `${original.account.accountNumber} - ${submissionDate}`,\n  credit_summary: summary,\n  total_credit_requested: original.totalCreditRequested,\n  hs_pipeline: '912400389',\n  hs_pipeline_stage: '1385996039',\n  photosdocumentation: allPhotos\n} }];"
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst response = $input.first().json;\nconst original = store.payload;\n\nconst contactId = response.results[0].id;\nstore.contactId = contactId;\n\nconst lines = original.productLines;\nconst linesSummary = lines.map((l, i) =>\n  `Line ${i+1}: ${l.productNumber} (${l.productDescription || ''}) \u00d7 ${l.quantity} \u2014 ${l.issueClassification} \u2014 $${parseFloat(l.creditAmount).toFixed(2)}${l.notes ? ' \u2014 ' + l.notes : ''}`\n).join('\\n');\n\nconst summary = `Credit Request \u2014 Acct #${original.account.accountNumber} (${original.account.accountName || store.companyName})\\n${linesSummary}\\nTotal Credit Requested: $${original.totalCreditRequested.toFixed(2)}${original.ticketNotes ? '\\nNotes: ' + original.ticketNotes : ''}`;\n\nstore.creditSummary = summary;\n\nconst allPhotos = lines.flatMap(l => (l.photoFileNames || []).map(f => `Line ${l.lineNumber}: ${f}`)).join('\\n');\n\nconst now = new Date(original.submittedAt);\nconst yy = String(now.getFullYear()).slice(2);\nconst mm = String(now.getMonth() + 1).padStart(2, '0');\nconst dd = String(now.getDate()).padStart(2, '0');\nconst submissionDate = `${yy}-${mm}-${dd}`;\n\nreturn [{ json: {\n  subject: `${original.account.accountNumber} - ${submissionDate}`,\n  account__: original.account.accountNumber,\n  company_name: original.account.accountName || store.companyName,\n  invoice: original.account.invoiceNumber || '',\n  credit_summary: summary,\n  total_credit_requested: original.totalCreditRequested,\n  hs_pipeline: '912400389',\n  hs_pipeline_stage: '1385996039',\n  photosdocumentation: allPhotos\n} }];"
       },
       "id": "cr-handler-010",
       "name": "Build Ticket",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1540, -400]
+      "position": [
+        1540,
+        -400
+      ]
     },
     {
       "parameters": {
@@ -192,7 +247,10 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Content-Type", "value": "application/json" }
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
           ]
         },
         "sendBody": true,
@@ -204,7 +262,10 @@
       "name": "Create Ticket",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [1760, -400],
+      "position": [
+        1760,
+        -400
+      ],
       "credentials": {
         "hubspotAppToken": {
           "id": "vxGS6a3iorMrt7wb",
@@ -220,7 +281,10 @@
       "name": "Store Ticket ID",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1980, -400]
+      "position": [
+        1980,
+        -400
+      ]
     },
     {
       "parameters": {
@@ -231,7 +295,10 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Content-Type", "value": "application/json" }
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
           ]
         },
         "sendBody": true,
@@ -240,10 +307,13 @@
         "options": {}
       },
       "id": "cr-handler-013",
-      "name": "Associate Ticket → Contact",
+      "name": "Associate Ticket \u2192 Contact",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [2200, -400],
+      "position": [
+        2200,
+        -400
+      ],
       "credentials": {
         "hubspotAppToken": {
           "id": "vxGS6a3iorMrt7wb",
@@ -260,7 +330,10 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Content-Type", "value": "application/json" }
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
           ]
         },
         "sendBody": true,
@@ -269,10 +342,13 @@
         "options": {}
       },
       "id": "cr-handler-014",
-      "name": "Associate Ticket → Company",
+      "name": "Associate Ticket \u2192 Company",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [2420, -400],
+      "position": [
+        2420,
+        -400
+      ],
       "credentials": {
         "hubspotAppToken": {
           "id": "vxGS6a3iorMrt7wb",
@@ -288,7 +364,10 @@
       "name": "Prepare Line Items",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2640, -400]
+      "position": [
+        2640,
+        -400
+      ]
     },
     {
       "parameters": {
@@ -298,7 +377,10 @@
       "name": "Loop Product Lines",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
-      "position": [2860, -400]
+      "position": [
+        2860,
+        -400
+      ]
     },
     {
       "parameters": {
@@ -309,7 +391,10 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Content-Type", "value": "application/json" }
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
           ]
         },
         "sendBody": true,
@@ -321,7 +406,10 @@
       "name": "Create Item Record",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [3080, -400],
+      "position": [
+        3080,
+        -400
+      ],
       "credentials": {
         "hubspotAppToken": {
           "id": "vxGS6a3iorMrt7wb",
@@ -338,7 +426,10 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Content-Type", "value": "application/json" }
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
           ]
         },
         "sendBody": true,
@@ -347,10 +438,13 @@
         "options": {}
       },
       "id": "cr-handler-018",
-      "name": "Associate Item → Ticket",
+      "name": "Associate Item \u2192 Ticket",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [3300, -400],
+      "position": [
+        3300,
+        -400
+      ],
       "credentials": {
         "hubspotAppToken": {
           "id": "vxGS6a3iorMrt7wb",
@@ -365,7 +459,10 @@
         "options": {
           "responseHeaders": {
             "entries": [
-              { "name": "Access-Control-Allow-Origin", "value": "*" }
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
             ]
           }
         }
@@ -374,66 +471,209 @@
       "name": "Success Response",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [3520, -400]
+      "position": [
+        3520,
+        -400
+      ]
     }
   ],
   "connections": {
     "Webhook": {
-      "main": [[{ "node": "Validate Payload", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Validate Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Validate Payload": {
-      "main": [[{ "node": "Validation OK?", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Validation OK?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Validation OK?": {
       "main": [
-        [{ "node": "Validation Error Response", "type": "main", "index": 0 }],
-        [{ "node": "Search Company", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Validation Error Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Search Company",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Search Company": {
-      "main": [[{ "node": "Company Found?", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Company Found?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Company Found?": {
       "main": [
-        [{ "node": "Prepare Contact", "type": "main", "index": 0 }],
-        [{ "node": "Account Not Found Response", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Prepare Contact",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Account Not Found Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Prepare Contact": {
-      "main": [[{ "node": "Upsert Contact", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Upsert Contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Upsert Contact": {
-      "main": [[{ "node": "Build Ticket", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Build Ticket",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Build Ticket": {
-      "main": [[{ "node": "Create Ticket", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Create Ticket",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Create Ticket": {
-      "main": [[{ "node": "Store Ticket ID", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Store Ticket ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Store Ticket ID": {
-      "main": [[{ "node": "Associate Ticket → Contact", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Associate Ticket \u2192 Contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
-    "Associate Ticket → Contact": {
-      "main": [[{ "node": "Associate Ticket → Company", "type": "main", "index": 0 }]]
+    "Associate Ticket \u2192 Contact": {
+      "main": [
+        [
+          {
+            "node": "Associate Ticket \u2192 Company",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
-    "Associate Ticket → Company": {
-      "main": [[{ "node": "Prepare Line Items", "type": "main", "index": 0 }]]
+    "Associate Ticket \u2192 Company": {
+      "main": [
+        [
+          {
+            "node": "Prepare Line Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Prepare Line Items": {
-      "main": [[{ "node": "Loop Product Lines", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Loop Product Lines",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Loop Product Lines": {
       "main": [
-        [{ "node": "Create Item Record", "type": "main", "index": 0 }],
-        [{ "node": "Success Response", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Create Item Record",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Success Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Create Item Record": {
-      "main": [[{ "node": "Associate Item → Ticket", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Associate Item \u2192 Ticket",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
-    "Associate Item → Ticket": {
-      "main": [[{ "node": "Loop Product Lines", "type": "main", "index": 0 }]]
+    "Associate Item \u2192 Ticket": {
+      "main": [
+        [
+          {
+            "node": "Loop Product Lines",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
