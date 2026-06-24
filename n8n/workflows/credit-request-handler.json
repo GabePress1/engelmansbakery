@@ -225,7 +225,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://api.hubapi.com/crm/v4/objects/tickets/{{ $json.ticketId }}/associations/contacts/{{ $json.contactId }}",
+        "url": "https://api.hubapi.com/crm/v4/associations/tickets/contacts/batch/create",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "hubspotAppToken",
         "sendHeaders": true,
@@ -236,7 +236,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "=[{\"associationCategory\":\"HUBSPOT_DEFINED\",\"associationTypeId\":16}]",
+        "jsonBody": "={{ JSON.stringify({ inputs: [{ types: [{ associationCategory: 'HUBSPOT_DEFINED', associationTypeId: 16 }], from: { id: $json.ticketId }, to: { id: $json.contactId } }] }) }}",
         "options": {}
       },
       "id": "cr-handler-013",
@@ -254,7 +254,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://api.hubapi.com/crm/v4/objects/tickets/{{ $('Store Ticket ID').first().json.ticketId }}/associations/companies/{{ $('Store Ticket ID').first().json.companyId }}",
+        "url": "https://api.hubapi.com/crm/v4/associations/tickets/companies/batch/create",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "hubspotAppToken",
         "sendHeaders": true,
@@ -265,7 +265,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "=[{\"associationCategory\":\"HUBSPOT_DEFINED\",\"associationTypeId\":26}]",
+        "jsonBody": "={{ JSON.stringify({ inputs: [{ types: [{ associationCategory: 'HUBSPOT_DEFINED', associationTypeId: 26 }], from: { id: $('Store Ticket ID').first().json.ticketId }, to: { id: $('Store Ticket ID').first().json.companyId } }] }) }}",
         "options": {}
       },
       "id": "cr-handler-014",
@@ -332,7 +332,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://api.hubapi.com/crm/v4/objects/2-48651243/{{ $json.id }}/associations/tickets/{{ $('Store Ticket ID').first().json.ticketId }}",
+        "url": "https://api.hubapi.com/crm/v4/associations/2-48651243/tickets/batch/create",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "hubspotAppToken",
         "sendHeaders": true,
@@ -343,7 +343,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "=[{\"associationCategory\":\"USER_DEFINED\",\"associationTypeId\":35}]",
+        "jsonBody": "={{ JSON.stringify({ inputs: [{ types: [{ associationCategory: 'USER_DEFINED', associationTypeId: 35 }], from: { id: $json.id }, to: { id: $('Store Ticket ID').first().json.ticketId } }] }) }}",
         "options": {}
       },
       "id": "cr-handler-018",
