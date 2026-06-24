@@ -179,7 +179,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const searchResult = $input.first().json;\nconst store = $getWorkflowStaticData('global');\nconst original = $('Validate Payload').first().json;\n\nstore.companyId = searchResult.results[0].id;\nstore.companyName = searchResult.results[0].properties.name || '';\nstore.payload = original;\n\nreturn [{ json: {\n  email: original.contact.email,\n  firstname: original.contact.firstName,\n  lastname: original.contact.lastName\n} }];"
+        "jsCode": "const searchResult = $input.first().json;\nconst store = $getWorkflowStaticData('global');\nconst original = $('Validate Payload').first().json;\n\nstore.companyId = searchResult.results[0].id;\nstore.companyName = searchResult.results[0].properties.name || '';\nstore.payload = original;\n\nreturn [{ json: {\n  email: original.contact.email,\n  firstname: original.contact.firstName,\n  lastname: original.contact.lastName,\n  phone: original.contact.phone || ''\n} }];"
       },
       "id": "cr-handler-008",
       "name": "Prepare Contact",
@@ -207,7 +207,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ inputs: [{ idProperty: 'email', id: $json.email, properties: { email: $json.email, firstname: $json.firstname, lastname: $json.lastname } }] }) }}",
+        "jsonBody": "={{ JSON.stringify({ inputs: [{ idProperty: 'email', id: $json.email, properties: { email: $json.email, firstname: $json.firstname, lastname: $json.lastname, phone: $json.phone } }] }) }}",
         "options": {}
       },
       "id": "cr-handler-009",
@@ -227,14 +227,14 @@
     },
     {
       "parameters": {
-        "jsCode": "const store = $getWorkflowStaticData('global');\nconst response = $input.first().json;\nconst original = store.payload;\n\nconst contactId = response.results[0].id;\nstore.contactId = contactId;\n\nconst lines = original.productLines;\nconst linesSummary = lines.map((l, i) =>\n  `Line ${i+1}: ${l.productNumber} (${l.productDescription || ''}) \u00d7 ${l.quantity} \u2014 ${l.issueClassification} \u2014 $${parseFloat(l.creditAmount).toFixed(2)}${l.notes ? ' \u2014 ' + l.notes : ''}`\n).join('\\n');\n\nconst summary = `Credit Request \u2014 Acct #${original.account.accountNumber} (${original.account.accountName || store.companyName})\\n${linesSummary}\\nTotal Credit Requested: $${original.totalCreditRequested.toFixed(2)}${original.ticketNotes ? '\\nNotes: ' + original.ticketNotes : ''}`;\n\nstore.creditSummary = summary;\n\nconst allPhotos = lines.flatMap(l => (l.photoFileNames || []).map(f => `Line ${l.lineNumber}: ${f}`)).join('\\n');\n\nconst now = new Date(original.submittedAt);\nconst yy = String(now.getFullYear()).slice(2);\nconst mm = String(now.getMonth() + 1).padStart(2, '0');\nconst dd = String(now.getDate()).padStart(2, '0');\nconst submissionDate = `${yy}-${mm}-${dd}`;\n\nreturn [{ json: {\n  subject: `${original.account.accountNumber} - ${submissionDate}`,\n  account__: original.account.accountNumber,\n  company_name: original.account.accountName || store.companyName,\n  invoice: original.account.invoiceNumber || '',\n  credit_summary: summary,\n  total_credit_requested: original.totalCreditRequested,\n  hs_pipeline: '912400389',\n  hs_pipeline_stage: '1385996039',\n  photosdocumentation: allPhotos\n} }];"
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst upsertResponse = $('Upsert Contact').first().json;\nconst original = store.payload;\n\nconst contactId = upsertResponse.results[0].id;\nstore.contactId = contactId;\n\nconst lines = original.productLines;\nconst linesSummary = lines.map((l, i) =>\n  `Line ${i+1}: ${l.productNumber} (${l.productDescription || ''}) \u00d7 ${l.quantity} \u2014 ${l.issueClassification} \u2014 $${parseFloat(l.creditAmount).toFixed(2)}${l.notes ? ' \u2014 ' + l.notes : ''}`\n).join('\\n');\n\nconst summary = `Credit Request \u2014 Acct #${original.account.accountNumber} (${original.account.accountName || store.companyName})\\n${linesSummary}\\nTotal Credit Requested: $${original.totalCreditRequested.toFixed(2)}${original.ticketNotes ? '\\nNotes: ' + original.ticketNotes : ''}`;\n\nstore.creditSummary = summary;\n\nconst uploadedUrls = store.uploadedUrls || {};\nconst allPhotos = Object.keys(uploadedUrls)\n  .sort((a, b) => Number(a) - Number(b))\n  .flatMap(lineNum => uploadedUrls[lineNum].map(url => url))\n  .join('\\n');\n\nconst now = new Date(original.submittedAt);\nconst yy = String(now.getFullYear()).slice(2);\nconst mm = String(now.getMonth() + 1).padStart(2, '0');\nconst dd = String(now.getDate()).padStart(2, '0');\nconst submissionDate = `${yy}-${mm}-${dd}`;\n\nreturn [{ json: {\n  subject: `${original.account.accountNumber} - ${submissionDate}`,\n  account__: original.account.accountNumber,\n  company_name: original.account.accountName || store.companyName,\n  invoice: original.account.invoiceNumber || '',\n  credit_summary: summary,\n  total_credit_requested: original.totalCreditRequested,\n  hs_pipeline: '912400389',\n  hs_pipeline_stage: '1385996039',\n  photosdocumentation: allPhotos\n} }];"
       },
       "id": "cr-handler-010",
       "name": "Build Ticket",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1540,
+        2640,
         -400
       ]
     },
@@ -263,7 +263,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        1760,
+        2860,
         -400
       ],
       "credentials": {
@@ -282,7 +282,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1980,
+        3080,
         -400
       ]
     },
@@ -311,7 +311,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        2200,
+        3300,
         -400
       ],
       "credentials": {
@@ -346,7 +346,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        2420,
+        3520,
         -400
       ],
       "credentials": {
@@ -358,14 +358,14 @@
     },
     {
       "parameters": {
-        "jsCode": "const store = $getWorkflowStaticData('global');\nconst lines = store.payload.productLines;\nreturn lines.map(l => ({ json: l }));"
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst lines = store.payload.productLines;\nconst uploadedUrls = store.uploadedUrls || {};\nreturn lines.map(l => ({\n  json: {\n    ...l,\n    uploadedPhotoUrls: uploadedUrls[String(l.lineNumber)] || []\n  }\n}));"
       },
       "id": "cr-handler-015",
       "name": "Prepare Line Items",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2640,
+        3740,
         -400
       ]
     },
@@ -378,7 +378,7 @@
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
       "position": [
-        2860,
+        3960,
         -400
       ]
     },
@@ -399,7 +399,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ properties: { subject: $('Validate Payload').first().json.account.accountNumber + ' - ' + $json.productNumber, item_no_: $json.productNumber, item_description: $json.productDescription || '', quantity: String($json.quantity), credit_amount: String($json.creditAmount), complaint_type: $json.issueClassification, line_notes: $json.notes || '', photosdocumentation: ($json.photoFileNames || []).join(', '), hs_pipeline: '912368291', hs_pipeline_stage: '1386096010' } }) }}",
+        "jsonBody": "={{ JSON.stringify({ properties: { subject: $('Validate Payload').first().json.account.accountNumber + ' - ' + $json.productNumber, item_no_: $json.productNumber, item_description: $json.productDescription || '', quantity: String($json.quantity), credit_amount: String($json.creditAmount), complaint_type: $json.issueClassification, line_notes: $json.notes || '', photosdocumentation: ($json.uploadedPhotoUrls || []).join('\\n'), hs_pipeline: '912368291', hs_pipeline_stage: '1386096010' } }) }}",
         "options": {}
       },
       "id": "cr-handler-017",
@@ -407,7 +407,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        3080,
+        4180,
         -400
       ],
       "credentials": {
@@ -442,7 +442,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        3300,
+        4400,
         -400
       ],
       "credentials": {
@@ -472,8 +472,122 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        3520,
+        4180,
+        -600
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const webhookBinary = $('Webhook').first().binary || {};\nconst store = $getWorkflowStaticData('global');\n\nconst filesToUpload = [];\n\nfor (const key of Object.keys(webhookBinary)) {\n  const match = key.match(/^photo_line(\\d+)_file(\\d+)$/);\n  if (!match) {\n    const legacyMatch = key.match(/^photos_line_(\\d+)/);\n    if (!legacyMatch) continue;\n    const lineNum = legacyMatch[1];\n    filesToUpload.push({\n      json: {\n        lineNum: lineNum,\n        fileName: webhookBinary[key].fileName || key\n      },\n      binary: { data: webhookBinary[key] }\n    });\n    continue;\n  }\n  const lineNum = match[1];\n  filesToUpload.push({\n    json: {\n      lineNum: lineNum,\n      fileName: webhookBinary[key].fileName || key\n    },\n    binary: { data: webhookBinary[key] }\n  });\n}\n\nstore.uploadedUrls = {};\n\nif (filesToUpload.length === 0) {\n  return [{ json: { hasFiles: false } }];\n}\n\nreturn filesToUpload.map(f => ({\n  json: { ...f.json, hasFiles: true },\n  binary: f.binary\n}));"
+      },
+      "id": "cr-handler-020",
+      "name": "Prepare File Uploads",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1430,
         -400
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": ""
+          },
+          "conditions": [
+            {
+              "id": "f1",
+              "leftValue": "={{ $json.hasFiles }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "cr-handler-021",
+      "name": "Files to Upload?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1650,
+        -400
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "cr-handler-022",
+      "name": "File Upload Loop",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1870,
+        -400
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/files/v3/files",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "data"
+            },
+            {
+              "parameterType": "formData",
+              "name": "options",
+              "value": "{\"access\":\"PRIVATE\"}"
+            },
+            {
+              "parameterType": "formData",
+              "name": "folderPath",
+              "value": "/credit-requests"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "cr-handler-023",
+      "name": "Upload to HubSpot Files",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2090,
+        -600
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "vxGS6a3iorMrt7wb",
+          "name": "HubSpot Service Key Production"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst uploadResult = $input.first().json;\nconst lineNum = $('File Upload Loop').first().json.lineNum;\n\nif (!store.uploadedUrls) store.uploadedUrls = {};\nif (!store.uploadedUrls[lineNum]) store.uploadedUrls[lineNum] = [];\nstore.uploadedUrls[lineNum].push(uploadResult.url || uploadResult.defaultDisplayUrl || '');\n\nreturn [{ json: { stored: true, lineNum } }];"
+      },
+      "id": "cr-handler-024",
+      "name": "Store File URL",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2310,
+        -600
       ]
     }
   ],
@@ -562,7 +676,7 @@
       "main": [
         [
           {
-            "node": "Build Ticket",
+            "node": "Prepare File Uploads",
             "type": "main",
             "index": 0
           }
@@ -669,6 +783,75 @@
         [
           {
             "node": "Loop Product Lines",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare File Uploads": {
+      "main": [
+        [
+          {
+            "node": "Files to Upload?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Files to Upload?": {
+      "main": [
+        [
+          {
+            "node": "File Upload Loop",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Ticket",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "File Upload Loop": {
+      "main": [
+        [
+          {
+            "node": "Upload to HubSpot Files",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Ticket",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload to HubSpot Files": {
+      "main": [
+        [
+          {
+            "node": "Store File URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store File URL": {
+      "main": [
+        [
+          {
+            "node": "File Upload Loop",
             "type": "main",
             "index": 0
           }

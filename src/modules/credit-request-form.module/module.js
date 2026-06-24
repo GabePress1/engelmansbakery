@@ -408,7 +408,7 @@
     for (var li = 0; li < allLines.length; li++) {
       var fileInput = allLines[li].querySelector(".cr-product-photos");
       for (var fi = 0; fi < fileInput.files.length; fi++) {
-        formData.append("photos_line_" + (li + 1), fileInput.files[fi]);
+        formData.append("photo_line" + (li + 1) + "_file" + fi, fileInput.files[fi]);
       }
     }
 
