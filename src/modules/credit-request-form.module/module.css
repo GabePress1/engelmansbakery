@@ -111,7 +111,7 @@
 }
 
 .cr-form__field input[type="number"] {
-  font-size: 15px;
+  font-size: 16px !important;
 }
 
 .cr-form__field input[type="number"]::-webkit-outer-spin-button,
