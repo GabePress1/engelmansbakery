@@ -227,7 +227,7 @@
     },
     {
       "parameters": {
-        "method": "PUT",
+        "method": "POST",
         "url": "=https://api.hubapi.com/crm/v4/objects/tickets/{{ $json.ticketId }}/associations/contacts/{{ $json.contactId }}",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "hubspotAppToken",
@@ -256,7 +256,7 @@
     },
     {
       "parameters": {
-        "method": "PUT",
+        "method": "POST",
         "url": "=https://api.hubapi.com/crm/v4/objects/tickets/{{ $('Store Ticket ID').first().json.ticketId }}/associations/companies/{{ $('Store Ticket ID').first().json.companyId }}",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "hubspotAppToken",
@@ -334,7 +334,7 @@
     },
     {
       "parameters": {
-        "method": "PUT",
+        "method": "POST",
         "url": "=https://api.hubapi.com/crm/v4/objects/2-48651243/{{ $json.id }}/associations/tickets/{{ $('Store Ticket ID').first().json.ticketId }}",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "hubspotAppToken",
