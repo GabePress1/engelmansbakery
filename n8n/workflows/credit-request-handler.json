@@ -399,7 +399,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ properties: { subject: $('Validate Payload').first().json.account.accountNumber + ' - ' + $json.productNumber, item_no_: $json.productNumber, item_description: $json.productDescription || '', quantity: String($json.quantity), credit_amount: String($json.creditAmount), complaint_type: $json.issueClassification, line_notes: $json.notes || '', photosdocumentation: ($json.uploadedPhotoUrls || []).join('\\n'), hs_pipeline: '912368291', hs_pipeline_stage: '1386096010' } }) }}",
+        "jsonBody": "={{ JSON.stringify({ properties: { item_name: $('Validate Payload').first().json.account.accountNumber + ' - ' + $json.productNumber, item_no_: $json.productNumber, item_description: $json.productDescription || '', quantity: String($json.quantity), credit_amount: String($json.creditAmount), complaint_type: $json.issueClassification, line_notes: $json.notes || '', photosdocumentation: ($json.uploadedPhotoUrls || []).join('\\n'), hs_pipeline: '912368291', hs_pipeline_stage: '1386096010' } }) }}",
         "options": {}
       },
       "id": "cr-handler-017",
