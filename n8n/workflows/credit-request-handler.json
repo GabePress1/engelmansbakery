@@ -162,7 +162,7 @@
         "options": {}
       },
       "id": "cr-handler-009",
-      "name": "Create or Update Contact",
+      "name": "Upsert Contact",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [1320, -400],
@@ -400,9 +400,9 @@
       ]
     },
     "Prepare Contact": {
-      "main": [[{ "node": "Create or Update Contact", "type": "main", "index": 0 }]]
+      "main": [[{ "node": "Upsert Contact", "type": "main", "index": 0 }]]
     },
-    "Create or Update Contact": {
+    "Upsert Contact": {
       "main": [[{ "node": "Build Ticket", "type": "main", "index": 0 }]]
     },
     "Build Ticket": {
