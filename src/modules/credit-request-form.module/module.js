@@ -1,5 +1,8 @@
 (function () {
   var ISSUE_CLASSIFICATIONS = [
+    "Flavor",
+    "Size",
+    "Color",
     "Damaged",
     "Moldy",
     "Allergen/Food Safety",
@@ -10,8 +13,15 @@
     "Wrong Substitution",
     "Mispick",
     "Wrong Specification",
-    "Order Error",
-    "Flavor",
+    "Order Error"
+  ];
+
+  var PHOTO_REQUIRED_CLASSIFICATIONS = [
+    "Damaged",
+    "Moldy",
+    "Allergen/Food Safety",
+    "Shelf Life",
+    "Shortage",
     "Size",
     "Color"
   ];
@@ -139,8 +149,8 @@
             '<textarea class="cr-product-notes" rows="2" placeholder="Optional notes for this line"></textarea>' +
           "</div>" +
           '<div class="cr-form__field cr-form__field--full">' +
-            '<label>Photos / Attachments <span class="cr-required">*</span></label>' +
-            '<input type="file" class="cr-product-photos" multiple accept="image/*,.pdf" required>' +
+            '<label>Photos / Attachments <span class="cr-required cr-photo-required-asterisk" style="display:none">*</span></label>' +
+            '<input type="file" class="cr-product-photos" multiple accept="image/*,.pdf">' +
             '<span class="cr-form__error" data-error="photos"></span>' +
           "</div>" +
         "</div>" +
@@ -155,6 +165,17 @@
       var option = document.createElement("option");
       option.value = bcItems[i].number + " — " + bcItems[i].displayName;
       datalist.appendChild(option);
+    }
+  }
+
+  function updatePhotoRequirement(lineEl) {
+    var classification = lineEl.querySelector(".cr-product-classification").value;
+    var photos = lineEl.querySelector(".cr-product-photos");
+    var asterisk = lineEl.querySelector(".cr-photo-required-asterisk");
+    var isRequired = PHOTO_REQUIRED_CLASSIFICATIONS.indexOf(classification) !== -1;
+    photos.required = isRequired;
+    if (asterisk) {
+      asterisk.style.display = isRequired ? "" : "none";
     }
   }
 
@@ -174,6 +195,10 @@
     });
     searchInput.addEventListener("blur", function() {
       onProductSearchChange(searchInput);
+    });
+
+    lineEl.querySelector(".cr-product-classification").addEventListener("change", function () {
+      updatePhotoRequirement(lineEl);
     });
 
     lineEl.querySelector(".cr-remove-line").addEventListener("click", function () {
@@ -320,7 +345,8 @@
       }
 
       var photos = line.querySelector(".cr-product-photos");
-      if (!photos.files || photos.files.length === 0) {
+      var classificationVal = classification.value;
+      if (PHOTO_REQUIRED_CLASSIFICATIONS.indexOf(classificationVal) !== -1 && (!photos.files || photos.files.length === 0)) {
         markError(photos, "At least one photo is required.");
       }
     }
