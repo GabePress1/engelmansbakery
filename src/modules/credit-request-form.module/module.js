@@ -10,7 +10,10 @@
     "Wrong Substitution",
     "Mispick",
     "Wrong Specification",
-    "Order Error"
+    "Order Error",
+    "Flavor",
+    "Size",
+    "Color"
   ];
 
   var MAX_LINES = 10;
