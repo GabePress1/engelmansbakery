@@ -131,6 +131,10 @@
   opacity: 1;
 }
 
+.cr-product-classification {
+  font-size: 15px !important;
+}
+
 /* Error states */
 .cr-form__field--error input,
 .cr-form__field--error select,
