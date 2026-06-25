@@ -148,14 +148,14 @@
             "</select>" +
             '<span class="cr-form__error" data-error="classification"></span>' +
           "</div>" +
-          '<div class="cr-form__field cr-form__field--full">' +
-            "<label>Reason / Notes</label>" +
-            '<textarea class="cr-product-notes" rows="2" placeholder="Optional notes for this line"></textarea>' +
-          "</div>" +
-          '<div class="cr-form__field cr-form__field--full">' +
+          '<div class="cr-form__field">' +
             '<label>Photos / Attachments <span class="cr-required cr-photo-required-asterisk" style="display:none">*</span></label>' +
             '<input type="file" class="cr-product-photos" multiple accept="image/*,.pdf">' +
             '<span class="cr-form__error" data-error="photos"></span>' +
+          "</div>" +
+          '<div class="cr-form__field cr-form__field--full">' +
+            "<label>Reason / Notes</label>" +
+            '<textarea class="cr-product-notes" rows="2" placeholder="Optional notes for this line"></textarea>' +
           "</div>" +
         "</div>" +
       "</div>"
