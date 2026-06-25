@@ -1,0 +1,230 @@
+{
+  "name": "Credit Request – Ticket Stage Guard",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 5
+            }
+          ]
+        }
+      },
+      "id": "guard-001",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/tickets/search",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ filterGroups: [{ filters: [{ propertyName: 'hs_pipeline', operator: 'EQ', value: '912400389' }, { propertyName: 'hs_pipeline_stage', operator: 'IN', values: ['1387983014', '1385996040'] }] }], properties: ['hs_pipeline_stage', 'subject'], limit: 100 }) }}",
+        "options": {}
+      },
+      "id": "guard-002",
+      "name": "Search Guarded Tickets",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [220, 0],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "vxGS6a3iorMrt7wb",
+          "name": "HubSpot Service Key Production"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "" },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.total }}",
+              "rightValue": 0,
+              "operator": { "type": "number", "operation": "gt" }
+            }
+          ]
+        }
+      },
+      "id": "guard-003",
+      "name": "Any Tickets?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [440, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = $input.first().json.results || [];\nreturn results.map(t => ({ json: { ticketId: t.id, ticketStage: t.properties.hs_pipeline_stage, subject: t.properties.subject || '' } }));"
+      },
+      "id": "guard-004",
+      "name": "Split Tickets",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, -100]
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "guard-005",
+      "name": "Loop Tickets",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [880, -100]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.hubapi.com/crm/v4/objects/tickets/{{ $json.ticketId }}/associations/2-48651243",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "options": {}
+      },
+      "id": "guard-006",
+      "name": "Get Associated Items",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1100, -100],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "vxGS6a3iorMrt7wb",
+          "name": "HubSpot Service Key Production"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const associations = $input.first().json.results || [];\nconst ticketId = $('Loop Tickets').first().json.ticketId;\nconst ticketStage = $('Loop Tickets').first().json.ticketStage;\n\nif (associations.length === 0) {\n  return [{ json: { ticketId, ticketStage, allReady: true, openCount: 0 } }];\n}\n\nconst itemIds = associations.map(a => a.toObjectId);\n\nconst batchBody = { inputs: itemIds.map(id => ({ id })), properties: ['hs_pipeline_stage'] };\n\nconst response = await this.helpers.httpRequestWithAuthentication.call(this, 'hubspotAppToken', {\n  method: 'POST',\n  url: 'https://api.hubapi.com/crm/v3/objects/2-48651243/batch/read',\n  body: batchBody,\n  json: true,\n  headers: { 'Content-Type': 'application/json' }\n});\n\nconst items = response.results || [];\n\nconst ITEM_REVIEW = '1388087302';\nconst ITEM_CLOSED = '1386096011';\n\nlet allReady = true;\nlet openCount = 0;\n\nif (ticketStage === '1387983014') {\n  for (const item of items) {\n    const stage = item.properties.hs_pipeline_stage;\n    if (stage !== ITEM_REVIEW && stage !== ITEM_CLOSED) {\n      allReady = false;\n      openCount++;\n    }\n  }\n} else if (ticketStage === '1385996040') {\n  for (const item of items) {\n    if (item.properties.hs_pipeline_stage !== ITEM_CLOSED) {\n      allReady = false;\n      openCount++;\n    }\n  }\n}\n\nreturn [{ json: { ticketId, ticketStage, allReady, openCount } }];"
+      },
+      "id": "guard-007",
+      "name": "Check Items Status",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1320, -100],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "vxGS6a3iorMrt7wb",
+          "name": "HubSpot Service Key Production"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "" },
+          "conditions": [
+            {
+              "id": "c2",
+              "leftValue": "={{ $json.allReady }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "equals", "singleValue": true }
+            }
+          ]
+        }
+      },
+      "id": "guard-008",
+      "name": "All Items Ready?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1540, -100]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.hubapi.com/crm/v3/objects/tickets/{{ $json.ticketId }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ properties: { hs_pipeline_stage: $json.ticketStage === '1385996040' ? '1387983014' : '1387983013' } }) }}",
+        "options": {}
+      },
+      "id": "guard-009",
+      "name": "Move Ticket Back",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1760, 0],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "vxGS6a3iorMrt7wb",
+          "name": "HubSpot Service Key Production"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [{ "node": "Search Guarded Tickets", "type": "main", "index": 0 }]
+      ]
+    },
+    "Search Guarded Tickets": {
+      "main": [
+        [{ "node": "Any Tickets?", "type": "main", "index": 0 }]
+      ]
+    },
+    "Any Tickets?": {
+      "main": [
+        [{ "node": "Split Tickets", "type": "main", "index": 0 }],
+        []
+      ]
+    },
+    "Split Tickets": {
+      "main": [
+        [{ "node": "Loop Tickets", "type": "main", "index": 0 }]
+      ]
+    },
+    "Loop Tickets": {
+      "main": [
+        [{ "node": "Get Associated Items", "type": "main", "index": 0 }],
+        []
+      ]
+    },
+    "Get Associated Items": {
+      "main": [
+        [{ "node": "Check Items Status", "type": "main", "index": 0 }]
+      ]
+    },
+    "Check Items Status": {
+      "main": [
+        [{ "node": "All Items Ready?", "type": "main", "index": 0 }]
+      ]
+    },
+    "All Items Ready?": {
+      "main": [
+        [{ "node": "Loop Tickets", "type": "main", "index": 0 }],
+        [{ "node": "Move Ticket Back", "type": "main", "index": 0 }]
+      ]
+    },
+    "Move Ticket Back": {
+      "main": [
+        [{ "node": "Loop Tickets", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
