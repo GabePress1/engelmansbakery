@@ -123,8 +123,8 @@
             '<span class="cr-form__error" data-error="productNumber"></span>' +
           "</div>" +
           '<div class="cr-form__field">' +
-            '<label>Date of Delivery</label>' +
-            '<input type="date" class="cr-product-delivery-date">' +
+            '<label>Julian Code</label>' +
+            '<input type="text" class="cr-product-julian" placeholder="e.g. 176">' +
           "</div>" +
           '<div class="cr-form__field">' +
             '<label>Quantity <span class="cr-required">*</span></label>' +
@@ -387,7 +387,7 @@
         lineNumber: i + 1,
         productNumber: searchInput.getAttribute("data-product-number") || "",
         productDescription: searchInput.getAttribute("data-product-description") || "",
-        deliveryDate: line.querySelector(".cr-product-delivery-date").value,
+        julianCode: line.querySelector(".cr-product-julian").value.trim(),
         quantity: parseInt(line.querySelector(".cr-product-qty").value, 10) || 0,
         creditAmount: creditAmt,
         issueClassification: line.querySelector(".cr-product-classification").value,
