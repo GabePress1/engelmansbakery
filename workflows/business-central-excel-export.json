@@ -183,6 +183,22 @@
     },
     {
       "parameters": {
+        "fileName": "BusinessCentral_Route21_Export.xlsx",
+        "operation": "read",
+        "authentication": "oneDrive",
+        "folderId": "="
+      },
+      "id": "Read Existing Excel",
+      "name": "Read Existing Excel",
+      "type": "n8n-nodes-base.microsoftOneDrive",
+      "typeVersion": 2,
+      "position": [
+        950,
+        325
+      ]
+    },
+    {
+      "parameters": {
         "functionCode": "const XLSX = require('xlsx');\n\nconst parentData = items[0];\nconst detailData = items[1];\n\n// Create a new workbook\nconst workbook = XLSX.utils.book_new();\n\n// Convert parent data to worksheet\nconst parentSheet = XLSX.utils.json_to_sheet(parentData);\nXLSX.utils.book_append_sheet(workbook, parentSheet, 'Documents');\n\n// Convert detail data to worksheet\nconst detailSheet = XLSX.utils.json_to_sheet(detailData);\nXLSX.utils.book_append_sheet(workbook, detailSheet, 'Line Items');\n\n// Return the workbook as binary data\nconst buffer = XLSX.write(workbook, {bookType: 'xlsx', type: 'buffer'});\n\nreturn [{\n  fileName: 'BusinessCentral_Route21_Export.xlsx',\n  data: buffer.toString('base64'),\n  mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'\n}];"
       },
       "id": "Generate Excel File",
@@ -369,6 +385,17 @@
       ]
     },
     "Merge Detail Data": {
+      "main": [
+        [
+          {
+            "node": "Read Existing Excel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Existing Excel": {
       "main": [
         [
           {
