@@ -183,7 +183,7 @@
     },
     {
       "parameters": {
-        "functionCode": "const XLSX = require('xlsx');\n\nconst parentData = items[0];\nconst detailData = items[1];\n\n// Create a new workbook\nconst workbook = XLSX.utils.book_new();\n\n// Convert parent data to worksheet\nconst parentSheet = XLSX.utils.json_to_sheet(parentData);\nXLSX.utils.book_append_sheet(workbook, parentSheet, 'Documents');\n\n// Convert detail data to worksheet\nconst detailSheet = XLSX.utils.json_to_sheet(detailData);\nXLSX.utils.book_append_sheet(workbook, detailSheet, 'Line Items');\n\n// Return the workbook as binary data\nconst buffer = XLSX.write(workbook, {bookType: 'xlsx', type: 'buffer'});\n\nreturn [{\n  fileName: `BusinessCentral_Route21_Export_${new Date().toISOString().split('T')[0]}.xlsx`,\n  data: buffer.toString('base64'),\n  mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'\n}];"
+        "functionCode": "const XLSX = require('xlsx');\n\nconst parentData = items[0];\nconst detailData = items[1];\n\n// Create a new workbook\nconst workbook = XLSX.utils.book_new();\n\n// Convert parent data to worksheet\nconst parentSheet = XLSX.utils.json_to_sheet(parentData);\nXLSX.utils.book_append_sheet(workbook, parentSheet, 'Documents');\n\n// Convert detail data to worksheet\nconst detailSheet = XLSX.utils.json_to_sheet(detailData);\nXLSX.utils.book_append_sheet(workbook, detailSheet, 'Line Items');\n\n// Return the workbook as binary data\nconst buffer = XLSX.write(workbook, {bookType: 'xlsx', type: 'buffer'});\n\nreturn [{\n  fileName: 'BusinessCentral_Route21_Export.xlsx',\n  data: buffer.toString('base64'),\n  mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'\n}];"
       },
       "id": "Generate Excel File",
       "name": "Generate Excel File",
@@ -196,7 +196,7 @@
     },
     {
       "parameters": {
-        "fileName": "=BusinessCentral_Route21_Export_{{ $now.toFormat('yyyy-MM-dd') }}.xlsx",
+        "fileName": "BusinessCentral_Route21_Export.xlsx",
         "binaryPropertyName": "data",
         "operation": "write",
         "authentication": "oneDrive",
