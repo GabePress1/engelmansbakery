@@ -204,29 +204,49 @@
 /* Credit field with dollar prefix */
 .cr-form__credit-wrapper {
   position: relative;
-  display: flex;
-  align-items: stretch;
 }
 
 .cr-form__credit-wrapper::before {
   content: "$";
+  position: absolute;
+  left: 12px;
+  top: 0;
+  bottom: 0;
   display: flex;
   align-items: center;
-  padding: 0 8px 0 12px;
-  color: var(--cr-text);
-  font-size: 16px;
-  font-weight: 500;
+  color: var(--cr-text-light);
+  font-size: 15px;
   pointer-events: none;
-  border: 1px solid var(--cr-border);
-  border-right: none;
-  border-radius: 4px 0 0 4px;
-  background: var(--cr-bg);
+  z-index: 1;
 }
 
 .cr-form__credit-wrapper input {
-  flex: 1;
-  min-width: 0;
-  border-radius: 0 4px 4px 0 !important;
+  padding-left: 26px !important;
+}
+
+/* Always-visible datalist caret */
+.cr-product-search,
+.cr-product-classification {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23999'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 12px center !important;
+  padding-right: 32px !important;
+}
+
+.cr-product-search::-webkit-calendar-picker-indicator,
+.cr-product-classification::-webkit-calendar-picker-indicator {
+  opacity: 0 !important;
+  width: 0 !important;
+}
+
+/* Consistent placeholder font */
+.cr-form__field input::placeholder,
+.cr-form__field select::placeholder,
+.cr-form__field textarea::placeholder {
+  font-family: var(--cr-font);
+  font-size: 15px;
+  color: #999999;
+  opacity: 1;
 }
 
 /* Buttons */
