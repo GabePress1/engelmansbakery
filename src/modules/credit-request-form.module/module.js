@@ -109,6 +109,7 @@
   function createProductLineHtml(index) {
     var dataListId = "cr-datalist-" + index;
     var classListId = "cr-classlist-" + index;
+    var reqTypeId = "cr-reqtype-" + index;
     return (
       '<div class="cr-product-line" data-line="' + index + '">' +
         '<div class="cr-product-line__header">' +
@@ -132,9 +133,10 @@
             '<span class="cr-form__error" data-error="quantity"></span>' +
           "</div>" +
           '<div class="cr-form__field">' +
-            '<label>Credit Amount ($) <span class="cr-required">*</span></label>' +
-            '<input type="number" class="cr-product-credit" min="0.01" step="0.01" required placeholder="0.00">' +
-            '<span class="cr-form__error" data-error="creditAmount"></span>' +
+            '<label>Request Type <span class="cr-required">*</span></label>' +
+            '<input type="text" class="cr-product-request-type" required placeholder="Select type..." list="' + reqTypeId + '">' +
+            '<datalist id="' + reqTypeId + '"><option value="Complaint"><option value="Credit"></datalist>' +
+            '<span class="cr-form__error" data-error="requestType"></span>' +
           "</div>" +
           '<div class="cr-form__field">' +
             '<label>Complaint Type <span class="cr-required">*</span></label>' +
@@ -193,14 +195,6 @@
     });
     searchInput.addEventListener("blur", function() {
       onProductSearchChange(searchInput);
-    });
-
-    var creditInput = lineEl.querySelector(".cr-product-credit");
-    creditInput.addEventListener("blur", function () {
-      var val = parseFloat(creditInput.value);
-      if (!isNaN(val) && val > 0) {
-        creditInput.value = val.toFixed(2);
-      }
     });
 
     lineEl.querySelector(".cr-product-classification").addEventListener("change", function () {
@@ -339,10 +333,9 @@
         markError(qty, "Enter a valid quantity.");
       }
 
-      var credit = line.querySelector(".cr-product-credit");
-      var creditVal = parseFloat(credit.value);
-      if (!credit.value || isNaN(creditVal) || creditVal <= 0) {
-        markError(credit, "Enter a valid credit amount.");
+      var requestType = line.querySelector(".cr-product-request-type");
+      if (!requestType.value || (requestType.value !== "Complaint" && requestType.value !== "Credit")) {
+        markError(requestType, "Select Complaint or Credit.");
       }
 
       var classification = line.querySelector(".cr-product-classification");
@@ -370,13 +363,9 @@
   function buildPayload() {
     var lines = productContainer.querySelectorAll(".cr-product-line");
     var productLines = [];
-    var totalCredit = 0;
 
     for (var i = 0; i < lines.length; i++) {
       var line = lines[i];
-      var creditAmt = parseFloat(line.querySelector(".cr-product-credit").value) || 0;
-      totalCredit += creditAmt;
-
       var searchInput = line.querySelector(".cr-product-search");
       var photoFiles = line.querySelector(".cr-product-photos").files;
       var photoNames = [];
@@ -389,7 +378,7 @@
         productDescription: searchInput.getAttribute("data-product-description") || "",
         julianCode: line.querySelector(".cr-product-julian").value.trim(),
         quantity: parseInt(line.querySelector(".cr-product-qty").value, 10) || 0,
-        creditAmount: creditAmt,
+        requestType: line.querySelector(".cr-product-request-type").value,
         issueClassification: line.querySelector(".cr-product-classification").value,
         notes: line.querySelector(".cr-product-notes").value.trim(),
         photoFileNames: photoNames
@@ -411,7 +400,6 @@
       },
       productLines: productLines,
       ticketNotes: document.getElementById("cr-ticket-notes").value.trim(),
-      totalCreditRequested: Math.round(totalCredit * 100) / 100,
       totalLineItems: productLines.length,
       source: "engelmansbakery.com/credit-request"
     };
