@@ -132,10 +132,8 @@
             '<span class="cr-form__error" data-error="quantity"></span>' +
           "</div>" +
           '<div class="cr-form__field">' +
-            '<label>Credit Amount <span class="cr-required">*</span></label>' +
-            '<div class="cr-form__credit-wrapper">' +
-              '<input type="number" class="cr-product-credit" min="0.01" step="0.01" required placeholder="0.00">' +
-            "</div>" +
+            '<label>Credit Amount ($) <span class="cr-required">*</span></label>' +
+            '<input type="number" class="cr-product-credit" min="0.01" step="0.01" required placeholder="0.00">' +
             '<span class="cr-form__error" data-error="creditAmount"></span>' +
           "</div>" +
           '<div class="cr-form__field">' +
