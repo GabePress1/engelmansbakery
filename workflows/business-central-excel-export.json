@@ -21,19 +21,119 @@
     },
     {
       "parameters": {
-        "url": "=https://api.businesscentral.dynamics.com/v2.0/bddeba87-9d41-4063-a0e3-be9e6afcd2ba/Production/ODataV4/Company('Live-EB')/Posted_Sales_Invoice?$filter=shippingAgentCode eq 'RT 21' and ERC_Posting_Date ge datetime'2026-01-01T00:00:00Z'&$top=1",
-        "authentication": "businessCentralOData",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "k1",
+              "name": "Tenant_ID",
+              "value": "bddeba87-9d41-4063-a0e3-be9e6afcd2ba",
+              "type": "string"
+            },
+            {
+              "id": "k2",
+              "name": "client_ID",
+              "value": "db88be9e-de13-4205-b0c1-472007c60c36",
+              "type": "string"
+            },
+            {
+              "id": "k3",
+              "name": "Secret_ID",
+              "value": "{{SECRET_ID}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "Keys",
+      "name": "Keys",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        350,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://login.microsoftonline.com/{{ $json.Tenant_ID }}/oauth2/v2.0/token",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "grant_type",
+              "value": "client_credentials"
+            },
+            {
+              "name": "client_id",
+              "value": "={{ $json.client_ID }}"
+            },
+            {
+              "name": "client_secret",
+              "value": "={{ $json.Secret_ID }}"
+            },
+            {
+              "name": "scope",
+              "value": "https://api.businesscentral.dynamics.com/.default"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "Get BC Token",
+      "name": "Get BC Token",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.businesscentral.dynamics.com/v2.0/bddeba87-9d41-4063-a0e3-be9e6afcd2ba/Production/ODataV4/Company('Live-EB')/Posted_Sales_Invoice",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "$filter",
+              "value": "shippingAgentCode eq 'RT 21' and ERC_Posting_Date ge datetime'2026-01-01T00:00:00Z'"
+            },
+            {
+              "name": "$select",
+              "value": "No,Sell_to_Customer_No,Sell_to_Customer_Name,Posting_Date,Due_Date,Order_No,Total_Amount_Excluding_Tax,Total_Amount_Including_Tax,Amount,ERC_Posting_Date"
+            },
+            {
+              "name": "$top",
+              "value": "100"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Get BC Token').first().json.access_token }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
         "method": "GET",
         "responseFormat": "json",
         "options": {
-          "redirect": "follow",
           "timeout": 60000
         }
       },
       "id": "Get Invoices",
       "name": "Get Invoices",
       "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 3,
+      "typeVersion": 4,
       "position": [
         450,
         100
@@ -41,19 +141,47 @@
     },
     {
       "parameters": {
-        "url": "=https://api.businesscentral.dynamics.com/v2.0/bddeba87-9d41-4063-a0e3-be9e6afcd2ba/Production/ODataV4/Company('Live-EB')/Posted_Sales_Invoice_Lines_Excel?$filter=ERC_Posting_Date ge datetime'2026-01-01T00:00:00Z'&$top=1",
-        "authentication": "businessCentralOData",
+        "url": "https://api.businesscentral.dynamics.com/v2.0/bddeba87-9d41-4063-a0e3-be9e6afcd2ba/Production/ODataV4/Company('Live-EB')/Posted_Sales_Invoice_Lines_Excel",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "$filter",
+              "value": "ERC_Posting_Date ge datetime'2026-01-01T00:00:00Z'"
+            },
+            {
+              "name": "$select",
+              "value": "No,Document_No,Item_No,Description,Quantity,Unit_Price,Amount,Line_Amount_Excluding_Tax,Line_Amount_Including_Tax,ERC_Posting_Date"
+            },
+            {
+              "name": "$top",
+              "value": "500"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Get BC Token').first().json.access_token }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
         "method": "GET",
         "responseFormat": "json",
         "options": {
-          "redirect": "follow",
           "timeout": 60000
         }
       },
       "id": "Get Invoice Lines",
       "name": "Get Invoice Lines",
       "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 3,
+      "typeVersion": 4,
       "position": [
         450,
         250
@@ -61,19 +189,47 @@
     },
     {
       "parameters": {
-        "url": "=https://api.businesscentral.dynamics.com/v2.0/bddeba87-9d41-4063-a0e3-be9e6afcd2ba/Production/ODataV4/Company('Live-EB')/Sales_Order?$filter=shippingAgentCode eq 'RT 21' and ERC_Posting_Date ge datetime'2026-01-01T00:00:00Z'&$top=1",
-        "authentication": "businessCentralOData",
+        "url": "https://api.businesscentral.dynamics.com/v2.0/bddeba87-9d41-4063-a0e3-be9e6afcd2ba/Production/ODataV4/Company('Live-EB')/Sales_Order",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "$filter",
+              "value": "shippingAgentCode eq 'RT 21' and ERC_Posting_Date ge datetime'2026-01-01T00:00:00Z'"
+            },
+            {
+              "name": "$select",
+              "value": "No,Sell_to_Customer_No,Sell_to_Customer_Name,Order_Date,Requested_Delivery_Date,Status,Total_Amount_Excluding_Tax,Total_Amount_Including_Tax,Amount,ERC_Posting_Date"
+            },
+            {
+              "name": "$top",
+              "value": "100"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Get BC Token').first().json.access_token }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
         "method": "GET",
         "responseFormat": "json",
         "options": {
-          "redirect": "follow",
           "timeout": 60000
         }
       },
       "id": "Get Sales Orders",
       "name": "Get Sales Orders",
       "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 3,
+      "typeVersion": 4,
       "position": [
         450,
         400
@@ -81,19 +237,47 @@
     },
     {
       "parameters": {
-        "url": "=https://api.businesscentral.dynamics.com/v2.0/bddeba87-9d41-4063-a0e3-be9e6afcd2ba/Production/ODataV4/Company('Live-EB')/Sales_Order_Line?$filter=ERC_Posting_Date ge datetime'2026-01-01T00:00:00Z'&$top=1",
-        "authentication": "businessCentralOData",
+        "url": "https://api.businesscentral.dynamics.com/v2.0/bddeba87-9d41-4063-a0e3-be9e6afcd2ba/Production/ODataV4/Company('Live-EB')/Sales_Order_Line",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "$filter",
+              "value": "ERC_Posting_Date ge datetime'2026-01-01T00:00:00Z'"
+            },
+            {
+              "name": "$select",
+              "value": "No,Document_No,Type,Item_No,Description,Quantity,Unit_Price,Amount,Line_Amount_Excluding_Tax,Line_Amount_Including_Tax,ERC_Posting_Date"
+            },
+            {
+              "name": "$top",
+              "value": "500"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Get BC Token').first().json.access_token }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
         "method": "GET",
         "responseFormat": "json",
         "options": {
-          "redirect": "follow",
           "timeout": 60000
         }
       },
       "id": "Get Sales Order Lines",
       "name": "Get Sales Order Lines",
       "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 3,
+      "typeVersion": 4,
       "position": [
         450,
         550
@@ -260,6 +444,28 @@
   ],
   "connections": {
     "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Keys",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Keys": {
+      "main": [
+        [
+          {
+            "node": "Get BC Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get BC Token": {
       "main": [
         [
           {
