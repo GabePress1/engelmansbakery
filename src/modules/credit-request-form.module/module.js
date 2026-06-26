@@ -197,6 +197,14 @@
       onProductSearchChange(searchInput);
     });
 
+    var creditInput = lineEl.querySelector(".cr-product-credit");
+    creditInput.addEventListener("blur", function () {
+      var val = parseFloat(creditInput.value);
+      if (!isNaN(val) && val > 0) {
+        creditInput.value = val.toFixed(2);
+      }
+    });
+
     lineEl.querySelector(".cr-product-classification").addEventListener("change", function () {
       updatePhotoRequirement(lineEl);
     });
