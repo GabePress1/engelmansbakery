@@ -21,7 +21,7 @@
     },
     {
       "parameters": {
-        "url": "=https://api.businesscentral.dynamics.com/v2.0/bddeba87-9d41-4063-a0e3-be9e6afcd2ba/Production/ODataV4/Company('Live-EB')/Posted_Sales_Invoice?$filter=shippingAgentCode eq 'RT 21'&$top=1",
+        "url": "=https://api.businesscentral.dynamics.com/v2.0/bddeba87-9d41-4063-a0e3-be9e6afcd2ba/Production/ODataV4/Company('Live-EB')/Posted_Sales_Invoice?$filter=shippingAgentCode eq 'RT 21' and ERC_Posting_Date ge datetime'2026-01-01T00:00:00Z'&$top=1",
         "authentication": "businessCentralOData",
         "method": "GET",
         "responseFormat": "json",
@@ -41,7 +41,7 @@
     },
     {
       "parameters": {
-        "url": "=https://api.businesscentral.dynamics.com/v2.0/bddeba87-9d41-4063-a0e3-be9e6afcd2ba/Production/ODataV4/Company('Live-EB')/Posted_Sales_Invoice_Lines_Excel?$top=1",
+        "url": "=https://api.businesscentral.dynamics.com/v2.0/bddeba87-9d41-4063-a0e3-be9e6afcd2ba/Production/ODataV4/Company('Live-EB')/Posted_Sales_Invoice_Lines_Excel?$filter=ERC_Posting_Date ge datetime'2026-01-01T00:00:00Z'&$top=1",
         "authentication": "businessCentralOData",
         "method": "GET",
         "responseFormat": "json",
@@ -61,7 +61,7 @@
     },
     {
       "parameters": {
-        "url": "=https://api.businesscentral.dynamics.com/v2.0/bddeba87-9d41-4063-a0e3-be9e6afcd2ba/Production/ODataV4/Company('Live-EB')/Sales_Order?$filter=shippingAgentCode eq 'RT 21'&$top=1",
+        "url": "=https://api.businesscentral.dynamics.com/v2.0/bddeba87-9d41-4063-a0e3-be9e6afcd2ba/Production/ODataV4/Company('Live-EB')/Sales_Order?$filter=shippingAgentCode eq 'RT 21' and ERC_Posting_Date ge datetime'2026-01-01T00:00:00Z'&$top=1",
         "authentication": "businessCentralOData",
         "method": "GET",
         "responseFormat": "json",
@@ -81,7 +81,7 @@
     },
     {
       "parameters": {
-        "url": "=https://api.businesscentral.dynamics.com/v2.0/bddeba87-9d41-4063-a0e3-be9e6afcd2ba/Production/ODataV4/Company('Live-EB')/Sales_Order_Line?$top=1",
+        "url": "=https://api.businesscentral.dynamics.com/v2.0/bddeba87-9d41-4063-a0e3-be9e6afcd2ba/Production/ODataV4/Company('Live-EB')/Sales_Order_Line?$filter=ERC_Posting_Date ge datetime'2026-01-01T00:00:00Z'&$top=1",
         "authentication": "businessCentralOData",
         "method": "GET",
         "responseFormat": "json",
