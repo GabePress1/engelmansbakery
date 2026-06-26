@@ -215,7 +215,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const batchItems = $input.all();\nconst store = $getWorkflowStaticData('global');\n\nconst customerNos = batchItems\n  .map(i => String(i.json.customerNo || '').trim())\n  .filter(no => no && no !== 'null');\n\nconst uniqueNos = [...new Set(customerNos)];\nif (uniqueNos.length === 0) {\n  return [{ json: { filter: null, customerNos: [], skip: true } }];\n}\nconst customerFilter = uniqueNos.map(no => `Sell_to_Customer_No eq '${no.replace(/'/g,\"''\")}'`).join(' or ');\nconst filter = `Type eq 'Item' and ERC_Posting_Date ge datetime'2026-01-01T00:00:00Z' and (${customerFilter})`;\nreturn [{ json: { filter, customerNos: uniqueNos, skip: false } }];"
+        "jsCode": "const batchItems = $input.all();\n\nconst customerNos = batchItems\n  .map(i => {\n    const item = i.json || i;\n    return String(item.customerNo || '').trim();\n  })\n  .filter(no => no && no !== 'null');\n\nconst uniqueNos = [...new Set(customerNos)];\nif (uniqueNos.length === 0) {\n  return [{ json: { filter: null, customerNos: [], skip: true } }];\n}\nconst customerFilter = uniqueNos.map(no => `Sell_to_Customer_No eq '${no.replace(/'/g,\"''\")}'`).join(' or ');\nconst filter = `Type eq 'Item' and ERC_Posting_Date ge datetime'2026-01-01T00:00:00Z' and (${customerFilter})`;\nreturn [{ json: { filter, customerNos: uniqueNos, skip: false } }];"
       },
       "id": "build_invoice_filter",
       "name": "Build Invoice Filter",
