@@ -1,0 +1,410 @@
+{
+  "name": "Business Central Route 21 Excel Export",
+  "nodes": [
+    {
+      "parameters": {
+        "interval": [
+          {
+            "triggerAtHour": 6,
+            "triggerAtMinute": 0
+          }
+        ]
+      },
+      "id": "Schedule Trigger",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.businesscentral.dynamics.com/v2.0/companies({{ $json.companyId }})/salesInvoices?$filter=shippingAgentCode eq 'RT 21'&$select=id,number,documentDate,postingDate,dueDate,customerId,customer_displayName,shipmentDate,totalAmountExcludingTax,totalAmountIncludingTax",
+        "authentication": "businessCentralOData",
+        "method": "GET",
+        "responseFormat": "json",
+        "options": {
+          "redirect": "follow",
+          "timeout": 300
+        }
+      },
+      "id": "Get Invoices",
+      "name": "Get Invoices",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        450,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.businesscentral.dynamics.com/v2.0/companies({{ $json.companyId }})/salesInvoiceLines?$filter=document/shippingAgentCode eq 'RT 21'&$select=documentId,lineNumber,lineType,itemId,item_displayName,quantity,unitPrice,lineAmount,lineAmountExcludingTax,lineAmountIncludingTax",
+        "authentication": "businessCentralOData",
+        "method": "GET",
+        "responseFormat": "json",
+        "options": {
+          "redirect": "follow",
+          "timeout": 300
+        }
+      },
+      "id": "Get Invoice Lines",
+      "name": "Get Invoice Lines",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        450,
+        250
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.businesscentral.dynamics.com/v2.0/companies({{ $json.companyId }})/salesOrders?$filter=shippingAgentCode eq 'RT 21'&$select=id,number,orderDate,requestedDeliveryDate,customerId,customer_displayName,shipmentDate,totalAmountExcludingTax,totalAmountIncludingTax,status",
+        "authentication": "businessCentralOData",
+        "method": "GET",
+        "responseFormat": "json",
+        "options": {
+          "redirect": "follow",
+          "timeout": 300
+        }
+      },
+      "id": "Get Sales Orders",
+      "name": "Get Sales Orders",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        450,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.businesscentral.dynamics.com/v2.0/companies({{ $json.companyId }})/salesOrderLines?$filter=document/shippingAgentCode eq 'RT 21'&$select=documentId,lineNumber,lineType,itemId,item_displayName,quantity,unitPrice,lineAmount,lineAmountExcludingTax,lineAmountIncludingTax",
+        "authentication": "businessCentralOData",
+        "method": "GET",
+        "responseFormat": "json",
+        "options": {
+          "redirect": "follow",
+          "timeout": 300
+        }
+      },
+      "id": "Get Sales Order Lines",
+      "name": "Get Sales Order Lines",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        450,
+        550
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "jsonl",
+        "jsonl": "={\"type\": \"INVOICE\", \"document_number\": $json.number, \"customer_id\": $json.customerId, \"customer_name\": $json.customer_displayName, \"document_date\": $json.documentDate, \"posting_date\": $json.postingDate, \"due_date\": $json.dueDate, \"shipment_date\": $json.shipmentDate, \"amount_excluding_tax\": $json.totalAmountExcludingTax, \"amount_including_tax\": $json.totalAmountIncludingTax}"
+      },
+      "id": "Transform Invoices",
+      "name": "Transform Invoices",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        650,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "jsonl",
+        "jsonl": "={\"type\": \"SALES_ORDER\", \"document_number\": $json.number, \"customer_id\": $json.customerId, \"customer_name\": $json.customer_displayName, \"document_date\": $json.orderDate, \"requested_delivery_date\": $json.requestedDeliveryDate, \"shipment_date\": $json.shipmentDate, \"status\": $json.status, \"amount_excluding_tax\": $json.totalAmountExcludingTax, \"amount_including_tax\": $json.totalAmountIncludingTax}"
+      },
+      "id": "Transform Sales Orders",
+      "name": "Transform Sales Orders",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        650,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "jsonl",
+        "jsonl": "={\"document_type\": \"INVOICE_LINE\", \"document_number\": $json.documentId, \"line_number\": $json.lineNumber, \"line_type\": $json.lineType, \"item_id\": $json.itemId, \"item_name\": $json.item_displayName, \"quantity\": $json.quantity, \"unit_price\": $json.unitPrice, \"line_amount\": $json.lineAmount, \"line_amount_excluding_tax\": $json.lineAmountExcludingTax, \"line_amount_including_tax\": $json.lineAmountIncludingTax}"
+      },
+      "id": "Transform Invoice Lines",
+      "name": "Transform Invoice Lines",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        650,
+        250
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "jsonl",
+        "jsonl": "={\"document_type\": \"ORDER_LINE\", \"document_number\": $json.documentId, \"line_number\": $json.lineNumber, \"line_type\": $json.lineType, \"item_id\": $json.itemId, \"item_name\": $json.item_displayName, \"quantity\": $json.quantity, \"unit_price\": $json.unitPrice, \"line_amount\": $json.lineAmount, \"line_amount_excluding_tax\": $json.lineAmountExcludingTax, \"line_amount_including_tax\": $json.lineAmountIncludingTax}"
+      },
+      "id": "Transform Sales Order Lines",
+      "name": "Transform Sales Order Lines",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        650,
+        550
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Merge invoices and sales orders into a single parent table\nconst parentData = [];\n\nif (Array.isArray(items[0])) {\n  parentData.push(...items[0]);\n}\nif (Array.isArray(items[1])) {\n  parentData.push(...items[1]);\n}\n\nreturn parentData;"
+      },
+      "id": "Merge Parent Data",
+      "name": "Merge Parent Data",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        850,
+        250
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Merge invoice lines and sales order lines into a single detail table\nconst detailData = [];\n\nif (Array.isArray(items[0])) {\n  detailData.push(...items[0]);\n}\nif (Array.isArray(items[1])) {\n  detailData.push(...items[1]);\n}\n\nreturn detailData;"
+      },
+      "id": "Merge Detail Data",
+      "name": "Merge Detail Data",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        850,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "const XLSX = require('xlsx');\n\nconst parentData = items[0];\nconst detailData = items[1];\n\n// Create a new workbook\nconst workbook = XLSX.utils.book_new();\n\n// Convert parent data to worksheet\nconst parentSheet = XLSX.utils.json_to_sheet(parentData);\nXLSX.utils.book_append_sheet(workbook, parentSheet, 'Documents');\n\n// Convert detail data to worksheet\nconst detailSheet = XLSX.utils.json_to_sheet(detailData);\nXLSX.utils.book_append_sheet(workbook, detailSheet, 'Line Items');\n\n// Return the workbook as binary data\nconst buffer = XLSX.write(workbook, {bookType: 'xlsx', type: 'buffer'});\n\nreturn [{\n  fileName: `BusinessCentral_Route21_Export_${new Date().toISOString().split('T')[0]}.xlsx`,\n  data: buffer.toString('base64'),\n  mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'\n}];"
+      },
+      "id": "Generate Excel File",
+      "name": "Generate Excel File",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1050,
+        325
+      ]
+    },
+    {
+      "parameters": {
+        "fileName": "=BusinessCentral_Route21_Export_{{ $now.toFormat('yyyy-MM-dd') }}.xlsx",
+        "binaryPropertyName": "data",
+        "operation": "write",
+        "authentication": "oneDrive",
+        "folderId": "=",
+        "options": {}
+      },
+      "id": "Save to OneDrive",
+      "name": "Save to OneDrive",
+      "type": "n8n-nodes-base.microsoftOneDrive",
+      "typeVersion": 2,
+      "position": [
+        1250,
+        325
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "{{ $env.ERROR_EMAIL_RECIPIENT }}",
+        "subject": "Business Central Route 21 Export - Workflow Failed",
+        "textOnly": true,
+        "text": "The Business Central Route 21 Export workflow encountered an error:\n\nNode: {{ $node.name }}\nError: {{ $error.message }}\nTimestamp: {{ $now.toFormat('yyyy-MM-dd HH:mm:ss') }}\n\nPlease check the n8n workflow logs for more details."
+      },
+      "id": "Send Error Email",
+      "name": "Send Error Email",
+      "type": "n8n-nodes-base.sendEmail",
+      "typeVersion": 1,
+      "position": [
+        1250,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Log successful execution\nconsole.log('Business Central Route 21 Export workflow completed successfully');\nconsole.log(`Excel file saved: ${items[0].fileName}`);\nreturn items[0];"
+      },
+      "id": "Log Success",
+      "name": "Log Success",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1250,
+        150
+      ]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Invoices",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Invoice Lines",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Sales Orders",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Sales Order Lines",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Invoices": {
+      "main": [
+        [
+          {
+            "node": "Transform Invoices",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Invoice Lines": {
+      "main": [
+        [
+          {
+            "node": "Transform Invoice Lines",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Sales Orders": {
+      "main": [
+        [
+          {
+            "node": "Transform Sales Orders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Sales Order Lines": {
+      "main": [
+        [
+          {
+            "node": "Transform Sales Order Lines",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transform Invoices": {
+      "main": [
+        [
+          {
+            "node": "Merge Parent Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transform Sales Orders": {
+      "main": [
+        [
+          {
+            "node": "Merge Parent Data",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Transform Invoice Lines": {
+      "main": [
+        [
+          {
+            "node": "Merge Detail Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transform Sales Order Lines": {
+      "main": [
+        [
+          {
+            "node": "Merge Detail Data",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Parent Data": {
+      "main": [
+        [
+          {
+            "node": "Generate Excel File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Detail Data": {
+      "main": [
+        [
+          {
+            "node": "Generate Excel File",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Generate Excel File": {
+      "main": [
+        [
+          {
+            "node": "Save to OneDrive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save to OneDrive": {
+      "main": [
+        [
+          {
+            "node": "Log Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "timezone": "UTC"
+  }
+}
