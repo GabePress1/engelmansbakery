@@ -123,7 +123,7 @@
             '<span class="cr-form__error" data-error="productNumber"></span>' +
           "</div>" +
           '<div class="cr-form__field">' +
-            '<label>Julian Code</label>' +
+            '<label>Production Code</label>' +
             '<input type="text" class="cr-product-julian" placeholder="e.g. 176">' +
           "</div>" +
           '<div class="cr-form__field">' +
