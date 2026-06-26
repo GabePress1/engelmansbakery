@@ -1,0 +1,501 @@
+{
+  "name": "Route 21 – BC Invoice Export with HubSpot Customer Lookup",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 6 * * *"
+            }
+          ]
+        }
+      },
+      "id": "schedule_trigger",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [
+        -176,
+        104
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "k1",
+              "name": "Tenant_ID",
+              "value": "bddeba87-9d41-4063-a0e3-be9e6afcd2ba",
+              "type": "string"
+            },
+            {
+              "id": "k2",
+              "name": "client_ID",
+              "value": "db88be9e-de13-4205-b0c1-472007c60c36",
+              "type": "string"
+            },
+            {
+              "id": "k3",
+              "name": "Secret_ID",
+              "value": "{{SECRET_ID}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "keys",
+      "name": "Keys",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        48,
+        104
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global');\nstore.hsCompanies = [];\nstore.hsCursor = null;\nreturn [{ json: { initialized: true } }];"
+      },
+      "id": "initialize_hs_fetch",
+      "name": "Initialize HS Fetch",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        272,
+        104
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst payload = {\n  filterGroups: [{\n    filters: [\n      { propertyName: 'relationship',        operator: 'EQ',         value: 'Distribution Center' },\n      { propertyName: 'erp_account_number',  operator: 'HAS_PROPERTY' }\n    ]\n  }],\n  properties: ['hs_object_id','erp_account_number','name'],\n  limit: 200\n};\nif (store.hsCursor) payload.after = store.hsCursor;\nreturn [{ json: payload }];"
+      },
+      "id": "build_hs_search_payload",
+      "name": "Build HS Search Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        496,
+        104
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/companies/search",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "id": "search_hubspot_companies",
+      "name": "Search HubSpot Companies",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        720,
+        24
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "vxGS6a3iorMrt7wb",
+          "name": "HubSpot Service Key Production"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst results = response.results || [];\nconst store = $getWorkflowStaticData('global');\nif (!store.hsCompanies) store.hsCompanies = [];\nstore.hsCompanies.push(...results);\nconst nextCursor = response.paging?.next?.after;\nstore.hsCursor = (nextCursor && results.length > 0) ? nextCursor : null;\nconst hasMore = store.hsCursor !== null ? 1 : 0;\nreturn [{ json: { fetched: store.hsCompanies.length, thisPage: results.length, hasMore } }];"
+      },
+      "id": "accumulate_hs_results",
+      "name": "Accumulate HS Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        944,
+        24
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.hasMore }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "more_hs_pages",
+      "name": "More HS Pages?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1168,
+        104
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst companies = store.hsCompanies || [];\nconst output = [];\nfor (const c of companies) {\n  const no = String(c.properties?.erp_account_number || '').trim();\n  if (no) {\n    output.push({ json: { customerNo: no, customerName: c.properties?.name || no } });\n  }\n}\nstore.customerNos = output.map(o => o.json.customerNo);\nif (output.length === 0) return [{ json: { customerNo: null, skip: true } }];\nreturn output;"
+      },
+      "id": "store_distribution_customers",
+      "name": "Store Distribution Customers",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1392,
+        104
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://login.microsoftonline.com/{{ $('Keys').first().json.Tenant_ID }}/oauth2/v2.0/token",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "grant_type",
+              "value": "client_credentials"
+            },
+            {
+              "name": "client_id",
+              "value": "={{ $('Keys').first().json.client_ID }}"
+            },
+            {
+              "name": "client_secret",
+              "value": "={{ $('Keys').first().json.Secret_ID }}"
+            },
+            {
+              "name": "scope",
+              "value": "https://api.businesscentral.dynamics.com/.default"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "get_bc_token",
+      "name": "Get BC Token",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1616,
+        104
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const batchItems = $input.all();\nconst store = $getWorkflowStaticData('global');\n\nconst customerNos = batchItems\n  .map(i => String(i.json.customerNo || '').trim())\n  .filter(no => no && no !== 'null');\n\nconst uniqueNos = [...new Set(customerNos)];\nif (uniqueNos.length === 0) {\n  return [{ json: { filter: null, customerNos: [], skip: true } }];\n}\nconst customerFilter = uniqueNos.map(no => `Sell_to_Customer_No eq '${no.replace(/'/g,\"''\")}'`).join(' or ');\nconst filter = `Type eq 'Item' and ERC_Posting_Date ge datetime'2026-01-01T00:00:00Z' and (${customerFilter})`;\nreturn [{ json: { filter, customerNos: uniqueNos, skip: false } }];"
+      },
+      "id": "build_invoice_filter",
+      "name": "Build Invoice Filter",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1840,
+        104
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.businesscentral.dynamics.com/v2.0/bddeba87-9d41-4063-a0e3-be9e6afcd2ba/Production/ODataV4/Company('Live-EB')/Posted_Sales_Invoice_Lines_Excel",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "$filter",
+              "value": "={{ $('Build Invoice Filter').first().json.filter || \"Sell_to_Customer_No eq 'SKIP'\" }}"
+            },
+            {
+              "name": "$select",
+              "value": "No,Description,Document_No,Sell_to_Customer_No,Sell_to_Customer_Name,Quantity,Unit_Price,Amount,Order_No,ERC_Posting_Date"
+            },
+            {
+              "name": "$top",
+              "value": "1000"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Get BC Token').first().json.access_token }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "fetch_invoices",
+      "name": "Fetch Invoices",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        2064,
+        104
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const invoices = $input.all().map(i => i.json);\n\nconst output = [];\nfor (const inv of invoices) {\n  output.push({\n    json: {\n      document_no: inv.No || inv.Document_No || '',\n      item_no: inv.Item_No || inv.No || '',\n      description: inv.Description || '',\n      customer_no: inv.Sell_to_Customer_No || '',\n      customer_name: inv.Sell_to_Customer_Name || '',\n      quantity: inv.Quantity || 0,\n      unit_price: inv.Unit_Price || 0,\n      amount: inv.Amount || 0,\n      posting_date: inv.ERC_Posting_Date || '',\n      order_no: inv.Order_No || ''\n    }\n  });\n}\n\nreturn output.length > 0 ? output : [{ json: { message: 'No data' } }];"
+      },
+      "id": "format_invoice_data",
+      "name": "Format Invoice Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2288,
+        104
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "const XLSX = require('xlsx');\n\nconst invoiceData = $input.all().map(i => i.json).filter(i => i.message === undefined);\n\n// Create a new workbook\nconst workbook = XLSX.utils.book_new();\n\n// Convert invoice data to worksheet\nconst invoiceSheet = XLSX.utils.json_to_sheet(invoiceData);\nXLSX.utils.book_append_sheet(workbook, invoiceSheet, 'Route 21 Invoices');\n\n// Return the workbook as binary data\nconst buffer = XLSX.write(workbook, {bookType: 'xlsx', type: 'buffer'});\n\nreturn [{\n  fileName: 'Route21_Invoice_Export.xlsx',\n  data: buffer.toString('base64'),\n  mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'\n}];"
+      },
+      "id": "generate_excel_file",
+      "name": "Generate Excel File",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        2512,
+        104
+      ]
+    },
+    {
+      "parameters": {
+        "fileName": "Route21_Invoice_Export.xlsx",
+        "binaryPropertyName": "data",
+        "operation": "write",
+        "authentication": "oneDrive",
+        "folderId": "=",
+        "options": {}
+      },
+      "id": "save_to_onedrive",
+      "name": "Save to OneDrive",
+      "type": "n8n-nodes-base.microsoftOneDrive",
+      "typeVersion": 2,
+      "position": [
+        2736,
+        104
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Log successful execution\nconsole.log('Route 21 HubSpot-BC Excel Export workflow completed successfully');\nconsole.log(`Excel file saved: ${items[0].fileName}`);\nreturn items[0];"
+      },
+      "id": "log_success",
+      "name": "Log Success",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        2960,
+        104
+      ]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Keys",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Keys": {
+      "main": [
+        [
+          {
+            "node": "Initialize HS Fetch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Initialize HS Fetch": {
+      "main": [
+        [
+          {
+            "node": "Build HS Search Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build HS Search Payload": {
+      "main": [
+        [
+          {
+            "node": "Search HubSpot Companies",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search HubSpot Companies": {
+      "main": [
+        [
+          {
+            "node": "Accumulate HS Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Accumulate HS Results": {
+      "main": [
+        [
+          {
+            "node": "More HS Pages?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "More HS Pages?": {
+      "main": [
+        [
+          {
+            "node": "Build HS Search Payload",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Store Distribution Customers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Distribution Customers": {
+      "main": [
+        [
+          {
+            "node": "Get BC Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get BC Token": {
+      "main": [
+        [
+          {
+            "node": "Build Invoice Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Invoice Filter": {
+      "main": [
+        [
+          {
+            "node": "Fetch Invoices",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Invoices": {
+      "main": [
+        [
+          {
+            "node": "Format Invoice Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Invoice Data": {
+      "main": [
+        [
+          {
+            "node": "Generate Excel File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Excel File": {
+      "main": [
+        [
+          {
+            "node": "Save to OneDrive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save to OneDrive": {
+      "main": [
+        [
+          {
+            "node": "Log Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "timezone": "UTC"
+  }
+}
