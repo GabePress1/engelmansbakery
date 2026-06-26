@@ -97,21 +97,18 @@
     return html;
   }
 
-  function buildClassificationOptions() {
-    var html = '<option value="">Select classification...</option>';
+  function buildClassificationDatalist(id) {
+    var html = '<datalist id="' + id + '">';
     for (var i = 0; i < ISSUE_CLASSIFICATIONS.length; i++) {
-      html +=
-        '<option value="' +
-        escapeAttr(ISSUE_CLASSIFICATIONS[i]) +
-        '">' +
-        escapeHtml(ISSUE_CLASSIFICATIONS[i]) +
-        "</option>";
+      html += '<option value="' + escapeAttr(ISSUE_CLASSIFICATIONS[i]) + '">';
     }
+    html += '</datalist>';
     return html;
   }
 
   function createProductLineHtml(index) {
     var dataListId = "cr-datalist-" + index;
+    var classListId = "cr-classlist-" + index;
     return (
       '<div class="cr-product-line" data-line="' + index + '">' +
         '<div class="cr-product-line__header">' +
@@ -143,9 +140,8 @@
           "</div>" +
           '<div class="cr-form__field">' +
             '<label>Complaint Type <span class="cr-required">*</span></label>' +
-            '<select class="cr-product-classification" required>' +
-              buildClassificationOptions() +
-            "</select>" +
+            '<input type="text" class="cr-product-classification" required placeholder="Select classification..." list="' + classListId + '">' +
+            buildClassificationDatalist(classListId) +
             '<span class="cr-form__error" data-error="classification"></span>' +
           "</div>" +
           '<div class="cr-form__field">' +
@@ -344,8 +340,8 @@
       }
 
       var classification = line.querySelector(".cr-product-classification");
-      if (!classification.value) {
-        markError(classification, "Select a classification.");
+      if (!classification.value || ISSUE_CLASSIFICATIONS.indexOf(classification.value) === -1) {
+        markError(classification, "Select a valid classification.");
       }
 
       var photos = line.querySelector(".cr-product-photos");
