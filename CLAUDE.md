@@ -8,11 +8,11 @@ This repository is used to track and debug n8n workflows for Engelman's Bakery. 
 
 ## n8n Configuration
 
-**N8N Instance**: Add the n8n hostname/URL to future sessions via an environment variable or ask the user to provide it (it's not currently stored in this repo to avoid hardcoding URLs)
+**N8N Instance**: https://engelmansbakery.app.n8n.cloud/
 
 **API Access**:
 - The N8N_API_KEY is available in the session environment
-- Use it to access the n8n REST API at `{N8N_URL}/api/v1/`
+- Use it to access the n8n REST API at `https://engelmansbakery.app.n8n.cloud/api/v1/`
 - Authentication: Add the header `X-N8N-API-KEY: {N8N_API_KEY}`
 
 **User Email**: gpress@engelmansbakery.com (used in n8n notifications)
