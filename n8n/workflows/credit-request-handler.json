@@ -654,6 +654,87 @@
     },
     {
       "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/tickets/{{ $('Store Ticket ID').first().json.ticketId }}/associations/2-48651243",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": false,
+        "options": {}
+      },
+      "id": "cr-handler-030",
+      "name": "Get Associated Items",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        5040,
+        -600
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "vxGS6a3iorMrt7wb",
+          "name": "HubSpot Service Key Production"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst results = response.results || [];\n\nif (results.length === 0) {\n  return [{ json: { lowestStage: null, message: 'No associated items found' } }];\n}\n\nconst stages = results.map(item => {\n  const stageValue = item.properties && item.properties.hs_pipeline_stage;\n  return stageValue ? parseInt(stageValue) : null;\n}).filter(s => s !== null);\n\nif (stages.length === 0) {\n  return [{ json: { lowestStage: null, message: 'No stages found in items' } }];\n}\n\nconst lowestStage = Math.min(...stages);\nreturn [{ json: { lowestStage: String(lowestStage), itemCount: results.length, allStages: stages } }];"
+      },
+      "id": "cr-handler-031",
+      "name": "Find Lowest Item Stage",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5260,
+        -600
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.hubapi.com/crm/v3/objects/tickets/{{ $('Store Ticket ID').first().json.ticketId }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ properties: { hs_pipeline_stage: $json.lowestStage } }) }}",
+        "options": {}
+      },
+      "id": "cr-handler-032",
+      "name": "Update Ticket to Lowest Stage",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        5480,
+        -600
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "vxGS6a3iorMrt7wb",
+          "name": "HubSpot Service Key Production"
+        }
+      }
+    },
+    {
+      "parameters": {
         "jsCode": "const store = $getWorkflowStaticData('global');\nconst itemIds = store.itemIds || [];\nconst itemStage = $input.first().json.itemStage;\nconst productLineCount = store.payload.productLines.length;\n\nif (!itemIds || itemIds.length === 0) {\n  return [{ json: { error: 'No item IDs captured', itemIdsCount: 0, productLinesCount: productLineCount } }];\n}\n\nif (itemIds.length !== productLineCount) {\n  return [{ json: { warning: 'Item ID count mismatch', itemIdsCount: itemIds.length, productLinesCount: productLineCount, itemIds: itemIds } }];\n}\n\nconst requestBody = {\n  inputs: itemIds.map(id => ({\n    id: String(id),\n    properties: {\n      hs_pipeline_stage: itemStage\n    }\n  }))\n};\n\nreturn [{ json: { requestBody, itemIdsCount: itemIds.length, stageName: $input.first().json.routeType } }];"
       },
       "id": "cr-handler-029",
@@ -911,6 +992,39 @@
       ]
     },
     "Update Items Stage": {
+      "main": [
+        [
+          {
+            "node": "Get Associated Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Associated Items": {
+      "main": [
+        [
+          {
+            "node": "Find Lowest Item Stage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Lowest Item Stage": {
+      "main": [
+        [
+          {
+            "node": "Update Ticket to Lowest Stage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Ticket to Lowest Stage": {
       "main": [
         [
           {
