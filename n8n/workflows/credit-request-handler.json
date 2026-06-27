@@ -740,7 +740,7 @@
     {
       "parameters": {
         "method": "PATCH",
-        "url": "=https://api.hubapi.com/crm/v3/objects/tickets/{{ $('Store Ticket ID').first().json.ticketId }}",
+        "url": "=https://api.hubapi.com/crm/v3/objects/tickets/{{ $getWorkflowStaticData('global')['ticketId'] }}",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "hubspotAppToken",
         "sendHeaders": true,
