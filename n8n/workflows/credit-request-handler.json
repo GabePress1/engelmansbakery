@@ -655,7 +655,7 @@
     {
       "parameters": {
         "method": "GET",
-        "url": "https://api.hubapi.com/crm/v3/objects/tickets/{{ $('Store Ticket ID').first().json.ticketId }}/associations/2-48651243",
+        "url": "=https://api.hubapi.com/crm/v3/objects/tickets/{{ $('Store Ticket ID').first().json.ticketId }}/associations/2-48651243",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "hubspotAppToken",
         "sendHeaders": true,
