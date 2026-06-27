@@ -668,7 +668,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ (() => { const store = $getWorkflowStaticData('global'); const payload = store.payload; const itemStage = store.itemStage; const itemIds = store.itemIds || []; if (!itemIds || itemIds.length === 0) { throw new Error('No item IDs captured. Expected ' + payload.productLines.length + ' items but got 0 IDs. Check Capture Item ID node.'); } if (itemIds.length !== payload.productLines.length) { throw new Error('Mismatch: ' + payload.productLines.length + ' product lines but only ' + itemIds.length + ' item IDs captured.'); } return JSON.stringify({ inputs: payload.productLines.map((l, i) => ({ id: itemIds[i], properties: { hs_pipeline_stage: itemStage } })) }); })() }}",
+        "jsonBody": "={{ JSON.stringify({ inputs: ($getWorkflowStaticData('global').itemIds || []).map((id, i) => ({ id: id, properties: { hs_pipeline_stage: $getWorkflowStaticData('global').itemStage } })) }) }}",
         "options": {}
       },
       "id": "cr-handler-027",
