@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Credit Request System - Standard Operating Procedure</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            border-bottom: 3px solid #b5872a;
+            padding-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            color: #b5872a;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.1em;
+            color: #666;
+            font-style: italic;
+        }
+
+        h2 {
+            font-size: 1.8em;
+            color: #b5872a;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            border-left: 4px solid #b5872a;
+            padding-left: 15px;
+        }
+
+        h3 {
+            font-size: 1.3em;
+            color: #333;
+            margin-top: 25px;
+            margin-bottom: 15px;
+        }
+
+        h4 {
+            font-size: 1.1em;
+            color: #555;
+            margin-top: 15px;
+            margin-bottom: 10px;
+        }
+
+        p {
+            margin-bottom: 15px;
+            line-height: 1.8;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 0.95em;
+        }
+
+        th {
+            background: #b5872a;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+
+        tr:hover {
+            background: #f0f0f0;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            background: #fafafa;
+            padding: 20px;
+            border-radius: 6px;
+            border-left: 4px solid #b5872a;
+        }
+
+        .step {
+            background: white;
+            padding: 15px;
+            margin: 15px 0;
+            border-left: 4px solid #9a7223;
+            border-radius: 4px;
+        }
+
+        .step-number {
+            display: inline-block;
+            background: #b5872a;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .step-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .dropdown-box {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+        }
+
+        .stage-box {
+            background: white;
+            padding: 15px;
+            margin: 15px 0;
+            border-left: 4px solid #b5872a;
+            border-radius: 4px;
+        }
+
+        .stage-title {
+            font-weight: 600;
+            font-size: 1.1em;
+            color: #b5872a;
+        }
+
+        .stage-id {
+            font-size: 0.9em;
+            color: #666;
+            font-family: 'Courier New', monospace;
+            margin-top: 5px;
+        }
+
+        ul {
+            margin: 15px 0 15px 30px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        code {
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: #d63384;
+        }
+
+        .diagram {
+            background: white;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            margin: 20px 0;
+            overflow-x: auto;
+            font-size: 0.9em;
+            line-height: 1.8;
+        }
+
+        .required {
+            color: #d32f2f;
+            font-weight: bold;
+        }
+
+        .footer {
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 2px solid #b5872a;
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+
+            h2 {
+                font-size: 1.4em;
+            }
+
+            table {
+                font-size: 0.85em;
+            }
+
+            th, td {
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Credit Request System</h1>
+            <p class="subtitle">Standard Operating Procedure (SOP)</p>
+        </header>
+
+        <h2>Overview</h2>
+        <p>The Credit Request System is a three-part workflow that captures credit/complaint requests from customers through a form, validates and routes them through HubSpot, with data sourced from Business Central.</p>
+
+        <!-- FORM SECTION -->
+        <h2>Part 1: Credit Request Form</h2>
+        <p><strong>Purpose:</strong> Collect customer-initiated credit requests and complaints</p>
+
+        <h3>Form Structure</h3>
+
+        <h4>Section 1: Contact Information <span class="required">*Required</span></h4>
+        <table>
+            <tr>
+                <th>Field</th>
+                <th>Type</th>
+                <th>Mapped To</th>
+            </tr>
+            <tr>
+                <td>First Name</td>
+                <td>Text Input</td>
+                <td>HubSpot Contact: <code>firstname</code></td>
+            </tr>
+            <tr>
+                <td>Last Name</td>
+                <td>Text Input</td>
+                <td>HubSpot Contact: <code>lastname</code></td>
+            </tr>
+            <tr>
+                <td>Email</td>
+                <td>Email Input</td>
+                <td>HubSpot Contact: <code>email</code></td>
+            </tr>
+            <tr>
+                <td>Phone</td>
+                <td>Tel Input</td>
+                <td>HubSpot Contact: <code>phone</code></td>
+            </tr>
+        </table>
+
+        <h4>Section 2: Account Information <span class="required">*Required</span></h4>
+        <table>
+            <tr>
+                <th>Field</th>
+                <th>Type</th>
+                <th>Mapped To</th>
+            </tr>
+            <tr>
+                <td>Account #</td>
+                <td>Text Input (ERP lookup)</td>
+                <td>Company: <code>erp_account_number</code>, Ticket: <code>account__</code></td>
+            </tr>
+            <tr>
+                <td>Business Name</td>
+                <td>Text Input</td>
+                <td>Ticket: <code>company_name</code></td>
+            </tr>
+            <tr>
+                <td>Invoice Number</td>
+                <td>Text Input</td>
+                <td>Ticket: <code>invoice</code></td>
+            </tr>
+        </table>
+
+        <h4>Section 3: Product Lines <span class="required">*Required (1-10 items)</span></h4>
+        <table>
+            <tr>
+                <th>Field</th>
+                <th>Type</th>
+                <th>Mapped To</th>
+            </tr>
+            <tr>
+                <td>Product Number</td>
+                <td>Datalist (BC sourced)</td>
+                <td>Item: <code>item_no_</code></td>
+            </tr>
+            <tr>
+                <td>Product Description</td>
+                <td>Text (auto-filled)</td>
+                <td>Item: <code>item_description</code></td>
+            </tr>
+            <tr>
+                <td>Production Code</td>
+                <td>Text Input</td>
+                <td>Item: <code>julian_code</code></td>
+            </tr>
+            <tr>
+                <td>Quantity</td>
+                <td>Number Input</td>
+                <td>Item: <code>quantity</code></td>
+            </tr>
+            <tr>
+                <td>Request Type</td>
+                <td>Dropdown</td>
+                <td>Item: <code>request_type</code></td>
+            </tr>
+            <tr>
+                <td>Issue Classification</td>
+                <td>Datalist</td>
+                <td>Item: <code>complaint_type</code></td>
+            </tr>
+            <tr>
+                <td>Notes</td>
+                <td>Textarea</td>
+                <td>Item: <code>line_notes</code></td>
+            </tr>
+            <tr>
+                <td>Photos / Attachments</td>
+                <td>File Upload (conditional)</td>
+                <td>Item: <code>photosdocumentation</code></td>
+            </tr>
+        </table>
+
+        <h4>Section 4: Additional Notes <span style="color: #999;">(Optional)</span></h4>
+        <table>
+            <tr>
+                <th>Field</th>
+                <th>Type</th>
+                <th>Mapped To</th>
+            </tr>
+            <tr>
+                <td>Reason / Notes</td>
+                <td>Textarea</td>
+                <td>Ticket: <code>credit_summary</code></td>
+            </tr>
+        </table>
+
+        <!-- DROPDOWNS SECTION -->
+        <h2>Form Dropdowns Explained</h2>
+
+        <div class="dropdown-box">
+            <h3>1. Product Number (Datalist Dropdown)</h3>
+            <ul>
+                <li><strong>Type:</strong> Searchable autocomplete</li>
+                <li><strong>Source:</strong> Business Central Items (via BC Items Proxy)</li>
+                <li><strong>Behavior:</strong> User types product # or description, shows matching items</li>
+                <li><strong>Display:</strong> Product # + Description as they type</li>
+                <li><strong>Required:</strong> <span class="required">Yes</span></li>
+                <li><strong>Maps to:</strong> Item: <code>item_no_</code></li>
+            </ul>
+        </div>
+
+        <div class="dropdown-box">
+            <h3>2. Request Type (Standard Dropdown)</h3>
+            <p><strong>Options:</strong></p>
+            <ul>
+                <li><strong>Credit</strong> — Customer requesting refund/credit</li>
+                <li><strong>Complaint</strong> — Reporting quality/delivery issue</li>
+            </ul>
+            <p><strong>Required:</strong> <span class="required">Yes (one per product line)</span></p>
+            <p><strong>Maps to:</strong> Item: <code>request_type</code></p>
+            <p><strong>⚠️ Critical Impact:</strong> Determines routing stage:</p>
+            <ul>
+                <li>If <strong>ANY</strong> item = "Complaint" → Routes to <strong>CAPA</strong> stage</li>
+                <li>If all = "Credit" + Total Qty ≥ 10 → Routes to <strong>Verification</strong> stage</li>
+                <li>If all = "Credit" + Total Qty < 10 → Routes to <strong>Credit Decision</strong> stage</li>
+            </ul>
+        </div>
+
+        <div class="dropdown-box">
+            <h3>3. Issue Classification / Complaint Type (Datalist Dropdown)</h3>
+            <p><strong>Available Options:</strong></p>
+            <ul>
+                <li>Flavor</li>
+                <li>Size</li>
+                <li>Color</li>
+                <li>Mold</li>
+                <li>Damaged Packaging</li>
+            </ul>
+            <p><strong>Required:</strong> <span class="required">Yes</span></p>
+            <p><strong>Maps to:</strong> Item: <code>complaint_type</code></p>
+            <p><strong>⚠️ Conditional Photo Requirement:</strong></p>
+            <ul>
+                <li><strong>Photos REQUIRED for:</strong> Flavor, Size, Color, Mold, Damaged Packaging</li>
+                <li>Photo field becomes mandatory when these are selected</li>
+                <li>Form will not submit without photos for these classifications</li>
+            </ul>
+        </div>
+
+        <!-- BC ITEMS PROXY SECTION -->
+        <h2>Part 2: Credit Request – BC Items Proxy</h2>
+        <p><strong>Purpose:</strong> Provide Business Central item data to the form and sync item information</p>
+
+        <h3>Data Flow</h3>
+        <div class="diagram">
+Business Central Database
+    ↓
+BC Items Proxy Workflow
+    ↓
+Transforms BC Item Data
+    ↓
+Returns: Product Numbers + Descriptions
+    ↓
+Credit Request Form (Datalist Dropdown)
+        </div>
+
+        <h3>Method</h3>
+        <ul>
+            <li><strong>Triggered by:</strong> Form field focus (Product Number field)</li>
+            <li><strong>Query:</strong> Searches Business Central for available items</li>
+            <li><strong>Transform:</strong> Converts BC item data into datalist format</li>
+            <li><strong>Response:</strong> JSON array with matching product numbers and descriptions</li>
+            <li><strong>Used by:</strong> Credit Request – Form Handler (validation step)</li>
+        </ul>
+
+        <h3>Mapped Data Points</h3>
+        <table>
+            <tr>
+                <th>Business Central</th>
+                <th>→</th>
+                <th>Credit Request Form</th>
+            </tr>
+            <tr>
+                <td>BC Item Number</td>
+                <td>→</td>
+                <td>Product Number datalist</td>
+            </tr>
+            <tr>
+                <td>BC Item Description</td>
+                <td>→</td>
+                <td>Datalist display text</td>
+            </tr>
+            <tr>
+                <td>BC Item Properties</td>
+                <td>→</td>
+                <td>Available for reference</td>
+            </tr>
+        </table>
+
+        <!-- FORM HANDLER SECTION -->
+        <h2>Part 3: Credit Request – Form Handler</h2>
+        <p><strong>Purpose:</strong> Process form submissions, create tickets, route to appropriate stage</p>
+
+        <h3>Processing Steps</h3>
+
+        <div class="step">
+            <span class="step-number">1</span>
+            <div class="step-title">Webhook Trigger</div>
+            <p>Receives form submission with all data in JSON format from HubSpot form module</p>
+        </div>
+
+        <div class="step">
+            <span class="step-number">2</span>
+            <div class="step-title">Payload Validation</div>
+            <ul>
+                <li>Validates account number exists</li>
+                <li>Validates contact information complete</li>
+                <li>Validates product lines (1-10 items, correct structure)</li>
+                <li>Validates Request Type = "Credit" or "Complaint"</li>
+                <li>Calculates Total Quantity across all lines</li>
+                <li><strong>Result:</strong> Returns 400 error if validation fails, or proceeds to Step 3</li>
+            </ul>
+        </div>
+
+        <div class="step">
+            <span class="step-number">3</span>
+            <div class="step-title">Company Lookup</div>
+            <ul>
+                <li>Searches HubSpot Companies by ERP Account Number</li>
+                <li>Maps Company ID to workflow storage</li>
+                <li><strong>Result:</strong> Returns company details or "Account Not Found" error</li>
+            </ul>
+        </div>
+
+        <div class="step">
+            <span class="step-number">4</span>
+            <div class="step-title">Contact Upsert</div>
+            <ul>
+                <li>Searches/creates HubSpot Contact using email as unique ID</li>
+                <li><strong>Maps to Contact:</strong></li>
+                <ul>
+                    <li>Email</li>
+                    <li>First Name</li>
+                    <li>Last Name</li>
+                    <li>Phone</li>
+                </ul>
+                <li>Stores Contact ID for associations</li>
+            </ul>
+        </div>
+
+        <div class="step">
+            <span class="step-number">5</span>
+            <div class="step-title">File Uploads (if photos provided)</div>
+            <ul>
+                <li>For each photo: Uploads to HubSpot File Manager</li>
+                <li><strong>Location:</strong> <code>/credit-requests</code> folder</li>
+                <li><strong>Access:</strong> Private</li>
+                <li>File URLs stored for attachment to ticket/items</li>
+            </ul>
+        </div>
+
+        <div class="step">
+            <span class="step-number">6</span>
+            <div class="step-title">Build Ticket</div>
+            <p><strong>Subject Line Format:</strong> <code>Credit Request: [Account #] - [YYYY-MM-DD]</code></p>
+            <p><strong>Maps to Ticket properties:</strong></p>
+            <ul>
+                <li><code>account__</code> → Account Number</li>
+                <li><code>company_name</code> → Business Name</li>
+                <li><code>invoice</code> → Invoice Number</li>
+                <li><code>credit_summary</code> → Formatted summary of all lines + request type</li>
+                <li><code>hs_pipeline</code> → "912400389" (Credit Requests pipeline)</li>
+                <li><code>hs_pipeline_stage</code> → Temporary (will be updated in Step 10)</li>
+                <li><code>photosdocumentation</code> → All uploaded file URLs</li>
+            </ul>
+        </div>
+
+        <div class="step">
+            <span class="step-number">7</span>
+            <div class="step-title">Create Ticket & Associations</div>
+            <ul>
+                <li>Creates Ticket in HubSpot Tickets object</li>
+                <li>Associates: Ticket ↔ Contact (HubSpot standard association)</li>
+                <li>Associates: Ticket ↔ Company (HubSpot standard association)</li>
+                <li>Stores Ticket ID for item associations</li>
+            </ul>
+        </div>
+
+        <div class="step">
+            <span class="step-number">8</span>
+            <div class="step-title">Create Items (Loop - 1-10 iterations)</div>
+            <p><strong>For each product line:</strong></p>
+            <ul>
+                <li>Creates Item record (custom object 2-48651243)</li>
+                <li><strong>Item Name Format:</strong> <code>[Account #] - [YYYY-MM-DD] - [Product Number]</code></li>
+                <li><strong>Maps to Item properties:</strong>
+                    <ul>
+                        <li><code>item_name</code> → Formatted name</li>
+                        <li><code>item_no_</code> → Product Number</li>
+                        <li><code>item_description</code> → Product Description</li>
+                        <li><code>julian_code</code> → Production Code</li>
+                        <li><code>quantity</code> → Quantity</li>
+                        <li><code>request_type</code> → Credit or Complaint</li>
+                        <li><code>complaint_type</code> → Issue Classification</li>
+                        <li><code>line_notes</code> → Notes</li>
+                        <li><code>photosdocumentation</code> → Line-specific photos</li>
+                        <li><code>hs_pipeline</code> → "912368291" (Items pipeline)</li>
+                        <li><code>hs_pipeline_stage</code> → Temporary (will be updated in Step 11)</li>
+                    </ul>
+                </li>
+                <li>Associates Item ↔ Ticket (custom association)</li>
+                <li>Captures Item IDs for batch update</li>
+            </ul>
+        </div>
+
+        <div class="step">
+            <span class="step-number">9</span>
+            <div class="step-title">Determine Route (Decision Logic)</div>
+            <p><strong>Routing Calculation:</strong></p>
+            <ol>
+                <li>Check if ANY item has <code>request_type</code> = "Complaint"
+                    <ul>
+                        <li><strong>YES</strong> → Route to <strong>CAPA</strong> stage</li>
+                        <li><strong>NO</strong> → Check quantity threshold (Step 2)</li>
+                    </ul>
+                </li>
+                <li>Check if <code>Total Quantity</code> ≥ 10
+                    <ul>
+                        <li><strong>YES</strong> → Route to <strong>Verification</strong> stage</li>
+                        <li><strong>NO</strong> → Route to <strong>Credit Decision</strong> stage</li>
+                    </ul>
+                </li>
+            </ol>
+        </div>
+
+        <div class="step">
+            <span class="step-number">10</span>
+            <div class="step-title">Update Ticket Stage</div>
+            <ul>
+                <li>Updates Ticket with determined stage via PATCH request</li>
+                <li>Ticket immediately moves to correct pipeline stage</li>
+            </ul>
+        </div>
+
+        <div class="step">
+            <span class="step-number">11</span>
+            <div class="step-title">Update Items Stage (Batch)</div>
+            <ul>
+                <li>Updates ALL items created in Step 8 with determined stage</li>
+                <li>All items route to same stage as parent ticket</li>
+                <li>Uses batch API for efficiency</li>
+            </ul>
+        </div>
+
+        <div class="step">
+            <span class="step-number">12</span>
+            <div class="step-title">Success Response</div>
+            <ul>
+                <li>Returns JSON response with Ticket ID</li>
+                <li>HTTP Status: 200 OK</li>
+                <li>Used for form confirmation message to customer</li>
+            </ul>
+        </div>
+
+        <!-- STAGES SECTION -->
+        <h2>Pipeline Stages for Tickets & Items</h2>
+        <p>All tickets and items flow through <strong>4 stages</strong>:</p>
+
+        <div class="stage-box">
+            <div class="stage-title">Stage 1: Verification</div>
+            <div class="stage-id">Ticket ID: 1385996039 | Item ID: 1386096010</div>
+            <p><strong>Triggered when:</strong> Credit request with Total Quantity ≥ 10</p>
+            <p><strong>Team:</strong> QA / Supply Chain</p>
+            <p><strong>Task:</strong> Review for accuracy and approval before credit decision</p>
+        </div>
+
+        <div class="stage-box">
+            <div class="stage-title">Stage 2: Credit Decision</div>
+            <div class="stage-id">Ticket ID: 1387983013 | Item ID: 1388087301</div>
+            <p><strong>Triggered when:</strong> Credit request with Total Quantity &lt; 10</p>
+            <p><strong>Team:</strong> Customer Care</p>
+            <p><strong>Task:</strong> Evaluate creditability and approve/deny request</p>
+        </div>
+
+        <div class="stage-box">
+            <div class="stage-title">Stage 3: CAPA (Corrective & Preventive Action)</div>
+            <div class="stage-id">Ticket ID: 1387983014 | Item ID: 1388087302</div>
+            <p><strong>Triggered when:</strong> ANY item marked as "Complaint"</p>
+            <p><strong>Team:</strong> Quality Assurance / Operations</p>
+            <p><strong>Task:</strong> Investigate root cause, document resolution, implement preventive measures</p>
+        </div>
+
+        <div class="stage-box">
+            <div class="stage-title">Stage 4: Closed</div>
+            <p><strong>Triggered:</strong> Manual transition when resolution is complete</p>
+            <p><strong>Indicates:</strong> Request fully resolved</p>
+        </div>
+
+        <!-- ROUTING LOGIC SECTION -->
+        <h2>Routing Logic Diagram</h2>
+        <div class="diagram">
+REQUEST SUBMITTED
+    ↓
+[CHECK: Any "Complaint" items?]
+    ├─ YES → CAPA Stage
+    │        (Ticket: 1387983014, Item: 1388087302)
+    │
+    └─ NO → [CHECK: Total Qty ≥ 10?]
+            ├─ YES → Verification Stage
+            │        (Ticket: 1385996039, Item: 1386096010)
+            │
+            └─ NO → Credit Decision Stage
+                   (Ticket: 1387983013, Item: 1388087301)
+        </div>
+
+        <!-- ERROR HANDLING SECTION -->
+        <h2>Error Handling</h2>
+        <table>
+            <tr>
+                <th>Error</th>
+                <th>HTTP Status</th>
+                <th>Message</th>
+                <th>User Action</th>
+            </tr>
+            <tr>
+                <td>Validation Failed</td>
+                <td>400</td>
+                <td>Specific field error message</td>
+                <td>Fix required fields and resubmit</td>
+            </tr>
+            <tr>
+                <td>Account Not Found</td>
+                <td>404</td>
+                <td>No account found with that Account #</td>
+                <td>Verify Account # and try again</td>
+            </tr>
+            <tr>
+                <td>File Upload Failed</td>
+                <td>Continues</td>
+                <td>Proceeds without photos</td>
+                <td>Resubmit with photos later</td>
+            </tr>
+            <tr>
+                <td>HubSpot API Error</td>
+                <td>500</td>
+                <td>API error message</td>
+                <td>Support team investigates</td>
+            </tr>
+        </table>
+
+        <div class="footer">
+            <p><strong>Credit Request System SOP</strong></p>
+            <p>Last Updated: June 2026</p>
+            <p>For support or questions, contact your system administrator</p>
+        </div>
+    </div>
+</body>
+</html>
