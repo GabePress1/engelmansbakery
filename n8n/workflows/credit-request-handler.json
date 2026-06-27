@@ -654,7 +654,7 @@
     },
     {
       "parameters": {
-        "method": "POST",
+        "method": "GET",
         "url": "https://api.hubapi.com/crm/v3/objects/tickets/{{ $('Store Ticket ID').first().json.ticketId }}/associations/2-48651243",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "hubspotAppToken",
@@ -687,7 +687,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const response = $input.first().json;\nconst results = response.results || [];\n\nif (results.length === 0) {\n  return [{ json: { lowestStage: null, message: 'No associated items found' } }];\n}\n\nconst stages = results.map(item => {\n  const stageValue = item.properties && item.properties.hs_pipeline_stage;\n  return stageValue ? parseInt(stageValue) : null;\n}).filter(s => s !== null);\n\nif (stages.length === 0) {\n  return [{ json: { lowestStage: null, message: 'No stages found in items' } }];\n}\n\nconst lowestStage = Math.min(...stages);\nreturn [{ json: { lowestStage: String(lowestStage), itemCount: results.length, allStages: stages } }];"
+        "jsCode": "const response = $input.first().json;\nconst results = response.results || [];\n\nif (results.length === 0) {\n  // If no associated items found, use the ticket's current stage\n  const store = $getWorkflowStaticData('global');\n  return [{ json: { lowestStage: store.itemStage, message: 'No associated items found, using determined stage' } }];\n}\n\nconst stages = results.map(item => {\n  const stageValue = item.properties && item.properties.hs_pipeline_stage;\n  return stageValue ? parseInt(stageValue) : null;\n}).filter(s => s !== null);\n\nif (stages.length === 0) {\n  const store = $getWorkflowStaticData('global');\n  return [{ json: { lowestStage: store.itemStage, message: 'No stages found in items, using determined stage' } }];\n}\n\nconst lowestStage = Math.min(...stages);\nreturn [{ json: { lowestStage: String(lowestStage), itemCount: results.length, allStages: stages, success: true } }];"
       },
       "id": "cr-handler-031",
       "name": "Find Lowest Item Stage",
