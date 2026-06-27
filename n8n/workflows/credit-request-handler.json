@@ -653,6 +653,19 @@
     },
     {
       "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst itemIds = store.itemIds || [];\nconst itemStage = $input.first().json.itemStage;\n\nif (!itemIds || itemIds.length === 0) {\n  return [{ json: { error: 'No item IDs captured', itemIdsCount: 0, productLinesCount: store.payload.productLines.length } }];\n}\n\nconst requestBody = {\n  inputs: itemIds.map(id => ({\n    id: id,\n    properties: {\n      hs_pipeline_stage: itemStage\n    }\n  }))\n};\n\nreturn [{ json: { requestBody, itemIdsCount: itemIds.length } }];"
+      },
+      "id": "cr-handler-029",
+      "name": "Prepare Items Update",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4820,
+        -600
+      ]
+    },
+    {
+      "parameters": {
         "method": "POST",
         "url": "https://api.hubapi.com/crm/v3/objects/2-48651243/batch/update",
         "authentication": "predefinedCredentialType",
@@ -668,7 +681,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ inputs: ($getWorkflowStaticData('global').itemIds || []).map((id, i) => ({ id: id, properties: { hs_pipeline_stage: $getWorkflowStaticData('global').itemStage } })) }) }}",
+        "jsonBody": "={{ $json.requestBody }}",
         "options": {}
       },
       "id": "cr-handler-027",
@@ -875,6 +888,17 @@
       ]
     },
     "Update Ticket Stage": {
+      "main": [
+        [
+          {
+            "node": "Prepare Items Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Items Update": {
       "main": [
         [
           {
