@@ -654,8 +654,21 @@
     },
     {
       "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst ticketId = store.ticketId;\nif (!ticketId) {\n  throw new Error('Ticket ID not found in workflow state');\n}\nreturn [{ json: { ticketId: ticketId } }];"
+      },
+      "id": "cr-handler-033",
+      "name": "Prepare Ticket ID for Query",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4900,
+        -600
+      ]
+    },
+    {
+      "parameters": {
         "method": "GET",
-        "url": "=https://api.hubapi.com/crm/v3/objects/tickets/{{ $getWorkflowStaticData('global')['ticketId'] }}/associations/2-48651243",
+        "url": "=https://api.hubapi.com/crm/v3/objects/tickets/{{ $json.ticketId }}/associations/2-48651243",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "hubspotAppToken",
         "sendHeaders": true,
@@ -992,6 +1005,17 @@
       ]
     },
     "Update Items Stage": {
+      "main": [
+        [
+          {
+            "node": "Prepare Ticket ID for Query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Ticket ID for Query": {
       "main": [
         [
           {
