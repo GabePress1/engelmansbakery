@@ -454,7 +454,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const store = $getWorkflowStaticData('global');\nconst createItemResult = $('Create Item Record').first().json;\nif (!store.itemIds) store.itemIds = [];\nconst itemId = createItemResult.id;\nif (itemId) {\n  store.itemIds.push(itemId);\n} else {\n  throw new Error('Failed to capture item ID from Create Item Record response. Response: ' + JSON.stringify(createItemResult));\n}\nreturn [{ json: { itemId: itemId, capturedIds: store.itemIds.length } }];"
+        "jsCode": "const store = $getWorkflowStaticData('global');\nif (!store.itemIds) store.itemIds = [];\n\nconst createItemResult = $('Create Item Record').first().json;\nlet itemId = null;\n\nif (createItemResult && createItemResult.id) {\n  itemId = createItemResult.id;\n  store.itemIds.push(itemId);\n  return [{ json: { itemId: itemId, success: true, totalCaptured: store.itemIds.length } }];\n} else {\n  return [{ json: { error: 'Failed to capture item ID', responseKeys: createItemResult ? Object.keys(createItemResult) : 'null', totalCaptured: store.itemIds.length } }];\n}"
       },
       "id": "cr-handler-028",
       "name": "Capture Item ID",
