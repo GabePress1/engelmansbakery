@@ -713,6 +713,19 @@
     },
     {
       "parameters": {
+        "jsCode": "const itemStage = $json.lowestStage;\nconst stageMapping = {\n  '1386096010': '1385996039',\n  '1388087301': '1387983013',\n  '1388087302': '1387983014'\n};\n\nconst ticketStage = stageMapping[itemStage] || itemStage;\n\nif (!stageMapping[itemStage]) {\n  console.warn(`Unknown item stage ${itemStage}, using as-is`);\n}\n\nreturn [{ json: { ticketStage: ticketStage, itemStage: itemStage } }];"
+      },
+      "id": "cr-handler-034",
+      "name": "Map Item Stage to Ticket Stage",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5700,
+        -600
+      ]
+    },
+    {
+      "parameters": {
         "method": "PATCH",
         "url": "=https://api.hubapi.com/crm/v3/objects/tickets/{{ $('Store Ticket ID').first().json.ticketId }}",
         "authentication": "predefinedCredentialType",
@@ -728,7 +741,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ properties: { hs_pipeline_stage: $json.lowestStage } }) }}",
+        "jsonBody": "={{ JSON.stringify({ properties: { hs_pipeline_stage: $json.ticketStage } }) }}",
         "options": {}
       },
       "id": "cr-handler-032",
@@ -1038,6 +1051,17 @@
       ]
     },
     "Find Lowest Item Stage": {
+      "main": [
+        [
+          {
+            "node": "Map Item Stage to Ticket Stage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Map Item Stage to Ticket Stage": {
       "main": [
         [
           {
