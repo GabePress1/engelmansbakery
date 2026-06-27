@@ -358,7 +358,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const store = $getWorkflowStaticData('global');\nconst lines = store.payload.productLines;\nconst uploadedUrls = store.uploadedUrls || {};\nreturn lines.map(l => ({\n  json: {\n    ...l,\n    uploadedPhotoUrls: uploadedUrls[String(l.lineNumber)] || []\n  }\n}));"
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst lines = store.payload.productLines;\nconst uploadedUrls = store.uploadedUrls || {};\n\nconst totalCreditQuantity = lines\n  .filter(l => l.requestType === 'Credit')\n  .reduce((sum, l) => sum + (parseInt(l.quantity) || 0), 0);\n\nconst hasComplaint = lines.some(l => l.requestType === 'Complaint');\n\nstore.totalCreditQuantity = totalCreditQuantity;\nstore.hasComplaint = hasComplaint;\n\nreturn lines.map(l => ({\n  json: {\n    ...l,\n    uploadedPhotoUrls: uploadedUrls[String(l.lineNumber)] || []\n  }\n}));"
       },
       "id": "cr-handler-015",
       "name": "Prepare Line Items",
@@ -385,6 +385,19 @@
     },
     {
       "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst line = $json;\nconst totalCreditQty = store.totalCreditQuantity;\n\nlet itemStage;\n\nif (line.requestType === 'Complaint') {\n  itemStage = '1388087302';\n} else if (line.requestType === 'Credit') {\n  itemStage = totalCreditQty >= 10 ? '1386096010' : '1388087301';\n} else {\n  itemStage = '1388087301';\n}\n\nconst accountNumber = $('Validate Payload').first().json.account.accountNumber;\nconst submittedAt = $('Validate Payload').first().json.submittedAt;\nconst d = new Date(submittedAt);\nconst e = new Date(d.toLocaleString('en-US', { timeZone: 'America/New_York' }));\nconst formattedDate = String(e.getFullYear()).slice(2) + '-' + String(e.getMonth()+1).padStart(2,'0') + '-' + String(e.getDate()).padStart(2,'0');\n\nreturn [{ json: {\n  properties: {\n    item_name: accountNumber + ' - ' + formattedDate + ' - ' + line.productNumber,\n    item_no_: line.productNumber,\n    item_description: line.productDescription || '',\n    julian_code: line.julianCode || '',\n    quantity: String(line.quantity),\n    request_type: line.requestType,\n    complaint_type: line.issueClassification,\n    line_notes: line.notes || '',\n    photosdocumentation: (line.uploadedPhotoUrls || []).join('\\n'),\n    hs_pipeline: '912368291',\n    hs_pipeline_stage: itemStage\n  }\n} }];"
+      },
+      "id": "cr-handler-017b",
+      "name": "Determine Item Stage",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3808,
+        -288
+      ]
+    },
+    {
+      "parameters": {
         "method": "POST",
         "url": "https://api.hubapi.com/crm/v3/objects/2-48651243",
         "authentication": "predefinedCredentialType",
@@ -400,7 +413,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ properties: { item_name: $('Validate Payload').first().json.account.accountNumber + ' - ' + (() => { const d = new Date($('Validate Payload').first().json.submittedAt); const e = new Date(d.toLocaleString('en-US', { timeZone: 'America/New_York' })); return String(e.getFullYear()).slice(2) + '-' + String(e.getMonth()+1).padStart(2,'0') + '-' + String(e.getDate()).padStart(2,'0'); })() + ' - ' + $json.productNumber, item_no_: $json.productNumber, item_description: $json.productDescription || '', julian_code: $json.julianCode || '', quantity: String($json.quantity), request_type: $json.requestType, complaint_type: $json.issueClassification, line_notes: $json.notes || '', photosdocumentation: ($json.uploadedPhotoUrls || []).join('\\n'), hs_pipeline: '912368291', hs_pipeline_stage: '1386096010' } }) }}",
+        "jsonBody": "={{ JSON.stringify({ properties: $json.properties }) }}",
         "options": {}
       },
       "id": "cr-handler-017",
@@ -970,7 +983,7 @@
       "main": [
         [
           {
-            "node": "Create Item Record",
+            "node": "Determine Item Stage",
             "type": "main",
             "index": 0
           }
@@ -978,6 +991,17 @@
         [
           {
             "node": "Determine Route",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Determine Item Stage": {
+      "main": [
+        [
+          {
+            "node": "Create Item Record",
             "type": "main",
             "index": 0
           }
@@ -996,28 +1020,6 @@
       ]
     },
     "Update Ticket Stage": {
-      "main": [
-        [
-          {
-            "node": "Prepare Items Update",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Prepare Items Update": {
-      "main": [
-        [
-          {
-            "node": "Update Items Stage",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Update Items Stage": {
       "main": [
         [
           {
