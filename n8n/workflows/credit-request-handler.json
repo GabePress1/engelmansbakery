@@ -454,7 +454,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const store = $getWorkflowStaticData('global');\nif (!store.itemIds) store.itemIds = [];\nstore.itemIds.push($('Create Item Record').first().json.id);\nreturn [{ json: { itemId: $('Create Item Record').first().json.id } }];"
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst createItemResult = $('Create Item Record').first().json;\nif (!store.itemIds) store.itemIds = [];\nconst itemId = createItemResult.id;\nif (itemId) {\n  store.itemIds.push(itemId);\n} else {\n  throw new Error('Failed to capture item ID from Create Item Record response. Response: ' + JSON.stringify(createItemResult));\n}\nreturn [{ json: { itemId: itemId, capturedIds: store.itemIds.length } }];"
       },
       "id": "cr-handler-028",
       "name": "Capture Item ID",
@@ -668,7 +668,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ (() => { const store = $getWorkflowStaticData('global'); const payload = store.payload; const itemStage = store.itemStage; return JSON.stringify({ inputs: payload.productLines.map((l, i) => ({ id: store.itemIds[i], properties: { hs_pipeline_stage: itemStage } })) }); })() }}",
+        "jsonBody": "={{ (() => { const store = $getWorkflowStaticData('global'); const payload = store.payload; const itemStage = store.itemStage; const itemIds = store.itemIds || []; if (!itemIds || itemIds.length === 0) { throw new Error('No item IDs captured. Expected ' + payload.productLines.length + ' items but got 0 IDs. Check Capture Item ID node.'); } if (itemIds.length !== payload.productLines.length) { throw new Error('Mismatch: ' + payload.productLines.length + ' product lines but only ' + itemIds.length + ' item IDs captured.'); } return JSON.stringify({ inputs: payload.productLines.map((l, i) => ({ id: itemIds[i], properties: { hs_pipeline_stage: itemStage } })) }); })() }}",
         "options": {}
       },
       "id": "cr-handler-027",
