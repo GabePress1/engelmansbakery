@@ -726,7 +726,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const itemStage = $json.lowestStage;\nconst stageMapping = {\n  '1386096010': '1385996039',\n  '1388087301': '1387983013',\n  '1388087302': '1387983014'\n};\n\nconst ticketStage = stageMapping[itemStage] || itemStage;\n\nif (!stageMapping[itemStage]) {\n  console.warn(`Unknown item stage ${itemStage}, using as-is`);\n}\n\nreturn [{ json: { ticketStage: ticketStage, itemStage: itemStage } }];"
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst itemStage = $json.lowestStage;\nconst stageMapping = {\n  '1386096010': '1385996039',\n  '1388087301': '1387983013',\n  '1388087302': '1387983014'\n};\n\nconst ticketStage = stageMapping[itemStage] || itemStage;\n\nif (!stageMapping[itemStage]) {\n  console.warn(`Unknown item stage ${itemStage}, using as-is`);\n}\n\nreturn [{ json: { ticketStage: ticketStage, itemStage: itemStage, ticketId: store.ticketId } }];"
       },
       "id": "cr-handler-034",
       "name": "Map Item Stage to Ticket Stage",
@@ -740,7 +740,7 @@
     {
       "parameters": {
         "method": "PATCH",
-        "url": "=https://api.hubapi.com/crm/v3/objects/tickets/{{ $getWorkflowStaticData('global')['ticketId'] }}",
+        "url": "=https://api.hubapi.com/crm/v3/objects/tickets/{{ $json.ticketId }}",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "hubspotAppToken",
         "sendHeaders": true,
