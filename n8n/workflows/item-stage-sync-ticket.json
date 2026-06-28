@@ -27,6 +27,16 @@
     },
     {
       "parameters": {
+        "jsCode": "const newStage = $json.newStage;\nconst allowedStages = ['1388087301', '1388087302'];\n\nif (!allowedStages.includes(newStage)) {\n  return [];\n}\n\nreturn [{ json: { itemId: $json.itemId, newStage: newStage } }];"
+      },
+      "id": "item-sync-validate-stage",
+      "name": "Validate Stage (Credit Decision or CAPA)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [330, 0]
+    },
+    {
+      "parameters": {
         "method": "GET",
         "url": "=https://api.hubapi.com/crm/v3/objects/2-48651243/{{ $json.itemId }}/associations/tickets",
         "authentication": "predefinedCredentialType",
@@ -95,17 +105,17 @@
     },
     {
       "parameters": {
-        "jsCode": "const response = $input.first().json;\nconst results = response.results || [];\n\nif (results.length === 0) {\n  return [{ json: { error: 'No associated items found', lowestStage: '1387983014' } }];\n}\n\nconst stages = results.map(item => {\n  const stageValue = item.properties && item.properties.hs_pipeline_stage;\n  return stageValue ? parseInt(stageValue) : null;\n}).filter(s => s !== null);\n\nif (stages.length === 0) {\n  return [{ json: { error: 'No stages found', lowestStage: '1387983014' } }];\n}\n\nconst lowestStage = Math.min(...stages);\nreturn [{ json: { lowestStage: String(lowestStage), itemCount: results.length, allStages: stages, success: true } }];"
+        "jsCode": "const itemStage = $('Validate Stage (Credit Decision or CAPA)').first().json.newStage;\nreturn [{ json: { itemStage: itemStage, success: true } }];"
       },
       "id": "item-sync-find-lowest",
-      "name": "Find Lowest Item Stage",
+      "name": "Get Item Stage",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [1100, 0]
     },
     {
       "parameters": {
-        "jsCode": "const itemStage = $json.lowestStage;\nconst stageMapping = {\n  '1386096010': '1385996039',\n  '1388087301': '1387983013',\n  '1388087302': '1387983014'\n};\n\nconst ticketStage = stageMapping[itemStage] || itemStage;\n\nif (!stageMapping[itemStage]) {\n  console.warn(`Unknown item stage ${itemStage}, using as-is`);\n}\n\nreturn [{ json: { ticketStage: ticketStage, itemStage: itemStage } }];"
+        "jsCode": "const itemStage = $json.itemStage;\nconst stageMapping = {\n  '1388087301': '1388087301',\n  '1388087302': '1388087302'\n};\n\nconst ticketStage = stageMapping[itemStage] || itemStage;\n\nreturn [{ json: { ticketStage: ticketStage, itemStage: itemStage } }];"
       },
       "id": "item-sync-map-stage",
       "name": "Map Item Stage to Ticket Stage",
@@ -180,6 +190,17 @@
       ]
     },
     "Extract Item Info": {
+      "main": [
+        [
+          {
+            "node": "Validate Stage (Credit Decision or CAPA)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Stage (Credit Decision or CAPA)": {
       "main": [
         [
           {
