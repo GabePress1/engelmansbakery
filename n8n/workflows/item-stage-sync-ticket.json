@@ -20,7 +20,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const body = $input.first().json;\nconst itemId = body.objectId || body.id;\nconst newStage = body.properties?.hs_pipeline_stage?.value || body.hs_pipeline_stage;\n\nif (!itemId || !newStage) {\n  return [{ json: { error: 'Missing itemId or stage', received: body } }];\n}\n\nreturn [{ json: { itemId, newStage } }];"
+        "jsCode": "const webhookInput = $input.first().json;\nconst body = webhookInput.body || webhookInput;\nconst itemId = body.objectId || body.id;\nconst newStage = body.properties?.hs_pipeline_stage?.value || body.hs_pipeline_stage;\n\nif (!itemId || !newStage) {\n  return [{ json: { error: 'Missing itemId or stage', received: body } }];\n}\n\nreturn [{ json: { itemId, newStage } }];"
       },
       "id": "item-sync-extract",
       "name": "Extract Item Info",
