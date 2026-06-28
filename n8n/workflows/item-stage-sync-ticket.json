@@ -136,7 +136,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const itemStage = $json.itemStage;\nconst stageMapping = {\n  '1388087301': '1388087301',\n  '1388087302': '1388087302'\n};\n\nconst ticketStage = stageMapping[itemStage] || itemStage;\n\nreturn [{ json: { ticketStage: ticketStage, itemStage: itemStage } }];"
+        "jsCode": "const itemStage = $json.itemStage;\nconst stageMapping = {\n  '1388087301': '1387983013',\n  '1388087302': '1387983014'\n};\n\nconst ticketStage = stageMapping[itemStage];\n\nif (!ticketStage) {\n  return [{ json: { error: 'No ticket stage mapping for item stage: ' + itemStage } }];\n}\n\nreturn [{ json: { ticketStage: ticketStage, itemStage: itemStage } }];"
       },
       "id": "item-sync-map-stage",
       "name": "Map Item Stage to Ticket Stage",
