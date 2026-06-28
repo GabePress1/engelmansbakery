@@ -12,18 +12,24 @@
       "name": "Webhook - Item Stage Changed",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [0, 0],
+      "position": [
+        0,
+        0
+      ],
       "webhookId": "verify-to-next-stage"
     },
     {
       "parameters": {
-        "jsCode": "const body = $input.first().json;\nconst itemId = body.objectId || body.id;\nconst newStage = body.properties?.hs_pipeline_stage || body.hs_pipeline_stage;\n\nif (!itemId || !newStage) {\n  return [{ json: { error: 'Missing itemId or stage', received: body } }];\n}\n\nreturn [{ json: { itemId, newStage } }];"
+        "jsCode": "const body = $input.first().json;\nconst itemId = body.objectId || body.id;\nconst newStage = body.properties?.hs_pipeline_stage?.value || body.hs_pipeline_stage;\n\nif (!itemId || !newStage) {\n  return [{ json: { error: 'Missing itemId or stage', received: body } }];\n}\n\nreturn [{ json: { itemId, newStage } }];"
       },
       "id": "item-sync-extract",
       "name": "Extract Item Info",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [220, 0]
+      "position": [
+        220,
+        0
+      ]
     },
     {
       "parameters": {
@@ -33,7 +39,10 @@
       "name": "Validate Stage (Credit Decision or CAPA)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [330, 0]
+      "position": [
+        330,
+        0
+      ]
     },
     {
       "parameters": {
@@ -56,7 +65,10 @@
       "name": "Get Associated Ticket",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [440, 0],
+      "position": [
+        440,
+        0
+      ],
       "credentials": {
         "hubspotAppToken": {
           "id": "vxGS6a3iorMrt7wb",
@@ -72,7 +84,10 @@
       "name": "Extract Ticket ID",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [660, 0]
+      "position": [
+        660,
+        0
+      ]
     },
     {
       "parameters": {
@@ -95,7 +110,10 @@
       "name": "Get All Associated Items",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [880, 0],
+      "position": [
+        880,
+        0
+      ],
       "credentials": {
         "hubspotAppToken": {
           "id": "vxGS6a3iorMrt7wb",
@@ -111,7 +129,10 @@
       "name": "Get Item Stage",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1100, 0]
+      "position": [
+        1100,
+        0
+      ]
     },
     {
       "parameters": {
@@ -121,7 +142,10 @@
       "name": "Map Item Stage to Ticket Stage",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1320, 0]
+      "position": [
+        1320,
+        0
+      ]
     },
     {
       "parameters": {
@@ -147,7 +171,10 @@
       "name": "Update Ticket Stage",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [1540, 0],
+      "position": [
+        1540,
+        0
+      ],
       "credentials": {
         "hubspotAppToken": {
           "id": "vxGS6a3iorMrt7wb",
@@ -174,7 +201,10 @@
       "name": "Success Response",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [1760, 0]
+      "position": [
+        1760,
+        0
+      ]
     }
   ],
   "connections": {
