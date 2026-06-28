@@ -33,7 +33,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const newStage = $json.newStage;\nconst allowedStages = ['1388087301', '1388087302'];\n\nif (!allowedStages.includes(newStage)) {\n  return [];\n}\n\nreturn [{ json: { itemId: $json.itemId, newStage: newStage } }];"
+        "jsCode": "const newStage = String($json.newStage);\nconst allowedStages = ['1388087301', '1388087302'];\n\nif (!allowedStages.includes(newStage)) {\n  return [];\n}\n\nreturn [{ json: { itemId: $json.itemId, newStage: newStage } }];"
       },
       "id": "item-sync-validate-stage",
       "name": "Validate Stage (Credit Decision or CAPA)",
