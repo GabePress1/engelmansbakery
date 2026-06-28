@@ -267,14 +267,14 @@
       "main": [
         [
           {
-            "node": "Find Lowest Item Stage",
+            "node": "Get Item Stage",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Find Lowest Item Stage": {
+    "Get Item Stage": {
       "main": [
         [
           {
