@@ -1,10 +1,10 @@
 {
-  "name": "Item Stage Updated - Sync Ticket",
+  "name": "Verify to Next Stage - Sync Ticket",
   "nodes": [
     {
       "parameters": {
         "httpMethod": "POST",
-        "path": "item-stage-updated",
+        "path": "verify-to-next-stage",
         "responseMode": "responseNode",
         "options": {}
       },
@@ -13,7 +13,7 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [0, 0],
-      "webhookId": "item-stage-updated"
+      "webhookId": "verify-to-next-stage"
     },
     {
       "parameters": {
