@@ -1,0 +1,934 @@
+{
+  "updatedAt": "2026-06-29T21:09:24.001Z",
+  "createdAt": "2026-05-28T22:35:32.988Z",
+  "id": "SjB9N6EAE5MBiuq7",
+  "name": "Phase 2 \u2013 Customer Invoice Analytics",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global');\nstore.hsCompanies = [];\nstore.hsCursor = null;\nstore.analyticsResults = [];\nreturn [{ json: { initialized: true } }];"
+      },
+      "id": "7e763d8d-b63a-460e-9cbb-1d1476324aec",
+      "name": "Initialize HS Fetch",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst payload = {\n  filterGroups: [{ filters: [\n    { propertyName: 'relationship',        operator: 'EQ',             value: 'Customer' },\n    { propertyName: 'division_multiselect', operator: 'CONTAINS_TOKEN', value: \"Engelman's Bakery\" },\n    { propertyName: 'erp_account_number',  operator: 'HAS_PROPERTY' }\n  ]}],\n  properties: ['hs_object_id', 'erp_account_number', 'name', 'ordering_status', 'first_invoice_date'],\n  limit: 200\n};\nif (store.hsCursor) payload.after = store.hsCursor;\nreturn [{ json: payload }];"
+      },
+      "id": "170164b5-3a26-4ed2-8d71-211b006c5459",
+      "name": "Build HS Search Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/companies/search",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "id": "e9f6bf3f-102a-4be0-b345-46507bf02c4d",
+      "name": "Search HubSpot Companies",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1120,
+        112
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "vxGS6a3iorMrt7wb",
+          "name": "HubSpot Service Key Production"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst results  = response.results || [];\nconst store    = $getWorkflowStaticData('global');\nif (!store.hsCompanies) store.hsCompanies = [];\nstore.hsCompanies.push(...results);\nconst nextCursor = response.paging?.next?.after;\nstore.hsCursor   = (nextCursor && results.length > 0) ? nextCursor : null;\nconst hasMore    = store.hsCursor !== null ? 1 : 0;\nreturn [{ json: { fetched: store.hsCompanies.length, thisPage: results.length, hasMore } }];"
+      },
+      "id": "ae699762-6a02-42da-9168-45c6efc4e2a2",
+      "name": "Accumulate HS Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1344,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.hasMore }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "9c75920f-a1ed-4a8d-84c7-070f72697197",
+      "name": "More HS Pages?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1568,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst companies = store.hsCompanies || [];\nif (companies.length === 0) return [{ json: { skipped: true } }];\nreturn companies.map(c => ({ json: c }));"
+      },
+      "id": "d56f58d4-16b1-4b9a-a58d-c104c380f4bf",
+      "name": "Expand HS Companies",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1792,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "batchSize": 100,
+        "options": {}
+      },
+      "id": "cd5361b3-efa5-409b-9499-b0b9c19a5b85",
+      "name": "Loop 2 Batches",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        2016,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst total = (store.hsCompanies || []).length;\nstore.hsCompanies = []; store.hsCursor = null; store.analyticsResults = [];\nreturn [{ json: { message: 'Analytics sync complete', companiesProcessed: total } }];"
+      },
+      "id": "deb3aa59-c956-452e-82cd-b86d45d190f9",
+      "name": "Sync Complete",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2240,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 0 2 * * 2-6,0"
+            }
+          ]
+        }
+      },
+      "id": "b7a12ca1-99ba-45c9-9b2b-03e636055194",
+      "name": "Schedule Trigger1",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [
+        -16,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "k1",
+              "name": "Tenant_ID",
+              "value": "bddeba87-9d41-4063-a0e3-be9e6afcd2ba",
+              "type": "string"
+            },
+            {
+              "id": "k2",
+              "name": "client_ID",
+              "value": "db88be9e-de13-4205-b0c1-472007c60c36",
+              "type": "string"
+            },
+            {
+              "id": "k3",
+              "name": "Secret_ID",
+              "value": "*** REDACTED ***",
+              "type": "string"
+            },
+            {
+              "id": "k4",
+              "name": "Company_ID",
+              "value": "9ebc308f-a2c8-ed11-9a88-000d3a8e59a1",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "e9bbcf9c-8f67-4928-a587-a3ae4f490c7d",
+      "name": "Keys",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://login.microsoftonline.com/{{ $json.Tenant_ID }}/oauth2/v2.0/token",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "grant_type",
+              "value": "client_credentials"
+            },
+            {
+              "name": "client_id",
+              "value": "={{ $json.client_ID }}"
+            },
+            {
+              "name": "client_secret",
+              "value": "={{ $json.Secret_ID }}"
+            },
+            {
+              "name": "scope",
+              "value": "https://api.businesscentral.dynamics.com/.default"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a1fc9bf6-c75a-434f-8c51-4d003fcaa124",
+      "name": "Get BC Token",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        464,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst token = $('Get BC Token').first().json.access_token;\nconst keys = $('Keys').first().json;\nreturn [{\n  json: {\n    companies: items.map(i => i.json),\n    accessToken: token,\n    tenantId: keys.Tenant_ID,\n    companyId: keys.Company_ID\n  }\n}];"
+      },
+      "id": "mw-package",
+      "name": "Package Batch Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2240,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "AsnzZVH6SAtnTBsD",
+          "mode": "id"
+        }
+      },
+      "id": "mw-exec-sub",
+      "name": "Process Batch",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        2490,
+        112
+      ]
+    }
+  ],
+  "connections": {
+    "Initialize HS Fetch": {
+      "main": [
+        [
+          {
+            "node": "Build HS Search Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build HS Search Payload": {
+      "main": [
+        [
+          {
+            "node": "Search HubSpot Companies",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search HubSpot Companies": {
+      "main": [
+        [
+          {
+            "node": "Accumulate HS Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Accumulate HS Results": {
+      "main": [
+        [
+          {
+            "node": "More HS Pages?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "More HS Pages?": {
+      "main": [
+        [
+          {
+            "node": "Build HS Search Payload",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Expand HS Companies",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Expand HS Companies": {
+      "main": [
+        [
+          {
+            "node": "Loop 2 Batches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop 2 Batches": {
+      "main": [
+        [
+          {
+            "node": "Sync Complete",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Package Batch Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger1": {
+      "main": [
+        [
+          {
+            "node": "Keys",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Keys": {
+      "main": [
+        [
+          {
+            "node": "Get BC Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get BC Token": {
+      "main": [
+        [
+          {
+            "node": "Initialize HS Fetch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Package Batch Data": {
+      "main": [
+        [
+          {
+            "node": "Process Batch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Batch": {
+      "main": [
+        [
+          {
+            "node": "Loop 2 Batches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "meta": null,
+  "nodeGroups": [],
+  "pinData": {
+    "Schedule Trigger1": [
+      {
+        "json": {
+          "isArtificialRecoveredEventItem": true
+        }
+      }
+    ]
+  },
+  "versionId": "c3b3359e-813e-4b4f-809c-fda0d467e60e",
+  "activeVersionId": "c3b3359e-813e-4b4f-809c-fda0d467e60e",
+  "versionCounter": 86,
+  "triggerCount": 1,
+  "sourceWorkflowId": null,
+  "shared": [
+    {
+      "updatedAt": "2026-05-29T12:52:26.166Z",
+      "createdAt": "2026-05-29T12:52:26.166Z",
+      "role": "workflow:owner",
+      "workflowId": "SjB9N6EAE5MBiuq7",
+      "projectId": "w449YKCiGtDqy2aw",
+      "project": {
+        "updatedAt": "2026-05-12T18:28:44.589Z",
+        "createdAt": "2026-05-12T18:28:44.589Z",
+        "id": "w449YKCiGtDqy2aw",
+        "name": "My project",
+        "type": "team",
+        "icon": {
+          "type": "icon",
+          "value": "layers"
+        },
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e717323e-c35c-4f70-bb1d-233a634fca54"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-06-29T21:08:23.899Z",
+    "createdAt": "2026-06-29T21:08:23.899Z",
+    "versionId": "c3b3359e-813e-4b4f-809c-fda0d467e60e",
+    "workflowId": "SjB9N6EAE5MBiuq7",
+    "nodes": [
+      {
+        "parameters": {
+          "jsCode": "const store = $getWorkflowStaticData('global');\nstore.hsCompanies = [];\nstore.hsCursor = null;\nstore.analyticsResults = [];\nreturn [{ json: { initialized: true } }];"
+        },
+        "id": "7e763d8d-b63a-460e-9cbb-1d1476324aec",
+        "name": "Initialize HS Fetch",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          672,
+          192
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const store = $getWorkflowStaticData('global');\nconst payload = {\n  filterGroups: [{ filters: [\n    { propertyName: 'relationship',        operator: 'EQ',             value: 'Customer' },\n    { propertyName: 'division_multiselect', operator: 'CONTAINS_TOKEN', value: \"Engelman's Bakery\" },\n    { propertyName: 'erp_account_number',  operator: 'HAS_PROPERTY' }\n  ]}],\n  properties: ['hs_object_id', 'erp_account_number', 'name', 'ordering_status', 'first_invoice_date'],\n  limit: 200\n};\nif (store.hsCursor) payload.after = store.hsCursor;\nreturn [{ json: payload }];"
+        },
+        "id": "170164b5-3a26-4ed2-8d71-211b006c5459",
+        "name": "Build HS Search Payload",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          896,
+          192
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.hubapi.com/crm/v3/objects/companies/search",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "hubspotAppToken",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json) }}",
+          "options": {}
+        },
+        "id": "e9f6bf3f-102a-4be0-b345-46507bf02c4d",
+        "name": "Search HubSpot Companies",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4,
+        "position": [
+          1120,
+          112
+        ],
+        "credentials": {
+          "hubspotAppToken": {
+            "id": "vxGS6a3iorMrt7wb",
+            "name": "HubSpot Service Key Production"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "const response = $input.first().json;\nconst results  = response.results || [];\nconst store    = $getWorkflowStaticData('global');\nif (!store.hsCompanies) store.hsCompanies = [];\nstore.hsCompanies.push(...results);\nconst nextCursor = response.paging?.next?.after;\nstore.hsCursor   = (nextCursor && results.length > 0) ? nextCursor : null;\nconst hasMore    = store.hsCursor !== null ? 1 : 0;\nreturn [{ json: { fetched: store.hsCompanies.length, thisPage: results.length, hasMore } }];"
+        },
+        "id": "ae699762-6a02-42da-9168-45c6efc4e2a2",
+        "name": "Accumulate HS Results",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1344,
+          112
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 1
+            },
+            "conditions": [
+              {
+                "id": "c1",
+                "leftValue": "={{ $json.hasMore }}",
+                "rightValue": 0,
+                "operator": {
+                  "type": "number",
+                  "operation": "gt"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "9c75920f-a1ed-4a8d-84c7-070f72697197",
+        "name": "More HS Pages?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          1568,
+          192
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const store = $getWorkflowStaticData('global');\nconst companies = store.hsCompanies || [];\nif (companies.length === 0) return [{ json: { skipped: true } }];\nreturn companies.map(c => ({ json: c }));"
+        },
+        "id": "d56f58d4-16b1-4b9a-a58d-c104c380f4bf",
+        "name": "Expand HS Companies",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1792,
+          192
+        ]
+      },
+      {
+        "parameters": {
+          "batchSize": 100,
+          "options": {}
+        },
+        "id": "cd5361b3-efa5-409b-9499-b0b9c19a5b85",
+        "name": "Loop 2 Batches",
+        "type": "n8n-nodes-base.splitInBatches",
+        "typeVersion": 3,
+        "position": [
+          2016,
+          192
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const store = $getWorkflowStaticData('global');\nconst total = (store.hsCompanies || []).length;\nstore.hsCompanies = []; store.hsCursor = null; store.analyticsResults = [];\nreturn [{ json: { message: 'Analytics sync complete', companiesProcessed: total } }];"
+        },
+        "id": "deb3aa59-c956-452e-82cd-b86d45d190f9",
+        "name": "Sync Complete",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2240,
+          -80
+        ]
+      },
+      {
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "0 0 2 * * 2-6,0"
+              }
+            ]
+          }
+        },
+        "id": "b7a12ca1-99ba-45c9-9b2b-03e636055194",
+        "name": "Schedule Trigger1",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1,
+        "position": [
+          -16,
+          192
+        ]
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "k1",
+                "name": "Tenant_ID",
+                "value": "bddeba87-9d41-4063-a0e3-be9e6afcd2ba",
+                "type": "string"
+              },
+              {
+                "id": "k2",
+                "name": "client_ID",
+                "value": "db88be9e-de13-4205-b0c1-472007c60c36",
+                "type": "string"
+              },
+              {
+                "id": "k3",
+                "name": "Secret_ID",
+                "value": "*** REDACTED ***",
+                "type": "string"
+              },
+              {
+                "id": "k4",
+                "name": "Company_ID",
+                "value": "9ebc308f-a2c8-ed11-9a88-000d3a8e59a1",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "e9bbcf9c-8f67-4928-a587-a3ae4f490c7d",
+        "name": "Keys",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          224,
+          192
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "=https://login.microsoftonline.com/{{ $json.Tenant_ID }}/oauth2/v2.0/token",
+          "sendBody": true,
+          "contentType": "form-urlencoded",
+          "bodyParameters": {
+            "parameters": [
+              {
+                "name": "grant_type",
+                "value": "client_credentials"
+              },
+              {
+                "name": "client_id",
+                "value": "={{ $json.client_ID }}"
+              },
+              {
+                "name": "client_secret",
+                "value": "={{ $json.Secret_ID }}"
+              },
+              {
+                "name": "scope",
+                "value": "https://api.businesscentral.dynamics.com/.default"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "a1fc9bf6-c75a-434f-8c51-4d003fcaa124",
+        "name": "Get BC Token",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4,
+        "position": [
+          464,
+          192
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const items = $input.all();\nconst token = $('Get BC Token').first().json.access_token;\nconst keys = $('Keys').first().json;\nreturn [{\n  json: {\n    companies: items.map(i => i.json),\n    accessToken: token,\n    tenantId: keys.Tenant_ID,\n    companyId: keys.Company_ID\n  }\n}];"
+        },
+        "id": "mw-package",
+        "name": "Package Batch Data",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2240,
+          112
+        ]
+      },
+      {
+        "parameters": {
+          "source": "database",
+          "workflowId": {
+            "__rl": true,
+            "value": "AsnzZVH6SAtnTBsD",
+            "mode": "id"
+          }
+        },
+        "id": "mw-exec-sub",
+        "name": "Process Batch",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.2,
+        "position": [
+          2490,
+          112
+        ]
+      }
+    ],
+    "connections": {
+      "Initialize HS Fetch": {
+        "main": [
+          [
+            {
+              "node": "Build HS Search Payload",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build HS Search Payload": {
+        "main": [
+          [
+            {
+              "node": "Search HubSpot Companies",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Search HubSpot Companies": {
+        "main": [
+          [
+            {
+              "node": "Accumulate HS Results",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Accumulate HS Results": {
+        "main": [
+          [
+            {
+              "node": "More HS Pages?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "More HS Pages?": {
+        "main": [
+          [
+            {
+              "node": "Build HS Search Payload",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Expand HS Companies",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Expand HS Companies": {
+        "main": [
+          [
+            {
+              "node": "Loop 2 Batches",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Loop 2 Batches": {
+        "main": [
+          [
+            {
+              "node": "Sync Complete",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Package Batch Data",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Schedule Trigger1": {
+        "main": [
+          [
+            {
+              "node": "Keys",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Keys": {
+        "main": [
+          [
+            {
+              "node": "Get BC Token",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get BC Token": {
+        "main": [
+          [
+            {
+              "node": "Initialize HS Fetch",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Package Batch Data": {
+        "main": [
+          [
+            {
+              "node": "Process Batch",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Process Batch": {
+        "main": [
+          [
+            {
+              "node": "Loop 2 Batches",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodeGroups": [],
+    "authors": "Gabe Press",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-06-29T21:09:24.148Z",
+        "id": 258,
+        "workflowId": "SjB9N6EAE5MBiuq7",
+        "versionId": "c3b3359e-813e-4b4f-809c-fda0d467e60e",
+        "event": "activated",
+        "userId": "e717323e-c35c-4f70-bb1d-233a634fca54"
+      },
+      {
+        "createdAt": "2026-06-29T21:09:24.112Z",
+        "id": 257,
+        "workflowId": "SjB9N6EAE5MBiuq7",
+        "versionId": "c3b3359e-813e-4b4f-809c-fda0d467e60e",
+        "event": "deactivated",
+        "userId": "e717323e-c35c-4f70-bb1d-233a634fca54"
+      }
+    ]
+  }
+}
