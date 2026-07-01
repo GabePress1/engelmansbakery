@@ -23,7 +23,7 @@
       "name": "Extract Ticket Info",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [220, 0]
+      "position": [200, 0]
     },
     {
       "parameters": {
@@ -42,7 +42,7 @@
       "name": "Get Associated Items",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [440, 0],
+      "position": [400, 0],
       "credentials": {
         "hubspotAppToken": {
           "id": "vxGS6a3iorMrt7wb",
@@ -52,19 +52,62 @@
     },
     {
       "parameters": {
-        "jsCode": "const associations = $input.first().json.results || [];\nconst ticketId = $('Extract Ticket Info').first().json.ticketId;\n\nif (associations.length === 0) {\n  return [{ json: { ticketId, decision: 'none', reason: 'No associated items' } }];\n}\n\nconst itemIds = associations.map(a => a.id || a.toObjectId);\n\nconst batchBody = { inputs: itemIds.map(id => ({ id })), properties: ['hs_pipeline_stage'] };\n\nconst response = await this.helpers.httpRequestWithAuthentication.call(this, 'hubspotAppToken', {\n  method: 'POST',\n  url: 'https://api.hubapi.com/crm/v3/objects/2-48651243/batch/read',\n  body: batchBody,\n  json: true,\n  headers: { 'Content-Type': 'application/json' }\n});\n\nconst items = response.results || [];\n\nconst ITEM_VERIFICATION = '1386096010';\nconst ITEM_CREDIT_DECISION = '1388087301';\nconst ITEM_CAPA = '1388087302';\nconst ITEM_CLOSED = '1386096011';\n\nlet allReady = true;   // every item in CAPA or Closed\nlet hasEarly = false;  // any item still in Verification or Credit Decision\nconst stages = [];\n\nfor (const item of items) {\n  const stage = String(item.properties.hs_pipeline_stage);\n  stages.push(stage);\n  const isReady = (stage === ITEM_CAPA || stage === ITEM_CLOSED);\n  if (!isReady) {\n    allReady = false;\n  }\n  if (stage === ITEM_VERIFICATION || stage === ITEM_CREDIT_DECISION) {\n    hasEarly = true;\n  }\n}\n\nlet decision;\nif (allReady) {\n  decision = 'advance';\n} else if (hasEarly) {\n  decision = 'revert';\n} else {\n  decision = 'none';\n}\n\nreturn [{ json: { ticketId, decision, allReady, hasEarly, itemCount: items.length, stages } }];"
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "" },
+          "conditions": [
+            {
+              "id": "cond-has-items",
+              "leftValue": "={{ $json.results ? $json.results.length : 0 }}",
+              "rightValue": 0,
+              "operator": { "type": "number", "operation": "gt" }
+            }
+          ]
+        }
       },
-      "id": "cg-evaluate",
-      "name": "Evaluate Items",
-      "type": "n8n-nodes-base.code",
+      "id": "cg-if-has-items",
+      "name": "Has Items?",
+      "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [660, 0],
+      "position": [600, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/2-48651243/batch/read",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ inputs: $json.results.map(a => ({ id: a.id || a.toObjectId })), properties: ['hs_pipeline_stage'] }) }}",
+        "options": {}
+      },
+      "id": "cg-batch-read",
+      "name": "Batch Read Item Stages",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [800, -80],
       "credentials": {
         "hubspotAppToken": {
           "id": "vxGS6a3iorMrt7wb",
           "name": "HubSpot Service Key Production"
         }
       }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.first().json.results || [];\nconst ticketId = $('Extract Ticket Info').first().json.ticketId;\n\nconst ITEM_VERIFICATION = '1386096010';\nconst ITEM_CREDIT_DECISION = '1388087301';\nconst ITEM_CAPA = '1388087302';\nconst ITEM_CLOSED = '1386096011';\n\nlet allReady = true;   // every item in CAPA or Closed\nlet hasEarly = false;  // any item still in Verification or Credit Decision\nconst stages = [];\n\nfor (const item of items) {\n  const stage = String(item.properties.hs_pipeline_stage);\n  stages.push(stage);\n  if (stage !== ITEM_CAPA && stage !== ITEM_CLOSED) {\n    allReady = false;\n  }\n  if (stage === ITEM_VERIFICATION || stage === ITEM_CREDIT_DECISION) {\n    hasEarly = true;\n  }\n}\n\nlet decision;\nif (items.length === 0) {\n  decision = 'none';\n} else if (allReady) {\n  decision = 'advance';\n} else if (hasEarly) {\n  decision = 'revert';\n} else {\n  decision = 'none';\n}\n\nreturn [{ json: { ticketId, decision, allReady, hasEarly, itemCount: items.length, stages } }];"
+      },
+      "id": "cg-evaluate",
+      "name": "Evaluate Items",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1000, -80]
     },
     {
       "parameters": {
@@ -84,7 +127,7 @@
       "name": "All Items Ready?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [880, 0]
+      "position": [1200, -80]
     },
     {
       "parameters": {
@@ -107,7 +150,7 @@
       "name": "Move Ticket to CAPA",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [1100, -120],
+      "position": [1400, -180],
       "credentials": {
         "hubspotAppToken": {
           "id": "vxGS6a3iorMrt7wb",
@@ -131,7 +174,7 @@
       "name": "Advance Response",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [1320, -120]
+      "position": [1600, -180]
     },
     {
       "parameters": {
@@ -151,7 +194,7 @@
       "name": "Any Items Still Pending?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [1100, 120]
+      "position": [1400, 40]
     },
     {
       "parameters": {
@@ -174,7 +217,7 @@
       "name": "Clear Credit Given",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [1320, 40],
+      "position": [1600, 0],
       "credentials": {
         "hubspotAppToken": {
           "id": "vxGS6a3iorMrt7wb",
@@ -198,12 +241,12 @@
       "name": "Revert Response",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [1540, 40]
+      "position": [1800, 0]
     },
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ JSON.stringify({ success: true, action: 'none', message: 'No stage change needed', decision: $json.decision }) }}",
+        "responseBody": "={{ JSON.stringify({ success: true, action: 'none', message: 'No stage change needed' }) }}",
         "options": {
           "responseHeaders": {
             "entries": [
@@ -216,7 +259,7 @@
       "name": "No Action Response",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [1320, 240]
+      "position": [1000, 200]
     }
   ],
   "connections": {
@@ -231,6 +274,17 @@
       ]
     },
     "Get Associated Items": {
+      "main": [
+        [{ "node": "Has Items?", "type": "main", "index": 0 }]
+      ]
+    },
+    "Has Items?": {
+      "main": [
+        [{ "node": "Batch Read Item Stages", "type": "main", "index": 0 }],
+        [{ "node": "No Action Response", "type": "main", "index": 0 }]
+      ]
+    },
+    "Batch Read Item Stages": {
       "main": [
         [{ "node": "Evaluate Items", "type": "main", "index": 0 }]
       ]
