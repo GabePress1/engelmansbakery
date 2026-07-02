@@ -17,23 +17,13 @@
     },
     {
       "parameters": {
-        "jsCode": "const webhookInput = $input.first().json;\nconst body = webhookInput.body || webhookInput;\nconst itemId = body.objectId || body.id;\nconst newStage = body.properties?.hs_pipeline_stage?.value || body.hs_pipeline_stage;\n\nif (!itemId || !newStage) {\n  return [{ json: { error: 'Missing itemId or stage', received: body } }];\n}\n\nreturn [{ json: { itemId, newStage } }];"
+        "jsCode": "const webhookInput = $input.first().json;\nconst body = webhookInput.body || webhookInput;\nconst itemId = body.objectId || body.id;\n\nif (!itemId) {\n  return [{ json: { error: 'Missing itemId', received: body } }];\n}\n\nreturn [{ json: { itemId: String(itemId) } }];"
       },
       "id": "capa-closed-extract",
       "name": "Extract Item Info",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [220, 0]
-    },
-    {
-      "parameters": {
-        "jsCode": "const newStage = String($json.newStage);\nconst allowedStages = ['1386096011'];\n\nif (!allowedStages.includes(newStage)) {\n  return [];\n}\n\nreturn [{ json: { itemId: $json.itemId, newStage: newStage } }];"
-      },
-      "id": "capa-closed-validate-stage",
-      "name": "Validate Stage (Item Closed)",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [440, 0]
     },
     {
       "parameters": {
@@ -53,7 +43,7 @@
       "name": "Get Associated Ticket",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [660, 0],
+      "position": [440, 0],
       "credentials": {
         "hubspotAppToken": {
           "id": "vxGS6a3iorMrt7wb",
@@ -69,7 +59,7 @@
       "name": "Extract Ticket ID",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [880, 0]
+      "position": [660, 0]
     },
     {
       "parameters": {
@@ -89,7 +79,7 @@
       "name": "Get All Associated Items",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [1100, 0],
+      "position": [880, 0],
       "credentials": {
         "hubspotAppToken": {
           "id": "vxGS6a3iorMrt7wb",
@@ -118,7 +108,7 @@
       "name": "Batch Read Item Stages",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [1320, 0],
+      "position": [1100, 0],
       "credentials": {
         "hubspotAppToken": {
           "id": "vxGS6a3iorMrt7wb",
@@ -134,7 +124,7 @@
       "name": "Get Item Stage",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1540, 0]
+      "position": [1320, 0]
     },
     {
       "parameters": {
@@ -144,7 +134,7 @@
       "name": "Map Item Stage to Ticket Stage",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1760, 0]
+      "position": [1540, 0]
     },
     {
       "parameters": {
@@ -167,7 +157,7 @@
       "name": "Update Ticket Stage",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [1980, 0],
+      "position": [1760, 0],
       "credentials": {
         "hubspotAppToken": {
           "id": "vxGS6a3iorMrt7wb",
@@ -191,25 +181,7 @@
       "name": "Success Response",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [2200, 0]
-    },
-    {
-      "parameters": {
-        "respondWith": "json",
-        "responseBody": "={{ JSON.stringify({ success: false, message: 'Stage not in allowed list (Item Closed)', stage: $json.newStage }) }}",
-        "options": {
-          "responseHeaders": {
-            "entries": [
-              { "name": "Access-Control-Allow-Origin", "value": "*" }
-            ]
-          }
-        }
-      },
-      "id": "capa-closed-skip-response",
-      "name": "Skip Response",
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.1,
-      "position": [660, 200]
+      "position": [1980, 0]
     }
   ],
   "connections": {
@@ -220,13 +192,7 @@
     },
     "Extract Item Info": {
       "main": [
-        [{ "node": "Validate Stage (Item Closed)", "type": "main", "index": 0 }]
-      ]
-    },
-    "Validate Stage (Item Closed)": {
-      "main": [
-        [{ "node": "Get Associated Ticket", "type": "main", "index": 0 }],
-        [{ "node": "Skip Response", "type": "main", "index": 0 }]
+        [{ "node": "Get Associated Ticket", "type": "main", "index": 0 }]
       ]
     },
     "Get Associated Ticket": {
