@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-07-02T18:11:38.162Z",
+  "updatedAt": "2026-07-02T18:36:17.566Z",
   "createdAt": "2026-06-01T13:42:15.890Z",
   "id": "2HLvAAkFmeKkhHg0",
   "name": "Phase 1 \u2013 BC \u2192 HubSpot Companies Final",
@@ -77,7 +77,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const store = $getWorkflowStaticData('global');\nconst lastTimestamp = store.lastPhase1Run || '2000-01-01T00:00:00Z';\nconst runDate = new Date().toISOString();\nstore.lastPhase1Run = runDate;\nstore.createdThisRun = {};\nreturn [{ json: { lastTimestamp, runDate } }];"
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst runDate = new Date().toISOString();\nstore.lastPhase1Run = runDate;\nreturn [{ json: { runDate } }];"
       },
       "id": "de54a210-d0b0-4e3d-af4a-795785936322",
       "name": "Set Window",
@@ -139,69 +139,6 @@
     },
     {
       "parameters": {
-        "url": "=https://api.businesscentral.dynamics.com/v2.0/{{ $('Keys').first().json.Tenant_ID }}/production/api/v2.0/companies({{ $('Keys').first().json.Company_ID }})/customers",
-        "sendQuery": true,
-        "queryParameters": {
-          "parameters": [
-            {
-              "name": "$filter",
-              "value": "={{ `lastModifiedDateTime gt ${$('Set Window').first().json.lastTimestamp}` }}"
-            },
-            {
-              "name": "$select",
-              "value": "id,number,displayName,addressLine1,addressLine2,city,state,postalCode,country,salespersonCode,creditLimit,blocked,lastModifiedDateTime"
-            },
-            {
-              "name": "$expand",
-              "value": "paymentTerm($select=code),paymentMethod($select=code)"
-            },
-            {
-              "name": "$top",
-              "value": "5000"
-            }
-          ]
-        },
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Authorization",
-              "value": "=Bearer {{ $('Get BC Token').first().json.access_token }}"
-            },
-            {
-              "name": "Accept",
-              "value": "application/json"
-            }
-          ]
-        },
-        "options": {
-          "timeout": 60000
-        }
-      },
-      "id": "b7516b60-e346-42b6-9c50-6ffcf77d3b92",
-      "name": "Fetch Changed BC Customers",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4,
-      "position": [
-        1344,
-        -48
-      ]
-    },
-    {
-      "parameters": {
-        "jsCode": "const customers = $input.first().json.value || [];\n// Customer fields are now fetched per-batch via Get Calendar & Balance.\n// We no longer need to store them in static data.\nreturn [{ json: { bcCustomerCount: customers.length } }];"
-      },
-      "id": "6e1802e5-e757-475d-ad60-ecf2d2fdc5e6",
-      "name": "Store BC Customer Data",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        1568,
-        -48
-      ]
-    },
-    {
-      "parameters": {
         "jsCode": "const store = $getWorkflowStaticData('global');\nstore.hsCompanies = [];\nstore.hsCursor = null;\nreturn [{ json: { initialized: true } }];"
       },
       "id": "0762cfea-a5c9-4368-a33a-269af46059b8",
@@ -215,7 +152,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const store = $getWorkflowStaticData('global');\nconst payload = {\n  filterGroups: [{\n    filters: [\n      { propertyName: 'relationship',         operator: 'EQ',             value: 'Customer' },\n      { propertyName: 'division_multiselect',  operator: 'CONTAINS_TOKEN', value: \"Engelman's Bakery\" },\n      { propertyName: 'erp_account_number',    operator: 'HAS_PROPERTY' }\n    ]\n  }],\n  properties: ['hs_object_id', 'erp_account_number', 'name'],\n  limit: 200\n};\nif (store.hsCursor) payload.after = store.hsCursor;\nreturn [{ json: payload }];"
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst payload = {\n  filterGroups: [{\n    filters: [\n      { propertyName: 'relationship',         operator: 'EQ',             value: 'Customer' },\n      { propertyName: 'division_multiselect',  operator: 'CONTAINS_TOKEN', value: \"Engelman's Bakery\" },\n      { propertyName: 'erp_account_number',    operator: 'HAS_PROPERTY' }\n    ]\n  }],\n  properties: ['erp_account_number'],\n  limit: 200\n};\nif (store.hsCursor) payload.after = store.hsCursor;\nreturn [{ json: payload }];"
       },
       "id": "8597c626-043f-4158-a59a-2d31c264e2f4",
       "name": "Build HS Search Payload",
@@ -628,28 +565,6 @@
       "main": [
         [
           {
-            "node": "Fetch Changed BC Customers",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Fetch Changed BC Customers": {
-      "main": [
-        [
-          {
-            "node": "Store BC Customer Data",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Store BC Customer Data": {
-      "main": [
-        [
-          {
             "node": "Initialize HS Fetch",
             "type": "main",
             "index": 0
@@ -830,13 +745,13 @@
     "saveExecutionProgress": true,
     "callerPolicy": "workflowsFromSameOwner"
   },
-  "staticData": null,
+  "staticData": {},
   "meta": null,
   "nodeGroups": [],
   "pinData": {},
-  "versionId": "e6f87d2f-42ab-465e-b3cd-c419f7b4d829",
+  "versionId": "fe245823-0ea1-49d7-a3f7-7b8a22c3c1d8",
   "activeVersionId": null,
-  "versionCounter": 94,
+  "versionCounter": 95,
   "triggerCount": 1,
   "sourceWorkflowId": null,
   "shared": [
