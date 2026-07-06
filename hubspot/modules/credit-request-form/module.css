@@ -238,6 +238,13 @@
   cursor: pointer;
 }
 
+/* Keep the readonly picker input looking like a normal (white) field */
+.cr-form__field input.cr-select__input[readonly] {
+  background: var(--cr-bg);
+  color: var(--cr-text);
+  cursor: pointer;
+}
+
 .cr-select__panel {
   position: absolute;
   top: calc(100% + 4px);
