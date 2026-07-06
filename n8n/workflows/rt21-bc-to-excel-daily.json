@@ -1,0 +1,775 @@
+{
+  "name": "RT 21 - BC to Excel (Daily)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "triggerAtHour": 6,
+              "triggerAtMinute": 30
+            }
+          ]
+        }
+      },
+      "id": "rt21-schedule",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "rt21-export-run",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "rt21-webhook",
+      "name": "Run Now (Test)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        100
+      ],
+      "webhookId": "rt21-export-run"
+    },
+    {
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global');\nstore.rt21 = { orders: [], invoices: [], orderLines: [], invoiceLines: [], sheetRanges: {}, fileId: null, sessionId: null };\nconst year = new Date().getFullYear();\nreturn [{ json: {\n  yearStart: year + '-01-01',\n  driveId: 'b!GBMH8cf5mk2CZl1ZfpWgDMJRDzREsg1Npw0_haVaoSy_p0-rU6CqTIb8wOlQB4p-',\n  folderId: '01ENPIF4CERGMSIGMKQVHKJW5HGYOOQVRD',\n  templateName: 'RT21_template.xlsx',\n  fileName: 'RT21_Orders_and_Invoices.xlsx'\n} }];"
+      },
+      "id": "rt21-init",
+      "name": "Init",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://login.microsoftonline.com/bddeba87-9d41-4063-a0e3-be9e6afcd2ba/oauth2/v2.0/token",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "grant_type",
+              "value": "client_credentials"
+            },
+            {
+              "name": "client_id",
+              "value": "db88be9e-de13-4205-b0c1-472007c60c36"
+            },
+            {
+              "name": "client_secret",
+              "value": "<REDACTED - set in n8n>"
+            },
+            {
+              "name": "scope",
+              "value": "https://api.businesscentral.dynamics.com/.default"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "rt21-token",
+      "name": "Get BC Token",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        400,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ 'https://api.businesscentral.dynamics.com/v2.0/bddeba87-9d41-4063-a0e3-be9e6afcd2ba/Production/ODataV4/Company(%27Live-EB%27)/Sales_Order_Excel?$top=19999&$select=No,Order_Date,Requested_Delivery_Date,Shipment_Date,Status,Sell_to_Customer_No,Sell_to_Customer_Name,Ship_to_Name,Ship_to_City,Shipping_Agent_Code,External_Document_No,Salesperson_Code,Location_Code,Completely_Shipped&$filter=' + encodeURIComponent(\"Shipping_Agent_Code eq 'RT 21' and Order_Date ge \" + $('Init').first().json.yearStart) }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.access_token }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "rt21-fetch-orders",
+      "name": "Fetch Orders",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        600,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ 'https://api.businesscentral.dynamics.com/v2.0/bddeba87-9d41-4063-a0e3-be9e6afcd2ba/Production/ODataV4/Company(%27Live-EB%27)/Posted_Sales_Invoice_Excel?$top=19999&$select=No,Posting_Date,Due_Date,Order_No,Sell_to_Customer_No,Sell_to_Customer_Name,Ship_to_Name,Ship_to_City,Shipping_Agent_Code,External_Document_No,Salesperson_Code,Payment_Terms_Code,Location_Code&$filter=' + encodeURIComponent(\"Shipping_Agent_Code eq 'RT 21' and Posting_Date ge \" + $('Init').first().json.yearStart) }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Get BC Token').first().json.access_token }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "rt21-fetch-invoices",
+      "name": "Fetch Invoices",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        800,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global').rt21;\nconst orders = $('Fetch Orders').first().json.value || [];\nconst invoices = $('Fetch Invoices').first().json.value || [];\nstore.orders = orders;\nstore.invoices = invoices;\nconst chunk = (arr, n) => { const out = []; for (let i = 0; i < arr.length; i += n) out.push(arr.slice(i, i + n)); return out; };\nconst esc = s => String(s).replace(/'/g, \"''\");\nconst items = [];\nfor (const c of chunk(orders.map(o => o.No), 80)) {\n  items.push({ json: { kind: 'order', filter: \"Document_Type eq 'Order' and (\" + c.map(n => \"Document_No eq '\" + esc(n) + \"'\").join(' or ') + \")\" } });\n}\nfor (const c of chunk(invoices.map(v => v.No), 80)) {\n  items.push({ json: { kind: 'invoice', filter: \"(\" + c.map(n => \"Document_No eq '\" + esc(n) + \"'\").join(' or ') + \")\" } });\n}\nif (items.length === 0) items.push({ json: { kind: 'noop', filter: \"Document_No eq 'NOOP_NONE'\" } });\nreturn items;"
+      },
+      "id": "rt21-prep-chunks",
+      "name": "Prepare Doc Chunks",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "rt21-loop-chunks",
+      "name": "Loop Chunks",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1200,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ (() => { const k = $json.kind; const f = encodeURIComponent($json.filter); if (k === 'invoice') return 'https://api.businesscentral.dynamics.com/v2.0/bddeba87-9d41-4063-a0e3-be9e6afcd2ba/Production/ODataV4/Company(%27Live-EB%27)/Posted_Sales_Invoice_Lines_Excel?$top=19999&$select=Document_No,Line_No,Type,No,Description,Quantity,Unit_of_Measure_Code,Unit_Price,Line_Discount_Amount,Amount,Amount_Including_VAT,ERC_Posting_Date,Sell_to_Customer_No,Order_No&$filter=' + f; return 'https://api.businesscentral.dynamics.com/v2.0/bddeba87-9d41-4063-a0e3-be9e6afcd2ba/Production/ODataV4/Company(%27Live-EB%27)/Sales_Lines_Excel?$top=19999&$select=Document_No,Line_No,Type,No,Description,Quantity,Qty_to_Ship,Outstanding_Quantity,Unit_of_Measure_Code,Line_Amount,Shipment_Date,Location_Code,Sell_to_Customer_No&$filter=' + f; })() }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Get BC Token').first().json.access_token }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "rt21-fetch-lines",
+      "name": "Fetch Lines Chunk",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1400,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global').rt21;\nconst kind = $('Loop Chunks').first().json.kind;\nconst rows = $json.value || [];\nif (kind === 'order') store.orderLines.push(...rows);\nif (kind === 'invoice') store.invoiceLines.push(...rows);\nreturn [{ json: { kind, added: rows.length, orderLines: store.orderLines.length, invoiceLines: store.invoiceLines.length } }];"
+      },
+      "id": "rt21-accumulate",
+      "name": "Accumulate Lines",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1600,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ 'https://graph.microsoft.com/v1.0/drives/' + $('Init').first().json.driveId + '/items/' + $('Init').first().json.folderId + ':/' + $('Init').first().json.templateName + ':/content' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "rt21-get-template",
+      "name": "Get Template",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1400,
+        -150
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "NdNx9ZJrAqeKJKtr",
+          "name": "MS Graph - n8n BC Read (client credentials)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "={{ 'https://graph.microsoft.com/v1.0/drives/' + $('Init').first().json.driveId + '/items/' + $('Init').first().json.folderId + ':/' + $('Init').first().json.fileName + ':/content' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "data",
+        "options": {}
+      },
+      "id": "rt21-create-file",
+      "name": "Create Working File",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1600,
+        -150
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "NdNx9ZJrAqeKJKtr",
+          "name": "MS Graph - n8n BC Read (client credentials)"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'https://graph.microsoft.com/v1.0/drives/' + $('Init').first().json.driveId + '/items/' + $json.id + '/workbook/createSession' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ persistChanges: true }) }}",
+        "options": {}
+      },
+      "id": "rt21-session",
+      "name": "Create Session",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1800,
+        -150
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "NdNx9ZJrAqeKJKtr",
+          "name": "MS Graph - n8n BC Read (client credentials)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global').rt21;\nconst init = $('Init').first().json;\nconst fileId = $('Get Working File').first().json.id;\nconst sessionId = $json.id;\nstore.fileId = fileId;\nstore.sessionId = sessionId;\nconst colLetter = (n) => { let s = ''; while (n > 0) { const m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); } return s; };\nconst sheets = [\n  { sheet: 'Sales Orders',  rows: store.orders,       cols: [\"No\", \"Order_Date\", \"Requested_Delivery_Date\", \"Shipment_Date\", \"Status\", \"Sell_to_Customer_No\", \"Sell_to_Customer_Name\", \"Ship_to_Name\", \"Ship_to_City\", \"Shipping_Agent_Code\", \"External_Document_No\", \"Salesperson_Code\", \"Location_Code\", \"Completely_Shipped\"] },\n  { sheet: 'Order Lines',   rows: store.orderLines,   cols: [\"Document_No\", \"Line_No\", \"Type\", \"No\", \"Description\", \"Quantity\", \"Qty_to_Ship\", \"Outstanding_Quantity\", \"Unit_of_Measure_Code\", \"Line_Amount\", \"Shipment_Date\", \"Location_Code\", \"Sell_to_Customer_No\"] },\n  { sheet: 'Invoices',      rows: store.invoices,     cols: [\"No\", \"Posting_Date\", \"Due_Date\", \"Order_No\", \"Sell_to_Customer_No\", \"Sell_to_Customer_Name\", \"Ship_to_Name\", \"Ship_to_City\", \"Shipping_Agent_Code\", \"External_Document_No\", \"Salesperson_Code\", \"Payment_Terms_Code\", \"Location_Code\"] },\n  { sheet: 'Invoice Lines', rows: store.invoiceLines, cols: [\"Document_No\", \"Line_No\", \"Type\", \"No\", \"Description\", \"Quantity\", \"Unit_of_Measure_Code\", \"Unit_Price\", \"Line_Discount_Amount\", \"Amount\", \"Amount_Including_VAT\", \"ERC_Posting_Date\", \"Sell_to_Customer_No\", \"Order_No\"] }\n];\nconst items = [];\nconst CH = 1000;\nfor (const s of sheets) {\n  const width = s.cols.length;\n  const dataRows = s.rows.map(r => s.cols.map(c => { const v = r[c]; return (v === null || v === undefined) ? '' : v; }));\n  const all = [s.cols, ...dataRows];\n  store.sheetRanges[s.sheet] = { address: 'A1:' + colLetter(width) + all.length, rows: dataRows.length };\n  for (let i = 0; i < all.length; i += CH) {\n    const slice = all.slice(i, i + CH);\n    items.push({ json: { sheet: s.sheet, address: 'A' + (i + 1) + ':' + colLetter(width) + (i + slice.length), values: slice, fileId, sessionId, driveId: init.driveId } });\n  }\n}\nreturn items;"
+      },
+      "id": "rt21-prep-writes",
+      "name": "Prepare Write Chunks",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        -150
+      ]
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "rt21-loop-writes",
+      "name": "Loop Writes",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        2200,
+        -150
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ 'https://graph.microsoft.com/v1.0/drives/' + $json.driveId + '/items/' + $json.fileId + \"/workbook/worksheets('\" + encodeURIComponent($json.sheet) + \"')/range(address='\" + $json.address + \"')\" }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "workbook-session-id",
+              "value": "={{ $json.sessionId }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ values: $json.values }) }}",
+        "options": {}
+      },
+      "id": "rt21-write-range",
+      "name": "Write Range",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2400,
+        -50
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "NdNx9ZJrAqeKJKtr",
+          "name": "MS Graph - n8n BC Read (client credentials)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global').rt21;\nconst init = $('Init').first().json;\nconst items = [];\nfor (const [sheet, r] of Object.entries(store.sheetRanges)) {\n  if (r.rows > 0) items.push({ json: { sheet, address: r.address, driveId: init.driveId, fileId: store.fileId, sessionId: store.sessionId } });\n}\nif (items.length === 0) items.push({ json: { sheet: 'Sales Orders', address: 'A1:A1', driveId: init.driveId, fileId: store.fileId, sessionId: store.sessionId } });\nreturn items;"
+      },
+      "id": "rt21-prep-tables",
+      "name": "Prepare Tables",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2400,
+        -250
+      ]
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "rt21-loop-tables",
+      "name": "Loop Tables",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        2600,
+        -250
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'https://graph.microsoft.com/v1.0/drives/' + $json.driveId + '/items/' + $json.fileId + \"/workbook/worksheets('\" + encodeURIComponent($json.sheet) + \"')/tables/add\" }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "workbook-session-id",
+              "value": "={{ $json.sessionId }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ address: $json.address, hasHeaders: true }) }}",
+        "options": {}
+      },
+      "id": "rt21-add-table",
+      "name": "Add Table",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2800,
+        -150
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "NdNx9ZJrAqeKJKtr",
+          "name": "MS Graph - n8n BC Read (client credentials)"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'https://graph.microsoft.com/v1.0/drives/' + $('Prepare Write Chunks').first().json.driveId + '/items/' + $('Prepare Write Chunks').first().json.fileId + '/workbook/closeSession' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "workbook-session-id",
+              "value": "={{ $('Prepare Write Chunks').first().json.sessionId }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({}) }}",
+        "options": {}
+      },
+      "id": "rt21-close-session",
+      "name": "Close Session",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2800,
+        -350
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "NdNx9ZJrAqeKJKtr",
+          "name": "MS Graph - n8n BC Read (client credentials)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global').rt21;\nreturn [{ json: {\n  success: true,\n  orders: store.orders.length,\n  orderLines: store.orderLines.length,\n  invoices: store.invoices.length,\n  invoiceLines: store.invoiceLines.length,\n  file: 'RT21_Orders_and_Invoices.xlsx'\n} }];"
+      },
+      "id": "rt21-summary",
+      "name": "Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3000,
+        -350
+      ]
+    },
+    {
+      "parameters": {
+        "method": "DELETE",
+        "url": "={{ 'https://graph.microsoft.com/v1.0/drives/' + $('Init').first().json.driveId + '/items/' + $('Init').first().json.folderId + ':/' + $('Init').first().json.fileName + ':' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "options": {}
+      },
+      "id": "rt21-delete-old",
+      "name": "Delete Old File",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1300,
+        -150
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "NdNx9ZJrAqeKJKtr",
+          "name": "MS Graph - n8n BC Read (client credentials)"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ 'https://graph.microsoft.com/v1.0/drives/' + $('Init').first().json.driveId + '/items/' + $('Init').first().json.folderId + ':/' + $('Init').first().json.fileName + ':' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "options": {}
+      },
+      "id": "rt21-get-file",
+      "name": "Get Working File",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1700,
+        -150
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "NdNx9ZJrAqeKJKtr",
+          "name": "MS Graph - n8n BC Read (client credentials)"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Init",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Now (Test)": {
+      "main": [
+        [
+          {
+            "node": "Init",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Init": {
+      "main": [
+        [
+          {
+            "node": "Get BC Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get BC Token": {
+      "main": [
+        [
+          {
+            "node": "Fetch Orders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Orders": {
+      "main": [
+        [
+          {
+            "node": "Fetch Invoices",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Invoices": {
+      "main": [
+        [
+          {
+            "node": "Prepare Doc Chunks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Doc Chunks": {
+      "main": [
+        [
+          {
+            "node": "Loop Chunks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Chunks": {
+      "main": [
+        [
+          {
+            "node": "Delete Old File",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fetch Lines Chunk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Lines Chunk": {
+      "main": [
+        [
+          {
+            "node": "Accumulate Lines",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Accumulate Lines": {
+      "main": [
+        [
+          {
+            "node": "Loop Chunks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Template": {
+      "main": [
+        [
+          {
+            "node": "Create Working File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Working File": {
+      "main": [
+        [
+          {
+            "node": "Get Working File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Session": {
+      "main": [
+        [
+          {
+            "node": "Prepare Write Chunks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Write Chunks": {
+      "main": [
+        [
+          {
+            "node": "Loop Writes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Writes": {
+      "main": [
+        [
+          {
+            "node": "Prepare Tables",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Write Range",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write Range": {
+      "main": [
+        [
+          {
+            "node": "Loop Writes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Tables": {
+      "main": [
+        [
+          {
+            "node": "Loop Tables",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Tables": {
+      "main": [
+        [
+          {
+            "node": "Close Session",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Add Table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add Table": {
+      "main": [
+        [
+          {
+            "node": "Loop Tables",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Close Session": {
+      "main": [
+        [
+          {
+            "node": "Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Old File": {
+      "main": [
+        [
+          {
+            "node": "Get Template",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Working File": {
+      "main": [
+        [
+          {
+            "node": "Create Session",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
