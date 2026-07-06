@@ -1,0 +1,546 @@
+(function () {
+  var ISSUE_CLASSIFICATIONS = [
+    "Flavor",
+    "Size",
+    "Color",
+    "Damaged",
+    "Moldy",
+    "Allergen/Food Safety",
+    "Stale",
+    "Shelf Life",
+    "Shortage",
+    "Incorrect Price",
+    "Wrong Substitution",
+    "Mispick",
+    "Wrong Specification",
+    "Order Error"
+  ];
+
+  var PHOTO_REQUIRED_CLASSIFICATIONS = [
+    "Damaged",
+    "Moldy",
+    "Allergen/Food Safety",
+    "Shelf Life",
+    "Shortage",
+    "Size",
+    "Color"
+  ];
+
+  var MAX_LINES = 10;
+  var MIN_LINES = 1;
+
+  var wrapper = document.getElementById("credit-request-module");
+  if (!wrapper) return;
+
+  var webhookUrl = wrapper.getAttribute("data-webhook-url");
+  var itemsEndpoint = wrapper.getAttribute("data-items-endpoint");
+
+  var form = document.getElementById("credit-request-form");
+  var productContainer = document.getElementById("cr-product-lines");
+  var addBtn = document.getElementById("cr-add-product");
+  var productCount = document.getElementById("cr-product-count");
+  var submitBtn = document.getElementById("cr-submit");
+  var loadingEl = document.getElementById("cr-loading");
+  var successEl = document.getElementById("cr-success");
+  var errorEl = document.getElementById("cr-error");
+
+  var bcItems = [];
+  var lineCount = 0;
+
+  // ── BC Items Loading ──
+
+  function loadBCItems() {
+    if (!itemsEndpoint) {
+      showItemsError("Items endpoint not configured.");
+      return;
+    }
+
+    productContainer.innerHTML =
+      '<div class="cr-items-loading"><span class="cr-spinner"></span> Loading products...</div>';
+
+    fetch(itemsEndpoint)
+      .then(function (res) {
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        return res.json();
+      })
+      .then(function (data) {
+        bcItems = Array.isArray(data) ? data : data.value || [];
+        productContainer.innerHTML = "";
+        addProductLine();
+      })
+      .catch(function () {
+        productContainer.innerHTML = "";
+        showItemsError("Unable to load products. Please refresh the page.");
+      });
+  }
+
+  function showItemsError(msg) {
+    productContainer.innerHTML = '<div class="cr-items-error">' + escapeHtml(msg) + "</div>";
+  }
+
+  // ── Product Line Management ──
+
+  function buildProductOptions() {
+    var html = '<option value="">Select a product...</option>';
+    for (var i = 0; i < bcItems.length; i++) {
+      html +=
+        '<option value="' +
+        escapeAttr(bcItems[i].number) +
+        '" data-description="' +
+        escapeAttr(bcItems[i].displayName) +
+        '">' +
+        escapeHtml(bcItems[i].number) +
+        " — " +
+        escapeHtml(bcItems[i].displayName) +
+        "</option>";
+    }
+    return html;
+  }
+
+  function buildClassificationOptions() {
+    var html = "";
+    for (var i = 0; i < ISSUE_CLASSIFICATIONS.length; i++) {
+      html +=
+        '<button type="button" class="cr-select__option" data-value="' +
+        escapeAttr(ISSUE_CLASSIFICATIONS[i]) +
+        '">' +
+        escapeHtml(ISSUE_CLASSIFICATIONS[i]) +
+        "</button>";
+    }
+    return html;
+  }
+
+  function createProductLineHtml(index) {
+    var dataListId = "cr-datalist-" + index;
+    var reqTypeId = "cr-reqtype-" + index;
+    return (
+      '<div class="cr-product-line" data-line="' + index + '">' +
+        '<div class="cr-product-line__header">' +
+          '<span class="cr-product-line__label">Product Line ' + index + "</span>" +
+          '<button type="button" class="cr-btn cr-btn--remove cr-remove-line">Remove</button>' +
+        "</div>" +
+        '<div class="cr-product-line__grid">' +
+          '<div class="cr-form__field cr-form__field--search">' +
+            '<label>Item No. <span class="cr-required">*</span></label>' +
+            '<input type="text" class="cr-product-search" required placeholder="Search by item # or name" list="' + dataListId + '">' +
+            '<datalist id="' + dataListId + '" class="cr-product-datalist"></datalist>' +
+            '<span class="cr-form__error" data-error="productNumber"></span>' +
+          "</div>" +
+          '<div class="cr-form__field">' +
+            '<label>Lot Code</label>' +
+            '<input type="text" class="cr-product-julian" placeholder="e.g. 176">' +
+          "</div>" +
+          '<div class="cr-form__field">' +
+            '<label>Quantity <span class="cr-required">*</span></label>' +
+            '<input type="number" class="cr-product-qty" min="1" step="1" required placeholder="Qty">' +
+            '<span class="cr-form__error" data-error="quantity"></span>' +
+          "</div>" +
+          '<div class="cr-form__field">' +
+            '<label>Request Type <span class="cr-required">*</span></label>' +
+            '<input type="text" class="cr-product-request-type" required placeholder="Select type..." list="' + reqTypeId + '">' +
+            '<datalist id="' + reqTypeId + '"><option value="Complaint"><option value="Credit"></datalist>' +
+            '<span class="cr-form__error" data-error="requestType"></span>' +
+          "</div>" +
+          '<div class="cr-form__field">' +
+            '<label>Complaint Type <span class="cr-required">*</span></label>' +
+            '<div class="cr-select">' +
+              '<input type="text" class="cr-product-classification cr-select__input" required readonly autocomplete="off" placeholder="Select classification...">' +
+              '<div class="cr-select__panel" hidden>' +
+                buildClassificationOptions() +
+              "</div>" +
+            "</div>" +
+            '<span class="cr-form__error" data-error="classification"></span>' +
+          "</div>" +
+          '<div class="cr-form__field">' +
+            '<label>Photos / Attachments <span class="cr-required cr-photo-required-asterisk" style="display:none">*</span></label>' +
+            '<input type="file" class="cr-product-photos" multiple accept="image/*,.pdf">' +
+            '<span class="cr-form__error" data-error="photos"></span>' +
+          "</div>" +
+          '<div class="cr-form__field cr-form__field--full">' +
+            "<label>Reason / Notes</label>" +
+            '<textarea class="cr-product-notes" rows="2" placeholder="Optional notes for this line"></textarea>' +
+          "</div>" +
+        "</div>" +
+      "</div>"
+    );
+  }
+
+  function populateDatalist(datalistId) {
+    var datalist = document.getElementById(datalistId);
+    datalist.innerHTML = "";
+    for (var i = 0; i < bcItems.length; i++) {
+      var option = document.createElement("option");
+      option.value = bcItems[i].number + " — " + bcItems[i].displayName;
+      datalist.appendChild(option);
+    }
+  }
+
+  function closeAllSelectPanels(except) {
+    var panels = productContainer.querySelectorAll(".cr-select__panel");
+    for (var i = 0; i < panels.length; i++) {
+      if (panels[i] !== except) panels[i].hidden = true;
+    }
+  }
+
+  function updatePhotoRequirement(lineEl) {
+    var classification = lineEl.querySelector(".cr-product-classification").value;
+    var photos = lineEl.querySelector(".cr-product-photos");
+    var asterisk = lineEl.querySelector(".cr-photo-required-asterisk");
+    var isRequired = PHOTO_REQUIRED_CLASSIFICATIONS.indexOf(classification) !== -1;
+    photos.required = isRequired;
+    if (asterisk) {
+      asterisk.style.display = isRequired ? "" : "none";
+    }
+  }
+
+  function addProductLine() {
+    if (lineCount >= MAX_LINES) return;
+    lineCount++;
+    var temp = document.createElement("div");
+    temp.innerHTML = createProductLineHtml(lineCount);
+    var lineEl = temp.firstChild;
+    productContainer.appendChild(lineEl);
+
+    populateDatalist("cr-datalist-" + lineCount);
+
+    var searchInput = lineEl.querySelector(".cr-product-search");
+    searchInput.addEventListener("change", function() {
+      onProductSearchChange(searchInput);
+    });
+    searchInput.addEventListener("blur", function() {
+      onProductSearchChange(searchInput);
+    });
+
+    // Custom two-column Complaint Type picker
+    var classInput = lineEl.querySelector(".cr-product-classification");
+    var classPanel = lineEl.querySelector(".cr-select__panel");
+
+    classInput.addEventListener("click", function (e) {
+      e.stopPropagation();
+      var willOpen = classPanel.hidden;
+      closeAllSelectPanels(classPanel);
+      classPanel.hidden = !willOpen;
+    });
+
+    classPanel.addEventListener("click", function (e) {
+      var opt = e.target.closest(".cr-select__option");
+      if (!opt) return;
+      classInput.value = opt.getAttribute("data-value");
+      classPanel.hidden = true;
+      updatePhotoRequirement(lineEl);
+    });
+
+    lineEl.querySelector(".cr-remove-line").addEventListener("click", function () {
+      removeProductLine(lineEl);
+    });
+
+    updateProductUI();
+  }
+
+  function onProductSearchChange(input) {
+    var value = input.value.trim();
+    var matchedItem = bcItems.find(function(item) {
+      return item.number === value ||
+             (item.number + " — " + item.displayName) === value;
+    });
+
+    if (matchedItem) {
+      input.setAttribute("data-product-number", matchedItem.number);
+      input.setAttribute("data-product-description", matchedItem.displayName);
+    } else {
+      input.removeAttribute("data-product-number");
+      input.removeAttribute("data-product-description");
+    }
+  }
+
+  function removeProductLine(lineEl) {
+    if (lineCount <= MIN_LINES) return;
+    lineEl.remove();
+    lineCount--;
+    renumberLines();
+    updateProductUI();
+  }
+
+  function renumberLines() {
+    var lines = productContainer.querySelectorAll(".cr-product-line");
+    for (var i = 0; i < lines.length; i++) {
+      lines[i].setAttribute("data-line", i + 1);
+      lines[i].querySelector(".cr-product-line__label").textContent =
+        "Product Line " + (i + 1);
+    }
+  }
+
+  function updateProductUI() {
+    productCount.textContent = lineCount + " of " + MAX_LINES;
+    addBtn.disabled = lineCount >= MAX_LINES;
+
+    var removeBtns = productContainer.querySelectorAll(".cr-remove-line");
+    for (var i = 0; i < removeBtns.length; i++) {
+      removeBtns[i].style.display = lineCount <= MIN_LINES ? "none" : "";
+    }
+  }
+
+  function onProductChange(e) {
+    var select = e.target;
+    var selectedOption = select.options[select.selectedIndex];
+    var description = selectedOption.getAttribute("data-description") || "";
+    var line = select.closest(".cr-product-line");
+    line.querySelector(".cr-product-description").value = description;
+  }
+
+  // ── Validation ──
+
+  function clearErrors() {
+    var errorFields = wrapper.querySelectorAll(".cr-form__field--error");
+    for (var i = 0; i < errorFields.length; i++) {
+      errorFields[i].classList.remove("cr-form__field--error");
+    }
+    var errorMsgs = wrapper.querySelectorAll(".cr-form__error");
+    for (var j = 0; j < errorMsgs.length; j++) {
+      errorMsgs[j].textContent = "";
+    }
+  }
+
+  function setFieldError(field, message) {
+    var parent = field.closest(".cr-form__field");
+    if (parent) {
+      parent.classList.add("cr-form__field--error");
+      var errorSpan = parent.querySelector(".cr-form__error");
+      if (errorSpan) errorSpan.textContent = message;
+    }
+  }
+
+  function validateForm() {
+    clearErrors();
+    var firstError = null;
+
+    function markError(field, msg) {
+      setFieldError(field, msg);
+      if (!firstError) firstError = field;
+    }
+
+    var accountNum = document.getElementById("cr-account-number");
+    if (!accountNum.value.trim()) {
+      markError(accountNum, "Account number is required.");
+    }
+
+    var invoiceNum = document.getElementById("cr-invoice-number");
+    if (!invoiceNum.value.trim()) {
+      markError(invoiceNum, "Invoice number is required.");
+    }
+
+    var firstName = document.getElementById("cr-first-name");
+    if (!firstName.value.trim()) {
+      markError(firstName, "First name is required.");
+    }
+
+    var lastName = document.getElementById("cr-last-name");
+    if (!lastName.value.trim()) {
+      markError(lastName, "Last name is required.");
+    }
+
+    var email = document.getElementById("cr-email");
+    var emailVal = email.value.trim();
+    if (!emailVal) {
+      markError(email, "Email is required.");
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)) {
+      markError(email, "Enter a valid email address.");
+    }
+
+    var lines = productContainer.querySelectorAll(".cr-product-line");
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i];
+
+      var productSearch = line.querySelector(".cr-product-search");
+      if (!productSearch.value || !productSearch.getAttribute("data-product-number")) {
+        markError(productSearch, "Select a valid product.");
+      }
+
+      var qty = line.querySelector(".cr-product-qty");
+      var qtyVal = parseInt(qty.value, 10);
+      if (!qty.value || isNaN(qtyVal) || qtyVal < 1) {
+        markError(qty, "Enter a valid quantity.");
+      }
+
+      var requestType = line.querySelector(".cr-product-request-type");
+      if (!requestType.value || (requestType.value !== "Complaint" && requestType.value !== "Credit")) {
+        markError(requestType, "Select Complaint or Credit.");
+      }
+
+      var classification = line.querySelector(".cr-product-classification");
+      if (!classification.value || ISSUE_CLASSIFICATIONS.indexOf(classification.value) === -1) {
+        markError(classification, "Select a valid classification.");
+      }
+
+      var photos = line.querySelector(".cr-product-photos");
+      var classificationVal = classification.value;
+      if (PHOTO_REQUIRED_CLASSIFICATIONS.indexOf(classificationVal) !== -1 && (!photos.files || photos.files.length === 0)) {
+        markError(photos, "At least one photo is required.");
+      }
+    }
+
+    if (firstError) {
+      firstError.scrollIntoView({ behavior: "smooth", block: "center" });
+      firstError.focus();
+    }
+
+    return { isValid: !firstError, firstErrorElement: firstError };
+  }
+
+  // ── Form Submission ──
+
+  function buildPayload() {
+    var lines = productContainer.querySelectorAll(".cr-product-line");
+    var productLines = [];
+
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i];
+      var searchInput = line.querySelector(".cr-product-search");
+      var photoFiles = line.querySelector(".cr-product-photos").files;
+      var photoNames = [];
+      for (var f = 0; f < photoFiles.length; f++) {
+        photoNames.push(photoFiles[f].name);
+      }
+      productLines.push({
+        lineNumber: i + 1,
+        productNumber: searchInput.getAttribute("data-product-number") || "",
+        productDescription: searchInput.getAttribute("data-product-description") || "",
+        julianCode: line.querySelector(".cr-product-julian").value.trim(),
+        quantity: parseInt(line.querySelector(".cr-product-qty").value, 10) || 0,
+        requestType: line.querySelector(".cr-product-request-type").value,
+        issueClassification: line.querySelector(".cr-product-classification").value,
+        notes: line.querySelector(".cr-product-notes").value.trim(),
+        photoFileNames: photoNames
+      });
+    }
+
+    return {
+      submittedAt: new Date().toISOString(),
+      account: {
+        accountNumber: document.getElementById("cr-account-number").value.trim(),
+        accountName: document.getElementById("cr-account-name").value.trim(),
+        invoiceNumber: document.getElementById("cr-invoice-number").value.trim()
+      },
+      contact: {
+        firstName: document.getElementById("cr-first-name").value.trim(),
+        lastName: document.getElementById("cr-last-name").value.trim(),
+        email: document.getElementById("cr-email").value.trim(),
+        phone: document.getElementById("cr-phone").value.trim()
+      },
+      productLines: productLines,
+      ticketNotes: document.getElementById("cr-ticket-notes").value.trim(),
+      totalLineItems: productLines.length,
+      source: "engelmansbakery.com/credit-request"
+    };
+  }
+
+  function setSubmitLoading(loading) {
+    submitBtn.disabled = loading;
+    submitBtn.style.display = loading ? "none" : "";
+    loadingEl.style.display = loading ? "flex" : "none";
+  }
+
+  function submitForm() {
+    var result = validateForm();
+    if (!result.isValid) return;
+
+    if (!webhookUrl) {
+      showFormError("Webhook URL not configured. Please contact the administrator.");
+      return;
+    }
+
+    setSubmitLoading(true);
+    errorEl.style.display = "none";
+
+    var payload = buildPayload();
+
+    var formData = new FormData();
+    formData.append("data", JSON.stringify(payload));
+
+    var allLines = productContainer.querySelectorAll(".cr-product-line");
+    for (var li = 0; li < allLines.length; li++) {
+      var fileInput = allLines[li].querySelector(".cr-product-photos");
+      for (var fi = 0; fi < fileInput.files.length; fi++) {
+        formData.append("photo_line" + (li + 1) + "_file" + fi, fileInput.files[fi]);
+      }
+    }
+
+    fetch(webhookUrl, {
+      method: "POST",
+      body: formData
+    })
+      .then(function (res) {
+        if (!res.ok) {
+          return res.json().catch(function () {
+            return {};
+          }).then(function (body) {
+            throw { status: res.status, body: body };
+          });
+        }
+        return res.json().catch(function () {
+          return { success: true };
+        });
+      })
+      .then(function (data) {
+        if (data.success === false) {
+          showFormError(data.message || errorEl.textContent);
+          setSubmitLoading(false);
+          return;
+        }
+        form.style.display = "none";
+        successEl.style.display = "block";
+      })
+      .catch(function (err) {
+        var msg = "";
+        if (err && err.body && err.body.message) {
+          msg = err.body.message;
+        }
+        showFormError(msg);
+        setSubmitLoading(false);
+      });
+  }
+
+  function showFormError(msg) {
+    if (msg) {
+      errorEl.textContent = msg;
+    }
+    errorEl.style.display = "block";
+    errorEl.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
+  // ── Utility ──
+
+  function escapeHtml(str) {
+    var div = document.createElement("div");
+    div.textContent = str || "";
+    return div.innerHTML;
+  }
+
+  function escapeAttr(str) {
+    return (str || "")
+      .replace(/&/g, "&amp;")
+      .replace(/"/g, "&quot;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
+  // ── Event Binding ──
+
+  addBtn.addEventListener("click", addProductLine);
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    submitForm();
+  });
+
+  // Close any open Complaint Type picker when clicking outside of it
+  document.addEventListener("click", function (e) {
+    if (!e.target.closest(".cr-select")) {
+      closeAllSelectPanels(null);
+    }
+  });
+
+  // ── Init ──
+
+  loadBCItems();
+})();
