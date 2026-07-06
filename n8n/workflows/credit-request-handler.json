@@ -1,5 +1,5 @@
 {
-  "name": "Credit Request \u2013 Form Handler",
+  "name": "Credit Request – Form Handler",
   "nodes": [
     {
       "parameters": {
@@ -227,7 +227,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const store = $getWorkflowStaticData('global');\nconst upsertResponse = $('Upsert Contact').first().json;\nconst original = store.payload;\n\nconst contactId = upsertResponse.results[0].id;\nstore.contactId = contactId;\n\nconst lines = original.productLines;\nconst linesSummary = lines.map((l, i) =>\n  `Line ${i+1}: ${l.productNumber} (${l.productDescription || ''}) \u00d7 ${l.quantity} \u2014 ${l.issueClassification} \u2014 ${l.requestType}${l.notes ? ' \u2014 ' + l.notes : ''}`\n).join('\\n');\n\nconst summary = `Request: ${lines.length > 0 ? lines[0].requestType : 'Credit'} \u2014 Acct #${original.account.accountNumber} (${original.account.accountName || store.companyName})\\n${linesSummary}${original.ticketNotes ? '\\nNotes: ' + original.ticketNotes : ''}`;\n\nstore.creditSummary = summary;\n\nconst uploadedUrls = store.uploadedUrls || {};\nconst allPhotos = Object.keys(uploadedUrls)\n  .sort((a, b) => Number(a) - Number(b))\n  .flatMap(lineNum => uploadedUrls[lineNum].map(url => url))\n  .join('\\n');\n\nconst now = new Date(original.submittedAt);\nconst estDate = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));\nconst yy = String(estDate.getFullYear()).slice(2);\nconst mm = String(estDate.getMonth() + 1).padStart(2, '0');\nconst dd = String(estDate.getDate()).padStart(2, '0');\nconst submissionDate = `${yy}-${mm}-${dd}`;\n\nconst allComplaint = lines.length > 0 && lines.every(l => l.requestType === 'Complaint');\nconst subjectPrefix = allComplaint ? 'Complaint' : 'Credit Request';\n\nreturn [{ json: {\n  subject: `${subjectPrefix}: ${original.account.accountNumber} - ${submissionDate}`,\n  account__: original.account.accountNumber,\n  company_name: original.account.accountName || store.companyName,\n  invoice: original.account.invoiceNumber || '',\n  credit_summary: summary,\n  hs_pipeline: '912400389',\n  hs_pipeline_stage: '1385996039',\n  photosdocumentation: allPhotos\n} }];"
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst upsertResponse = $('Upsert Contact').first().json;\nconst original = store.payload;\n\nconst contactId = upsertResponse.results[0].id;\nstore.contactId = contactId;\n\nconst lines = original.productLines;\nconst linesSummary = lines.map((l, i) =>\n  `Line ${i+1}: ${l.productNumber} (${l.productDescription || ''}) × ${l.quantity} — ${l.issueClassification} — ${l.requestType}${l.notes ? ' — ' + l.notes : ''}`\n).join('\\n');\n\nconst summary = `Request: ${lines.length > 0 ? lines[0].requestType : 'Credit'} — Acct #${original.account.accountNumber} (${original.account.accountName || store.companyName})\\n${linesSummary}${original.ticketNotes ? '\\nNotes: ' + original.ticketNotes : ''}`;\n\nstore.creditSummary = summary;\n\nconst linesHtml = lines.map((l, i) => `<li><strong>Line ${i+1}:</strong> ${l.productNumber}${l.productDescription ? ' (' + l.productDescription + ')' : ''} &times; ${l.quantity} &mdash; ${l.issueClassification} &mdash; ${l.requestType}${l.notes ? ' &mdash; ' + l.notes : ''}</li>`).join('');\nconst summaryHtml = `<p><strong>Request:</strong> ${lines.length > 0 ? lines[0].requestType : 'Credit'} &mdash; Acct #${original.account.accountNumber} (${original.account.accountName || store.companyName})</p><ul>${linesHtml}</ul>${original.ticketNotes ? '<p><strong>Notes:</strong> ' + original.ticketNotes + '</p>' : ''}`;\nstore.creditSummaryHtml = summaryHtml;\n\nconst uploadedUrls = store.uploadedUrls || {};\nconst allPhotos = Object.keys(uploadedUrls)\n  .sort((a, b) => Number(a) - Number(b))\n  .flatMap(lineNum => uploadedUrls[lineNum].map(url => url))\n  .join('\\n');\n\nconst now = new Date(original.submittedAt);\nconst estDate = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));\nconst yy = String(estDate.getFullYear()).slice(2);\nconst mm = String(estDate.getMonth() + 1).padStart(2, '0');\nconst dd = String(estDate.getDate()).padStart(2, '0');\nconst submissionDate = `${yy}-${mm}-${dd}`;\n\nconst allComplaint = lines.length > 0 && lines.every(l => l.requestType === 'Complaint');\nconst subjectPrefix = allComplaint ? 'Complaint' : 'Credit Request';\n\nreturn [{ json: {\n  subject: `${subjectPrefix}: ${original.account.accountNumber} - ${submissionDate}`,\n  account__: original.account.accountNumber,\n  company_name: original.account.accountName || store.companyName,\n  invoice: original.account.invoiceNumber || '',\n  credit_summary: summary,\n  credit_summary_html: summaryHtml,\n  hs_pipeline: '912400389',\n  hs_pipeline_stage: '1385996039',\n  photosdocumentation: allPhotos\n} }];"
       },
       "id": "cr-handler-010",
       "name": "Build Ticket",
@@ -307,7 +307,7 @@
         "options": {}
       },
       "id": "cr-handler-013",
-      "name": "Associate Ticket \u2192 Contact",
+      "name": "Associate Ticket → Contact",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
@@ -342,7 +342,7 @@
         "options": {}
       },
       "id": "cr-handler-014",
-      "name": "Associate Ticket \u2192 Company",
+      "name": "Associate Ticket → Company",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
@@ -452,7 +452,7 @@
         "options": {}
       },
       "id": "cr-handler-018",
-      "name": "Associate Item \u2192 Ticket",
+      "name": "Associate Item → Ticket",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
@@ -939,25 +939,25 @@
       "main": [
         [
           {
-            "node": "Associate Ticket \u2192 Contact",
+            "node": "Associate Ticket → Contact",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Associate Ticket \u2192 Contact": {
+    "Associate Ticket → Contact": {
       "main": [
         [
           {
-            "node": "Associate Ticket \u2192 Company",
+            "node": "Associate Ticket → Company",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Associate Ticket \u2192 Company": {
+    "Associate Ticket → Company": {
       "main": [
         [
           {
@@ -1089,14 +1089,14 @@
       "main": [
         [
           {
-            "node": "Associate Item \u2192 Ticket",
+            "node": "Associate Item → Ticket",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Associate Item \u2192 Ticket": {
+    "Associate Item → Ticket": {
       "main": [
         [
           {
