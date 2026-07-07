@@ -1,0 +1,11 @@
+# Secrets — never commit keys or tokens
+.env
+.env.*
+.mcp.json
+*.key
+*.pem
+
+# Local/OS noise
+node_modules/
+.DS_Store
+~$*

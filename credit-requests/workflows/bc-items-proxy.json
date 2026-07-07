@@ -1,0 +1,145 @@
+{
+  "name": "Credit Request – BC Items Proxy",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "bc-items",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "cr-proxy-001",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "webhookId": "bc-items-proxy"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "k1",
+              "name": "Tenant_ID",
+              "value": "YOUR_BC_TENANT_ID",
+              "type": "string"
+            },
+            {
+              "id": "k2",
+              "name": "client_ID",
+              "value": "YOUR_BC_CLIENT_ID",
+              "type": "string"
+            },
+            {
+              "id": "k3",
+              "name": "Secret_ID",
+              "value": "YOUR_BC_CLIENT_SECRET",
+              "type": "string"
+            },
+            {
+              "id": "k4",
+              "name": "Company_ID",
+              "value": "YOUR_BC_COMPANY_ID",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "cr-proxy-002",
+      "name": "Keys",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [220, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://login.microsoftonline.com/{{ $json.Tenant_ID }}/oauth2/v2.0/token",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            { "name": "grant_type", "value": "client_credentials" },
+            { "name": "client_id", "value": "={{ $json.client_ID }}" },
+            { "name": "client_secret", "value": "={{ $json.Secret_ID }}" },
+            { "name": "scope", "value": "https://api.businesscentral.dynamics.com/.default" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "cr-proxy-003",
+      "name": "Get BC Token",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [440, 0]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.businesscentral.dynamics.com/v2.0/{{ $('Keys').first().json.Tenant_ID }}/Production/api/v2.0/companies({{ $('Keys').first().json.Company_ID }})/items?$filter=generalProductPostingGroupCode eq 'FG' and blocked eq false&$select=number,displayName&$top=1000",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $json.access_token }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "cr-proxy-004",
+      "name": "Fetch BC Items",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [660, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = ($input.first().json.value || [])\n  .map(i => ({ number: i.number, displayName: i.displayName }))\n  .sort((a, b) => a.number.localeCompare(b.number));\nreturn [{ json: { items } }];"
+      },
+      "id": "cr-proxy-005",
+      "name": "Transform Items",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [880, 0]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json.items }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              { "name": "Access-Control-Allow-Origin", "value": "https://www.engelmansbakery.com, http://engelmansbakery-8355567hs-sites.com" }
+            ]
+          }
+        }
+      },
+      "id": "cr-proxy-006",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1100, 0]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [[{ "node": "Keys", "type": "main", "index": 0 }]]
+    },
+    "Keys": {
+      "main": [[{ "node": "Get BC Token", "type": "main", "index": 0 }]]
+    },
+    "Get BC Token": {
+      "main": [[{ "node": "Fetch BC Items", "type": "main", "index": 0 }]]
+    },
+    "Fetch BC Items": {
+      "main": [[{ "node": "Transform Items", "type": "main", "index": 0 }]]
+    },
+    "Transform Items": {
+      "main": [[{ "node": "Respond to Webhook", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

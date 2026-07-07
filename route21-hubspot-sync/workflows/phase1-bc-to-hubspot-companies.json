@@ -1,0 +1,402 @@
+{
+  "updatedAt": "2026-07-02T19:09:38.485Z",
+  "createdAt": "2026-06-01T13:42:15.890Z",
+  "id": "2HLvAAkFmeKkhHg0",
+  "name": "Phase 1 \u2013 BC \u2192 HubSpot Companies Final",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 0 3 * * 1-6"
+            }
+          ]
+        }
+      },
+      "id": "2ccc8c43-2c58-4b5a-a9fd-052a9ba03671",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -160
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "b7f27bcf-5d24-48fa-b2e4-ad56f159603e",
+      "name": "When clicking 'Execute workflow'",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global');\nstore.lastPhase1Run = new Date().toISOString();\nreturn [{ json: { runDate: store.lastPhase1Run } }];"
+      },
+      "id": "de54a210-d0b0-4e3d-af4a-795785936322",
+      "name": "Set Window",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        -48
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global');\nstore.hsCompanies = [];\nstore.hsCursor = null;\nreturn [{ json: { initialized: true } }];"
+      },
+      "id": "0762cfea-a5c9-4368-a33a-269af46059b8",
+      "name": "Initialize HS Fetch",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1792,
+        -48
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst payload = {\n  filterGroups: [{\n    filters: [\n      { propertyName: 'relationship',         operator: 'EQ',             value: 'Customer' },\n      { propertyName: 'division_multiselect',  operator: 'CONTAINS_TOKEN', value: \"Engelman's Bakery\" },\n      { propertyName: 'erp_account_number',    operator: 'HAS_PROPERTY' }\n    ]\n  }],\n  properties: ['erp_account_number'],\n  limit: 200\n};\nif (store.hsCursor) payload.after = store.hsCursor;\nreturn [{ json: payload }];"
+      },
+      "id": "8597c626-043f-4158-a59a-2d31c264e2f4",
+      "name": "Build HS Search Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2016,
+        -48
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/companies/search",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "id": "e9f6bf3f-102a-4be0-b345-46507bf02c4d",
+      "name": "Search HubSpot Companies",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        2240,
+        -48
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "vxGS6a3iorMrt7wb",
+          "name": "HubSpot Service Key Production"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst results = response.results || [];\nconst store = $getWorkflowStaticData('global');\nif (!store.hsCompanies) store.hsCompanies = [];\n// Store only id + erp_account_number to keep static data small\nstore.hsCompanies.push(...results.map(c => ({\n  id: c.id,\n  properties: { erp_account_number: c.properties?.erp_account_number }\n})));\nconst nextCursor = response.paging?.next?.after;\nstore.hsCursor = (nextCursor && results.length > 0) ? nextCursor : null;\nconst hasMore = store.hsCursor !== null ? 1 : 0;\nreturn [{ json: { fetched: store.hsCompanies.length, thisPage: results.length, hasMore } }];"
+      },
+      "id": "5342e5ff-e149-44db-8099-ffaf3a6718b2",
+      "name": "Accumulate HS Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2464,
+        -48
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.hasMore }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "afcdb4c8-d035-4282-9b3c-5eee15b11b33",
+      "name": "More HS Pages?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2688,
+        -48
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst companies = store.hsCompanies || [];\nif (companies.length === 0) return [{ json: { skipped: true, count: 0 } }];\nreturn companies.map(c => ({ json: c }));"
+      },
+      "id": "211ad271-34c9-4be5-9f73-b939b3a356bd",
+      "name": "Expand HS Companies",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2912,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "batchSize": 100,
+        "options": {}
+      },
+      "id": "c0f8d45d-4a56-4bd5-9c9d-02109fa7d54e",
+      "name": "Loop 2 Batches",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        3168,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst totalProcessed = (store.hsCompanies || []).length;\nstore.hsCompanies = [];\nstore.hsCursor = null;\nreturn [{ json: { message: 'Phase 1 Final complete', totalProcessed } }];"
+      },
+      "id": "c27ddf67-369c-4fef-ae7a-c6540049255e",
+      "name": "Sync Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3136,
+        -96
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "iJ02LTjeOtM6AvwC",
+          "mode": "list",
+          "cachedResultName": "Phase 1 \u2013 Batch Processor (Sub)"
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "exec-batch-sub",
+      "name": "Run Batch Sub-workflow",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        3584,
+        80
+      ]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Set Window",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking 'Execute workflow'": {
+      "main": [
+        [
+          {
+            "node": "Set Window",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Window": {
+      "main": [
+        [
+          {
+            "node": "Initialize HS Fetch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Initialize HS Fetch": {
+      "main": [
+        [
+          {
+            "node": "Build HS Search Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build HS Search Payload": {
+      "main": [
+        [
+          {
+            "node": "Search HubSpot Companies",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search HubSpot Companies": {
+      "main": [
+        [
+          {
+            "node": "Accumulate HS Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Accumulate HS Results": {
+      "main": [
+        [
+          {
+            "node": "More HS Pages?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "More HS Pages?": {
+      "main": [
+        [
+          {
+            "node": "Build HS Search Payload",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Expand HS Companies",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Expand HS Companies": {
+      "main": [
+        [
+          {
+            "node": "Loop 2 Batches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop 2 Batches": {
+      "main": [
+        [
+          {
+            "node": "Sync Summary",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Run Batch Sub-workflow",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Batch Sub-workflow": {
+      "main": [
+        [
+          {
+            "node": "Loop 2 Batches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "saveExecutionProgress": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": {},
+  "meta": null,
+  "nodeGroups": [],
+  "pinData": {},
+  "versionId": "6bb04a5f-f3b0-4872-9af1-521bf6842b6f",
+  "activeVersionId": null,
+  "versionCounter": 97,
+  "triggerCount": 1,
+  "sourceWorkflowId": null,
+  "shared": [
+    {
+      "updatedAt": "2026-06-01T13:42:15.896Z",
+      "createdAt": "2026-06-01T13:42:15.896Z",
+      "role": "workflow:owner",
+      "workflowId": "2HLvAAkFmeKkhHg0",
+      "projectId": "w449YKCiGtDqy2aw",
+      "project": {
+        "updatedAt": "2026-05-12T18:28:44.589Z",
+        "createdAt": "2026-05-12T18:28:44.589Z",
+        "id": "w449YKCiGtDqy2aw",
+        "name": "My project",
+        "type": "team",
+        "icon": {
+          "type": "icon",
+          "value": "layers"
+        },
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e717323e-c35c-4f70-bb1d-233a634fca54"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}

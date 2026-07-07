@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Phase 1 – BC → HubSpot Companies Final | SOP</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 13px;
+    color: #1a1a1a;
+    background: #fff;
+    padding: 48px;
+    max-width: 960px;
+    margin: 0 auto;
+  }
+  .header {
+    border-bottom: 3px solid #003366;
+    padding-bottom: 16px;
+    margin-bottom: 28px;
+  }
+  .header h1 {
+    font-size: 22px;
+    color: #003366;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+  }
+  .header .meta {
+    margin-top: 6px;
+    color: #555;
+    font-size: 12px;
+  }
+  .header .meta span { margin-right: 24px; }
+
+  h2 {
+    font-size: 15px;
+    color: #003366;
+    font-weight: 700;
+    margin: 28px 0 10px 0;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #ccd6e0;
+  }
+  h3 {
+    font-size: 13px;
+    color: #003366;
+    font-weight: 600;
+    margin: 16px 0 6px 0;
+  }
+  p { margin-bottom: 8px; line-height: 1.6; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 16px;
+    font-size: 12.5px;
+  }
+  th {
+    background: #003366;
+    color: #fff;
+    text-align: left;
+    padding: 7px 10px;
+    font-weight: 600;
+    font-size: 12px;
+  }
+  td {
+    padding: 6px 10px;
+    border-bottom: 1px solid #e0e7ef;
+    vertical-align: top;
+    line-height: 1.6;
+  }
+  tr:nth-child(even) td { background: #f4f7fb; }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .badge-clear   { background: #fce8e8; color: #b30000; }
+  .badge-skip    { background: #e8f4e8; color: #1a6e1a; }
+  .badge-zero    { background: #fff3cd; color: #856404; }
+  .badge-trans   { background: #e8eaf6; color: #303f9f; }
+
+  .callout {
+    background: #f0f4f8;
+    border-left: 4px solid #003366;
+    padding: 10px 14px;
+    margin: 12px 0 16px 0;
+    border-radius: 0 4px 4px 0;
+    font-size: 12.5px;
+    line-height: 1.6;
+  }
+  .callout strong { color: #003366; }
+  .callout.warn  { border-left-color: #b35900; background: #fff8f0; }
+
+  .source-pill {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 10px;
+    margin-bottom: 3px;
+  }
+  .src-a { background: #dce8ff; color: #003399; }
+  .src-b { background: #dcf2e8; color: #004d22; }
+  .src-c { background: #f0dcff; color: #4a0080; }
+
+  .stage-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #666;
+    margin: 20px 0 8px 0;
+  }
+
+  .step {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 10px;
+    align-items: flex-start;
+  }
+  .step-num {
+    min-width: 26px;
+    height: 26px;
+    background: #003366;
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .step-body { flex: 1; }
+  .step-body strong { display: block; margin-bottom: 2px; }
+  .step-body span { color: #444; line-height: 1.5; }
+
+  .legend {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin: 10px 0 14px 0;
+    font-size: 12px;
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+
+  code {
+    background: #eef2f7;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-family: 'Consolas', monospace;
+    font-size: 11.5px;
+    color: #003366;
+  }
+
+  footer {
+    margin-top: 40px;
+    border-top: 1px solid #ccd6e0;
+    padding-top: 12px;
+    font-size: 11px;
+    color: #888;
+    text-align: center;
+  }
+
+  @media print {
+    body { padding: 24px; font-size: 12px; }
+    h2 { page-break-after: avoid; }
+    table { page-break-inside: avoid; }
+    .step { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════ HEADER ══════════════════════════════════ -->
+<div class="header">
+  <h1>Phase 1 – Business Central → HubSpot Companies Final</h1>
+  <div class="meta">
+    <span><strong>System:</strong> n8n Cloud — engelmansbakery.app.n8n.cloud</span>
+    <span><strong>Workflow ID:</strong> 2HLvAAkFmeKkhHg0</span>
+    <span><strong>Last Updated:</strong> June 2026</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════ PURPOSE ══════════════════════════════════ -->
+<h2>Purpose</h2>
+<p>
+  This workflow keeps HubSpot company records synchronized with Business Central (BC) customer data.
+  It runs automatically every weekday morning (Monday–Saturday) and can also be triggered manually.
+  It pulls financial, address, route, delivery schedule, salesperson, and payment data from BC
+  and writes it into the matching HubSpot Company record — matched by <strong>ERP Account Number</strong>.
+</p>
+<p>This workflow <strong>does not</strong> create new HubSpot companies, delete records, or write back to BC.</p>
+
+<!-- ══════════════════════════════════ TRIGGERS ══════════════════════════════════ -->
+<h2>Triggers</h2>
+<table>
+  <tr><th>Trigger</th><th>When It Runs</th></tr>
+  <tr><td><strong>Schedule Trigger</strong></td><td>Automatically at 3:00 AM, Monday–Saturday</td></tr>
+  <tr><td><strong>Manual Trigger</strong></td><td>On demand — click "Execute Workflow" in n8n</td></tr>
+</table>
+
+<!-- ══════════════════════════════════ SOURCING ══════════════════════════════════ -->
+<h2>BC Data Sources</h2>
+<p>Data is pulled from three separate BC endpoints each run. Each source has a different scope and frequency.</p>
+
+<div class="legend">
+  <div class="legend-item"><span class="source-pill src-a">Source A</span> OData · Ship-to Address List</div>
+  <div class="legend-item"><span class="source-pill src-b">Source B</span> Standard API v2.0 · Customers (changed only)</div>
+  <div class="legend-item"><span class="source-pill src-c">Source C</span> OData · Customer Table (balance, route, calendar)</div>
+</div>
+
+<h3><span class="source-pill src-a">Source A</span> &nbsp;Ship-to Address List — OData · All customers · Once per run</h3>
+<table>
+  <tr><th>BC Field</th><th>Description</th></tr>
+  <tr><td><code>HFSCustomerNo</code></td><td>Matches to ERP Account Number</td></tr>
+  <tr><td><code>Address</code></td><td>Delivery street address (line 1)</td></tr>
+  <tr><td><code>Address_2</code></td><td>Delivery address line 2</td></tr>
+  <tr><td><code>City</code></td><td>Delivery city</td></tr>
+  <tr><td><code>Post_Code</code></td><td>Delivery zip code</td></tr>
+</table>
+<p style="font-size:12px; color:#555; margin-top:-8px;">Only the <strong>first</strong> ship-to record per customer is used. This is the primary delivery address and differs from the billing address.</p>
+
+<h3><span class="source-pill src-b">Source B</span> &nbsp;Customers API v2.0 — Only customers modified since last run</h3>
+<table>
+  <tr><th>BC Field</th><th>Description</th></tr>
+  <tr><td><code>displayName</code></td><td>Company name</td></tr>
+  <tr><td><code>addressLine1</code> / <code>addressLine2</code></td><td>Billing street address lines 1 and 2</td></tr>
+  <tr><td><code>city</code> / <code>state</code> / <code>postalCode</code></td><td>Billing city, state, and zip code</td></tr>
+  <tr><td><code>creditLimit</code></td><td>Credit limit dollar amount</td></tr>
+  <tr><td><code>blocked</code></td><td>Whether the account is blocked in BC</td></tr>
+  <tr><td><code>paymentTerm.code</code></td><td>Payment terms code (e.g., NET30)</td></tr>
+  <tr><td><code>paymentMethod.code</code></td><td>Payment method code — translated to label</td></tr>
+  <tr><td><code>salespersonCode</code></td><td>Assigned salesperson code — translated to HubSpot Company Owner</td></tr>
+</table>
+<div class="callout">
+  <strong>Delta Sync:</strong> Source B only returns customers whose record was modified in BC since the previous run.
+  If a customer has not changed in BC, their name, billing address, payment terms, salesperson, and blocked status
+  will <em>not</em> be re-pushed to HubSpot that day — the existing HubSpot values are preserved.
+</div>
+
+<h3><span class="source-pill src-c">Source C</span> &nbsp;OData Customer Table — All customers in batch · Every run</h3>
+<table>
+  <tr><th>BC Field</th><th>Description</th></tr>
+  <tr><td><code>No</code></td><td>Matches to ERP Account Number</td></tr>
+  <tr><td><code>Balance_LCY</code></td><td>Current total account balance</td></tr>
+  <tr><td><code>Balance_Due_LCY</code></td><td>Amount currently past due</td></tr>
+  <tr><td><code>Shipping_Agent_Code</code></td><td>Delivery route code — translated to route label</td></tr>
+  <tr><td><code>Base_Calendar_Code</code></td><td>Delivery schedule — parsed to day names</td></tr>
+</table>
+<p style="font-size:12px; color:#555; margin-top:-8px;">Source C runs for <strong>every customer</strong> on every run, regardless of whether the customer was recently modified in BC.</p>
+
+<!-- ══════════════════════════════════ STEP BY STEP ══════════════════════════════════ -->
+<h2>Step-by-Step Flow</h2>
+
+<div class="stage-label">Stage 1 — Setup (Runs Once Per Execution)</div>
+
+<div class="step">
+  <div class="step-num">1</div>
+  <div class="step-body">
+    <strong>Keys</strong>
+    <span>Loads BC credentials: Tenant ID, Client ID, Client Secret, and Company ID. All downstream BC calls reference this node — credentials only need to be updated here.</span>
+  </div>
+</div>
+<div class="step">
+  <div class="step-num">2</div>
+  <div class="step-body">
+    <strong>Get BC Token</strong>
+    <span>Calls Microsoft Azure AD to obtain a Bearer token for the BC API. Valid for 60 minutes and used for the initial BC calls before the batch loop begins.</span>
+  </div>
+</div>
+<div class="step">
+  <div class="step-num">3</div>
+  <div class="step-body">
+    <strong>Set Window</strong>
+    <span>Reads the timestamp of the last successful run from n8n's persistent memory. Saves today's timestamp for the next run. This window controls which BC customers are treated as "changed" and returned by the customer fetch.</span>
+  </div>
+</div>
+<div class="step">
+  <div class="step-num">4</div>
+  <div class="step-body">
+    <strong>HTTP Request — Get All Ship-to Addresses</strong>
+    <span>Fetches up to 5,000 ship-to (delivery) addresses from the BC OData page <code>ShiptoAddressList</code>. Retrieved in full every run because ship-to changes are not reflected in the customer's modified date.</span>
+  </div>
+</div>
+<div class="step">
+  <div class="step-num">5</div>
+  <div class="step-body">
+    <strong>Store Ship-to Data</strong>
+    <span>Builds an in-memory lookup of ERP number → first ship-to address. Only the first ship-to record per customer is kept. Stored in memory for use during batch processing.</span>
+  </div>
+</div>
+<div class="step">
+  <div class="step-num">6</div>
+  <div class="step-body">
+    <strong>Fetch Changed BC Customers</strong>
+    <span>Calls the BC Standard API v2.0 <code>/customers</code> endpoint filtered to only customers whose <code>lastModifiedDateTime</code> is newer than the last run timestamp. Returns name, billing address, payment terms, payment method, credit limit, blocked status, and salesperson code.</span>
+  </div>
+</div>
+<div class="step">
+  <div class="step-num">7</div>
+  <div class="step-body">
+    <strong>Store BC Customer Data</strong>
+    <span>Stores the changed customer records in memory, keyed by ERP number. This becomes the <em>customerMap</em> used in Process Batch. Customers not modified since the last run will not appear here.</span>
+  </div>
+</div>
+
+<div class="stage-label">Stage 2 — Loop 1: Collect All HubSpot Companies</div>
+
+<div class="step">
+  <div class="step-num">8</div>
+  <div class="step-body">
+    <strong>Initialize HS Fetch → Build HS Search Payload → Search HubSpot Companies → Accumulate HS Results → More HS Pages?</strong>
+    <span>
+      Paginates through HubSpot's CRM search API (200 companies per page) collecting all companies that match <em>all three</em> criteria:
+      <ul style="margin:4px 0 0 16px; line-height:1.7;">
+        <li>Relationship = <strong>Customer</strong></li>
+        <li>Division includes <strong>Engelman's Bakery</strong></li>
+        <li>ERP Account Number field <strong>has a value</strong></li>
+      </ul>
+      Repeats until all pages are collected, then continues to Stage 3.
+    </span>
+  </div>
+</div>
+
+<div class="stage-label">Stage 3 — Loop 2: Process Each Batch of 100</div>
+
+<div class="step">
+  <div class="step-num">9</div>
+  <div class="step-body">
+    <strong>Expand HS Companies → Loop 2 Batches</strong>
+    <span>Splits all collected HubSpot companies into groups of 100. Processes one group at a time. When all batches are complete, exits to Sync Summary.</span>
+  </div>
+</div>
+<div class="step">
+  <div class="step-num">10</div>
+  <div class="step-body">
+    <strong>Build Calendar Filter</strong>
+    <span>Constructs a BC OData filter for the 100 ERP numbers in the current batch — e.g., <code>No eq '10001' or No eq '10002' or ...</code> — so only the relevant customers are returned by the BC API.</span>
+  </div>
+</div>
+<div class="step">
+  <div class="step-num">11</div>
+  <div class="step-body">
+    <strong>Refresh BC Token</strong>
+    <span>Fetches a brand-new BC API token before every batch. BC tokens expire after exactly 60 minutes; because the full workflow can run longer than that, refreshing every batch ensures no batch ever fails due to an expired token.</span>
+  </div>
+</div>
+<div class="step">
+  <div class="step-num">12</div>
+  <div class="step-body">
+    <strong>HTTP Request — Get Calendar &amp; Balance</strong>
+    <span>Fetches live balance, route, and delivery schedule data for every ERP number in the batch from the BC OData <code>Customer</code> page. Runs for <em>every</em> customer on every run — not just recently modified ones.</span>
+  </div>
+</div>
+<div class="step">
+  <div class="step-num">13</div>
+  <div class="step-body">
+    <strong>Process Batch</strong>
+    <span>Core logic: combines data from all three BC sources and maps it to HubSpot properties. Applies route translation, delivery calendar parsing, payment method label mapping, and salesperson-to-Company-Owner assignment. Only fields with a value (or fields that must be cleared) are included in the update payload.</span>
+  </div>
+</div>
+<div class="step">
+  <div class="step-num">14</div>
+  <div class="step-body">
+    <strong>Has Updates? → Batch Update HubSpot → Loop back</strong>
+    <span>If any companies in the batch have changes, sends a single PATCH batch request to the HubSpot CRM API updating up to 100 companies at once. Then loops back to step 9 for the next batch of 100.</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════ MAPPING ══════════════════════════════════ -->
+<h2>BC → HubSpot Field Mapping</h2>
+
+<div class="legend">
+  <div class="legend-item"><span class="badge badge-skip">Preserved</span> HubSpot value kept if BC is blank</div>
+  <div class="legend-item"><span class="badge badge-clear">Clears</span> HubSpot field cleared if BC is blank</div>
+  <div class="legend-item"><span class="badge badge-zero">$0 OK</span> Written even when value is zero</div>
+  <div class="legend-item"><span class="badge badge-trans">Translated</span> BC code converted to a label</div>
+</div>
+
+<table>
+  <tr>
+    <th style="width:22%">HubSpot Property</th>
+    <th style="width:14%">Source</th>
+    <th style="width:22%">BC Field</th>
+    <th>Notes</th>
+    <th style="width:16%">If BC Blank</th>
+  </tr>
+
+  <!-- Shipping Address -->
+  <tr>
+    <td><code>address</code></td>
+    <td><span class="source-pill src-a">Source A</span></td>
+    <td><code>Address</code></td>
+    <td>Delivery (ship-to) street address</td>
+    <td><span class="badge badge-skip">Preserved</span></td>
+  </tr>
+  <tr>
+    <td><code>address2</code></td>
+    <td><span class="source-pill src-a">Source A</span></td>
+    <td><code>Address_2</code></td>
+    <td>Delivery address line 2</td>
+    <td><span class="badge badge-skip">Preserved</span></td>
+  </tr>
+  <tr>
+    <td><code>city</code></td>
+    <td><span class="source-pill src-a">Source A</span></td>
+    <td><code>City</code></td>
+    <td>Delivery city</td>
+    <td><span class="badge badge-skip">Preserved</span></td>
+  </tr>
+  <tr>
+    <td><code>zip</code></td>
+    <td><span class="source-pill src-a">Source A</span></td>
+    <td><code>Post_Code</code></td>
+    <td>Delivery zip code</td>
+    <td><span class="badge badge-skip">Preserved</span></td>
+  </tr>
+
+  <!-- Billing Address + Account (Source B) -->
+  <tr>
+    <td><code>name</code></td>
+    <td><span class="source-pill src-b">Source B</span></td>
+    <td><code>displayName</code></td>
+    <td>Company name</td>
+    <td><span class="badge badge-skip">Preserved</span></td>
+  </tr>
+  <tr>
+    <td><code>billing_street_address</code></td>
+    <td><span class="source-pill src-b">Source B</span></td>
+    <td><code>addressLine1</code></td>
+    <td>Billing address line 1</td>
+    <td><span class="badge badge-skip">Preserved</span></td>
+  </tr>
+  <tr>
+    <td><code>billing_street_address_2</code></td>
+    <td><span class="source-pill src-b">Source B</span></td>
+    <td><code>addressLine2</code></td>
+    <td>Billing address line 2</td>
+    <td><span class="badge badge-skip">Preserved</span></td>
+  </tr>
+  <tr>
+    <td><code>billing_city</code></td>
+    <td><span class="source-pill src-b">Source B</span></td>
+    <td><code>city</code></td>
+    <td>Billing city</td>
+    <td><span class="badge badge-skip">Preserved</span></td>
+  </tr>
+  <tr>
+    <td><code>billing_state</code></td>
+    <td><span class="source-pill src-b">Source B</span></td>
+    <td><code>state</code></td>
+    <td>Billing state</td>
+    <td><span class="badge badge-skip">Preserved</span></td>
+  </tr>
+  <tr>
+    <td><code>billing_zip_code</code></td>
+    <td><span class="source-pill src-b">Source B</span></td>
+    <td><code>postalCode</code></td>
+    <td>Billing zip code</td>
+    <td><span class="badge badge-skip">Preserved</span></td>
+  </tr>
+  <tr>
+    <td><code>credit_limit</code></td>
+    <td><span class="source-pill src-b">Source B</span></td>
+    <td><code>creditLimit</code></td>
+    <td>Credit limit in dollars</td>
+    <td><span class="badge badge-skip">Preserved</span></td>
+  </tr>
+  <tr>
+    <td><code>blocked</code></td>
+    <td><span class="source-pill src-b">Source B</span></td>
+    <td><code>blocked</code></td>
+    <td>Writes <strong>"Blocked"</strong> if active, empty string if not blocked. Always written when the customer record exists in the delta — unblocking in BC will clear this field in HubSpot.</td>
+    <td><span class="badge badge-clear">Clears to ""</span></td>
+  </tr>
+  <tr>
+    <td><code>payment_terms_code</code></td>
+    <td><span class="source-pill src-b">Source B</span></td>
+    <td><code>paymentTerm.code</code></td>
+    <td>Payment terms as-is (e.g., NET30, NET07). Always written when customer is in the delta — if removed in BC, HubSpot is cleared.</td>
+    <td><span class="badge badge-clear">Clears to null</span></td>
+  </tr>
+  <tr>
+    <td><code>payment_method_code</code></td>
+    <td><span class="source-pill src-b">Source B</span></td>
+    <td><code>paymentMethod.code</code></td>
+    <td><span class="badge badge-trans">Translated</span> BC code converted to label — see Payment Method table below. Unknown codes write null. Always written when customer is in the delta.</td>
+    <td><span class="badge badge-clear">Clears to null</span></td>
+  </tr>
+  <tr>
+    <td><code>hubspot_owner_id</code><br><em style="font-size:11px;color:#555;">(Company Owner)</em></td>
+    <td><span class="source-pill src-b">Source B</span></td>
+    <td><code>salespersonCode</code></td>
+    <td><span class="badge badge-trans">Translated</span> BC salesperson code mapped to HubSpot user — see Salesperson table below. Codes not in the map are silently skipped; Company Owner is not changed.</td>
+    <td><span class="badge badge-skip">Preserved</span></td>
+  </tr>
+
+  <!-- OData fields (Source C) -->
+  <tr>
+    <td><code>balance</code></td>
+    <td><span class="source-pill src-c">Source C</span></td>
+    <td><code>Balance_LCY</code></td>
+    <td>Total account balance. Runs every day for all customers. <span class="badge badge-zero">$0 OK</span> — a zero balance overwrites HubSpot.</td>
+    <td><span class="badge badge-skip">Preserved</span> if null</td>
+  </tr>
+  <tr>
+    <td><code>balance_due</code></td>
+    <td><span class="source-pill src-c">Source C</span></td>
+    <td><code>Balance_Due_LCY</code></td>
+    <td>Past-due balance. Runs every day for all customers. <span class="badge badge-zero">$0 OK</span> — zero overwrites HubSpot.</td>
+    <td><span class="badge badge-skip">Preserved</span> if null</td>
+  </tr>
+  <tr>
+    <td><code>route</code></td>
+    <td><span class="source-pill src-c">Source C</span></td>
+    <td><code>Shipping_Agent_Code</code></td>
+    <td><span class="badge badge-trans">Translated</span> BC route code mapped to route label — see Route Map table below. Codes not in the map leave HubSpot unchanged.</td>
+    <td><span class="badge badge-skip">Preserved</span></td>
+  </tr>
+  <tr>
+    <td><code>days_of_delivery</code></td>
+    <td><span class="source-pill src-c">Source C</span></td>
+    <td><code>Base_Calendar_Code</code></td>
+    <td><span class="badge badge-trans">Translated</span> Calendar code parsed to day names — see Delivery Calendar table below. Output is semicolon-separated, e.g., <em>Monday;Wednesday;Friday</em>.</td>
+    <td><span class="badge badge-skip">Preserved</span></td>
+  </tr>
+</table>
+
+<!-- ══════════════════════════════════ TRANSLATION TABLES ══════════════════════════════════ -->
+<h2>Translation Tables</h2>
+
+<h3>Payment Method Code</h3>
+<table>
+  <tr><th>BC Code</th><th>HubSpot Label Written</th></tr>
+  <tr><td><code>ACH</code></td><td>ACH Upon Due Date</td></tr>
+  <tr><td><code>CCA</code></td><td>Credit Card Auto</td></tr>
+  <tr><td><code>CCW</code></td><td>Credit Card Weekly</td></tr>
+  <tr><td><code>CCM</code></td><td>Credit Card Monthly</td></tr>
+  <tr><td><code>CCP</code></td><td>Credit Card Payment Plan</td></tr>
+  <tr><td><code>Check</code></td><td>Check</td></tr>
+  <tr><td><code>COD</code></td><td>Cash on Delivery</td></tr>
+  <tr><td><em>Any other code</em></td><td><em>payment_method_code cleared to null in HubSpot</em></td></tr>
+</table>
+
+<h3>Salesperson Code → Company Owner</h3>
+<p>When a BC salesperson code is present, the HubSpot <strong>Company Owner</strong> field is updated to the corresponding user. If the customer has no salesperson code, or the code is not listed below, the Company Owner in HubSpot is left unchanged.</p>
+<table>
+  <tr><th>BC Salesperson Code</th><th>HubSpot Company Owner</th></tr>
+  <tr><td><code>CUDICK</code></td><td>Cameron Udick</td></tr>
+  <tr><td><code>DHALL</code></td><td>Dennis Hall</td></tr>
+  <tr><td><code>LLONG</code></td><td>Lance Long</td></tr>
+  <tr><td><code>GCOPLIN</code></td><td>Genesis Coplin</td></tr>
+  <tr><td><code>HWEST</code></td><td>Heath West</td></tr>
+  <tr><td><em>Any other code</em></td><td><em>Company Owner not changed in HubSpot</em></td></tr>
+</table>
+
+<h3>Route Map — Shipping Agent Code</h3>
+<table>
+  <tr><th>BC Shipping Agent Code</th><th>HubSpot Route Label</th></tr>
+  <tr><td><code>RT 1</code> – <code>RT 13</code></td><td>Route 1 – Route 13</td></tr>
+  <tr><td><code>RT 14</code></td><td><em>Not mapped — HubSpot value preserved (see note below)</em></td></tr>
+  <tr><td><code>RT 15</code></td><td>15 - Greenville</td></tr>
+  <tr><td><code>RT 16</code></td><td>Route 16 - Boxed</td></tr>
+  <tr><td><code>RT 20</code></td><td>Route 20 - Supervisor</td></tr>
+  <tr><td><code>RT 21</code></td><td>Route 21 - Distribution</td></tr>
+  <tr><td><em>Any other code</em></td><td><em>HubSpot route value preserved unchanged</em></td></tr>
+</table>
+
+<h3>Delivery Calendar Code → Days of Delivery</h3>
+<p>The BC calendar code is a string of letters. The workflow reads them character-by-character to produce an ordered, semicolon-separated list of day names.</p>
+<table>
+  <tr><th>BC Characters</th><th>Day</th></tr>
+  <tr><td><code>M</code></td><td>Monday</td></tr>
+  <tr><td><code>T</code></td><td>Tuesday</td></tr>
+  <tr><td><code>W</code></td><td>Wednesday</td></tr>
+  <tr><td><code>TH</code></td><td>Thursday</td></tr>
+  <tr><td><code>F</code></td><td>Friday</td></tr>
+  <tr><td><code>S</code></td><td>Saturday</td></tr>
+</table>
+<p style="font-size:12px; color:#555;">Example: BC code <code>MTWTHF</code> → HubSpot value <em>Monday;Tuesday;Wednesday;Thursday;Friday</em></p>
+
+<!-- ══════════════════════════════════ WHO GETS UPDATED ══════════════════════════════════ -->
+<h2>Who Gets Updated Each Run</h2>
+<table>
+  <tr><th>Customer State</th><th>What Is Updated in HubSpot</th></tr>
+  <tr>
+    <td>Modified in BC since the last run</td>
+    <td>All fields: balance, balance due, route, delivery days, ship-to address, <strong>plus</strong> name, billing address, payment terms, payment method, blocked status, credit limit, and company owner</td>
+  </tr>
+  <tr>
+    <td>Not modified in BC since last run</td>
+    <td>Balance, balance due, route, days of delivery, and ship-to address only (Sources A and C always run for every customer)</td>
+  </tr>
+  <tr>
+    <td>Not in HubSpot</td>
+    <td>Skipped — this workflow only updates existing HubSpot companies</td>
+  </tr>
+  <tr>
+    <td>HubSpot company has no ERP Account Number</td>
+    <td>Skipped — filtered out during the HubSpot search phase</td>
+  </tr>
+  <tr>
+    <td>HubSpot company not tagged as <em>Customer</em> or <em>Engelman's Bakery</em></td>
+    <td>Skipped — filtered out during the HubSpot search phase</td>
+  </tr>
+</table>
+
+<!-- ══════════════════════════════════ NOTES ══════════════════════════════════ -->
+<h2>Important Notes</h2>
+
+<div class="callout warn">
+  <strong>RT 14 is intentionally excluded from the route map.</strong><br>
+  Route 14 may be either "14a – Augusta" or "14b – Chattanooga" depending on the customer.
+  Because BC cannot distinguish between them, the workflow leaves the HubSpot route field
+  unchanged for any customer assigned to RT 14.
+</div>
+
+<div class="callout">
+  <strong>payment_terms_code and payment_method_code are always cleared when BC is blank.</strong><br>
+  These two fields behave differently from the others. If a customer's payment term or method
+  is removed in BC, the workflow will clear those fields in HubSpot on the next run that includes
+  that customer in the delta. This is intentional — it keeps HubSpot from showing stale payment info.
+</div>
+
+<div class="callout">
+  <strong>Company Owner only updates when the salesperson code changes in BC.</strong><br>
+  Because salesperson code comes from Source B (delta only), the Company Owner in HubSpot is
+  only updated when the BC customer record is modified. If a salesperson reassignment is made
+  directly in HubSpot, it will be overwritten the next time that customer's BC record changes.
+</div>
+
+<div class="callout">
+  <strong>Billing address vs. shipping address.</strong><br>
+  This workflow writes two separate address sets. <em>Billing address</em>
+  (<code>billing_street_address</code>, <code>billing_city</code>, etc.) comes from the BC customer record.
+  <em>Shipping/delivery address</em> (<code>address</code>, <code>city</code>, <code>zip</code>) comes from
+  the Ship-to Address List and reflects where orders are physically delivered.
+</div>
+
+<div class="callout">
+  <strong>Country field is not synced from BC.</strong><br>
+  The HubSpot <code>country</code> property is not written by this workflow.
+  Whatever value exists in HubSpot will remain untouched.
+</div>
+
+<footer>
+  Engelman's Bakery &nbsp;·&nbsp; n8n Workflow Documentation &nbsp;·&nbsp; Phase 1 Final &nbsp;·&nbsp; June 2026
+</footer>
+
+</body>
+</html>

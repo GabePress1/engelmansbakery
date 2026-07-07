@@ -1,0 +1,1194 @@
+{
+  "name": "Credit Request – Form Handler",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "credit-request",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "cr-handler-001",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "credit-request-handler"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json;\nlet body;\nif (raw.body && raw.body.data) {\n  body = JSON.parse(raw.body.data);\n} else if (raw.data && typeof raw.data === 'string') {\n  body = JSON.parse(raw.data);\n} else {\n  body = raw.body || raw;\n}\nconst errors = [];\n\nif (!body.account || !body.account.accountNumber) errors.push('Account number is required');\nif (!body.contact) errors.push('Contact information is required');\nelse {\n  if (!body.contact.firstName) errors.push('First name is required');\n  if (!body.contact.lastName) errors.push('Last name is required');\n  if (!body.contact.email) errors.push('Email is required');\n}\nif (!body.productLines || !Array.isArray(body.productLines) || body.productLines.length === 0) {\n  errors.push('At least one product line is required');\n} else if (body.productLines.length > 10) {\n  errors.push('Maximum 10 product lines allowed');\n} else {\n  body.productLines.forEach((line, i) => {\n    if (!line.productNumber) errors.push(`Line ${i+1}: Product number is required`);\n    if (!line.quantity || line.quantity < 1) errors.push(`Line ${i+1}: Valid quantity is required`);\n    if (!line.requestType || (line.requestType !== 'Credit' && line.requestType !== 'Complaint')) errors.push(`Line ${i+1}: Request type must be Credit or Complaint`);\n    if (!line.issueClassification) errors.push(`Line ${i+1}: Issue classification is required`);\n  });\n}\n\nif (errors.length > 0) {\n  return [{ json: { validationError: true, errors, message: errors.join('; ') } }];\n}\n\nconst totalQty = body.productLines.reduce((sum, l) => sum + (parseInt(l.quantity) || 0), 0);\nbody.totalQuantity = totalQty;\nbody.totalLineItems = body.productLines.length;\n\nreturn [{ json: body }];"
+      },
+      "id": "cr-handler-002",
+      "name": "Validate Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": ""
+          },
+          "conditions": [
+            {
+              "id": "v1",
+              "leftValue": "={{ $json.validationError }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "cr-handler-003",
+      "name": "Validation OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: false, error: 'validation_error', message: $json.message }) }}",
+        "options": {
+          "responseCode": 400,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "id": "cr-handler-004",
+      "name": "Validation Error Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        660,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/companies/search",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ filterGroups: [{ filters: [{ propertyName: 'erp_account_number', operator: 'EQ', value: String($json.account.accountNumber) }] }], properties: ['name', 'erp_account_number'], limit: 1 }) }}",
+        "options": {}
+      },
+      "id": "cr-handler-005",
+      "name": "Search Company",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        660,
+        -200
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "vxGS6a3iorMrt7wb",
+          "name": "HubSpot Service Key Production"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": ""
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.total }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "cr-handler-006",
+      "name": "Company Found?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        880,
+        -200
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: false, error: 'account_not_found', message: 'No account found with that Account #. Please verify and try again.' }) }}",
+        "options": {
+          "responseCode": 404,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "id": "cr-handler-007",
+      "name": "Account Not Found Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1100,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const searchResult = $input.first().json;\nconst store = $getWorkflowStaticData('global');\nconst original = $('Validate Payload').first().json;\n\nstore.companyId = searchResult.results[0].id;\nstore.companyName = searchResult.results[0].properties.name || '';\nstore.payload = original;\n\nreturn [{ json: {\n  email: original.contact.email,\n  firstname: original.contact.firstName,\n  lastname: original.contact.lastName,\n  phone: original.contact.phone || ''\n} }];"
+      },
+      "id": "cr-handler-008",
+      "name": "Prepare Contact",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        -400
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/contacts/batch/upsert",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ inputs: [{ idProperty: 'email', id: $json.email, properties: { email: $json.email, firstname: $json.firstname, lastname: $json.lastname, phone: $json.phone } }] }) }}",
+        "options": {}
+      },
+      "id": "cr-handler-009",
+      "name": "Upsert Contact",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1320,
+        -400
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "vxGS6a3iorMrt7wb",
+          "name": "HubSpot Service Key Production"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst upsertResponse = $('Upsert Contact').first().json;\nconst original = store.payload;\n\nconst contactId = upsertResponse.results[0].id;\nstore.contactId = contactId;\n\nconst lines = original.productLines;\nconst linesSummary = lines.map((l, i) =>\n  `Line ${i+1}: ${l.productNumber} (${l.productDescription || ''}) × ${l.quantity} — ${l.issueClassification} — ${l.requestType}${l.notes ? ' — ' + l.notes : ''}`\n).join('\\n');\n\nconst summary = `Request: ${lines.length > 0 ? lines[0].requestType : 'Credit'} — Acct #${original.account.accountNumber} (${original.account.accountName || store.companyName})\\n${linesSummary}${original.ticketNotes ? '\\nNotes: ' + original.ticketNotes : ''}`;\n\nstore.creditSummary = summary;\n\nconst up = store.uploadedUrls || {};\nconst esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\n\nconst lineBlocks = lines.map((l, i) => {\n  const photos = up[String(l.lineNumber)] || [];\n  const photoHtml = photos.length ? photos.map((u, n) => `<a href=\"${esc(u)}\">Photo ${n + 1}</a>`).join(', ') : '';\n  const rows = [];\n  rows.push(`<li><strong>Item No.:</strong> ${esc(l.productNumber)}${l.productDescription ? ' (' + esc(l.productDescription) + ')' : ''}</li>`);\n  rows.push(`<li><strong>Lot Code:</strong> ${esc(l.julianCode) || '&mdash;'}</li>`);\n  rows.push(`<li><strong>Quantity:</strong> ${esc(l.quantity)}</li>`);\n  rows.push(`<li><strong>Request Type:</strong> ${esc(l.requestType)}</li>`);\n  rows.push(`<li><strong>Complaint Type:</strong> ${esc(l.issueClassification)}</li>`);\n  if (photoHtml) rows.push(`<li><strong>Photos:</strong> ${photoHtml}</li>`);\n  if (l.notes) rows.push(`<li><strong>Notes:</strong> ${esc(l.notes)}</li>`);\n  return `<p style=\"margin:12px 0 4px;\"><strong>Product Line ${i + 1}</strong></p><ul style=\"margin:0 0 8px;\">${rows.join('')}</ul>`;\n}).join('');\n\nconst summaryHtml = `<p><strong>Request:</strong> ${lines.length > 0 ? esc(lines[0].requestType) : 'Credit'} &mdash; Acct #${esc(original.account.accountNumber)} (${esc(original.account.accountName || store.companyName)})</p>${original.account.invoiceNumber ? '<p><strong>Invoice #:</strong> ' + esc(original.account.invoiceNumber) + '</p>' : ''}${lineBlocks}${original.ticketNotes ? '<p><strong>Notes:</strong> ' + esc(original.ticketNotes) + '</p>' : ''}`;\nstore.creditSummaryHtml = summaryHtml;\n\nconst uploadedUrls = store.uploadedUrls || {};\nconst allPhotos = Object.keys(uploadedUrls)\n  .sort((a, b) => Number(a) - Number(b))\n  .flatMap(lineNum => uploadedUrls[lineNum].map(url => url))\n  .join('\\n');\n\nconst now = new Date(original.submittedAt);\nconst estDate = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));\nconst yy = String(estDate.getFullYear()).slice(2);\nconst mm = String(estDate.getMonth() + 1).padStart(2, '0');\nconst dd = String(estDate.getDate()).padStart(2, '0');\nconst submissionDate = `${yy}-${mm}-${dd}`;\n\nconst allComplaint = lines.length > 0 && lines.every(l => l.requestType === 'Complaint');\nconst subjectPrefix = allComplaint ? 'Complaint' : 'Credit Request';\n\nreturn [{ json: {\n  subject: `${subjectPrefix}: ${original.account.accountNumber} - ${submissionDate}`,\n  account__: original.account.accountNumber,\n  company_name: original.account.accountName || store.companyName,\n  invoice: original.account.invoiceNumber || '',\n  credit_summary: summary,\n  credit_summary_html: summaryHtml,\n  hs_pipeline: '912400389',\n  hs_pipeline_stage: '1385996039',\n  photosdocumentation: allPhotos\n} }];"
+      },
+      "id": "cr-handler-010",
+      "name": "Build Ticket",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2640,
+        -400
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/tickets",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ properties: $json }) }}",
+        "options": {}
+      },
+      "id": "cr-handler-011",
+      "name": "Create Ticket",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        2860,
+        -400
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "vxGS6a3iorMrt7wb",
+          "name": "HubSpot Service Key Production"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst ticket = $input.first().json;\nstore.ticketId = ticket.id;\nreturn [{ json: { ticketId: ticket.id, contactId: store.contactId, companyId: store.companyId } }];"
+      },
+      "id": "cr-handler-012",
+      "name": "Store Ticket ID",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3080,
+        -400
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v4/associations/tickets/contacts/batch/create",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ inputs: [{ types: [{ associationCategory: 'HUBSPOT_DEFINED', associationTypeId: 16 }], from: { id: $json.ticketId }, to: { id: $json.contactId } }] }) }}",
+        "options": {}
+      },
+      "id": "cr-handler-013",
+      "name": "Associate Ticket → Contact",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        3300,
+        -400
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "vxGS6a3iorMrt7wb",
+          "name": "HubSpot Service Key Production"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v4/associations/tickets/companies/batch/create",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ inputs: [{ types: [{ associationCategory: 'HUBSPOT_DEFINED', associationTypeId: 26 }], from: { id: $('Store Ticket ID').first().json.ticketId }, to: { id: $('Store Ticket ID').first().json.companyId } }] }) }}",
+        "options": {}
+      },
+      "id": "cr-handler-014",
+      "name": "Associate Ticket → Company",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        3520,
+        -400
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "vxGS6a3iorMrt7wb",
+          "name": "HubSpot Service Key Production"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst lines = store.payload.productLines;\nconst uploadedUrls = store.uploadedUrls || {};\n\nconst totalCreditQuantity = lines\n  .filter(l => l.requestType === 'Credit')\n  .reduce((sum, l) => sum + (parseInt(l.quantity) || 0), 0);\n\nconst hasComplaint = lines.some(l => l.requestType === 'Complaint');\n\nstore.totalCreditQuantity = totalCreditQuantity;\nstore.hasComplaint = hasComplaint;\n\nreturn lines.map(l => ({\n  json: {\n    ...l,\n    uploadedPhotoUrls: uploadedUrls[String(l.lineNumber)] || []\n  }\n}));"
+      },
+      "id": "cr-handler-015",
+      "name": "Prepare Line Items",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3740,
+        -400
+      ]
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "cr-handler-016",
+      "name": "Loop Product Lines",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        3960,
+        -400
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst line = $json;\nconst totalCreditQty = store.totalCreditQuantity;\n\nlet itemStage;\n\nif (line.requestType === 'Complaint') {\n  itemStage = '1388087302';\n} else if (line.requestType === 'Credit') {\n  itemStage = totalCreditQty >= 10 ? '1386096010' : '1388087301';\n} else {\n  itemStage = '1388087301';\n}\n\nconst accountNumber = $('Validate Payload').first().json.account.accountNumber;\nconst accountName = $('Validate Payload').first().json.account.accountName || store.companyName || '';\nconst submittedAt = $('Validate Payload').first().json.submittedAt;\nconst d = new Date(submittedAt);\nconst e = new Date(d.toLocaleString('en-US', { timeZone: 'America/New_York' }));\nconst formattedDate = String(e.getFullYear()).slice(2) + '-' + String(e.getMonth()+1).padStart(2,'0') + '-' + String(e.getDate()).padStart(2,'0');\n\nreturn [{ json: {\n  properties: {\n    item_name: accountNumber + ' - ' + formattedDate + ' - ' + line.productNumber,\n    erp_account_number: String(accountNumber),\n    company_name: store.companyName || accountName,\n    item_no_: line.productNumber,\n    item_description: line.productDescription || '',\n    julian_code: line.julianCode || '',\n    quantity: String(line.quantity),\n    request_type: line.requestType,\n    complaint_type: line.issueClassification,\n    line_notes: line.notes || '',\n    photosdocumentation: (line.uploadedPhotoUrls || []).join('\\n'),\n    hs_pipeline: '912368291',\n    hs_pipeline_stage: itemStage\n  }\n} }];"
+      },
+      "id": "cr-handler-017b",
+      "name": "Determine Item Stage",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3808,
+        -288
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/2-48651243",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ properties: $json.properties }) }}",
+        "options": {}
+      },
+      "id": "cr-handler-017",
+      "name": "Create Item Record",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        4180,
+        -400
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "vxGS6a3iorMrt7wb",
+          "name": "HubSpot Service Key Production"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v4/associations/2-48651243/tickets/batch/create",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ inputs: [{ types: [{ associationCategory: 'USER_DEFINED', associationTypeId: 35 }], from: { id: $json.id }, to: { id: $('Store Ticket ID').first().json.ticketId } }] }) }}",
+        "options": {}
+      },
+      "id": "cr-handler-018",
+      "name": "Associate Item → Ticket",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        4400,
+        -400
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "vxGS6a3iorMrt7wb",
+          "name": "HubSpot Service Key Production"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global');\nif (!store.itemIds) {\n  store.itemIds = [];\n}\n\nconst createItemResult = $('Create Item Record').first().json;\nlet itemId = null;\n\nif (createItemResult && createItemResult.id) {\n  itemId = createItemResult.id;\n  store.itemIds.push(itemId);\n  return [{ json: { itemId: itemId, success: true, totalCaptured: store.itemIds.length, allIds: store.itemIds } }];\n} else {\n  return [{ json: { error: 'Failed to capture item ID', responseKeys: createItemResult ? Object.keys(createItemResult) : 'null', totalCaptured: store.itemIds.length, allIds: store.itemIds } }];\n}"
+      },
+      "id": "cr-handler-028",
+      "name": "Capture Item ID",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4620,
+        -200
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, ticketId: $('Store Ticket ID').first().json.ticketId, message: 'Credit request submitted successfully.' }) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "id": "cr-handler-019",
+      "name": "Success Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        4180,
+        -600
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const webhookBinary = $('Webhook').first().binary || {};\nconst store = $getWorkflowStaticData('global');\n\nconst filesToUpload = [];\n\nfor (const key of Object.keys(webhookBinary)) {\n  const match = key.match(/^photo_line(\\d+)_file(\\d+)$/);\n  if (!match) {\n    const legacyMatch = key.match(/^photos_line_(\\d+)/);\n    if (!legacyMatch) continue;\n    const lineNum = legacyMatch[1];\n    filesToUpload.push({\n      json: {\n        lineNum: lineNum,\n        fileName: webhookBinary[key].fileName || key\n      },\n      binary: { data: webhookBinary[key] }\n    });\n    continue;\n  }\n  const lineNum = match[1];\n  filesToUpload.push({\n    json: {\n      lineNum: lineNum,\n      fileName: webhookBinary[key].fileName || key\n    },\n    binary: { data: webhookBinary[key] }\n  });\n}\n\nstore.uploadedUrls = {};\n\nif (filesToUpload.length === 0) {\n  return [{ json: { hasFiles: false } }];\n}\n\nreturn filesToUpload.map(f => ({\n  json: { ...f.json, hasFiles: true },\n  binary: f.binary\n}));"
+      },
+      "id": "cr-handler-020",
+      "name": "Prepare File Uploads",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1430,
+        -400
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": ""
+          },
+          "conditions": [
+            {
+              "id": "f1",
+              "leftValue": "={{ $json.hasFiles }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "cr-handler-021",
+      "name": "Files to Upload?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1650,
+        -400
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "cr-handler-022",
+      "name": "File Upload Loop",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1870,
+        -400
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/files/v3/files",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "data"
+            },
+            {
+              "parameterType": "formData",
+              "name": "options",
+              "value": "{\"access\":\"PRIVATE\"}"
+            },
+            {
+              "parameterType": "formData",
+              "name": "folderPath",
+              "value": "/credit-requests"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "cr-handler-023",
+      "name": "Upload to HubSpot Files",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2090,
+        -600
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "vxGS6a3iorMrt7wb",
+          "name": "HubSpot Service Key Production"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst uploadResult = $input.first().json;\nconst lineNum = $('File Upload Loop').first().json.lineNum;\n\nif (!store.uploadedUrls) store.uploadedUrls = {};\nif (!store.uploadedUrls[lineNum]) store.uploadedUrls[lineNum] = [];\nstore.uploadedUrls[lineNum].push(uploadResult.url || uploadResult.defaultDisplayUrl || '');\n\nreturn [{ json: { stored: true, lineNum } }];"
+      },
+      "id": "cr-handler-024",
+      "name": "Store File URL",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2310,
+        -600
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst payload = store.payload;\nconst lines = payload.productLines;\nconst totalQty = payload.totalQuantity;\n\nconst hasComplaint = lines.some(l => l.requestType === 'Complaint');\n\nlet ticketStage, itemStage;\n\nif (hasComplaint) {\n  ticketStage = '1387983014';\n  itemStage = '1388087302';\n  store.routeType = 'CAPA';\n} else if (totalQty >= 10) {\n  ticketStage = '1385996039';\n  itemStage = '1386096010';\n  store.routeType = 'Verification';\n} else {\n  ticketStage = '1387983013';\n  itemStage = '1388087301';\n  store.routeType = 'Credit Decision';\n}\n\nstore.ticketStage = ticketStage;\nstore.itemStage = itemStage;\n\nreturn [{ json: { ticketStage, itemStage, ticketId: store.ticketId, routeType: store.routeType } }];"
+      },
+      "id": "cr-handler-025",
+      "name": "Determine Route",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4600,
+        -400
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.hubapi.com/crm/v3/objects/tickets/{{ $json.ticketId }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ properties: { hs_pipeline_stage: $json.ticketStage } }) }}",
+        "options": {}
+      },
+      "id": "cr-handler-026",
+      "name": "Update Ticket Stage",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        4820,
+        -400
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "vxGS6a3iorMrt7wb",
+          "name": "HubSpot Service Key Production"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst ticketId = store.ticketId;\nif (!ticketId) {\n  throw new Error('Ticket ID not found in workflow state');\n}\nreturn [{ json: { ticketId: ticketId } }];"
+      },
+      "id": "cr-handler-033",
+      "name": "Prepare Ticket ID for Query",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4900,
+        -600
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.hubapi.com/crm/v3/objects/tickets/{{ $json.ticketId }}/associations/2-48651243",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": false,
+        "options": {}
+      },
+      "id": "cr-handler-030",
+      "name": "Get Associated Items",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        5040,
+        -600
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "vxGS6a3iorMrt7wb",
+          "name": "HubSpot Service Key Production"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst results = response.results || [];\n\nif (results.length === 0) {\n  // If no associated items found, use the ticket's current stage\n  const store = $getWorkflowStaticData('global');\n  return [{ json: { lowestStage: store.itemStage, message: 'No associated items found, using determined stage' } }];\n}\n\nconst stages = results.map(item => {\n  const stageValue = item.properties && item.properties.hs_pipeline_stage;\n  return stageValue ? parseInt(stageValue) : null;\n}).filter(s => s !== null);\n\nif (stages.length === 0) {\n  const store = $getWorkflowStaticData('global');\n  return [{ json: { lowestStage: store.itemStage, message: 'No stages found in items, using determined stage' } }];\n}\n\nconst lowestStage = Math.min(...stages);\nreturn [{ json: { lowestStage: String(lowestStage), itemCount: results.length, allStages: stages, success: true } }];"
+      },
+      "id": "cr-handler-031",
+      "name": "Find Lowest Item Stage",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5260,
+        -600
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst itemStage = $json.lowestStage;\nconst stageMapping = {\n  '1386096010': '1385996039',\n  '1388087301': '1387983013',\n  '1388087302': '1387983014'\n};\n\nconst ticketStage = stageMapping[itemStage] || itemStage;\n\nif (!stageMapping[itemStage]) {\n  console.warn(`Unknown item stage ${itemStage}, using as-is`);\n}\n\nreturn [{ json: { ticketStage: ticketStage, itemStage: itemStage, ticketId: store.ticketId } }];"
+      },
+      "id": "cr-handler-034",
+      "name": "Map Item Stage to Ticket Stage",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5700,
+        -600
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.hubapi.com/crm/v3/objects/tickets/{{ $json.ticketId }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ properties: { hs_pipeline_stage: $json.ticketStage } }) }}",
+        "options": {}
+      },
+      "id": "cr-handler-032",
+      "name": "Update Ticket to Lowest Stage",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        5480,
+        -600
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "vxGS6a3iorMrt7wb",
+          "name": "HubSpot Service Key Production"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst itemIds = store.itemIds || [];\nconst itemStage = $input.first().json.itemStage;\nconst productLineCount = store.payload.productLines.length;\n\nif (!itemIds || itemIds.length === 0) {\n  return [{ json: { error: 'No item IDs captured', itemIdsCount: 0, productLinesCount: productLineCount } }];\n}\n\nif (itemIds.length !== productLineCount) {\n  return [{ json: { warning: 'Item ID count mismatch', itemIdsCount: itemIds.length, productLinesCount: productLineCount, itemIds: itemIds } }];\n}\n\nconst requestBody = {\n  inputs: itemIds.map(id => ({\n    id: String(id),\n    properties: {\n      hs_pipeline_stage: itemStage\n    }\n  }))\n};\n\nreturn [{ json: { requestBody, itemIdsCount: itemIds.length, stageName: $input.first().json.routeType } }];"
+      },
+      "id": "cr-handler-029",
+      "name": "Prepare Items Update",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4820,
+        -600
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/2-48651243/batch/update",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.requestBody }}",
+        "options": {}
+      },
+      "id": "cr-handler-027",
+      "name": "Update Items Stage",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        5040,
+        -400
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "vxGS6a3iorMrt7wb",
+          "name": "HubSpot Service Key Production"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Payload": {
+      "main": [
+        [
+          {
+            "node": "Validation OK?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validation OK?": {
+      "main": [
+        [
+          {
+            "node": "Validation Error Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Search Company",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Company": {
+      "main": [
+        [
+          {
+            "node": "Company Found?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Company Found?": {
+      "main": [
+        [
+          {
+            "node": "Prepare Contact",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Account Not Found Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Contact": {
+      "main": [
+        [
+          {
+            "node": "Upsert Contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert Contact": {
+      "main": [
+        [
+          {
+            "node": "Prepare File Uploads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Ticket": {
+      "main": [
+        [
+          {
+            "node": "Create Ticket",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Ticket": {
+      "main": [
+        [
+          {
+            "node": "Store Ticket ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Ticket ID": {
+      "main": [
+        [
+          {
+            "node": "Associate Ticket → Contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Associate Ticket → Contact": {
+      "main": [
+        [
+          {
+            "node": "Associate Ticket → Company",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Associate Ticket → Company": {
+      "main": [
+        [
+          {
+            "node": "Prepare Line Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Line Items": {
+      "main": [
+        [
+          {
+            "node": "Loop Product Lines",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Product Lines": {
+      "main": [
+        [
+          {
+            "node": "Determine Item Stage",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Determine Route",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Determine Item Stage": {
+      "main": [
+        [
+          {
+            "node": "Create Item Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Determine Route": {
+      "main": [
+        [
+          {
+            "node": "Update Ticket Stage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Ticket Stage": {
+      "main": [
+        [
+          {
+            "node": "Prepare Ticket ID for Query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Ticket ID for Query": {
+      "main": [
+        [
+          {
+            "node": "Get Associated Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Associated Items": {
+      "main": [
+        [
+          {
+            "node": "Find Lowest Item Stage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Lowest Item Stage": {
+      "main": [
+        [
+          {
+            "node": "Map Item Stage to Ticket Stage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Map Item Stage to Ticket Stage": {
+      "main": [
+        [
+          {
+            "node": "Update Ticket to Lowest Stage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Ticket to Lowest Stage": {
+      "main": [
+        [
+          {
+            "node": "Success Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Item Record": {
+      "main": [
+        [
+          {
+            "node": "Associate Item → Ticket",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Associate Item → Ticket": {
+      "main": [
+        [
+          {
+            "node": "Capture Item ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Capture Item ID": {
+      "main": [
+        [
+          {
+            "node": "Loop Product Lines",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare File Uploads": {
+      "main": [
+        [
+          {
+            "node": "Files to Upload?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Files to Upload?": {
+      "main": [
+        [
+          {
+            "node": "File Upload Loop",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Ticket",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "File Upload Loop": {
+      "main": [
+        [
+          {
+            "node": "Upload to HubSpot Files",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Ticket",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload to HubSpot Files": {
+      "main": [
+        [
+          {
+            "node": "Store File URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store File URL": {
+      "main": [
+        [
+          {
+            "node": "File Upload Loop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

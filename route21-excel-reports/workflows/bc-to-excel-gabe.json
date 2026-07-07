@@ -1,0 +1,913 @@
+{
+  "name": "BC to Excel - Gabe",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 5 * * *"
+            }
+          ]
+        }
+      },
+      "id": "497c5709-6652-41c7-912b-3d9e7e857a69",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1808,
+        48
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "3c01c18a-e4c0-4586-a566-d07125b48152",
+      "name": "When clicking 'Execute workflow'",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1808,
+        272
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "k1",
+              "name": "Tenant_ID",
+              "value": "bddeba87-9d41-4063-a0e3-be9e6afcd2ba",
+              "type": "string"
+            },
+            {
+              "id": "k2",
+              "name": "client_ID",
+              "value": "db88be9e-de13-4205-b0c1-472007c60c36",
+              "type": "string"
+            },
+            {
+              "id": "k3",
+              "name": "Secret_ID",
+              "value": "{{SECRET_ID}}",
+              "type": "string"
+            },
+            {
+              "id": "k4",
+              "name": "Company_ID",
+              "value": "9ebc308f-a2c8-ed11-9a88-000d3a8e59a1",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "9c36cb47-8b31-4e5c-b8bb-b58d54a31795",
+      "name": "Keys",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1584,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://login.microsoftonline.com/{{ $json.Tenant_ID }}/oauth2/v2.0/token",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "grant_type",
+              "value": "client_credentials"
+            },
+            {
+              "name": "client_id",
+              "value": "={{ $json.client_ID }}"
+            },
+            {
+              "name": "client_secret",
+              "value": "={{ $json.Secret_ID }}"
+            },
+            {
+              "name": "scope",
+              "value": "https://api.businesscentral.dynamics.com/.default"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f3a0594a-f215-44c4-941c-8c0aff3050aa",
+      "name": "Get BC Token",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        -1360,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData(\"global\");\nconst now = new Date();\nconst yesterday = new Date(now);\nyesterday.setDate(yesterday.getDate() - 1);\nconst fmt = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,\"0\")}-${String(d.getDate()).padStart(2,\"0\")}`;\nconst startDate = \"2026-01-01\";\nconst endDate = fmt(yesterday);\nstore.startDate = startDate;\nstore.endDate = endDate;\nstore.hsCompanies = [];\nstore.hsCursor = null;\nstore.pendingInvoiceNotes = [];\nstore.pendingDroppedOrders = [];\nstore._orphanCheckedCompanies = {};\nstore.soReconciliation = {};\nstore.runSummary = { created: [], soInvoiced: [], soDeleted: [], soCreated: [], soUpdated: [] };\nstore.companyNames = store.companyNames || {};\nstore.excelRows = [];\nreturn [{ json: { startDate, endDate } }];"
+      },
+      "id": "ae2118a8-43eb-482e-9484-b3311ed2270d",
+      "name": "Set Yesterday",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1136,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global');\nstore.hsCompanies = [];\nstore.hsCursor = null;\nreturn [{ json: { initialized: true } }];"
+      },
+      "id": "14d1fe88-b1ee-4bca-801a-03b59fe474cc",
+      "name": "Initialize HS Fetch",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -912,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst payload = {\n  filterGroups: [{\n    filters: [\n      { propertyName: 'relationship',        operator: 'EQ',         value: 'Distribution Center' },\n      { propertyName: 'erp_account_number',  operator: 'HAS_PROPERTY' }\n    ]\n  }],\n  properties: ['hs_object_id','erp_account_number','name'],\n  limit: 200\n};\nif (store.hsCursor) payload.after = store.hsCursor;\nreturn [{ json: payload }];"
+      },
+      "id": "fdbbfd7d-e192-4294-bfd5-99290da9e37b",
+      "name": "Build HS Search Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -688,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/companies/search",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "id": "06cd0fb2-1320-4621-ba00-5334324f54e7",
+      "name": "Search HubSpot Companies",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        -464,
+        -32
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "Tn5sRx1iMiIl1pkn",
+          "name": "BC to HubSpot Sandbox"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst results = response.results || [];\nconst store = $getWorkflowStaticData('global');\nif (!store.hsCompanies) store.hsCompanies = [];\nstore.hsCompanies.push(...results);\nconst nextCursor = response.paging?.next?.after;\nstore.hsCursor = (nextCursor && results.length > 0) ? nextCursor : null;\nconst hasMore = store.hsCursor !== null ? 1 : 0;\nreturn [{ json: { fetched: store.hsCompanies.length, thisPage: results.length, hasMore } }];"
+      },
+      "id": "03a02b38-a10d-4a89-b183-59b86d082aff",
+      "name": "Accumulate HS Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -240,
+        -32
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.hasMore }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a90c13fc-6673-42db-b805-039e4fece1c5",
+      "name": "More HS Pages?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -16,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst companies = store.hsCompanies || [];\nconst hsIdMap = {};\nconst output = [];\nfor (const c of companies) {\n  const no = String(c.properties?.erp_account_number || '').trim();\n  if (no) {\n    hsIdMap[no] = c.id;\n    output.push({ json: { customerNo: no, hsId: c.id } });\n  }\n}\nstore.hsIdMap = hsIdMap;\nstore.customerNos = output.map(o => o.json.customerNo);\nif (output.length === 0) return [{ json: { customerNo: null, hsId: null } }];\nreturn output;"
+      },
+      "id": "a52b0087-7e6e-46bb-8ef3-93836d94abca",
+      "name": "Store Distribution Customers",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "batchSize": 15,
+        "options": {}
+      },
+      "id": "e10a3b21-7aac-4676-9292-dbbf7d375f9e",
+      "name": "Loop Customer Batches",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        432,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const batchItems = $input.all();\nconst store = $getWorkflowStaticData('global');\n\nconst getYesterday = () => {\n  const now = new Date();\n  const yesterday = new Date(now);\n  yesterday.setDate(yesterday.getDate() - 1);\n  const fmt = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;\n  const startDate = fmt(yesterday);\n  return { startDate, endDate: startDate };\n};\n\nconst { startDate, endDate } = (store.startDate && store.endDate)\n  ? { startDate: store.startDate, endDate: store.endDate }\n  : getYesterday();\n\nconst customerNos = batchItems\n  .map(i => String(i.json.customerNo || '').trim())\n  .filter(no => no && no !== 'null');\n\nconst uniqueNos = [...new Set(customerNos)];\nif (uniqueNos.length === 0) {\n  return [{ json: { filter: null, customerNos: [], skip: true } }];\n}\nconst customerFilter = uniqueNos.map(no => `Sell_to_Customer_No eq '${no.replace(/'/g,\"''\")}'`).join(' or ');\nconst filter = `Type eq 'Item' and ERC_Posting_Date ge ${startDate} and ERC_Posting_Date le ${endDate} and (${customerFilter})`;\nreturn [{ json: { filter, startDate, endDate, customerNos: uniqueNos, skip: false } }];"
+      },
+      "id": "78c37025-e8b3-4c04-8a62-4241ecd39610",
+      "name": "Build Invoice Filter",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        -16
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://login.microsoftonline.com/{{ $('Keys').first().json.Tenant_ID }}/oauth2/v2.0/token",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "grant_type",
+              "value": "client_credentials"
+            },
+            {
+              "name": "client_id",
+              "value": "={{ $('Keys').first().json.client_ID }}"
+            },
+            {
+              "name": "client_secret",
+              "value": "={{ $('Keys').first().json.Secret_ID }}"
+            },
+            {
+              "name": "scope",
+              "value": "https://api.businesscentral.dynamics.com/.default"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d9fde0de-ee23-4bbf-a79a-c5cc60fa4dc6",
+      "name": "Refresh BC Token",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        880,
+        -32
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.businesscentral.dynamics.com/v2.0/bddeba87-9d41-4063-a0e3-be9e6afcd2ba/Production/ODataV4/Company('Live-EB')/Posted_Sales_Invoice_Lines_Excel",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "$filter",
+              "value": "={{ $('Build Invoice Filter').first().json.filter || \"Sell_to_Customer_No eq 'SKIP'\" }}"
+            },
+            {
+              "name": "$select",
+              "value": "No,Description,Document_No,Sell_to_Customer_No,Sell_to_Customer_Name,Quantity,Unit_Price,Amount,Order_No,ERC_Posting_Date"
+            },
+            {
+              "name": "$top",
+              "value": "1000"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Refresh BC Token').first().json.access_token }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "e4779220-1c98-4bb4-a761-2cce513fe616",
+      "name": "Fetch Yesterday Invoices",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1104,
+        -32
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const invoices = $input.all().map(i => i.json);\nconst store = $getWorkflowStaticData('global');\nconst hsIdMap = store.hsIdMap || {};\n\nconst fmt = v => `$${Number(v||0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;\n\nconst DATA_BG    = '#ffffff';\nconst DATA_FG    = '#1a1a1a';\nconst HEADER_BG  = '#2d2d2d';\nconst HEADER_FG  = '#ffffff';\nconst BORDER     = '1px solid #888';\n\nconst notes = [];\nfor (const inv of invoices) {\n  let lines = inv.salesInvoiceLines || [];\n  if (lines.length === 0) continue;\n\n  const hsId = hsIdMap[String(inv.customerNumber || '').trim()];\n  if (!hsId) continue;\n\n  lines = lines.filter(l => Number(l.quantity||0) !== 0);\n  if (lines.length === 0) continue;\n  lines = [...lines].sort((a,b) => String(a.lineObjectNumber||'').localeCompare(String(b.lineObjectNumber||'')));\n\n  for (const l of lines) {\n    store.excelRows.push({\n      'Document No': inv.number || '',\n      'Sell-to Customer No': inv.customerNumber || '',\n      'Sell-to Customer Name': inv.customerName || '',\n      'Item No': l.lineObjectNumber || '',\n      'Description': l.description || '',\n      'Posting Date': inv.postingDate || '',\n      'Requested Delivery Date': inv.requestedDeliveryDate || '',\n      'Order No': inv.orderNumber || '',\n      'PO Number': inv.poNumber || '',\n      'Quantity': Number(l.quantity || 0),\n      'Unit Price': Number(l.unitPrice || 0),\n      'Amount': Number(l.lineAmount || 0)\n    });\n  }\n\n  const rowsHtml = lines.map(l => `\n    <tr>\n      <td style=\"padding:4px 8px;border:${BORDER};background:${DATA_BG};color:${DATA_FG};\">${l.lineObjectNumber||''}</td>\n      <td style=\"padding:4px 8px;border:${BORDER};background:${DATA_BG};color:${DATA_FG};\">${l.description||''}</td>\n      <td style=\"padding:4px 8px;border:${BORDER};background:${DATA_BG};color:${DATA_FG};text-align:right;\">${fmt(l.unitPrice)}</td>\n      <td style=\"padding:4px 8px;border:${BORDER};background:${DATA_BG};color:${DATA_FG};text-align:right;\">${Number(l.quantity||0).toLocaleString('en-US')}</td>\n      <td style=\"padding:4px 8px;border:${BORDER};background:${DATA_BG};color:${DATA_FG};text-align:right;\">${fmt(l.lineAmount)}</td>\n    </tr>`).join('');\n\n  const totalQty    = lines.reduce((s,l) => s + Number(l.quantity||0), 0);\n  const totalAmount = lines.reduce((s,l) => s + Number(l.lineAmount||0), 0);\n\n  const body = `\n<p style=\"margin:0 0 6px 0;\">\n  <span style=\"white-space:nowrap;\"><strong>Sales Order:</strong> ${inv.orderNumber||'N/A'}</span> <span style=\"white-space:nowrap;\"><strong>PO:</strong> ${inv.poNumber||'N/A'}</span> <span style=\"white-space:nowrap;\"><strong>Status:</strong> Invoiced (${inv.number})</span> <span style=\"white-space:nowrap;\"><strong>Requested Delivery:</strong> ${inv.requestedDeliveryDate||inv.postingDate||''}</span>${(inv.requestedDeliveryDate && inv.postingDate && inv.requestedDeliveryDate !== inv.postingDate) ? ` <span style=\"white-space:nowrap;\"><strong>Posting Date:</strong> ${inv.postingDate}</span>` : ''}\n</p>\n<table style=\"border-collapse:collapse;width:100%;font-size:13px;\">\n  <thead>\n    <tr>\n      <th style=\"padding:4px 8px;border:${BORDER};background:${HEADER_BG};color:${HEADER_FG};text-align:left;\">No.</th>\n      <th style=\"padding:4px 8px;border:${BORDER};background:${HEADER_BG};color:${HEADER_FG};text-align:left;\">Description</th>\n      <th style=\"padding:4px 8px;border:${BORDER};background:${HEADER_BG};color:${HEADER_FG};text-align:right;\">Unit Price</th>\n      <th style=\"padding:4px 8px;border:${BORDER};background:${HEADER_BG};color:${HEADER_FG};text-align:right;\">Qty</th>\n      <th style=\"padding:4px 8px;border:${BORDER};background:${HEADER_BG};color:${HEADER_FG};text-align:right;\">Amount</th>\n    </tr>\n  </thead>\n  <tbody>\n    ${rowsHtml}\n    <tr>\n      <td colspan=\"3\" style=\"padding:4px 8px;border:${BORDER};background:${HEADER_BG};color:${HEADER_FG};text-align:right;font-weight:bold;\">TOTAL</td>\n      <td style=\"padding:4px 8px;border:${BORDER};background:${HEADER_BG};color:${HEADER_FG};text-align:right;font-weight:bold;\">${totalQty.toLocaleString('en-US')}</td>\n      <td style=\"padding:4px 8px;border:${BORDER};background:${HEADER_BG};color:${HEADER_FG};text-align:right;font-weight:bold;\">${fmt(totalAmount)}</td>\n    </tr>\n  </tbody>\n</table>`;\n\n  store.companyNames[hsId] = inv.customerName || hsId;\n  notes.push({ invoiceNo: inv.number, hsCompanyId: hsId, postingDate: inv.postingDate, body: body.trim(), soOrderNo: inv.orderNumber || '', soInvoiceNo: inv.number });\n}\n\nstore.pendingInvoiceNotes = store.pendingInvoiceNotes || [];\nstore.pendingInvoiceNotes.push(...notes);\n\nreturn [{ json: { done: true } }];"
+      },
+      "id": "07e15372-05e4-4907-b006-40cd02b8aec5",
+      "name": "Build HubSpot Notes",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2448,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://login.microsoftonline.com/bddeba87-9d41-4063-a0e3-be9e6afcd2ba/oauth2/v2.0/token",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "grant_type",
+              "value": "client_credentials"
+            },
+            {
+              "name": "client_id",
+              "value": "db88be9e-de13-4205-b0c1-472007c60c36"
+            },
+            {
+              "name": "client_secret",
+              "value": "{{SECRET_ID}}"
+            },
+            {
+              "name": "scope",
+              "value": "https://api.businesscentral.dynamics.com/.default"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d4d44c79-97c3-414f-a663-04cabdd907dd",
+      "name": "Discover - Get Token",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        -1584,
+        272
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.businesscentral.dynamics.com/v2.0/bddeba87-9d41-4063-a0e3-be9e6afcd2ba/Production/ODataV4/Company('Live-EB')/Sales_Lines_Excel",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "$top",
+              "value": "1"
+            },
+            {
+              "name": "$filter",
+              "value": "Type eq 'Item' and Quantity gt 0"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.access_token }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "9b31d33d-c3b5-41ab-8cb6-986200ebd795",
+      "name": "Discover - All Customer Fields",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        -1360,
+        272
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "s1",
+              "leftValue": "={{ ($json.value || []).length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "5e701e92-1115-4ff2-958d-e5420546adcc",
+      "name": "Has Invoices?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1328,
+        -32
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const lines = $input.first().json.value || [];\nconst byDoc = {};\nfor (const l of lines) {\n  const doc = l.Document_No;\n  if (!byDoc[doc]) byDoc[doc] = {\n    number: doc,\n    orderNumber: l.Order_No,\n    customerNumber: l.Sell_to_Customer_No,\n    customerName: l.Sell_to_Customer_Name,\n    postingDate: l.ERC_Posting_Date,\n    salesInvoiceLines: []\n  };\n  byDoc[doc].salesInvoiceLines.push({\n    lineObjectNumber: l.No,\n    description: l.Description,\n    quantity: l.Quantity,\n    unitPrice: l.Unit_Price,\n    lineAmount: l.Amount\n  });\n}\nreturn Object.values(byDoc).map(inv => ({ json: inv }));"
+      },
+      "id": "687fc1a0-bc29-4ba3-bc3c-a2c814e97414",
+      "name": "Split Invoices",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1552,
+        -32
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const invoices = $input.all().map(i => i.json);\nconst store = $getWorkflowStaticData('global');\nstore.pendingInvoices = invoices;\n\nconst docNos = [...new Set(invoices.map(i => i.number))];\nconst filter = docNos.length\n  ? docNos.map(no => `No eq '${no.replace(/'/g,\"''\")}'`).join(' or ')\n  : \"No eq 'SKIP'\";\n\nreturn [{ json: { filter } }];"
+      },
+      "id": "66cfa5af-fd1c-4a7a-899b-b9cfd89ec826",
+      "name": "Build Header Filter",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1776,
+        -32
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.businesscentral.dynamics.com/v2.0/bddeba87-9d41-4063-a0e3-be9e6afcd2ba/Production/ODataV4/Company('Live-EB')/Posted_Sales_Invoice_Excel",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "$filter",
+              "value": "={{ $json.filter }}"
+            },
+            {
+              "name": "$select",
+              "value": "No,External_Document_No,Requested_Delivery_Date_SOD,Posting_Date,Order_No"
+            },
+            {
+              "name": "$top",
+              "value": "1000"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Refresh BC Token').first().json.access_token }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "768d33d1-2656-466e-be46-5736df7d0d83",
+      "name": "Fetch Invoice Headers",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        2000,
+        -32
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst invoices = store.pendingInvoices || [];\nconst headers = $input.first().json.value || [];\nconst poMap = {}, deliveryMap = {}, postingMap = {}, orderNoMap = {};\nfor (const h of headers) {\n  poMap[h.No] = h.External_Document_No;\n  deliveryMap[h.No] = h.Requested_Delivery_Date_SOD || '';\n  postingMap[h.No] = h.Posting_Date || '';\n  orderNoMap[h.No] = h.Order_No || '';\n}\nreturn invoices.map(inv => {\n  const requestedDelivery = deliveryMap[inv.number] || '';\n  const postingDate = postingMap[inv.number] || inv.postingDate || '';\n  return { json: { ...inv, poNumber: poMap[inv.number] || '', requestedDeliveryDate: requestedDelivery, postingDate, orderNumber: orderNoMap[inv.number] || inv.orderNumber || '' } };\n});"
+      },
+      "id": "aad0a6fc-22d1-4b6d-97bc-d4ba0d00f0c8",
+      "name": "Merge PO Numbers",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2224,
+        -32
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst rows = store.excelRows || [];\n\nif (rows.length === 0) {\n  return [{ json: { message: 'No invoice data to export', rowCount: 0 } }];\n}\n\nreturn [{ json: { rows, rowCount: rows.length } }];"
+      },
+      "id": "collect_excel_data",
+      "name": "Collect Excel Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        656,
+        248
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "const XLSX = require('xlsx');\n\nconst inputData = $input.first().json;\nif (!inputData.rows || inputData.rows.length === 0) {\n  return [{ json: { message: 'No data to generate Excel file' } }];\n}\n\nconst rows = inputData.rows;\nconst workbook = XLSX.utils.book_new();\nconst worksheet = XLSX.utils.json_to_sheet(rows);\n\nconst colWidths = [\n  { wch: 14 },\n  { wch: 20 },\n  { wch: 30 },\n  { wch: 12 },\n  { wch: 35 },\n  { wch: 14 },\n  { wch: 22 },\n  { wch: 12 },\n  { wch: 14 },\n  { wch: 10 },\n  { wch: 12 },\n  { wch: 12 }\n];\nworksheet['!cols'] = colWidths;\n\nXLSX.utils.book_append_sheet(workbook, worksheet, 'Invoices');\n\nconst now = new Date();\nconst dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;\nconst fileName = `Route21_Invoice_Export_${dateStr}.xlsx`;\n\nconst buffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'buffer' });\n\nreturn [{\n  json: { fileName, rowCount: rows.length },\n  binary: {\n    data: {\n      data: buffer.toString('base64'),\n      mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',\n      fileName: fileName\n    }\n  }\n}];"
+      },
+      "id": "generate_excel",
+      "name": "Generate Excel File",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        880,
+        248
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "upload",
+        "driveId": {
+          "__rl": true,
+          "mode": "list"
+        },
+        "folderId": {
+          "__rl": true,
+          "mode": "list"
+        },
+        "fileName": "={{ $json.fileName }}",
+        "binaryPropertyName": "data",
+        "options": {}
+      },
+      "id": "save_to_onedrive",
+      "name": "Save to OneDrive",
+      "type": "n8n-nodes-base.microsoftOneDrive",
+      "typeVersion": 2,
+      "position": [
+        1104,
+        248
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Keys",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking 'Execute workflow'": {
+      "main": [
+        [
+          {
+            "node": "Discover - Get Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Keys": {
+      "main": [
+        [
+          {
+            "node": "Get BC Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get BC Token": {
+      "main": [
+        [
+          {
+            "node": "Set Yesterday",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Yesterday": {
+      "main": [
+        [
+          {
+            "node": "Initialize HS Fetch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Initialize HS Fetch": {
+      "main": [
+        [
+          {
+            "node": "Build HS Search Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build HS Search Payload": {
+      "main": [
+        [
+          {
+            "node": "Search HubSpot Companies",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search HubSpot Companies": {
+      "main": [
+        [
+          {
+            "node": "Accumulate HS Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Accumulate HS Results": {
+      "main": [
+        [
+          {
+            "node": "More HS Pages?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "More HS Pages?": {
+      "main": [
+        [
+          {
+            "node": "Build HS Search Payload",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Store Distribution Customers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Distribution Customers": {
+      "main": [
+        [
+          {
+            "node": "Loop Customer Batches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Customer Batches": {
+      "main": [
+        [
+          {
+            "node": "Collect Excel Data",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Invoice Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Invoice Filter": {
+      "main": [
+        [
+          {
+            "node": "Refresh BC Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Refresh BC Token": {
+      "main": [
+        [
+          {
+            "node": "Fetch Yesterday Invoices",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Yesterday Invoices": {
+      "main": [
+        [
+          {
+            "node": "Has Invoices?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build HubSpot Notes": {
+      "main": [
+        [
+          {
+            "node": "Loop Customer Batches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Discover - Get Token": {
+      "main": [
+        [
+          {
+            "node": "Discover - All Customer Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Invoices?": {
+      "main": [
+        [
+          {
+            "node": "Split Invoices",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Loop Customer Batches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Invoices": {
+      "main": [
+        [
+          {
+            "node": "Build Header Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Header Filter": {
+      "main": [
+        [
+          {
+            "node": "Fetch Invoice Headers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Invoice Headers": {
+      "main": [
+        [
+          {
+            "node": "Merge PO Numbers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge PO Numbers": {
+      "main": [
+        [
+          {
+            "node": "Build HubSpot Notes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collect Excel Data": {
+      "main": [
+        [
+          {
+            "node": "Generate Excel File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Excel File": {
+      "main": [
+        [
+          {
+            "node": "Save to OneDrive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "05ffe6a1-1d5a-4648-86e6-a7a0c243b96b",
+  "meta": {
+    "instanceId": "f4e8b1fa2e48da97fd6a63547adbfd080ab2c1be2a2d89ff8b09f76c7b3ec28a"
+  },
+  "nodeGroups": [],
+  "id": "99RVTWlZsCKp6zHe",
+  "tags": []
+}

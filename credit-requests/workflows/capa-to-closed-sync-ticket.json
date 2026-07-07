@@ -1,0 +1,237 @@
+{
+  "name": "CAPA to Closed - Sync Ticket",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "capa-to-closed",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "capa-closed-webhook",
+      "name": "Webhook - Item Closed",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "webhookId": "capa-to-closed"
+    },
+    {
+      "parameters": {
+        "jsCode": "const webhookInput = $input.first().json;\nconst body = webhookInput.body || webhookInput;\nconst itemId = body.objectId || body.id;\n\nif (!itemId) {\n  return [{ json: { error: 'Missing itemId', received: body } }];\n}\n\nreturn [{ json: { itemId: String(itemId) } }];"
+      },
+      "id": "capa-closed-extract",
+      "name": "Extract Item Info",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 0]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.hubapi.com/crm/v3/objects/2-48651243/{{ $json.itemId }}/associations/tickets",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "capa-closed-get-ticket",
+      "name": "Get Associated Ticket",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [440, 0],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "vxGS6a3iorMrt7wb",
+          "name": "HubSpot Service Key Production"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst results = response.results || [];\n\nif (results.length === 0) {\n  return [{ json: { error: 'No associated ticket found' } }];\n}\n\nconst ticketId = results[0].id;\nreturn [{ json: { ticketId } }];"
+      },
+      "id": "capa-closed-extract-ticket",
+      "name": "Extract Ticket ID",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, 0]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.hubapi.com/crm/v3/objects/tickets/{{ $json.ticketId }}/associations/2-48651243",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "capa-closed-get-items",
+      "name": "Get All Associated Items",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [880, 0],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "vxGS6a3iorMrt7wb",
+          "name": "HubSpot Service Key Production"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/2-48651243/batch/read",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ inputs: $json.results.map(a => ({ id: a.id || a.toObjectId })), properties: ['hs_pipeline_stage'] }) }}",
+        "options": {}
+      },
+      "id": "capa-closed-batch-read",
+      "name": "Batch Read Item Stages",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1100, 0],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "vxGS6a3iorMrt7wb",
+          "name": "HubSpot Service Key Production"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.first().json.results || [];\n\nif (items.length === 0) {\n  return [{ json: { error: 'No associated items' } }];\n}\n\n// Item pipeline stage order (earliest -> latest)\nconst STAGE_ORDER = {\n  '1386096010': 0, // Verification\n  '1388087301': 1, // Credit Decision\n  '1388087302': 2, // CAPA\n  '1386096011': 3  // Closed\n};\n\nlet lowestStage = null;\nlet lowestRank = Infinity;\nconst stages = [];\n\nfor (const item of items) {\n  const stage = String(item.properties.hs_pipeline_stage);\n  stages.push(stage);\n  const rank = STAGE_ORDER[stage];\n  if (rank !== undefined && rank < lowestRank) {\n    lowestRank = rank;\n    lowestStage = stage;\n  }\n}\n\nif (lowestStage === null) {\n  return [{ json: { error: 'No recognized item stages', stages } }];\n}\n\nreturn [{ json: { itemStage: lowestStage, allStages: stages, itemCount: items.length, success: true } }];"
+      },
+      "id": "capa-closed-find-lowest",
+      "name": "Get Item Stage",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1320, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "const itemStage = $json.itemStage;\nconst stageMapping = {\n  '1386096010': '1385996039', // Verification\n  '1388087301': '1387983013', // Credit Decision\n  '1388087302': '1387983014', // CAPA\n  '1386096011': '1385996040'  // Closed\n};\n\nconst ticketStage = stageMapping[itemStage];\n\nif (!ticketStage) {\n  return [{ json: { error: 'No ticket stage mapping for item stage: ' + itemStage } }];\n}\n\nreturn [{ json: { ticketStage: ticketStage, itemStage: itemStage } }];"
+      },
+      "id": "capa-closed-map-stage",
+      "name": "Map Item Stage to Ticket Stage",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1540, 0]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.hubapi.com/crm/v3/objects/tickets/{{ $('Extract Ticket ID').first().json.ticketId }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ properties: { hs_pipeline_stage: $json.ticketStage } }) }}",
+        "options": {}
+      },
+      "id": "capa-closed-update-ticket",
+      "name": "Update Ticket Stage",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1760, 0],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "vxGS6a3iorMrt7wb",
+          "name": "HubSpot Service Key Production"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, message: 'Ticket synced to lowest item stage', ticketStage: $json.ticketStage }) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              { "name": "Access-Control-Allow-Origin", "value": "*" }
+            ]
+          }
+        }
+      },
+      "id": "capa-closed-response",
+      "name": "Success Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1980, 0]
+    }
+  ],
+  "connections": {
+    "Webhook - Item Closed": {
+      "main": [
+        [{ "node": "Extract Item Info", "type": "main", "index": 0 }]
+      ]
+    },
+    "Extract Item Info": {
+      "main": [
+        [{ "node": "Get Associated Ticket", "type": "main", "index": 0 }]
+      ]
+    },
+    "Get Associated Ticket": {
+      "main": [
+        [{ "node": "Extract Ticket ID", "type": "main", "index": 0 }]
+      ]
+    },
+    "Extract Ticket ID": {
+      "main": [
+        [{ "node": "Get All Associated Items", "type": "main", "index": 0 }]
+      ]
+    },
+    "Get All Associated Items": {
+      "main": [
+        [{ "node": "Batch Read Item Stages", "type": "main", "index": 0 }]
+      ]
+    },
+    "Batch Read Item Stages": {
+      "main": [
+        [{ "node": "Get Item Stage", "type": "main", "index": 0 }]
+      ]
+    },
+    "Get Item Stage": {
+      "main": [
+        [{ "node": "Map Item Stage to Ticket Stage", "type": "main", "index": 0 }]
+      ]
+    },
+    "Map Item Stage to Ticket Stage": {
+      "main": [
+        [{ "node": "Update Ticket Stage", "type": "main", "index": 0 }]
+      ]
+    },
+    "Update Ticket Stage": {
+      "main": [
+        [{ "node": "Success Response", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

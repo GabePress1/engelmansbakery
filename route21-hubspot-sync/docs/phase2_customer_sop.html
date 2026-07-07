@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Phase 2 – Customer Invoice Analytics | Sales & Customer Service SOP</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 13px;
+    color: #1a1a1a;
+    background: #fff;
+    padding: 48px;
+    max-width: 960px;
+    margin: 0 auto;
+  }
+  .header {
+    border-bottom: 3px solid #003366;
+    padding-bottom: 16px;
+    margin-bottom: 28px;
+  }
+  .header h1 {
+    font-size: 22px;
+    color: #003366;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+  }
+  .header .meta {
+    margin-top: 6px;
+    color: #555;
+    font-size: 12px;
+  }
+  .header .meta span { margin-right: 24px; }
+
+  h2 {
+    font-size: 15px;
+    color: #003366;
+    font-weight: 700;
+    margin: 28px 0 10px 0;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #ccd6e0;
+  }
+  h3 {
+    font-size: 13px;
+    color: #003366;
+    font-weight: 600;
+    margin: 16px 0 6px 0;
+  }
+  p { margin-bottom: 8px; line-height: 1.6; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 16px;
+    font-size: 12.5px;
+  }
+  th {
+    background: #003366;
+    color: #fff;
+    text-align: left;
+    padding: 7px 10px;
+    font-weight: 600;
+    font-size: 12px;
+  }
+  td {
+    padding: 6px 10px;
+    border-bottom: 1px solid #e0e7ef;
+    vertical-align: top;
+    line-height: 1.6;
+  }
+  tr:nth-child(even) td { background: #f4f7fb; }
+
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .badge-green  { background: #e2f5e8; color: #1a6e2e; }
+  .badge-amber  { background: #fff3cd; color: #7d5000; }
+  .badge-red    { background: #fce8e8; color: #b30000; }
+  .badge-gray   { background: #ebebeb; color: #444; }
+  .badge-blue   { background: #e8eaf6; color: #303f9f; }
+
+  .callout {
+    background: #f0f4f8;
+    border-left: 4px solid #003366;
+    padding: 10px 14px;
+    margin: 12px 0 16px 0;
+    border-radius: 0 4px 4px 0;
+    font-size: 12.5px;
+    line-height: 1.6;
+  }
+  .callout strong { color: #003366; }
+  .callout.warn  { border-left-color: #b35900; background: #fff8f0; }
+  .callout.green { border-left-color: #1a6e2e; background: #f0faf3; }
+
+  .source-pill {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 10px;
+    margin-bottom: 3px;
+  }
+  .src-a { background: #dce8ff; color: #003399; }
+  .src-b { background: #dcf2e8; color: #004d22; }
+  .src-c { background: #f5e6ff; color: #5a0080; }
+
+  .stage-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #666;
+    margin: 20px 0 8px 0;
+  }
+
+  .step {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 10px;
+    align-items: flex-start;
+  }
+  .step-num {
+    min-width: 26px;
+    height: 26px;
+    background: #003366;
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .step-body { flex: 1; }
+  .step-body strong { display: block; margin-bottom: 2px; }
+  .step-body span { color: #444; line-height: 1.5; }
+
+  .formula-box {
+    background: #f8f9fc;
+    border: 1px solid #d0d8e8;
+    border-radius: 4px;
+    padding: 12px 16px;
+    margin: 10px 0 14px 0;
+    font-size: 12.5px;
+    line-height: 1.8;
+  }
+  .formula-box .formula-line {
+    font-family: 'Consolas', monospace;
+    font-size: 12px;
+    color: #003366;
+    background: #eef2f7;
+    padding: 3px 8px;
+    border-radius: 3px;
+    display: inline-block;
+    margin: 2px 0;
+  }
+
+  .example-box {
+    background: #fffdf0;
+    border: 1px solid #e8d87a;
+    border-radius: 4px;
+    padding: 10px 14px;
+    margin: 8px 0 14px 0;
+    font-size: 12px;
+    line-height: 1.7;
+  }
+  .example-box strong { color: #6b5000; }
+
+  code {
+    background: #eef2f7;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-family: 'Consolas', monospace;
+    font-size: 11.5px;
+    color: #003366;
+  }
+
+  .status-card {
+    border: 1px solid #d0d8e8;
+    border-radius: 6px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+  }
+  .status-card-title {
+    font-weight: 700;
+    font-size: 13px;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .status-card p { margin-bottom: 4px; color: #333; }
+  .status-card .action { margin-top: 8px; color: #003366; font-weight: 600; font-size: 12px; }
+
+  .legend {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin: 10px 0 14px 0;
+    font-size: 12px;
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+
+  footer {
+    margin-top: 40px;
+    border-top: 1px solid #ccd6e0;
+    padding-top: 12px;
+    font-size: 11px;
+    color: #888;
+    text-align: center;
+  }
+
+  @media print {
+    body { padding: 24px; font-size: 12px; }
+    h2 { page-break-after: avoid; }
+    table { page-break-inside: avoid; }
+    .step { page-break-inside: avoid; }
+    .status-card { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════ HEADER ══════════════════════════════════ -->
+<div class="header">
+  <h1>Phase 2 – Customer Invoice Analytics | Sales &amp; Customer Service SOP</h1>
+  <div class="meta">
+    <span><strong>Audience:</strong> Sales Representatives &amp; Customer Service</span>
+    <span><strong>Workflow:</strong> Phase 2 – Customer Invoice Analytics</span>
+    <span><strong>Last Updated:</strong> June 2026</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════ PURPOSE ══════════════════════════════════ -->
+<h2>Purpose</h2>
+<p>
+  This workflow analyzes Business Central (BC) sales invoice history and writes customer health metrics
+  into HubSpot. It tells the sales team <strong>how recently a customer has ordered</strong>,
+  <strong>how much they typically spend per order</strong>, <strong>how often they order</strong>,
+  and whether their ordering behavior has changed. These fields automatically update each time the
+  workflow runs.
+</p>
+<p>This workflow <strong>does not</strong> modify BC, create HubSpot companies, or delete records.</p>
+
+<!-- ══════════════════════════════════ TRIGGERS ══════════════════════════════════ -->
+<h2>When It Runs</h2>
+<table>
+  <tr><th>Trigger</th><th>Description</th></tr>
+  <tr>
+    <td><strong>Manual Only</strong></td>
+    <td>Launched on demand by an analyst in n8n. It is not scheduled to run automatically.</td>
+  </tr>
+</table>
+<div class="callout">
+  <strong>Note for Sales Reps:</strong> The metrics in HubSpot reflect the last time the workflow was
+  run. If you need the most current data, ask an analyst to run Phase 2.
+</div>
+
+<!-- ══════════════════════════════════ DATA SOURCES ══════════════════════════════════ -->
+<h2>Data Sources</h2>
+<div class="legend">
+  <div class="legend-item"><span class="source-pill src-a">Source A</span> BC Sales Invoices (last 2,000 per run)</div>
+  <div class="legend-item"><span class="source-pill src-b">Source B</span> BC Sales Invoices (year-to-date, all)</div>
+  <div class="legend-item"><span class="source-pill src-c">Source C</span> HubSpot Deals (Closed Won, on/after Jan 1, 2026)</div>
+</div>
+
+<table>
+  <tr><th>Source</th><th>What It Provides</th></tr>
+  <tr>
+    <td><span class="source-pill src-a">Source A</span></td>
+    <td>The most recent invoices per customer (up to 2,000 per batch run). Used to calculate
+    ordering status, last invoice date, average order size, and average days between orders.</td>
+  </tr>
+  <tr>
+    <td><span class="source-pill src-b">Source B</span></td>
+    <td>All invoices posted since January 1st of the current year. Used to calculate
+    Actual Sales YTD only. No limit — every YTD invoice is included.</td>
+  </tr>
+  <tr>
+    <td><span class="source-pill src-c">Source C</span></td>
+    <td>Closed Won HubSpot deals with a close date on or after January 1, 2026. Used only
+    to set or update First Invoice Date when a new deal is won.</td>
+  </tr>
+</table>
+
+<!-- ══════════════════════════════════ STEP-BY-STEP ══════════════════════════════════ -->
+<h2>Step-by-Step Flow</h2>
+
+<div class="stage-label">Stage 1 — Setup (Once Per Run)</div>
+
+<div class="step">
+  <div class="step-num">1</div>
+  <div class="step-body">
+    <strong>Load Credentials &amp; Get BC Token</strong>
+    <span>The workflow loads API credentials and requests a secure access token from Microsoft Azure
+    to connect to Business Central. This token is refreshed automatically throughout the run.</span>
+  </div>
+</div>
+
+<div class="step">
+  <div class="step-num">2</div>
+  <div class="step-body">
+    <strong>Fetch All HubSpot Companies</strong>
+    <span>Retrieves all HubSpot companies tagged as <strong>Customers</strong> under
+    <strong>Engelman's Bakery</strong> with an ERP account number. Paginated in groups of 200.
+    The current Ordering Status and First Invoice Date are also fetched here so the workflow
+    knows what's already set before writing.</span>
+  </div>
+</div>
+
+<div class="stage-label">Stage 2 — Batch Processing (Repeats for Every 10 Companies)</div>
+
+<div class="step">
+  <div class="step-num">3</div>
+  <div class="step-body">
+    <strong>Build Invoice Filter</strong>
+    <span>Groups the current 10 companies into a BC filter string by their ERP account numbers
+    (e.g., <code>customerNumber eq '12345' or customerNumber eq '67890'</code>).</span>
+  </div>
+</div>
+
+<div class="step">
+  <div class="step-num">4</div>
+  <div class="step-body">
+    <strong>Fetch Last 2,000 Invoices for Batch <span class="source-pill src-a">Source A</span></strong>
+    <span>Calls BC's Sales Invoices API for the current 10 customers, ordered most-recent-first.
+    Up to 2,000 invoices are returned across the batch. This data drives ordering status,
+    last invoice date, average order size, and average days between orders.</span>
+  </div>
+</div>
+
+<div class="step">
+  <div class="step-num">5</div>
+  <div class="step-body">
+    <strong>Fetch YTD Invoices <span class="source-pill src-b">Source B</span></strong>
+    <span>Calls BC again for the same 10 customers, but filtered to only invoices with a
+    posting date on or after January 1st of the current year. All matching invoices are
+    returned with no cap — used exclusively to calculate Actual Sales YTD.</span>
+  </div>
+</div>
+
+<div class="step">
+  <div class="step-num">6</div>
+  <div class="step-body">
+    <strong>Fetch Closed Won Deals <span class="source-pill src-c">Source C</span></strong>
+    <span>Searches HubSpot for any Closed Won deal where the ERP account number matches one of
+    the current 10 customers and the deal close date is on or after January 1, 2026.
+    Used only to set or reset First Invoice Date.</span>
+  </div>
+</div>
+
+<div class="step">
+  <div class="step-num">7</div>
+  <div class="step-body">
+    <strong>Calculate Metrics</strong>
+    <span>Runs all calculations for the 10 companies using the data from Steps 4–6.
+    Determines ordering status, last invoice date, average order size, average days between
+    orders, YTD sales, and whether First Invoice Date needs to be written.
+    Only companies with changes are queued for update.</span>
+  </div>
+</div>
+
+<div class="step">
+  <div class="step-num">8</div>
+  <div class="step-body">
+    <strong>Update HubSpot</strong>
+    <span>Sends calculated values to HubSpot in a single batch API call for all companies
+    that need updating. Companies with no changes are skipped.</span>
+  </div>
+</div>
+
+<div class="step">
+  <div class="step-num">9</div>
+  <div class="step-body">
+    <strong>Repeat for Next 10 Companies</strong>
+    <span>Steps 3–8 repeat until all HubSpot companies have been processed.</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════ ORDERING STATUS ══════════════════════════════════ -->
+<h2>Ordering Status — What Each Status Means</h2>
+<p>
+  The <strong>Ordering Status</strong> field tells you where a customer currently stands relative
+  to their own historical ordering pattern. It is based entirely on their last 10 invoices from BC
+  and is recalculated every time the workflow runs.
+</p>
+
+<div class="status-card">
+  <div class="status-card-title">
+    <span class="badge badge-green">Actively Ordering</span>
+  </div>
+  <p>The customer's most recent invoice is recent enough that there is no cause for concern.
+  They are ordering within their normal frequency window.</p>
+  <p class="action">→ No action needed. Continue regular account management.</p>
+</div>
+
+<div class="status-card">
+  <div class="status-card-title">
+    <span class="badge badge-amber">Outside Ordering Pattern</span>
+  </div>
+  <p>The customer has not placed an order in longer than <strong>twice their average ordering
+  frequency</strong>. For example, if they normally order every 10 days, this triggers when
+  they have gone more than 20 days without an order.</p>
+  <p>This is the <strong>early warning signal</strong> — the customer has gone quiet but is not
+  yet considered lost.</p>
+  <p class="action">→ Reach out proactively. A check-in call or email at this stage is often enough to re-engage.</p>
+</div>
+
+<div class="status-card">
+  <div class="status-card-title">
+    <span class="badge badge-red">Potentially Lost</span>
+  </div>
+  <p>The customer has not placed an order in longer than <strong>three times their average
+  ordering frequency</strong>. Using the same example, this triggers after 30+ days with no order
+  from a customer who typically orders every 10 days.</p>
+  <p>This does <strong>not</strong> mean the customer has left — it means they are significantly
+  outside their normal pattern and need direct attention.</p>
+  <p class="action">→ Escalate to the assigned salesperson. Prioritize personal outreach.</p>
+</div>
+
+<div class="status-card">
+  <div class="status-card-title">
+    <span class="badge badge-gray">Not Ordered</span>
+  </div>
+  <p>No invoices were found in Business Central for this account. This typically applies to
+  newly onboarded customers who have not yet placed their first order, or accounts set up in
+  HubSpot before their first BC transaction.</p>
+  <p class="action">→ Confirm the account is fully onboarded. Follow up with the salesperson to initiate first delivery.</p>
+</div>
+
+<!-- ══════════════════════════════════ HOW CALCULATED ══════════════════════════════════ -->
+<h2>How Ordering Status Is Calculated</h2>
+<p>
+  The workflow uses only the customer's <strong>last 10 invoices</strong> from BC to determine
+  their ordering pattern. Here is the exact logic, step by step:
+</p>
+
+<h3>Step 1 — Average Days Between Orders</h3>
+<p>The 10 most recent invoices are sorted oldest to newest. The gap in days between each consecutive
+pair is measured, and those gaps are averaged.</p>
+
+<div class="formula-box">
+  <div><strong>Formula:</strong></div>
+  <div class="formula-line">Avg Days = (gap1 + gap2 + … + gap9) ÷ 9</div>
+  <div style="margin-top:6px; font-size:12px; color:#555;">Requires at least 2 invoices.
+  If only 1 invoice exists, default thresholds of 14 / 28 days are used instead.</div>
+</div>
+
+<div class="example-box">
+  <strong>Example:</strong> A customer's last 3 invoice dates are Jan 1, Jan 12, and Jan 25.<br>
+  Gap 1: 11 days &nbsp;|&nbsp; Gap 2: 13 days<br>
+  Avg Days Between Orders = (11 + 13) ÷ 2 = <strong>12 days</strong>
+</div>
+
+<h3>Step 2 — Risk Day and Lost Day</h3>
+<p>Using the average, the workflow calculates two thresholds from the date of the <strong>last invoice</strong>:</p>
+
+<div class="formula-box">
+  <div class="formula-line">Risk Day = Last Invoice Date + (Avg Days × 2) &nbsp; [minimum 5 days]</div><br>
+  <div class="formula-line">Lost Day = Last Invoice Date + (Avg Days × 3) &nbsp; [minimum 7 days]</div>
+</div>
+
+<div class="example-box">
+  <strong>Continuing the example:</strong> Last invoice was Jan 25. Avg = 12 days.<br>
+  Risk Day = Jan 25 + 24 days = <strong>Feb 18</strong><br>
+  Lost Day = Jan 25 + 36 days = <strong>Mar 2</strong>
+</div>
+
+<h3>Step 3 — Assign Status Based on Today's Date</h3>
+<div class="formula-box">
+  <div><strong>If today &lt; Risk Day →</strong> <span class="badge badge-green">Actively Ordering</span></div><br>
+  <div><strong>If today ≥ Risk Day but &lt; Lost Day →</strong> <span class="badge badge-amber">Outside Ordering Pattern</span></div><br>
+  <div><strong>If today ≥ Lost Day →</strong> <span class="badge badge-red">Potentially Lost</span></div><br>
+  <div><strong>If no invoices in BC →</strong> <span class="badge badge-gray">Not Ordered</span></div>
+</div>
+
+<div class="callout warn">
+  <strong>Important:</strong> A customer who orders irregularly (e.g., monthly) will have a wider
+  window before triggering Outside Ordering Pattern than a customer who orders weekly. The thresholds
+  are personalized to each account's own behavior — not a fixed number of days for everyone.
+</div>
+
+<!-- ══════════════════════════════════ STATUS DATE CHANGED ══════════════════════════════════ -->
+<h2>Ordering Status Date Changed</h2>
+<p>
+  This field records <strong>when the customer entered their current status</strong>. It is only
+  updated when the status actually changes — if a customer is already "Outside Ordering Pattern"
+  and remains so the next day, the date is not overwritten.
+</p>
+<table>
+  <tr><th>Status</th><th>Date Recorded</th></tr>
+  <tr><td><span class="badge badge-green">Actively Ordering</span></td><td>Date of their last invoice</td></tr>
+  <tr><td><span class="badge badge-amber">Outside Ordering Pattern</span></td><td>The calculated Risk Day (2× avg gap after last invoice)</td></tr>
+  <tr><td><span class="badge badge-red">Potentially Lost</span></td><td>The calculated Lost Day (3× avg gap after last invoice)</td></tr>
+  <tr><td><span class="badge badge-gray">Not Ordered</span></td><td>Not recorded (blank)</td></tr>
+</table>
+
+<!-- ══════════════════════════════════ AVG ORDER SIZE ══════════════════════════════════ -->
+<h2>How Average Order Size Is Calculated</h2>
+<p>
+  Average Order Size is the <strong>average dollar value of the last 10 invoices</strong>
+  for the customer. It uses the total amount including tax from each invoice.
+</p>
+
+<div class="formula-box">
+  <div class="formula-line">Avg Order Size = Sum of last 10 invoice totals ÷ 10</div>
+  <div style="margin-top:6px; font-size:12px; color:#555;">
+    Rounded to the nearest cent. If fewer than 10 invoices exist, all available invoices are used.
+  </div>
+</div>
+
+<div class="example-box">
+  <strong>Example:</strong> Last 4 invoices: $420, $380, $510, $390<br>
+  Avg Order Size = ($420 + $380 + $510 + $390) ÷ 4 = <strong>$425.00</strong>
+</div>
+
+<div class="callout">
+  <strong>What this tells you:</strong> If a customer's recent invoice amounts are significantly
+  lower than their average, it may indicate they are reducing their order volume — a useful early
+  signal even before ordering frequency changes.
+</div>
+
+<!-- ══════════════════════════════════ AVG DAYS BETWEEN ══════════════════════════════════ -->
+<h2>How Average Days Between Orders Is Calculated</h2>
+<p>
+  This field measures <strong>how many days typically pass between this customer's orders</strong>,
+  based on their last 10 invoices. It drives the risk and lost day thresholds described above.
+</p>
+
+<div class="formula-box">
+  <div class="formula-line">Sort last 10 invoices oldest → newest</div><br>
+  <div class="formula-line">Measure gap in days between each consecutive pair</div><br>
+  <div class="formula-line">Average all gaps → round to 1 decimal place</div>
+  <div style="margin-top:6px; font-size:12px; color:#555;">
+    Requires at least 2 invoices. If only 1 invoice exists, this field is left blank and default
+    thresholds of 14 days (risk) / 28 days (lost) are used for ordering status.
+  </div>
+</div>
+
+<div class="example-box">
+  <strong>Example — Weekly customer:</strong> Invoices every ~7 days<br>
+  Avg Days Between Orders ≈ <strong>7</strong> &nbsp;|&nbsp;
+  Risk threshold at 14 days &nbsp;|&nbsp; Lost threshold at 21 days<br><br>
+  <strong>Example — Monthly customer:</strong> Invoices every ~30 days<br>
+  Avg Days Between Orders ≈ <strong>30</strong> &nbsp;|&nbsp;
+  Risk threshold at 60 days &nbsp;|&nbsp; Lost threshold at 90 days
+</div>
+
+<!-- ══════════════════════════════════ ACTUAL SALES YTD ══════════════════════════════════ -->
+<h2>Actual Sales YTD</h2>
+<p>
+  This field shows the <strong>total dollar amount invoiced to the customer so far this calendar year</strong>,
+  from January 1st through the most recent invoice in BC at the time the workflow ran.
+</p>
+
+<div class="formula-box">
+  <div class="formula-line">YTD Sales = Sum of all invoice totals where posting date ≥ Jan 1 of current year</div>
+  <div style="margin-top:6px; font-size:12px; color:#555;">
+    No cap on number of invoices — all YTD invoices are included. Rounded to the nearest cent.
+    Tax is included in the total (matches BC invoice totals).
+  </div>
+</div>
+
+<div class="callout">
+  <strong>Note:</strong> This resets automatically each January 1st when the workflow next runs —
+  no manual action is required to start the new year.
+</div>
+
+<!-- ══════════════════════════════════ LAST INVOICE DATE ══════════════════════════════════ -->
+<h2>Last Invoice Date</h2>
+<p>
+  The posting date of the <strong>most recent invoice</strong> posted in BC for this customer.
+  Updated every time the workflow runs if a newer invoice exists.
+</p>
+
+<!-- ══════════════════════════════════ FIRST INVOICE DATE ══════════════════════════════════ -->
+<h2>First Invoice Date — How It Works</h2>
+<p>
+  First Invoice Date records <strong>when the customer placed their first order under the current
+  relationship</strong>. It is used to understand customer tenure and to track re-onboarded accounts.
+</p>
+
+<h3>Historical Accounts</h3>
+<p>
+  For existing customers, First Invoice Date was set through a one-time manual import by the
+  analyst team. The workflow will <strong>not overwrite</strong> these historical values unless
+  a qualifying new deal is won (see below).
+</p>
+
+<h3>New Customers (Won on or After January 1, 2026)</h3>
+<p>
+  When a deal in HubSpot is marked <strong>Closed Won</strong> with a close date on or after
+  January 1, 2026, the workflow will look for the first BC invoice posted on or after that deal's
+  close date and write it as the First Invoice Date.
+</p>
+
+<div class="formula-box">
+  <div><strong>Trigger:</strong> A Closed Won deal exists with close date ≥ Jan 1, 2026</div><br>
+  <div><strong>AND</strong> the deal's close date is more recent than the current First Invoice Date (or the field is blank)</div><br>
+  <div class="formula-line">First Invoice Date = Date of first BC invoice on or after the deal's close date</div>
+</div>
+
+<h3>Re-Onboarding Accounts</h3>
+<p>
+  If a customer who already has a First Invoice Date wins a <strong>new</strong> Closed Won deal
+  with a close date after the existing First Invoice Date, the field is reset. This captures
+  the start of the new relationship rather than the original one.
+</p>
+
+<div class="callout green">
+  <strong>What triggers an update:</strong>
+  <ul style="margin: 6px 0 0 18px; line-height:1.8;">
+    <li>A Closed Won deal is logged in HubSpot with close date ≥ Jan 1, 2026</li>
+    <li>The deal's ERP account number matches the HubSpot company</li>
+    <li>The deal close date is newer than the current First Invoice Date (or the field is blank)</li>
+  </ul>
+</div>
+
+<div class="callout warn">
+  <strong>What does NOT trigger an update:</strong>
+  <ul style="margin: 6px 0 0 18px; line-height:1.8;">
+    <li>A deal won before January 1, 2026</li>
+    <li>A deal that is not in "Closed Won" stage</li>
+    <li>The field already having a value with no newer qualifying deal</li>
+  </ul>
+</div>
+
+<!-- ══════════════════════════════════ HUBSPOT PROPERTIES ══════════════════════════════════ -->
+<h2>HubSpot Properties Written by This Workflow</h2>
+<table>
+  <tr>
+    <th>HubSpot Property</th>
+    <th>What It Shows</th>
+    <th>Updated When</th>
+  </tr>
+  <tr>
+    <td><code>ordering_status</code></td>
+    <td>Actively Ordering / Outside Ordering Pattern / Potentially Lost / Not Ordered</td>
+    <td>Every run</td>
+  </tr>
+  <tr>
+    <td><code>ordering_status_date_changed</code></td>
+    <td>Date the customer entered their current status</td>
+    <td>Only when status changes</td>
+  </tr>
+  <tr>
+    <td><code>last_invoice_date</code></td>
+    <td>Most recent invoice posting date in BC</td>
+    <td>Every run</td>
+  </tr>
+  <tr>
+    <td><code>avg_order_size</code></td>
+    <td>Average dollar value of last 10 invoices</td>
+    <td>Every run</td>
+  </tr>
+  <tr>
+    <td><code>avg_days_between_orders</code></td>
+    <td>Average days between the last 10 invoices</td>
+    <td>Every run (blank if fewer than 2 invoices)</td>
+  </tr>
+  <tr>
+    <td><code>actual_sales_ytd</code></td>
+    <td>Total invoiced amount since Jan 1 of current year</td>
+    <td>Every run</td>
+  </tr>
+  <tr>
+    <td><code>first_invoice_date</code></td>
+    <td>Date of first invoice under the current relationship</td>
+    <td>Only when a qualifying Closed Won deal exists (see above)</td>
+  </tr>
+</table>
+
+<!-- ══════════════════════════════════ FAQ ══════════════════════════════════ -->
+<h2>Common Questions</h2>
+
+<h3>A customer just placed a big order but still shows "Potentially Lost" — why?</h3>
+<p>
+  The workflow only reflects data as of the last time it was run. If a new invoice was posted in BC
+  after the last run, HubSpot has not yet been updated. Ask an analyst to re-run Phase 2 to refresh
+  the data.
+</p>
+
+<h3>A customer's First Invoice Date is wrong — how do I fix it?</h3>
+<p>
+  If the date shown is incorrect and no new deal has been won, the value can be corrected directly
+  in HubSpot by editing the property on the company record. The workflow will not overwrite a
+  manually set value unless a qualifying new Closed Won deal (close date ≥ Jan 1, 2026) is logged.
+</p>
+
+<h3>Why does a very infrequent customer take longer to show "Potentially Lost"?</h3>
+<p>
+  Because the threshold is based on each customer's own ordering pattern. A customer who orders
+  every 60 days won't trigger "Outside Ordering Pattern" until 120 days have passed — whereas a
+  weekly customer triggers it after only 14 days. This prevents false alarms on seasonal or
+  low-frequency accounts.
+</p>
+
+<h3>What if a customer has fewer than 10 invoices?</h3>
+<p>
+  All available invoices are used. The average order size and average days between orders are
+  calculated from however many invoices exist. If only 1 invoice exists, the ordering status
+  thresholds default to 14 days (Outside Ordering Pattern) and 28 days (Potentially Lost).
+</p>
+
+<h3>Does this workflow update billing or address information?</h3>
+<p>
+  No. Billing address, credit limit, payment terms, and salesperson assignment are managed
+  by Phase 1 – BC → HubSpot Companies Final. Phase 2 only writes the invoice analytics
+  fields listed in the table above.
+</p>
+
+<footer>
+  Engelman's Bakery &nbsp;·&nbsp; Phase 2 – Customer Invoice Analytics &nbsp;·&nbsp;
+  Sales &amp; Customer Service SOP &nbsp;·&nbsp; June 2026
+</footer>
+
+</body>
+</html>

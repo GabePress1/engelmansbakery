@@ -1,0 +1,772 @@
+{
+  "name": "Route 21 – BC Item Pricing → Excel (Daily)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 6 * * *"
+            }
+          ]
+        }
+      },
+      "id": "a1000000-0000-0000-0000-000000000001",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [-200, 500]
+    },
+    {
+      "parameters": {},
+      "id": "a1000000-0000-0000-0000-000000000002",
+      "name": "When clicking 'Execute workflow'",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [-200, 720]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "k1",
+              "name": "Tenant_ID",
+              "value": "bddeba87-9d41-4063-a0e3-be9e6afcd2ba",
+              "type": "string"
+            },
+            {
+              "id": "k2",
+              "name": "client_ID",
+              "value": "db88be9e-de13-4205-b0c1-472007c60c36",
+              "type": "string"
+            },
+            {
+              "id": "k3",
+              "name": "Secret_ID",
+              "value": "YOUR_CLIENT_SECRET_HERE",
+              "type": "string"
+            },
+            {
+              "id": "k4",
+              "name": "Company_ID",
+              "value": "9ebc308f-a2c8-ed11-9a88-000d3a8e59a1",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a1000000-0000-0000-0000-000000000003",
+      "name": "Keys",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [40, 500]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://login.microsoftonline.com/{{ $json.Tenant_ID }}/oauth2/v2.0/token",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "grant_type",
+              "value": "client_credentials"
+            },
+            {
+              "name": "client_id",
+              "value": "={{ $json.client_ID }}"
+            },
+            {
+              "name": "client_secret",
+              "value": "={{ $json.Secret_ID }}"
+            },
+            {
+              "name": "scope",
+              "value": "https://api.businesscentral.dynamics.com/.default"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a1000000-0000-0000-0000-000000000004",
+      "name": "Get BC Token",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [280, 500]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://login.microsoftonline.com/{{ $('Keys').first().json.Tenant_ID }}/oauth2/v2.0/token",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "grant_type",
+              "value": "client_credentials"
+            },
+            {
+              "name": "client_id",
+              "value": "={{ $('Keys').first().json.client_ID }}"
+            },
+            {
+              "name": "client_secret",
+              "value": "={{ $('Keys').first().json.Secret_ID }}"
+            },
+            {
+              "name": "scope",
+              "value": "https://graph.microsoft.com/.default"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a1000000-0000-0000-0000-000000000005",
+      "name": "Get Graph Token",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [280, 720]
+    },
+    {
+      "parameters": {
+        "jsCode": "const now = new Date();\nconst fmt = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;\nconst startDate = `${now.getFullYear()}-01-01`;\nconst endDate = fmt(now);\nreturn [{ json: { startDate, endDate } }];"
+      },
+      "id": "a1000000-0000-0000-0000-000000000006",
+      "name": "Set Date Range",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [520, 500]
+    },
+    {
+      "parameters": {
+        "url": "https://api.businesscentral.dynamics.com/v2.0/bddeba87-9d41-4063-a0e3-be9e6afcd2ba/Production/ODataV4/Company('Live-EB')/Posted_Sales_Invoice_Lines_Excel",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "$filter",
+              "value": "=Type eq 'Item' and ERC_Posting_Date ge {{ $('Set Date Range').first().json.startDate }} and ERC_Posting_Date le {{ $('Set Date Range').first().json.endDate }}"
+            },
+            {
+              "name": "$select",
+              "value": "No,Description,Document_No,Sell_to_Customer_No,Sell_to_Customer_Name,Quantity,Unit_Price,Amount,Order_No,ERC_Posting_Date"
+            },
+            {
+              "name": "$top",
+              "value": "5000"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Get BC Token').first().json.access_token }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "a1000000-0000-0000-0000-000000000010",
+      "name": "Fetch All Invoice Lines (YTD)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [760, 340]
+    },
+    {
+      "parameters": {
+        "url": "https://api.businesscentral.dynamics.com/v2.0/bddeba87-9d41-4063-a0e3-be9e6afcd2ba/Production/ODataV4/Company('Live-EB')/Posted_Sales_Invoice_Excel",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "$filter",
+              "value": "=Posting_Date ge {{ $('Set Date Range').first().json.startDate }} and Posting_Date le {{ $('Set Date Range').first().json.endDate }}"
+            },
+            {
+              "name": "$select",
+              "value": "No,Sell_to_Customer_No,Sell_to_Customer_Name,External_Document_No,Requested_Delivery_Date_SOD,Posting_Date,Order_No"
+            },
+            {
+              "name": "$top",
+              "value": "5000"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Get BC Token').first().json.access_token }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "a1000000-0000-0000-0000-000000000011",
+      "name": "Fetch All Invoice Headers (YTD)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [760, 560]
+    },
+    {
+      "parameters": {
+        "url": "https://api.businesscentral.dynamics.com/v2.0/bddeba87-9d41-4063-a0e3-be9e6afcd2ba/Production/ODataV4/Company('Live-EB')/Sales_Order_Excel",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "$filter",
+              "value": "Status eq 'Open' or Status eq 'Released'"
+            },
+            {
+              "name": "$select",
+              "value": "No,Sell_to_Customer_No,Sell_to_Customer_Name,External_Document_No,Status,Requested_Delivery_Date"
+            },
+            {
+              "name": "$top",
+              "value": "5000"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Get BC Token').first().json.access_token }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "a1000000-0000-0000-0000-000000000012",
+      "name": "Fetch Open Sales Orders",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [760, 780]
+    },
+    {
+      "parameters": {
+        "jsCode": "const lines = $('Fetch All Invoice Lines (YTD)').first().json.value || [];\nconst headers = $('Fetch All Invoice Headers (YTD)').first().json.value || [];\n\nconst headerMap = {};\nfor (const h of headers) {\n  headerMap[h.No] = {\n    poNumber: h.External_Document_No || '',\n    requestedDelivery: h.Requested_Delivery_Date_SOD || '',\n    postingDate: h.Posting_Date || '',\n    orderNo: h.Order_No || ''\n  };\n}\n\nconst rows = lines.map(l => {\n  const hdr = headerMap[l.Document_No] || {};\n  return {\n    json: {\n      'Item No': l.No || '',\n      'Description': l.Description || '',\n      'Invoice No': l.Document_No || '',\n      'Customer No': l.Sell_to_Customer_No || '',\n      'Customer Name': l.Sell_to_Customer_Name || '',\n      'Quantity': Number(l.Quantity || 0),\n      'Unit Price': Number(l.Unit_Price || 0),\n      'Amount': Number(l.Amount || 0),\n      'Sales Order No': l.Order_No || hdr.orderNo || '',\n      'PO Number': hdr.poNumber || '',\n      'Posting Date': l.ERC_Posting_Date || hdr.postingDate || '',\n      'Requested Delivery': hdr.requestedDelivery || ''\n    }\n  };\n});\n\nreturn rows.length > 0 ? rows : [{ json: { 'Item No': '', 'Description': 'No data', 'Invoice No': '', 'Customer No': '', 'Customer Name': '', 'Quantity': 0, 'Unit Price': 0, 'Amount': 0, 'Sales Order No': '', 'PO Number': '', 'Posting Date': '', 'Requested Delivery': '' } }];"
+      },
+      "id": "a1000000-0000-0000-0000-000000000020",
+      "name": "Build Invoice Rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1040, 440]
+    },
+    {
+      "parameters": {
+        "jsCode": "const orders = $('Fetch Open Sales Orders').first().json.value || [];\n\nconst rows = orders.map(o => ({\n  json: {\n    'Order No': o.No || '',\n    'Customer No': o.Sell_to_Customer_No || '',\n    'Customer Name': o.Sell_to_Customer_Name || '',\n    'PO Number': o.External_Document_No || '',\n    'Status': o.Status || '',\n    'Requested Delivery': o.Requested_Delivery_Date || ''\n  }\n}));\n\nreturn rows.length > 0 ? rows : [{ json: { 'Order No': '', 'Customer No': '', 'Customer Name': '', 'PO Number': '', 'Status': 'No open orders', 'Requested Delivery': '' } }];"
+      },
+      "id": "a1000000-0000-0000-0000-000000000021",
+      "name": "Build Sales Order Rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1040, 720]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ── CONFIG ──────────────────────────────────────────────────\n// Set these to match your SharePoint site and file path\nconst SHAREPOINT_SITE_ID   = 'YOUR_SHAREPOINT_SITE_ID';       // e.g. 'contoso.sharepoint.com,guid1,guid2'\nconst DRIVE_ID             = 'YOUR_DRIVE_ID';                  // document library drive ID\nconst EXCEL_FILE_ITEM_ID   = 'YOUR_EXCEL_FILE_ITEM_ID';        // the .xlsx file's item ID\n// ────────────────────────────────────────────────────────────\n\nconst graphToken = $('Get Graph Token').first().json.access_token;\n\nconst store = $getWorkflowStaticData('global');\nstore.graphToken = graphToken;\nstore.siteId = SHAREPOINT_SITE_ID;\nstore.driveId = DRIVE_ID;\nstore.fileItemId = EXCEL_FILE_ITEM_ID;\n\nreturn [{ json: { ready: true } }];"
+      },
+      "id": "a1000000-0000-0000-0000-000000000030",
+      "name": "Configure SharePoint IDs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [520, 720]
+    },
+    {
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst token = store.graphToken;\nconst driveId = store.driveId;\nconst fileId = store.fileItemId;\n\nreturn [{ json: {\n  clearUrl: `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${fileId}/workbook/worksheets('InvoiceLines')/range(address='InvoiceLines!A2:L100000')`,\n  token\n} }];"
+      },
+      "id": "a1000000-0000-0000-0000-000000000040",
+      "name": "Prepare Clear InvoiceLines",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1300, 340]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $json.clearUrl }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.token }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{ \"values\": null }",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "a1000000-0000-0000-0000-000000000041",
+      "name": "Clear InvoiceLines Sheet",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1540, 340],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst token = store.graphToken;\nconst driveId = store.driveId;\nconst fileId = store.fileItemId;\n\nconst invoiceRows = $('Build Invoice Rows').all();\nconst values = invoiceRows.map(r => [\n  r.json['Item No'],\n  r.json['Description'],\n  r.json['Invoice No'],\n  r.json['Customer No'],\n  r.json['Customer Name'],\n  r.json['Quantity'],\n  r.json['Unit Price'],\n  r.json['Amount'],\n  r.json['Sales Order No'],\n  r.json['PO Number'],\n  r.json['Posting Date'],\n  r.json['Requested Delivery']\n]);\n\nconst rowCount = values.length;\nconst endRow = rowCount + 1;\nconst addUrl = `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${fileId}/workbook/worksheets('InvoiceLines')/range(address='InvoiceLines!A2:L${endRow}')`;\n\nreturn [{ json: { addUrl, token, values } }];"
+      },
+      "id": "a1000000-0000-0000-0000-000000000042",
+      "name": "Prepare Invoice Write",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1780, 340]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $json.addUrl }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.token }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ values: $json.values }) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "a1000000-0000-0000-0000-000000000043",
+      "name": "Write Invoice Rows to Excel",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [2020, 340]
+    },
+    {
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst token = store.graphToken;\nconst driveId = store.driveId;\nconst fileId = store.fileItemId;\n\nreturn [{ json: {\n  clearUrl: `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${fileId}/workbook/worksheets('OpenSalesOrders')/range(address='OpenSalesOrders!A2:F100000')`,\n  token\n} }];"
+      },
+      "id": "a1000000-0000-0000-0000-000000000050",
+      "name": "Prepare Clear SalesOrders",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1300, 660]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $json.clearUrl }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.token }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{ \"values\": null }",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "a1000000-0000-0000-0000-000000000051",
+      "name": "Clear SalesOrders Sheet",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1540, 660],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst token = store.graphToken;\nconst driveId = store.driveId;\nconst fileId = store.fileItemId;\n\nconst soRows = $('Build Sales Order Rows').all();\nconst values = soRows.map(r => [\n  r.json['Order No'],\n  r.json['Customer No'],\n  r.json['Customer Name'],\n  r.json['PO Number'],\n  r.json['Status'],\n  r.json['Requested Delivery']\n]);\n\nconst rowCount = values.length;\nconst endRow = rowCount + 1;\nconst addUrl = `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${fileId}/workbook/worksheets('OpenSalesOrders')/range(address='OpenSalesOrders!A2:F${endRow}')`;\n\nreturn [{ json: { addUrl, token, values } }];"
+      },
+      "id": "a1000000-0000-0000-0000-000000000052",
+      "name": "Prepare SO Write",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1780, 660]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $json.addUrl }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.token }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ values: $json.values }) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "a1000000-0000-0000-0000-000000000053",
+      "name": "Write SO Rows to Excel",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [2020, 660]
+    },
+    {
+      "parameters": {
+        "jsCode": "const invoiceRows = $('Build Invoice Rows').all();\nconst soRows = $('Build Sales Order Rows').all();\nconst now = new Date().toISOString();\n\nconst totalInvoiceAmt = invoiceRows.reduce((s, r) => s + Number(r.json['Amount'] || 0), 0);\nconst uniqueCustomers = [...new Set(invoiceRows.map(r => r.json['Customer No']).filter(Boolean))];\nconst uniqueItems = [...new Set(invoiceRows.map(r => r.json['Item No']).filter(Boolean))];\n\nreturn [{ json: {\n  message: `Excel updated at ${now}`,\n  invoiceLineCount: invoiceRows.length,\n  salesOrderCount: soRows.length,\n  totalInvoiceAmount: totalInvoiceAmt.toFixed(2),\n  uniqueCustomers: uniqueCustomers.length,\n  uniqueItems: uniqueItems.length\n} }];"
+      },
+      "id": "a1000000-0000-0000-0000-000000000060",
+      "name": "Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2260, 500]
+    },
+    {
+      "parameters": {
+        "content": "## Trigger & Auth\nSchedule: Daily at 6 AM\nManual: Click to test\n\nGets two OAuth2 tokens:\n1. BC token (Business Central OData)\n2. Graph token (SharePoint Excel write)",
+        "width": 360,
+        "height": 280
+      },
+      "id": "a1000000-0000-0000-0000-000000000070",
+      "name": "Note: Setup",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-240, 380]
+    },
+    {
+      "parameters": {
+        "content": "## BC Data Fetch\nFetches three datasets in parallel:\n1. **Invoice Lines** – all item-type lines YTD\n2. **Invoice Headers** – PO #, delivery dates\n3. **Open Sales Orders** – current open/released",
+        "width": 360,
+        "height": 200
+      },
+      "id": "a1000000-0000-0000-0000-000000000071",
+      "name": "Note: BC Fetch",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [680, 180]
+    },
+    {
+      "parameters": {
+        "content": "## Excel Write (SharePoint)\nClears old data, writes fresh rows.\n\n**InvoiceLines** sheet: Item, Description, Invoice #, Customer, Qty, Price, Amount, SO #, PO #, Dates\n\n**OpenSalesOrders** sheet: Order #, Customer, PO #, Status, Delivery Date",
+        "width": 800,
+        "height": 200
+      },
+      "id": "a1000000-0000-0000-0000-000000000072",
+      "name": "Note: Excel Write",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [1240, 120]
+    },
+    {
+      "parameters": {
+        "content": "## ⚙️ SETUP REQUIRED\n\n1. In **Configure SharePoint IDs** node, set:\n   - `SHAREPOINT_SITE_ID`\n   - `DRIVE_ID`\n   - `EXCEL_FILE_ITEM_ID`\n\n2. Your Azure AD app needs the scope:\n   `https://graph.microsoft.com/.default`\n   with **Files.ReadWrite.All** permission\n\n3. Upload `Route21_Pricing_Report.xlsx` to SharePoint first\n\n4. Get the IDs via Graph Explorer:\n   `GET /sites/{host}:/sites/{site}`\n   `GET /sites/{id}/drives`\n   `GET /drives/{id}/root/children`",
+        "width": 400,
+        "height": 380
+      },
+      "id": "a1000000-0000-0000-0000-000000000073",
+      "name": "Note: Setup Required",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [380, 860]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Keys",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking 'Execute workflow'": {
+      "main": [
+        [
+          {
+            "node": "Keys",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Keys": {
+      "main": [
+        [
+          {
+            "node": "Get BC Token",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Graph Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get BC Token": {
+      "main": [
+        [
+          {
+            "node": "Set Date Range",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Graph Token": {
+      "main": [
+        [
+          {
+            "node": "Configure SharePoint IDs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Date Range": {
+      "main": [
+        [
+          {
+            "node": "Fetch All Invoice Lines (YTD)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch All Invoice Headers (YTD)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch Open Sales Orders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch All Invoice Lines (YTD)": {
+      "main": [
+        [
+          {
+            "node": "Build Invoice Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch All Invoice Headers (YTD)": {
+      "main": [
+        [
+          {
+            "node": "Build Invoice Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Invoice Rows": {
+      "main": [
+        [
+          {
+            "node": "Prepare Clear InvoiceLines",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Open Sales Orders": {
+      "main": [
+        [
+          {
+            "node": "Build Sales Order Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Sales Order Rows": {
+      "main": [
+        [
+          {
+            "node": "Prepare Clear SalesOrders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Clear InvoiceLines": {
+      "main": [
+        [
+          {
+            "node": "Clear InvoiceLines Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clear InvoiceLines Sheet": {
+      "main": [
+        [
+          {
+            "node": "Prepare Invoice Write",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Invoice Write": {
+      "main": [
+        [
+          {
+            "node": "Write Invoice Rows to Excel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write Invoice Rows to Excel": {
+      "main": [
+        [
+          {
+            "node": "Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Clear SalesOrders": {
+      "main": [
+        [
+          {
+            "node": "Clear SalesOrders Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clear SalesOrders Sheet": {
+      "main": [
+        [
+          {
+            "node": "Prepare SO Write",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare SO Write": {
+      "main": [
+        [
+          {
+            "node": "Write SO Rows to Excel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write SO Rows to Excel": {
+      "main": [
+        [
+          {
+            "node": "Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Configure SharePoint IDs": {
+      "main": [[]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "Route 21"
+    },
+    {
+      "name": "Excel"
+    },
+    {
+      "name": "Daily Report"
+    }
+  ],
+  "pinData": {}
+}

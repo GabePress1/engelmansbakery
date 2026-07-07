@@ -1,0 +1,225 @@
+{
+  "name": "BC-HubSpot",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 6 * * *"
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Daily at 6am",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $vars.BC_BASE_URL }}/api/v2.0/companies({{ $vars.BC_COMPANY_ID }})/customers",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Accept", "value": "application/json" }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "$top", "value": "100" },
+            { "name": "$filter", "value": "lastModifiedDateTime gt {{ new Date(Date.now() - 86400000).toISOString() }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "fetch-bc-customers",
+      "name": "Fetch BC Customers",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [480, 300],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "bc-oauth2",
+          "name": "Business Central OAuth2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "value",
+        "options": {}
+      },
+      "id": "split-customers",
+      "name": "Split Into Individual Customers",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [720, 300]
+    },
+    {
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const customer = $input.first().json;\n\n// Map BC customer fields to HubSpot company properties\nconst properties = {};\n\nif (customer.displayName)    properties.name           = customer.displayName;\nif (customer.email)          properties.email           = customer.email;\nif (customer.phoneNumber)    properties.phone           = customer.phoneNumber;\nif (customer.website)        properties.website         = customer.website;\nif (customer.taxRegistrationNumber) properties.vat_number = customer.taxRegistrationNumber;\nif (customer.currencyCode)   properties.hubspot_owner_currency = customer.currencyCode;\n\n// Address\nconst addr = customer.address || {};\nif (addr.street)     properties.address  = addr.street;\nif (addr.city)       properties.city     = addr.city;\nif (addr.state)      properties.state    = addr.state;\nif (addr.postalCode) properties.zip      = addr.postalCode;\nif (addr.countryLetterCode) properties.country = addr.countryLetterCode;\n\n// Store BC customer number for deduplication\nif (customer.number) properties.bc_customer_number = customer.number;\n\nreturn [{ json: { properties, bcId: customer.id, bcNumber: customer.number, name: customer.displayName } }];"
+      },
+      "id": "map-to-hubspot",
+      "name": "Map to HubSpot Company Fields",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [960, 300]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.hubapi.com/crm/v3/objects/companies/search",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"filterGroups\": [\n    {\n      \"filters\": [\n        {\n          \"propertyName\": \"bc_customer_number\",\n          \"operator\": \"EQ\",\n          \"value\": \"{{ $json.bcNumber }}\"\n        }\n      ]\n    }\n  ],\n  \"properties\": [\"name\", \"bc_customer_number\"],\n  \"limit\": 1\n}",
+        "options": {}
+      },
+      "id": "search-hubspot-company",
+      "name": "Search HubSpot for Existing Company",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1200, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "hubspot-api-key",
+          "name": "HubSpot API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "check-exists",
+              "leftValue": "={{ $json.total }}",
+              "rightValue": 0,
+              "operator": { "type": "number", "operation": "gt" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "company-exists",
+      "name": "Company Already Exists?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1440, 300]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.hubapi.com/crm/v3/objects/companies/{{ $json.results[0].id }}",
+        "method": "PATCH",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ properties: $('Map to HubSpot Company Fields').first().json.properties }) }}",
+        "options": {}
+      },
+      "id": "update-hubspot-company",
+      "name": "Update Existing Company",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1680, 200],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "hubspot-api-key",
+          "name": "HubSpot API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://api.hubapi.com/crm/v3/objects/companies",
+        "method": "POST",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ properties: $('Map to HubSpot Company Fields').first().json.properties }) }}",
+        "options": {}
+      },
+      "id": "create-hubspot-company",
+      "name": "Create New Company",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1680, 400],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "hubspot-api-key",
+          "name": "HubSpot API Key"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Daily at 6am": {
+      "main": [
+        [{ "node": "Fetch BC Customers", "type": "main", "index": 0 }]
+      ]
+    },
+    "Fetch BC Customers": {
+      "main": [
+        [{ "node": "Split Into Individual Customers", "type": "main", "index": 0 }]
+      ]
+    },
+    "Split Into Individual Customers": {
+      "main": [
+        [{ "node": "Map to HubSpot Company Fields", "type": "main", "index": 0 }]
+      ]
+    },
+    "Map to HubSpot Company Fields": {
+      "main": [
+        [{ "node": "Search HubSpot for Existing Company", "type": "main", "index": 0 }]
+      ]
+    },
+    "Search HubSpot for Existing Company": {
+      "main": [
+        [{ "node": "Company Already Exists?", "type": "main", "index": 0 }]
+      ]
+    },
+    "Company Already Exists?": {
+      "main": [
+        [{ "node": "Update Existing Company", "type": "main", "index": 0 }],
+        [{ "node": "Create New Company", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "errorWorkflow": ""
+  },
+  "staticData": null,
+  "meta": {
+    "templateId": "bc-hubspot"
+  }
+}

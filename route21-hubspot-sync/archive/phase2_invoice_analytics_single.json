@@ -1,0 +1,380 @@
+{
+  "name": "Phase 2 \u2013 Invoice Analytics (Single Customer)",
+  "nodes": [
+    {
+      "id": "b9fa8058-caeb-4657-afde-d9465329e29d",
+      "name": "When clicking 'Execute workflow'",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "2cd699fe-2c21-4ab4-b1e6-4cf11eee3e0e",
+      "name": "Customer ERP",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        0
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "erp1",
+              "name": "erp_number",
+              "value": "12884-07",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "k1",
+              "name": "Tenant_ID",
+              "value": "PASTE_YOUR_TENANT_ID_HERE",
+              "type": "string"
+            },
+            {
+              "id": "k2",
+              "name": "client_ID",
+              "value": "PASTE_YOUR_CLIENT_ID_HERE",
+              "type": "string"
+            },
+            {
+              "id": "k3",
+              "name": "Secret_ID",
+              "value": "PASTE_YOUR_BC_CLIENT_SECRET_HERE",
+              "type": "string"
+            },
+            {
+              "id": "k4",
+              "name": "Company_ID",
+              "value": "PASTE_YOUR_BC_COMPANY_ID_HERE",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "32bc389b-df3d-4376-98f6-d2394e34742f",
+      "name": "Keys",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        448,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://login.microsoftonline.com/{{ $json.Tenant_ID }}/oauth2/v2.0/token",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "grant_type",
+              "value": "client_credentials"
+            },
+            {
+              "name": "client_id",
+              "value": "={{ $json.client_ID }}"
+            },
+            {
+              "name": "client_secret",
+              "value": "={{ $json.Secret_ID }}"
+            },
+            {
+              "name": "scope",
+              "value": "https://api.businesscentral.dynamics.com/.default"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ee0e2cf8-a425-416c-8d27-c0c71c7675a6",
+      "name": "Get BC Token",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        672,
+        0
+      ]
+    },
+    {
+      "id": "bb768ab6-cab7-4f77-abbf-558e31f51eca",
+      "name": "Find HubSpot Company",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        896,
+        0
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "Tn5sRx1iMiIl1pkn",
+          "name": "BC to HubSpot"
+        }
+      },
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/companies/search",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  filterGroups: [{ filters: [{\n    propertyName: 'erp_account_number', operator: 'EQ',\n    value: $('Customer ERP').first().json.erp_number\n  }] }],\n  properties: ['hs_object_id', 'erp_account_number', 'name', 'ordering_status'],\n  limit: 1\n}) }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "b737c956-92aa-4a2d-8c3b-9a9571727388",
+      "name": "Fetch Last 10 Invoices",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1120,
+        0
+      ],
+      "parameters": {
+        "url": "=https://api.businesscentral.dynamics.com/v2.0/{{ $('Keys').first().json.Tenant_ID }}/production/api/v2.0/companies({{ $('Keys').first().json.Company_ID }})/salesInvoices",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "$filter",
+              "value": "={{ `customerNumber eq '${$('Customer ERP').first().json.erp_number}'` }}"
+            },
+            {
+              "name": "$select",
+              "value": "number,customerNumber,customerName,postingDate,totalAmountIncludingTax"
+            },
+            {
+              "name": "$orderby",
+              "value": "postingDate desc"
+            },
+            {
+              "name": "$top",
+              "value": "10"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Get BC Token').first().json.access_token }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "07e51287-f286-43c2-84ef-07b8ab807e06",
+      "name": "Calculate Metrics",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1568,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const invData        = $('Fetch Last 10 Invoices').first().json.value || [];\nconst ytdData        = $input.first().json.value || [];\nconst hsResult       = $('Find HubSpot Company').first().json.results?.[0];\n\nif (!hsResult) return [{ json: { error: 'HubSpot company not found for this ERP' } }];\n\nconst previousStatus = hsResult.properties?.ordering_status || null;\n\nconst DAY = 24 * 60 * 60 * 1000;\nconst today = new Date();\ntoday.setUTCHours(0, 0, 0, 0);\nconst todayMs = today.getTime();\n\nconst ytdSales = Math.round(ytdData.reduce((s, i) => s + (Number(i.totalAmountIncludingTax) || 0), 0) * 100) / 100;\n\n// No invoices \u2192 Not Ordered\nif (invData.length === 0) {\n  const props = { ordering_status: 'Not Ordered', actual_sales_ytd: ytdSales };\n  if ('Not Ordered' !== previousStatus) props.ordering_status_date_changed = null;\n  return [{ json: {\n    hsId: hsResult.id,\n    customerName: hsResult.properties?.name,\n    orderingStatus: 'Not Ordered',\n    hsUpdatePayload: props\n  } }];\n}\n\nconst invList = invData; // sorted desc, max 10\n\n// 1. Last invoice date (ms epoch for HubSpot)\nconst lastInvoiceDateStr = invList[0].postingDate;\nconst lastInvoiceDateMs  = new Date(lastInvoiceDateStr + 'T00:00:00Z').getTime();\n\n// 2. Avg order size\nconst avgOrderSize = Math.round(\n  (invList.reduce((s, i) => s + (Number(i.totalAmountIncludingTax) || 0), 0) / invList.length) * 100\n) / 100;\n\n// 3. Avg days between orders\nlet avgDaysBetweenOrders = null;\nconst sortedAsc = [...invList].sort((a, b) => new Date(a.postingDate) - new Date(b.postingDate));\nif (sortedAsc.length >= 2) {\n  const gaps = [];\n  for (let i = 1; i < sortedAsc.length; i++) {\n    gaps.push((new Date(sortedAsc[i].postingDate) - new Date(sortedAsc[i-1].postingDate)) / DAY);\n  }\n  avgDaysBetweenOrders = Math.round((gaps.reduce((s, g) => s + g, 0) / gaps.length) * 10) / 10;\n}\n\n// 4. Risk Day and Lost Day \u2014 whole days so timestamps land at midnight UTC\nlet riskDayMs, lostDayMs;\nif (avgDaysBetweenOrders !== null) {\n  const riskDays = Math.max(Math.round(avgDaysBetweenOrders * 2), 5);\n  const lostDays = Math.max(Math.round(avgDaysBetweenOrders * 3), 7);\n  riskDayMs = lastInvoiceDateMs + riskDays * DAY;\n  lostDayMs = lastInvoiceDateMs + lostDays * DAY;\n} else {\n  riskDayMs = lastInvoiceDateMs + 14 * DAY;\n  lostDayMs = lastInvoiceDateMs + 28 * DAY;\n}\n\n// 5. Ordering status\nlet newStatus;\nif      (todayMs >= lostDayMs) newStatus = 'Potentially Lost';\nelse if (todayMs >= riskDayMs) newStatus = 'Outside Ordering Pattern';\nelse                            newStatus = 'Actively Ordering';\n\n// 6. Date for when the customer entered this status tier\nlet statusDateMs;\nif      (newStatus === 'Potentially Lost')          statusDateMs = lostDayMs;\nelse if (newStatus === 'Outside Ordering Pattern')  statusDateMs = riskDayMs;\nelse                                                statusDateMs = lastInvoiceDateMs;\n\nconst props = {\n  last_invoice_date: lastInvoiceDateMs,\n  avg_order_size:    avgOrderSize,\n  ordering_status:   newStatus,\n  actual_sales_ytd:  ytdSales\n};\nif (avgDaysBetweenOrders !== null) props.avg_days_between_orders = avgDaysBetweenOrders;\n\n// Only write ordering_status_date_changed when the status actually transitions\nif (newStatus !== previousStatus) {\n  props.ordering_status_date_changed = statusDateMs;\n}\n\nreturn [{ json: {\n  hsId:                 hsResult.id,\n  customerName:         hsResult.properties?.name,\n  lastInvoiceDate:      lastInvoiceDateStr,\n  avgOrderSize,\n  avgDaysBetweenOrders,\n  invoiceCount:         invList.length,\n  previousStatus,\n  riskDay:              new Date(riskDayMs).toISOString().slice(0, 10),\n  lostDay:              new Date(lostDayMs).toISOString().slice(0, 10),\n  orderingStatus:       newStatus,\n  statusDate:           newStatus !== previousStatus ? new Date(statusDateMs).toISOString().slice(0, 10) : '(no change)',\n  hsUpdatePayload:      props\n} }];"
+      }
+    },
+    {
+      "id": "6acffdab-cb5d-4fa2-8317-ac17e44d1661",
+      "name": "Update HubSpot Company",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1568,
+        0
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "Tn5sRx1iMiIl1pkn",
+          "name": "BC to HubSpot"
+        }
+      },
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.hubapi.com/crm/v3/objects/companies/{{ $json.hsId }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ properties: $json.hsUpdatePayload }) }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "b3ec8d72-6228-4c58-b5a1-e1ea8c006355",
+      "name": "Fetch YTD Invoices",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1344,
+        0
+      ],
+      "parameters": {
+        "url": "=https://api.businesscentral.dynamics.com/v2.0/{{ $('Keys').first().json.Tenant_ID }}/production/api/v2.0/companies({{ $('Keys').first().json.Company_ID }})/salesInvoices",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "$filter",
+              "value": "={{ `customerNumber eq '${$('Customer ERP').first().json.erp_number}' and postingDate ge ${new Date().getFullYear()}-01-01` }}"
+            },
+            {
+              "name": "$select",
+              "value": "customerNumber,postingDate,totalAmountIncludingTax"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Get BC Token').first().json.access_token }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "When clicking 'Execute workflow'": {
+      "main": [
+        [
+          {
+            "node": "Customer ERP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Customer ERP": {
+      "main": [
+        [
+          {
+            "node": "Keys",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Keys": {
+      "main": [
+        [
+          {
+            "node": "Get BC Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get BC Token": {
+      "main": [
+        [
+          {
+            "node": "Find HubSpot Company",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find HubSpot Company": {
+      "main": [
+        [
+          {
+            "node": "Fetch Last 10 Invoices",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Last 10 Invoices": {
+      "main": [
+        [
+          {
+            "node": "Fetch YTD Invoices",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Metrics": {
+      "main": [
+        [
+          {
+            "node": "Update HubSpot Company",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch YTD Invoices": {
+      "main": [
+        [
+          {
+            "node": "Calculate Metrics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {},
+  "staticData": null
+}

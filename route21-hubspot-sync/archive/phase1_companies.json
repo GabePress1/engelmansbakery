@@ -1,0 +1,620 @@
+{
+  "name": "Phase 1 \u2013 BC \u2192 HubSpot Companies",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 6 * * 1-5"
+            }
+          ]
+        }
+      },
+      "id": "p1-0001",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -168
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "e3519675-6bf9-426e-ba94-cc5971935a04",
+      "name": "When clicking 'Execute workflow'",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        24
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "k1",
+              "name": "Tenant_ID",
+              "value": "PASTE_YOUR_BC_TENANT_ID_HERE",
+              "type": "string"
+            },
+            {
+              "id": "k2",
+              "name": "client_ID",
+              "value": "PASTE_YOUR_BC_CLIENT_ID_HERE",
+              "type": "string"
+            },
+            {
+              "id": "k3",
+              "name": "Secret_ID",
+              "value": "PASTE_YOUR_BC_CLIENT_SECRET_HERE",
+              "type": "string"
+            },
+            {
+              "id": "k4",
+              "name": "Company_ID",
+              "value": "PASTE_YOUR_BC_COMPANY_ID_HERE",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "p1-0002",
+      "name": "Keys",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        -48
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://login.microsoftonline.com/{{ $json.Tenant_ID }}/oauth2/v2.0/token",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "grant_type",
+              "value": "client_credentials"
+            },
+            {
+              "name": "client_id",
+              "value": "={{ $json.client_ID }}"
+            },
+            {
+              "name": "client_secret",
+              "value": "={{ $json.Secret_ID }}"
+            },
+            {
+              "name": "scope",
+              "value": "https://api.businesscentral.dynamics.com/.default"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "p1-0016",
+      "name": "Get BC Token",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        448,
+        -48
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst lastTimestamp = store.lastPhase1Run || '2000-01-01T00:00:00Z';\nconst runDate = new Date().toISOString();\nstore.lastPhase1Run = runDate;\n// Reset the created-this-run set so dedup guard starts fresh each execution\nstore.createdThisRun = {};\nreturn [{ json: { lastTimestamp, runDate } }];"
+      },
+      "id": "p1-0004",
+      "name": "Set Window",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        -48
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.businesscentral.dynamics.com/v2.0/{{ $('Keys').first().json.Tenant_ID }}/production/api/v2.0/companies({{ $('Keys').first().json.Company_ID }})/customers",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "$filter",
+              "value": "={{ `lastModifiedDateTime gt ${$('Set Window').first().json.lastTimestamp}` }}"
+            },
+            {
+              "name": "$select",
+              "value": "id,number,displayName,email,phoneNumber,addressLine1,addressLine2,city,state,postalCode,country,salespersonCode,creditLimit,blocked,lastModifiedDateTime"
+            },
+            {
+              "name": "$expand",
+              "value": "paymentTerm($select=code),paymentMethod($select=code)"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Get BC Token').first().json.access_token }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "p1-0006",
+      "name": "Fetch Changed BC Customers",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1344,
+        -48
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const customers = $input.first().json.value || [];\nif (customers.length === 0) return [{ json: { skipped: true, count: 0 } }];\nreturn customers.map(c => ({ json: c }));"
+      },
+      "id": "p1-0007",
+      "name": "Expand Customers",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1568,
+        -48
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const customers = $input.all().map(i => i.json);\nif (customers[0]?.skipped) return $input.all();\n\nconst chunkSize = 100;\nconst chunks = [];\nfor (let i = 0; i < customers.length; i += chunkSize) {\n  const slice = customers.slice(i, i + chunkSize);\n  chunks.push({ json: {\n    chunkCustomers: slice,\n    searchPayload: {\n      filterGroups: [{ filters: [{ propertyName: 'erp_account_number', operator: 'IN', values: slice.map(c => String(c.number)) }] }],\n      properties: ['hs_object_id', 'name', 'erp_account_number'],\n      limit: 100\n    }\n  }});\n}\nreturn chunks;"
+      },
+      "id": "p1-0019",
+      "name": "Build HubSpot Search Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1792,
+        -48
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/companies/search",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.searchPayload) }}",
+        "options": {}
+      },
+      "id": "p1-0020",
+      "name": "Search HubSpot Companies",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        2464,
+        -48
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "Tn5sRx1iMiIl1pkn",
+          "name": "BC to HubSpot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/companies/batch/update",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ inputs: $json.toUpdate }) }}",
+        "options": {}
+      },
+      "id": "p1-0022",
+      "name": "Batch Update Chunk",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        2912,
+        -48
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "Tn5sRx1iMiIl1pkn",
+          "name": "BC to HubSpot"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/companies/batch/create",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ inputs: $('Process Chunk').first().json.toCreate }) }}",
+        "options": {}
+      },
+      "id": "p1-0023",
+      "name": "Batch Create Chunk",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        3136,
+        -48
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "Tn5sRx1iMiIl1pkn",
+          "name": "BC to HubSpot"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const total = $('Expand Customers').all().filter(i => !i.json.skipped).length;\nreturn [{ json: { message: 'Phase 1 complete', totalCustomers: total } }];"
+      },
+      "id": "p1-0024",
+      "name": "Sync Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2240,
+        -240
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "p1-0025",
+      "name": "Loop Chunks",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        2016,
+        -48
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 1
+      },
+      "id": "p1-0026",
+      "name": "Wait 1s",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        3360,
+        24
+      ],
+      "webhookId": "rate-limit-wait"
+    },
+    {
+      "parameters": {
+        "jsCode": "const hsResults = $input.first().json.results || [];\nconst store = $getWorkflowStaticData('global');\nconst chunkCustomers  = store.currentChunkCustomers || [];\nconst shipToMap       = store.shipToMap || {};\nconst createdThisRun  = store.createdThisRun || {};\n\nconst hsMap = {};\nfor (const r of hsResults) {\n  const erpNum = r.properties?.erp_account_number;\n  if (erpNum) hsMap[String(erpNum)] = r.id;\n}\n\nfunction buildProps(c) {\n  const erpNum = String(c.number);\n  const ship   = shipToMap[erpNum] || {};\n  const bcBlocked = c.blocked && c.blocked.trim() && c.blocked.trim() !== '_x0020_';\n  const blocked = bcBlocked ? 'Blocked' : null;\n  const raw = {\n    erp_account_number:       erpNum,\n    name:                     c.displayName  || null,\n    phone:                    c.phoneNumber  || null,\n    // Billing address fields\n    billing_street_address:   c.addressLine1 || null,\n    billing_street_address_2: c.addressLine2 || null,\n    billing_city:             c.city         || null,\n    billing_state:            c.state        || null,\n    billing_postal_code:      c.postalCode   || null,\n    country:                  c.country      || null,\n    // Shipping address fields (from BC ship-to; blank if no ship-to record)\n    address:                  ship.address   || null,\n    address2:                 ship.address2  || null,\n    city:                     ship.city      || null,\n    zip:                      ship.zip       || null,\n    payment_terms_code:       c.paymentTerm?.code   || null,\n    payment_method_code:      c.paymentMethod?.code || null,\n    credit_limit:             c.creditLimit != null ? c.creditLimit : null,\n    blocked\n  };\n  const props = {};\n  for (const [k, v] of Object.entries(raw)) {\n    if (v !== null && v !== undefined && v !== '') props[k] = v;\n  }\n  return props;\n}\n\nconst toUpdate = [], toCreate = [];\nfor (const c of chunkCustomers) {\n  const erpNum = String(c.number);\n  const props  = buildProps(c);\n  if (hsMap[erpNum]) {\n    toUpdate.push({ id: hsMap[erpNum], properties: props });\n  } else if (!createdThisRun[erpNum]) {\n    toCreate.push({ properties: props });\n    createdThisRun[erpNum] = true;\n  }\n}\nstore.createdThisRun = createdThisRun;\n\nreturn [{ json: { toUpdate, toCreate } }];"
+      },
+      "id": "p1-0029",
+      "name": "Process Chunk",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2688,
+        -48
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const chunk = $input.first().json;\nconst store = $getWorkflowStaticData('global');\nstore.currentChunkCustomers = chunk.chunkCustomers;\n// Pass only searchPayload forward so Search HubSpot node gets a clean item\nreturn [{ json: { searchPayload: chunk.searchPayload } }];"
+      },
+      "id": "p1-0030",
+      "name": "Save Chunk",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2240,
+        -48
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.businesscentral.dynamics.com/v2.0/bddeba87-9d41-4063-a0e3-be9e6afcd2ba/Production/ODataV4/Company('Live-EB')/ShiptoAddressList",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "$select",
+              "value": "HFSCustomerNo,Code,Address,Address_2,City,Post_Code"
+            },
+            {
+              "name": "$top",
+              "value": "5000"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Get BC Token').first().json.access_token }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "bb3bbed5-0bc2-4a62-9fea-e36b0aa23229",
+      "name": "HTTP Request - Get All Ship-to Addresses",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        896,
+        -48
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build a map of customerNumber \u2192 first ship-to address\nconst rows = $input.first().json.value || [];\nconst store = $getWorkflowStaticData('global');\nconst shipToMap = {};\nfor (const row of rows) {\n  const custNo = String(row.HFSCustomerNo || '').trim();\n  if (custNo && !shipToMap[custNo]) {\n    shipToMap[custNo] = {\n      address:  row.Address   || null,\n      address2: row.Address_2 || null,\n      city:     row.City      || null,\n      zip:      row.Post_Code || null\n    };\n  }\n}\nstore.shipToMap = shipToMap;\nreturn [{ json: { shipToLoaded: Object.keys(shipToMap).length } }];"
+      },
+      "id": "p1-0031",
+      "name": "Store Ship-to Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        -48
+      ]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Keys",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking 'Execute workflow'": {
+      "main": [
+        [
+          {
+            "node": "Keys",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Keys": {
+      "main": [
+        [
+          {
+            "node": "Get BC Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get BC Token": {
+      "main": [
+        [
+          {
+            "node": "Set Window",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Window": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request - Get All Ship-to Addresses",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request - Get All Ship-to Addresses": {
+      "main": [
+        [
+          {
+            "node": "Store Ship-to Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Ship-to Data": {
+      "main": [
+        [
+          {
+            "node": "Fetch Changed BC Customers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Changed BC Customers": {
+      "main": [
+        [
+          {
+            "node": "Expand Customers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Expand Customers": {
+      "main": [
+        [
+          {
+            "node": "Build HubSpot Search Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build HubSpot Search Payload": {
+      "main": [
+        [
+          {
+            "node": "Loop Chunks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Chunks": {
+      "main": [
+        [
+          {
+            "node": "Sync Summary",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Save Chunk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Chunk": {
+      "main": [
+        [
+          {
+            "node": "Search HubSpot Companies",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search HubSpot Companies": {
+      "main": [
+        [
+          {
+            "node": "Process Chunk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Chunk": {
+      "main": [
+        [
+          {
+            "node": "Batch Update Chunk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Batch Update Chunk": {
+      "main": [
+        [
+          {
+            "node": "Batch Create Chunk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Batch Create Chunk": {
+      "main": [
+        [
+          {
+            "node": "Wait 1s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 1s": {
+      "main": [
+        [
+          {
+            "node": "Loop Chunks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

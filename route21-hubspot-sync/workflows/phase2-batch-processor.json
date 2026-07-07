@@ -1,0 +1,856 @@
+{
+  "updatedAt": "2026-06-29T21:09:04.386Z",
+  "createdAt": "2026-06-29T21:07:39.898Z",
+  "id": "AsnzZVH6SAtnTBsD",
+  "name": "Phase 2 \u2013 Batch Processor",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "using-fields-below",
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "companies",
+              "type": "array"
+            },
+            {
+              "name": "accessToken",
+              "type": "string"
+            },
+            {
+              "name": "tenantId",
+              "type": "string"
+            },
+            {
+              "name": "companyId",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "id": "sw-trigger",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $('Execute Workflow Trigger').first().json;\nconst companies = input.companies;\nconst filter = companies\n  .map(c => `customerNumber eq '${String(c.properties?.erp_account_number || '').replace(/'/g, \"''\")}'`)\n  .join(' or ');\nreturn [{ json: { invoiceFilter: filter, companies: companies } }];"
+      },
+      "id": "sw-filter",
+      "name": "Build Invoice Filter",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "id": "sw-wait2s",
+      "name": "Wait 2s",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        500,
+        300
+      ],
+      "webhookId": "222180c2-8090-41b1-92df-9ae2bb6b8a5d"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.businesscentral.dynamics.com/v2.0/{{ $('Execute Workflow Trigger').first().json.tenantId }}/production/api/v2.0/companies({{ $('Execute Workflow Trigger').first().json.companyId }})/salesInvoices",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "$filter",
+              "value": "={{ $json.invoiceFilter }}"
+            },
+            {
+              "name": "$select",
+              "value": "number,customerNumber,postingDate,totalAmountIncludingTax"
+            },
+            {
+              "name": "$orderby",
+              "value": "postingDate desc"
+            },
+            {
+              "name": "$top",
+              "value": "2000"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Execute Workflow Trigger').first().json.accessToken }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "sw-fetch-inv",
+      "name": "Fetch Invoices for Batch",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        750,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.businesscentral.dynamics.com/v2.0/{{ $('Execute Workflow Trigger').first().json.tenantId }}/production/api/v2.0/companies({{ $('Execute Workflow Trigger').first().json.companyId }})/salesInvoices",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "$filter",
+              "value": "={{ `(${$('Build Invoice Filter').first().json.invoiceFilter}) and postingDate ge ${new Date().getFullYear()}-01-01` }}"
+            },
+            {
+              "name": "$select",
+              "value": "customerNumber,postingDate,totalAmountIncludingTax"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Execute Workflow Trigger').first().json.accessToken }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "sw-fetch-ytd",
+      "name": "Fetch YTD Invoices",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1000,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const companies = $('Build Invoice Filter').first().json.companies;\nconst erpNumbers = companies\n  .map(c => String(c.properties?.erp_account_number || '').trim())\n  .filter(Boolean);\n\nreturn [{\n  json: {\n    filterGroups: [{\n      filters: [\n        { propertyName: 'dealstage',          operator: 'EQ',  value: 'closedwon' },\n        { propertyName: 'erp_account_number', operator: 'IN',  values: erpNumbers }\n      ]\n    }],\n    properties: ['erp_account_number', 'closedate'],\n    limit: 200\n  }\n}];"
+      },
+      "id": "sw-won-payload",
+      "name": "Build Won Deals Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/deals/search",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "id": "sw-fetch-deals",
+      "name": "Fetch Won Deals",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1500,
+        300
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "vxGS6a3iorMrt7wb",
+          "name": "HubSpot Service Key Production"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const invData   = $('Fetch Invoices for Batch').first().json.value || [];\nconst ytdData   = $('Fetch YTD Invoices').first().json.value || [];\nconst dealsData = $('Fetch Won Deals').first().json.results || [];\nconst currentBatch = $('Build Invoice Filter').first().json.companies;\n\nconst DAY = 24 * 60 * 60 * 1000;\nconst today = new Date();\ntoday.setUTCHours(0, 0, 0, 0);\nconst todayMs  = today.getTime();\nconst cutoffMs = new Date('2026-01-01T00:00:00Z').getTime();\n\n// Last-invoice map (desc from BC)\nconst byCustomer = {};\nfor (const inv of invData) {\n  const cust = String(inv.customerNumber || '');\n  if (!byCustomer[cust]) byCustomer[cust] = [];\n  byCustomer[cust].push(inv);\n}\n\n// YTD totals\nconst ytdByCustomer = {};\nfor (const inv of ytdData) {\n  const cust = String(inv.customerNumber || '');\n  ytdByCustomer[cust] = (ytdByCustomer[cust] || 0) + (Number(inv.totalAmountIncludingTax) || 0);\n}\n\n// Most-recent Closed Won deal close date per ERP (only those >= 2026-01-01)\nconst wonDealByErp = {};\nfor (const deal of dealsData) {\n  const erp     = String(deal.properties?.erp_account_number || '').trim();\n  const closeMs = deal.properties?.closedate\n    ? new Date(deal.properties.closedate).getTime() : null;\n  if (!erp || !closeMs || closeMs < cutoffMs) continue;\n  if (!wonDealByErp[erp] || closeMs > wonDealByErp[erp]) wonDealByErp[erp] = closeMs;\n}\n\nconst toUpdate = [];\nfor (const hsCompany of currentBatch) {\n  const erpNum         = String(hsCompany.properties?.erp_account_number || '').trim();\n  const hsId           = hsCompany.id;\n  const previousStatus = hsCompany.properties?.ordering_status || null;\n  if (!erpNum || !hsId) continue;\n\n  const ytdSales = Math.round((ytdByCustomer[erpNum] || 0) * 100) / 100;\n\n  // \u2500\u2500 First Invoice Date \u2500\u2500\n  const currentFirstInvMs = hsCompany.properties?.first_invoice_date\n    ? Number(hsCompany.properties.first_invoice_date) : null;\n  const wonDealCloseMs = wonDealByErp[erpNum] || null;\n\n  let firstInvoiceDateMs = null;\n  const shouldUpdate = wonDealCloseMs !== null\n    && (currentFirstInvMs === null || wonDealCloseMs > currentFirstInvMs);\n\n  if (shouldUpdate) {\n    const afterDeal = (byCustomer[erpNum] || [])\n      .filter(i => new Date(i.postingDate + 'T00:00:00Z').getTime() >= wonDealCloseMs)\n      .sort((a, b) => new Date(a.postingDate) - new Date(b.postingDate));\n    if (afterDeal.length > 0) {\n      firstInvoiceDateMs = new Date(afterDeal[0].postingDate + 'T00:00:00Z').getTime();\n    }\n  }\n\n  // \u2500\u2500 Ordering Status \u2500\u2500\n  const invList = (byCustomer[erpNum] || []).slice(0, 10);\n  if (invList.length === 0) {\n    const props = { ordering_status: 'Not Ordered', actual_sales_ytd: ytdSales };\n    if ('Not Ordered' !== previousStatus) props.ordering_status_date_changed = null;\n    if (firstInvoiceDateMs !== null) props.first_invoice_date = firstInvoiceDateMs;\n    toUpdate.push({ id: hsId, properties: props });\n    continue;\n  }\n\n  const lastInvoiceDateMs = new Date(invList[0].postingDate + 'T00:00:00Z').getTime();\n\n  // Single invoice: treat it as both first and last invoice\n  if (invList.length === 1 && firstInvoiceDateMs === null) {\n    firstInvoiceDateMs = lastInvoiceDateMs;\n  }\n\n  const avgOrderSize = Math.round(\n    (invList.reduce((s, i) => s + (Number(i.totalAmountIncludingTax) || 0), 0) / invList.length) * 100\n  ) / 100;\n\n  let avgDaysBetweenOrders = null;\n  const sortedAsc = [...invList].sort((a, b) => new Date(a.postingDate) - new Date(b.postingDate));\n  if (sortedAsc.length >= 2) {\n    const gaps = [];\n    for (let i = 1; i < sortedAsc.length; i++) {\n      gaps.push((new Date(sortedAsc[i].postingDate) - new Date(sortedAsc[i-1].postingDate)) / DAY);\n    }\n    avgDaysBetweenOrders = Math.round((gaps.reduce((s, g) => s + g, 0) / gaps.length) * 10) / 10;\n  }\n\n  let riskDayMs, lostDayMs;\n  if (avgDaysBetweenOrders !== null) {\n    const riskDays = Math.max(Math.round(avgDaysBetweenOrders * 2), 5);\n    const lostDays = Math.max(Math.round(avgDaysBetweenOrders * 3), 7);\n    riskDayMs = lastInvoiceDateMs + riskDays * DAY;\n    lostDayMs = lastInvoiceDateMs + lostDays * DAY;\n  } else {\n    riskDayMs = lastInvoiceDateMs + 14 * DAY;\n    lostDayMs = lastInvoiceDateMs + 28 * DAY;\n  }\n\n  let orderingStatus;\n  if      (todayMs >= lostDayMs) orderingStatus = 'Potentially Lost';\n  else if (todayMs >= riskDayMs) orderingStatus = 'Outside Ordering Pattern';\n  else                            orderingStatus = 'Actively Ordering';\n\n  let statusDateMs;\n  if      (orderingStatus === 'Potentially Lost')         statusDateMs = lostDayMs;\n  else if (orderingStatus === 'Outside Ordering Pattern') statusDateMs = riskDayMs;\n  else                                                    statusDateMs = lastInvoiceDateMs;\n\n  const props = {\n    last_invoice_date: lastInvoiceDateMs,\n    avg_order_size:    avgOrderSize,\n    ordering_status:   orderingStatus,\n    actual_sales_ytd:  ytdSales\n  };\n  if (avgDaysBetweenOrders !== null) props.avg_days_between_orders = avgDaysBetweenOrders;\n  if (orderingStatus !== previousStatus) props.ordering_status_date_changed = statusDateMs;\n  if (firstInvoiceDateMs !== null) props.first_invoice_date = firstInvoiceDateMs;\n\n  toUpdate.push({ id: hsId, properties: props });\n}\n\nreturn [{ json: { toUpdate, updateCount: toUpdate.length } }];"
+      },
+      "id": "sw-calc",
+      "name": "Calculate Metrics",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1750,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.updateCount }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "sw-has-updates",
+      "name": "Has Updates?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/companies/batch/update",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ inputs: $json.toUpdate }) }}",
+        "options": {}
+      },
+      "id": "sw-batch-update",
+      "name": "Batch Update HubSpot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        2250,
+        200
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "vxGS6a3iorMrt7wb",
+          "name": "HubSpot Service Key Production"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 1
+      },
+      "id": "sw-wait-after",
+      "name": "Wait After Batch",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2500,
+        200
+      ],
+      "webhookId": "4bc5abb1-21c4-4e41-8a21-aaae4724ba54"
+    }
+  ],
+  "connections": {
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "Build Invoice Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Invoice Filter": {
+      "main": [
+        [
+          {
+            "node": "Wait 2s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 2s": {
+      "main": [
+        [
+          {
+            "node": "Fetch Invoices for Batch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Invoices for Batch": {
+      "main": [
+        [
+          {
+            "node": "Fetch YTD Invoices",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch YTD Invoices": {
+      "main": [
+        [
+          {
+            "node": "Build Won Deals Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Won Deals Payload": {
+      "main": [
+        [
+          {
+            "node": "Fetch Won Deals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Won Deals": {
+      "main": [
+        [
+          {
+            "node": "Calculate Metrics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Metrics": {
+      "main": [
+        [
+          {
+            "node": "Has Updates?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Updates?": {
+      "main": [
+        [
+          {
+            "node": "Batch Update HubSpot",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Batch Update HubSpot": {
+      "main": [
+        [
+          {
+            "node": "Wait After Batch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": null,
+  "nodeGroups": [],
+  "pinData": null,
+  "versionId": "67495198-5306-4200-83fc-25a0bc734cf6",
+  "activeVersionId": "67495198-5306-4200-83fc-25a0bc734cf6",
+  "versionCounter": 2,
+  "triggerCount": 0,
+  "sourceWorkflowId": null,
+  "shared": [
+    {
+      "updatedAt": "2026-06-29T21:07:39.901Z",
+      "createdAt": "2026-06-29T21:07:39.901Z",
+      "role": "workflow:owner",
+      "workflowId": "AsnzZVH6SAtnTBsD",
+      "projectId": "1e9lFJJEtW8bxD6C",
+      "project": {
+        "updatedAt": "2026-05-12T18:27:58.798Z",
+        "createdAt": "2026-05-12T18:27:52.715Z",
+        "id": "1e9lFJJEtW8bxD6C",
+        "name": "Gabe Press <gpress@engelmansbakery.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e717323e-c35c-4f70-bb1d-233a634fca54"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-06-29T21:09:04.387Z",
+    "createdAt": "2026-06-29T21:09:04.387Z",
+    "versionId": "67495198-5306-4200-83fc-25a0bc734cf6",
+    "workflowId": "AsnzZVH6SAtnTBsD",
+    "nodes": [
+      {
+        "parameters": {
+          "inputSource": "using-fields-below",
+          "workflowInputs": {
+            "values": [
+              {
+                "name": "companies",
+                "type": "array"
+              },
+              {
+                "name": "accessToken",
+                "type": "string"
+              },
+              {
+                "name": "tenantId",
+                "type": "string"
+              },
+              {
+                "name": "companyId",
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "id": "sw-trigger",
+        "name": "Execute Workflow Trigger",
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "typeVersion": 1.1,
+        "position": [
+          0,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const input = $('Execute Workflow Trigger').first().json;\nconst companies = input.companies;\nconst filter = companies\n  .map(c => `customerNumber eq '${String(c.properties?.erp_account_number || '').replace(/'/g, \"''\")}'`)\n  .join(' or ');\nreturn [{ json: { invoiceFilter: filter, companies: companies } }];"
+        },
+        "id": "sw-filter",
+        "name": "Build Invoice Filter",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          250,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "amount": 2
+        },
+        "id": "sw-wait2s",
+        "name": "Wait 2s",
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          500,
+          300
+        ],
+        "webhookId": "222180c2-8090-41b1-92df-9ae2bb6b8a5d"
+      },
+      {
+        "parameters": {
+          "url": "=https://api.businesscentral.dynamics.com/v2.0/{{ $('Execute Workflow Trigger').first().json.tenantId }}/production/api/v2.0/companies({{ $('Execute Workflow Trigger').first().json.companyId }})/salesInvoices",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "$filter",
+                "value": "={{ $json.invoiceFilter }}"
+              },
+              {
+                "name": "$select",
+                "value": "number,customerNumber,postingDate,totalAmountIncludingTax"
+              },
+              {
+                "name": "$orderby",
+                "value": "postingDate desc"
+              },
+              {
+                "name": "$top",
+                "value": "2000"
+              }
+            ]
+          },
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "=Bearer {{ $('Execute Workflow Trigger').first().json.accessToken }}"
+              },
+              {
+                "name": "Accept",
+                "value": "application/json"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "sw-fetch-inv",
+        "name": "Fetch Invoices for Batch",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4,
+        "position": [
+          750,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "url": "=https://api.businesscentral.dynamics.com/v2.0/{{ $('Execute Workflow Trigger').first().json.tenantId }}/production/api/v2.0/companies({{ $('Execute Workflow Trigger').first().json.companyId }})/salesInvoices",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "$filter",
+                "value": "={{ `(${$('Build Invoice Filter').first().json.invoiceFilter}) and postingDate ge ${new Date().getFullYear()}-01-01` }}"
+              },
+              {
+                "name": "$select",
+                "value": "customerNumber,postingDate,totalAmountIncludingTax"
+              }
+            ]
+          },
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "=Bearer {{ $('Execute Workflow Trigger').first().json.accessToken }}"
+              },
+              {
+                "name": "Accept",
+                "value": "application/json"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "sw-fetch-ytd",
+        "name": "Fetch YTD Invoices",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4,
+        "position": [
+          1000,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const companies = $('Build Invoice Filter').first().json.companies;\nconst erpNumbers = companies\n  .map(c => String(c.properties?.erp_account_number || '').trim())\n  .filter(Boolean);\n\nreturn [{\n  json: {\n    filterGroups: [{\n      filters: [\n        { propertyName: 'dealstage',          operator: 'EQ',  value: 'closedwon' },\n        { propertyName: 'erp_account_number', operator: 'IN',  values: erpNumbers }\n      ]\n    }],\n    properties: ['erp_account_number', 'closedate'],\n    limit: 200\n  }\n}];"
+        },
+        "id": "sw-won-payload",
+        "name": "Build Won Deals Payload",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1250,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.hubapi.com/crm/v3/objects/deals/search",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "hubspotAppToken",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json) }}",
+          "options": {}
+        },
+        "id": "sw-fetch-deals",
+        "name": "Fetch Won Deals",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4,
+        "position": [
+          1500,
+          300
+        ],
+        "credentials": {
+          "hubspotAppToken": {
+            "id": "vxGS6a3iorMrt7wb",
+            "name": "HubSpot Service Key Production"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "const invData   = $('Fetch Invoices for Batch').first().json.value || [];\nconst ytdData   = $('Fetch YTD Invoices').first().json.value || [];\nconst dealsData = $('Fetch Won Deals').first().json.results || [];\nconst currentBatch = $('Build Invoice Filter').first().json.companies;\n\nconst DAY = 24 * 60 * 60 * 1000;\nconst today = new Date();\ntoday.setUTCHours(0, 0, 0, 0);\nconst todayMs  = today.getTime();\nconst cutoffMs = new Date('2026-01-01T00:00:00Z').getTime();\n\n// Last-invoice map (desc from BC)\nconst byCustomer = {};\nfor (const inv of invData) {\n  const cust = String(inv.customerNumber || '');\n  if (!byCustomer[cust]) byCustomer[cust] = [];\n  byCustomer[cust].push(inv);\n}\n\n// YTD totals\nconst ytdByCustomer = {};\nfor (const inv of ytdData) {\n  const cust = String(inv.customerNumber || '');\n  ytdByCustomer[cust] = (ytdByCustomer[cust] || 0) + (Number(inv.totalAmountIncludingTax) || 0);\n}\n\n// Most-recent Closed Won deal close date per ERP (only those >= 2026-01-01)\nconst wonDealByErp = {};\nfor (const deal of dealsData) {\n  const erp     = String(deal.properties?.erp_account_number || '').trim();\n  const closeMs = deal.properties?.closedate\n    ? new Date(deal.properties.closedate).getTime() : null;\n  if (!erp || !closeMs || closeMs < cutoffMs) continue;\n  if (!wonDealByErp[erp] || closeMs > wonDealByErp[erp]) wonDealByErp[erp] = closeMs;\n}\n\nconst toUpdate = [];\nfor (const hsCompany of currentBatch) {\n  const erpNum         = String(hsCompany.properties?.erp_account_number || '').trim();\n  const hsId           = hsCompany.id;\n  const previousStatus = hsCompany.properties?.ordering_status || null;\n  if (!erpNum || !hsId) continue;\n\n  const ytdSales = Math.round((ytdByCustomer[erpNum] || 0) * 100) / 100;\n\n  // \u2500\u2500 First Invoice Date \u2500\u2500\n  const currentFirstInvMs = hsCompany.properties?.first_invoice_date\n    ? Number(hsCompany.properties.first_invoice_date) : null;\n  const wonDealCloseMs = wonDealByErp[erpNum] || null;\n\n  let firstInvoiceDateMs = null;\n  const shouldUpdate = wonDealCloseMs !== null\n    && (currentFirstInvMs === null || wonDealCloseMs > currentFirstInvMs);\n\n  if (shouldUpdate) {\n    const afterDeal = (byCustomer[erpNum] || [])\n      .filter(i => new Date(i.postingDate + 'T00:00:00Z').getTime() >= wonDealCloseMs)\n      .sort((a, b) => new Date(a.postingDate) - new Date(b.postingDate));\n    if (afterDeal.length > 0) {\n      firstInvoiceDateMs = new Date(afterDeal[0].postingDate + 'T00:00:00Z').getTime();\n    }\n  }\n\n  // \u2500\u2500 Ordering Status \u2500\u2500\n  const invList = (byCustomer[erpNum] || []).slice(0, 10);\n  if (invList.length === 0) {\n    const props = { ordering_status: 'Not Ordered', actual_sales_ytd: ytdSales };\n    if ('Not Ordered' !== previousStatus) props.ordering_status_date_changed = null;\n    if (firstInvoiceDateMs !== null) props.first_invoice_date = firstInvoiceDateMs;\n    toUpdate.push({ id: hsId, properties: props });\n    continue;\n  }\n\n  const lastInvoiceDateMs = new Date(invList[0].postingDate + 'T00:00:00Z').getTime();\n\n  // Single invoice: treat it as both first and last invoice\n  if (invList.length === 1 && firstInvoiceDateMs === null) {\n    firstInvoiceDateMs = lastInvoiceDateMs;\n  }\n\n  const avgOrderSize = Math.round(\n    (invList.reduce((s, i) => s + (Number(i.totalAmountIncludingTax) || 0), 0) / invList.length) * 100\n  ) / 100;\n\n  let avgDaysBetweenOrders = null;\n  const sortedAsc = [...invList].sort((a, b) => new Date(a.postingDate) - new Date(b.postingDate));\n  if (sortedAsc.length >= 2) {\n    const gaps = [];\n    for (let i = 1; i < sortedAsc.length; i++) {\n      gaps.push((new Date(sortedAsc[i].postingDate) - new Date(sortedAsc[i-1].postingDate)) / DAY);\n    }\n    avgDaysBetweenOrders = Math.round((gaps.reduce((s, g) => s + g, 0) / gaps.length) * 10) / 10;\n  }\n\n  let riskDayMs, lostDayMs;\n  if (avgDaysBetweenOrders !== null) {\n    const riskDays = Math.max(Math.round(avgDaysBetweenOrders * 2), 5);\n    const lostDays = Math.max(Math.round(avgDaysBetweenOrders * 3), 7);\n    riskDayMs = lastInvoiceDateMs + riskDays * DAY;\n    lostDayMs = lastInvoiceDateMs + lostDays * DAY;\n  } else {\n    riskDayMs = lastInvoiceDateMs + 14 * DAY;\n    lostDayMs = lastInvoiceDateMs + 28 * DAY;\n  }\n\n  let orderingStatus;\n  if      (todayMs >= lostDayMs) orderingStatus = 'Potentially Lost';\n  else if (todayMs >= riskDayMs) orderingStatus = 'Outside Ordering Pattern';\n  else                            orderingStatus = 'Actively Ordering';\n\n  let statusDateMs;\n  if      (orderingStatus === 'Potentially Lost')         statusDateMs = lostDayMs;\n  else if (orderingStatus === 'Outside Ordering Pattern') statusDateMs = riskDayMs;\n  else                                                    statusDateMs = lastInvoiceDateMs;\n\n  const props = {\n    last_invoice_date: lastInvoiceDateMs,\n    avg_order_size:    avgOrderSize,\n    ordering_status:   orderingStatus,\n    actual_sales_ytd:  ytdSales\n  };\n  if (avgDaysBetweenOrders !== null) props.avg_days_between_orders = avgDaysBetweenOrders;\n  if (orderingStatus !== previousStatus) props.ordering_status_date_changed = statusDateMs;\n  if (firstInvoiceDateMs !== null) props.first_invoice_date = firstInvoiceDateMs;\n\n  toUpdate.push({ id: hsId, properties: props });\n}\n\nreturn [{ json: { toUpdate, updateCount: toUpdate.length } }];"
+        },
+        "id": "sw-calc",
+        "name": "Calculate Metrics",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1750,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 1
+            },
+            "conditions": [
+              {
+                "id": "c1",
+                "leftValue": "={{ $json.updateCount }}",
+                "rightValue": 0,
+                "operator": {
+                  "type": "number",
+                  "operation": "gt"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "sw-has-updates",
+        "name": "Has Updates?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          2000,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.hubapi.com/crm/v3/objects/companies/batch/update",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "hubspotAppToken",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ inputs: $json.toUpdate }) }}",
+          "options": {}
+        },
+        "id": "sw-batch-update",
+        "name": "Batch Update HubSpot",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4,
+        "position": [
+          2250,
+          200
+        ],
+        "credentials": {
+          "hubspotAppToken": {
+            "id": "vxGS6a3iorMrt7wb",
+            "name": "HubSpot Service Key Production"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "amount": 1
+        },
+        "id": "sw-wait-after",
+        "name": "Wait After Batch",
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          2500,
+          200
+        ],
+        "webhookId": "4bc5abb1-21c4-4e41-8a21-aaae4724ba54"
+      }
+    ],
+    "connections": {
+      "Execute Workflow Trigger": {
+        "main": [
+          [
+            {
+              "node": "Build Invoice Filter",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build Invoice Filter": {
+        "main": [
+          [
+            {
+              "node": "Wait 2s",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Wait 2s": {
+        "main": [
+          [
+            {
+              "node": "Fetch Invoices for Batch",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Fetch Invoices for Batch": {
+        "main": [
+          [
+            {
+              "node": "Fetch YTD Invoices",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Fetch YTD Invoices": {
+        "main": [
+          [
+            {
+              "node": "Build Won Deals Payload",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build Won Deals Payload": {
+        "main": [
+          [
+            {
+              "node": "Fetch Won Deals",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Fetch Won Deals": {
+        "main": [
+          [
+            {
+              "node": "Calculate Metrics",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Calculate Metrics": {
+        "main": [
+          [
+            {
+              "node": "Has Updates?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Has Updates?": {
+        "main": [
+          [
+            {
+              "node": "Batch Update HubSpot",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          []
+        ]
+      },
+      "Batch Update HubSpot": {
+        "main": [
+          [
+            {
+              "node": "Wait After Batch",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodeGroups": [],
+    "authors": "Gabe Press",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-06-29T21:09:13.851Z",
+        "id": 256,
+        "workflowId": "AsnzZVH6SAtnTBsD",
+        "versionId": "67495198-5306-4200-83fc-25a0bc734cf6",
+        "event": "activated",
+        "userId": "e717323e-c35c-4f70-bb1d-233a634fca54"
+      }
+    ]
+  }
+}
