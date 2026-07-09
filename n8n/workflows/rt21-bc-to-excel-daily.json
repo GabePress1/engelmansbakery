@@ -6,7 +6,6 @@
         "rule": {
           "interval": [
             {
-              "field": "days",
               "triggerAtHour": 6,
               "triggerAtMinute": 30
             }
@@ -19,14 +18,12 @@
       "typeVersion": 1.2,
       "position": [
         0,
-        -100
+        -224
       ]
     },
     {
       "parameters": {
-        "httpMethod": "GET",
         "path": "rt21-export-run",
-        "responseMode": "onReceived",
         "options": {}
       },
       "id": "rt21-webhook",
@@ -35,7 +32,7 @@
       "typeVersion": 2,
       "position": [
         0,
-        100
+        -32
       ],
       "webhookId": "rt21-export-run"
     },
@@ -48,8 +45,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        200,
-        0
+        224,
+        -32
       ]
     },
     {
@@ -85,13 +82,12 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        400,
-        0
+        448,
+        -32
       ]
     },
     {
       "parameters": {
-        "method": "GET",
         "url": "={{ 'https://api.businesscentral.dynamics.com/v2.0/bddeba87-9d41-4063-a0e3-be9e6afcd2ba/Production/ODataV4/Company(%27Live-EB%27)/Sales_Order_Excel?$top=19999&$select=No,Order_Date,Requested_Delivery_Date,Shipment_Date,Status,Sell_to_Customer_No,Sell_to_Customer_Name,Ship_to_Name,Ship_to_City,Shipping_Agent_Code,External_Document_No,Salesperson_Code,Location_Code,Completely_Shipped&$filter=' + encodeURIComponent(\"Shipping_Agent_Code eq 'RT 21' and Order_Date ge \" + $('Init').first().json.yearStart) }}",
         "sendHeaders": true,
         "headerParameters": {
@@ -109,13 +105,12 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        600,
-        0
+        672,
+        -32
       ]
     },
     {
       "parameters": {
-        "method": "GET",
         "url": "={{ 'https://api.businesscentral.dynamics.com/v2.0/bddeba87-9d41-4063-a0e3-be9e6afcd2ba/Production/ODataV4/Company(%27Live-EB%27)/Posted_Sales_Invoice_Excel?$top=19999&$select=No,Requested_Delivery_Date_SOD,Posting_Date,Due_Date,Order_No,Sell_to_Customer_No,Sell_to_Customer_Name,Ship_to_Name,Ship_to_City,Shipping_Agent_Code,External_Document_No,Salesperson_Code,Payment_Terms_Code,Location_Code&$filter=' + encodeURIComponent(\"Shipping_Agent_Code eq 'RT 21' and Posting_Date ge \" + $('Init').first().json.yearStart) }}",
         "sendHeaders": true,
         "headerParameters": {
@@ -133,8 +128,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        800,
-        0
+        896,
+        -32
       ]
     },
     {
@@ -146,13 +141,12 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1000,
-        0
+        1120,
+        -32
       ]
     },
     {
       "parameters": {
-        "batchSize": 1,
         "options": {}
       },
       "id": "rt21-loop-chunks",
@@ -160,13 +154,12 @@
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
       "position": [
-        1200,
-        0
+        1344,
+        -32
       ]
     },
     {
       "parameters": {
-        "method": "GET",
         "url": "={{ (() => { const k = $json.kind; const f = encodeURIComponent($json.filter); if (k === 'invoice') return 'https://api.businesscentral.dynamics.com/v2.0/bddeba87-9d41-4063-a0e3-be9e6afcd2ba/Production/ODataV4/Company(%27Live-EB%27)/Posted_Sales_Invoice_Lines_Excel?$top=19999&$select=Document_No,Line_No,Type,No,Description,Quantity,Unit_of_Measure_Code,Unit_Price,Line_Discount_Amount,Amount,Amount_Including_VAT,ERC_Posting_Date,Sell_to_Customer_No,Order_No&$filter=' + f; return 'https://api.businesscentral.dynamics.com/v2.0/bddeba87-9d41-4063-a0e3-be9e6afcd2ba/Production/ODataV4/Company(%27Live-EB%27)/Sales_Lines_Excel?$top=19999&$select=Document_No,Line_No,Type,No,Description,Quantity,Qty_to_Ship,Outstanding_Quantity,Unit_of_Measure_Code,Line_Amount,Shipment_Date,Location_Code,Sell_to_Customer_No&$filter=' + f; })() }}",
         "sendHeaders": true,
         "headerParameters": {
@@ -184,8 +177,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        1400,
-        100
+        1568,
+        -112
       ]
     },
     {
@@ -197,13 +190,12 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1600,
-        100
+        1792,
+        32
       ]
     },
     {
       "parameters": {
-        "method": "GET",
         "url": "={{ 'https://graph.microsoft.com/v1.0/drives/' + $('Init').first().json.driveId + '/items/' + $('Init').first().json.folderId + ':/' + $('Init').first().json.templateName + ':/content' }}",
         "authentication": "genericCredentialType",
         "genericAuthType": "oAuth2Api",
@@ -220,18 +212,18 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1400,
-        -150
+        1480,
+        120
       ],
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
       "credentials": {
         "oAuth2Api": {
           "id": "NdNx9ZJrAqeKJKtr",
           "name": "MS Graph - n8n BC Read (client credentials)"
         }
-      },
-      "retryOnFail": true,
-      "maxTries": 5,
-      "waitBetweenTries": 5000
+      }
     },
     {
       "parameters": {
@@ -249,24 +241,24 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1600,
-        -150
+        1660,
+        120
       ],
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
       "credentials": {
         "oAuth2Api": {
           "id": "NdNx9ZJrAqeKJKtr",
           "name": "MS Graph - n8n BC Read (client credentials)"
         }
       },
-      "onError": "continueRegularOutput",
-      "retryOnFail": true,
-      "maxTries": 5,
-      "waitBetweenTries": 5000
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ 'https://graph.microsoft.com/v1.0/drives/' + $('Init').first().json.driveId + '/items/' + $json.id + '/workbook/createSession' }}",
+        "url": "=https://graph.microsoft.com/v1.0/drives/{{ $json.driveId }}/items/{{ $json.fileId }}/workbook/createSession",
         "authentication": "genericCredentialType",
         "genericAuthType": "oAuth2Api",
         "sendBody": true,
@@ -279,7 +271,46 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1800,
+        2020,
+        -150
+      ],
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "oAuth2Api": {
+          "id": "NdNx9ZJrAqeKJKtr",
+          "name": "MS Graph - n8n BC Read (client credentials)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global').rt21;\nreturn [{ json: {\n  success: true,\n  orders: store.orders.length,\n  orderLines: store.orderLines.length,\n  invoices: store.invoices.length,\n  invoiceLines: store.invoiceLines.length,\n  combined: store.combinedCount,\n  file: 'RT21_Orders_and_Invoices.xlsx'\n} }];"
+      },
+      "id": "rt21-summary",
+      "name": "Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4256,
+        -352
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://graph.microsoft.com/v1.0/drives/{{ $('Init').first().json.driveId }}/items/{{ $('Init').first().json.folderId }}:/{{ $('Init').first().json.fileName }}:",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "options": {}
+      },
+      "id": "rt21-getfile",
+      "name": "Get Working File",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1300,
         -150
       ],
       "credentials": {
@@ -288,20 +319,88 @@
           "name": "MS Graph - n8n BC Read (client credentials)"
         }
       },
-      "retryOnFail": true,
-      "maxTries": 5,
-      "waitBetweenTries": 5000
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
-        "jsCode": "const store = $getWorkflowStaticData('global').rt21;\nconst init = $('Init').first().json;\nconst fileId = $('Get Working File').first().json.id;\nconst sessionId = $('Create Session').first().json.id;\nstore.fileId = fileId;\nstore.sessionId = sessionId;\nconst colLetter = (n) => { let s = ''; while (n > 0) { const m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); } return s; };\n\n// Build the Combined (pivot-ready) dataset: Item lines only\nconst statusByOrder = {};\nconst reqDateByOrder = {};\nfor (const o of store.orders) { statusByOrder[o.No] = o.Status || 'Open'; reqDateByOrder[o.No] = o.Requested_Delivery_Date || ''; }\nconst custNameByOrder = {};\nfor (const o of store.orders) custNameByOrder[o.No] = o.Sell_to_Customer_Name || '';\nconst custNameByInvoice = {};\nconst postDateByInvoice = {};\nfor (const v of store.invoices) { postDateByInvoice[v.No] = v.Requested_Delivery_Date_SOD || v.Posting_Date || ''; custNameByInvoice[v.No] = v.Sell_to_Customer_Name || ''; }\nconst combined = [];\nfor (const l of store.orderLines) {\n  if (l.Type !== 'Item') continue;\n  const qty = Number(l.Quantity) || 0;\n  const out = Number(l.Outstanding_Quantity) || 0;\n  const up = qty > 0 ? Math.round(((Number(l.Line_Amount) || 0) / qty) * 10000) / 10000 : '';\n  combined.push({\n    'SO Number': l.Document_No,\n    'Status': statusByOrder[l.Document_No] || 'Open',\n    'Requested_Delivery_Date': reqDateByOrder[l.Document_No] || l.Shipment_Date || '',\n    'No': l.No,\n    'Description': l.Description,\n    'Quantity': out,\n    'Unit Price': up,\n    'Line_Amount': up === '' ? 0 : Math.round(up * out * 100) / 100,\n    'Sell_to_Customer_No': l.Sell_to_Customer_No,\n    'Sell_to_Customer_Name': l.Sell_to_Customer_Name || custNameByOrder[l.Document_No] || ''\n  });\n}\nfor (const l of store.invoiceLines) {\n  if (l.Type !== 'Item') continue;\n  combined.push({\n    'SO Number': l.Order_No || l.Document_No,\n    'Status': 'Invoiced',\n    'Requested_Delivery_Date': postDateByInvoice[l.Document_No] || l.ERC_Posting_Date || '',\n    'No': l.No,\n    'Description': l.Description,\n    'Quantity': Number(l.Quantity) || 0,\n    'Unit Price': l.Unit_Price,\n    'Line_Amount': l.Amount,\n    'Sell_to_Customer_No': l.Sell_to_Customer_No,\n    'Sell_to_Customer_Name': l.Sell_to_Customer_Name || custNameByInvoice[l.Document_No] || ''\n  });\n}\nstore.combinedCount = combined.length;\n\nconst sheets = [\n  { sheet: 'Sales Orders',  rows: store.orders,       cols: [\"No\", \"Order_Date\", \"Requested_Delivery_Date\", \"Shipment_Date\", \"Status\", \"Sell_to_Customer_No\", \"Sell_to_Customer_Name\", \"Ship_to_Name\", \"Ship_to_City\", \"Shipping_Agent_Code\", \"External_Document_No\", \"Salesperson_Code\", \"Location_Code\", \"Completely_Shipped\"] },\n  { sheet: 'Order Lines',   rows: store.orderLines,   cols: [\"Document_No\", \"Line_No\", \"Type\", \"No\", \"Description\", \"Quantity\", \"Qty_to_Ship\", \"Outstanding_Quantity\", \"Unit_of_Measure_Code\", \"Line_Amount\", \"Shipment_Date\", \"Location_Code\", \"Sell_to_Customer_No\"] },\n  { sheet: 'Invoices',      rows: store.invoices,     cols: [\"No\", \"Posting_Date\", \"Due_Date\", \"Order_No\", \"Sell_to_Customer_No\", \"Sell_to_Customer_Name\", \"Ship_to_Name\", \"Ship_to_City\", \"Shipping_Agent_Code\", \"External_Document_No\", \"Salesperson_Code\", \"Payment_Terms_Code\", \"Location_Code\"] },\n  { sheet: 'Invoice Lines', rows: store.invoiceLines, cols: [\"Document_No\", \"Line_No\", \"Type\", \"No\", \"Description\", \"Quantity\", \"Unit_of_Measure_Code\", \"Unit_Price\", \"Line_Discount_Amount\", \"Amount\", \"Amount_Including_VAT\", \"ERC_Posting_Date\", \"Sell_to_Customer_No\", \"Order_No\"] },\n  { sheet: 'Combined',      rows: combined,           cols: [\"SO Number\", \"Status\", \"Requested_Delivery_Date\", \"No\", \"Description\", \"Quantity\", \"Unit Price\", \"Line_Amount\", \"Sell_to_Customer_No\", \"Sell_to_Customer_Name\"] }\n];\nconst items = [];\nconst CH = 1000;\nfor (const s of sheets) {\n  const width = s.cols.length;\n  const dataRows = s.rows.map(r => s.cols.map(c => { const v = r[c]; return (v === null || v === undefined) ? '' : v; }));\n  const all = [s.cols, ...dataRows];\n  store.sheetRanges[s.sheet] = { address: 'A1:' + colLetter(width) + all.length, rows: dataRows.length };\n  for (let i = 0; i < all.length; i += CH) {\n    const slice = all.slice(i, i + CH);\n    items.push({ json: { sheet: s.sheet, address: 'A' + (i + 1) + ':' + colLetter(width) + (i + slice.length), values: slice, fileId, sessionId, driveId: init.driveId } });\n  }\n}\nreturn items;"
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "fe",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
       },
-      "id": "rt21-prep-writes",
-      "name": "Prepare Write Chunks",
+      "id": "rt21-fileexists",
+      "name": "File Exists?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1480,
+        -150
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://graph.microsoft.com/v1.0/drives/{{ $('Init').first().json.driveId }}/items/{{ $('Init').first().json.folderId }}:/{{ $('Init').first().json.fileName }}:",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "options": {}
+      },
+      "id": "rt21-getfile2",
+      "name": "Get Working File After Create",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1660,
+        0
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "NdNx9ZJrAqeKJKtr",
+          "name": "MS Graph - n8n BC Read (client credentials)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const init=$('Init').first().json;\nreturn [{ json: { fileId: $json.id, driveId: init.driveId } }];"
+      },
+      "id": "rt21-resolve",
+      "name": "Resolve File",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2000,
+        1840,
+        -150
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global').rt21;\nconst init = $('Init').first().json;\nconst fileId = $('Resolve File').first().json.fileId;\nconst sessionId = $('Create Session').first().json.id;\nconst driveId = init.driveId;\nstore.fileId = fileId; store.sessionId = sessionId;\nconst colLetter = (n) => { let s=''; while(n>0){const m=(n-1)%26; s=String.fromCharCode(65+m)+s; n=Math.floor((n-1)/26);} return s; };\n\nconst statusByOrder={}, reqDateByOrder={}, custNameByOrder={};\nfor (const o of store.orders){ statusByOrder[o.No]=o.Status||'Open'; reqDateByOrder[o.No]=o.Requested_Delivery_Date||''; custNameByOrder[o.No]=o.Sell_to_Customer_Name||''; }\nconst postDateByInvoice={}, custNameByInvoice={};\nfor (const v of store.invoices){ postDateByInvoice[v.No]=v.Requested_Delivery_Date_SOD||v.Posting_Date||''; custNameByInvoice[v.No]=v.Sell_to_Customer_Name||''; }\nconst combined=[];\nfor (const l of store.orderLines){ if(l.Type!=='Item') continue; const qty=Number(l.Quantity)||0; const out=Number(l.Outstanding_Quantity)||0; const up=qty>0?Math.round(((Number(l.Line_Amount)||0)/qty)*10000)/10000:''; combined.push({ 'SO Number':l.Document_No, 'Status':statusByOrder[l.Document_No]||'Open', 'Requested_Delivery_Date':reqDateByOrder[l.Document_No]||l.Shipment_Date||'', 'No':l.No, 'Description':l.Description, 'Quantity':out, 'Unit Price':up, 'Line_Amount': up===''?0:Math.round(up*out*100)/100, 'Sell_to_Customer_No':l.Sell_to_Customer_No, 'Sell_to_Customer_Name':l.Sell_to_Customer_Name||custNameByOrder[l.Document_No]||'' }); }\nfor (const l of store.invoiceLines){ if(l.Type!=='Item') continue; combined.push({ 'SO Number':l.Order_No||l.Document_No, 'Status':'Invoiced', 'Requested_Delivery_Date':postDateByInvoice[l.Document_No]||l.ERC_Posting_Date||'', 'No':l.No, 'Description':l.Description, 'Quantity':Number(l.Quantity)||0, 'Unit Price':l.Unit_Price, 'Line_Amount':l.Amount, 'Sell_to_Customer_No':l.Sell_to_Customer_No, 'Sell_to_Customer_Name':l.Sell_to_Customer_Name||custNameByInvoice[l.Document_No]||'' }); }\nstore.combinedCount = combined.length;\n\nconst sheets = [\n  { sheet:'Sales Orders',  table:'Table1',   rows:store.orders,       cols:[\"No\", \"Order_Date\", \"Requested_Delivery_Date\", \"Shipment_Date\", \"Status\", \"Sell_to_Customer_No\", \"Sell_to_Customer_Name\", \"Ship_to_Name\", \"Ship_to_City\", \"Shipping_Agent_Code\", \"External_Document_No\", \"Salesperson_Code\", \"Location_Code\", \"Completely_Shipped\"] },\n  { sheet:'Order Lines',   table:'Table2',   rows:store.orderLines,   cols:[\"Document_No\", \"Line_No\", \"Type\", \"No\", \"Description\", \"Quantity\", \"Qty_to_Ship\", \"Outstanding_Quantity\", \"Unit_of_Measure_Code\", \"Line_Amount\", \"Shipment_Date\", \"Location_Code\", \"Sell_to_Customer_No\"] },\n  { sheet:'Invoices',      table:'Table3',   rows:store.invoices,     cols:[\"No\", \"Posting_Date\", \"Due_Date\", \"Order_No\", \"Sell_to_Customer_No\", \"Sell_to_Customer_Name\", \"Ship_to_Name\", \"Ship_to_City\", \"Shipping_Agent_Code\", \"External_Document_No\", \"Salesperson_Code\", \"Payment_Terms_Code\", \"Location_Code\"] },\n  { sheet:'Invoice Lines', table:'Table4',   rows:store.invoiceLines, cols:[\"Document_No\", \"Line_No\", \"Type\", \"No\", \"Description\", \"Quantity\", \"Unit_of_Measure_Code\", \"Unit_Price\", \"Line_Discount_Amount\", \"Amount\", \"Amount_Including_VAT\", \"ERC_Posting_Date\", \"Sell_to_Customer_No\", \"Order_No\"] },\n  { sheet:'Combined',      table:'Combined', rows:combined,           cols:[\"SO Number\", \"Status\", \"Requested_Delivery_Date\", \"No\", \"Description\", \"Quantity\", \"Unit Price\", \"Line_Amount\", \"Sell_to_Customer_No\", \"Sell_to_Customer_Name\"] }\n];\nconst ops=[]; const CH=1000;\nfor (const s of sheets){\n  const width=s.cols.length;\n  const dataRows=s.rows.map(r=>s.cols.map(c=>{const v=r[c]; return (v===null||v===undefined)?'':v;}));\n  const all=[s.cols, ...dataRows];\n  const fullAddr='A1:'+colLetter(width)+all.length;\n  ops.push({ op:'deleteSheet', sheet:s.sheet, driveId, fileId, sessionId });\n  ops.push({ op:'addSheet', sheet:s.sheet, driveId, fileId, sessionId });\n  for (let i=0;i<all.length;i+=CH){ const slice=all.slice(i,i+CH); ops.push({ op:'write', sheet:s.sheet, address:'A'+(i+1)+':'+colLetter(width)+(i+slice.length), values:slice, driveId, fileId, sessionId }); }\n  ops.push({ op:'addTable', sheet:s.sheet, address:fullAddr, tableName:s.table, driveId, fileId, sessionId });\n}\nreturn ops.map(o=>({json:o}));"
+      },
+      "id": "rt21-prep-ops",
+      "name": "Prepare Ops",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2200,
         -150
       ]
     },
@@ -310,19 +409,198 @@
         "batchSize": 1,
         "options": {}
       },
-      "id": "rt21-loop-writes",
-      "name": "Loop Writes",
+      "id": "rt21-loop-ops",
+      "name": "Loop Ops",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
       "position": [
-        2200,
+        2400,
         -150
       ]
     },
     {
       "parameters": {
+        "mode": "rules",
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "o1",
+                    "leftValue": "={{ $json.op }}",
+                    "rightValue": "deleteSheet",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": false
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "o2",
+                    "leftValue": "={{ $json.op }}",
+                    "rightValue": "addSheet",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": false
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "o3",
+                    "leftValue": "={{ $json.op }}",
+                    "rightValue": "write",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": false
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "o4",
+                    "leftValue": "={{ $json.op }}",
+                    "rightValue": "addTable",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": false
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "rt21-switch",
+      "name": "Route Op",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [
+        2600,
+        -150
+      ]
+    },
+    {
+      "parameters": {
+        "method": "DELETE",
+        "url": "=https://graph.microsoft.com/v1.0/drives/{{ $json.driveId }}/items/{{ $json.fileId }}/workbook/worksheets('{{ encodeURIComponent($json.sheet) }}')",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "workbook-session-id",
+              "value": "={{ $json.sessionId }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "rt21-del-sheet",
+      "name": "Delete Sheet",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2820,
+        -320
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "NdNx9ZJrAqeKJKtr",
+          "name": "MS Graph - n8n BC Read (client credentials)"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.microsoft.com/v1.0/drives/{{ $json.driveId }}/items/{{ $json.fileId }}/workbook/worksheets/add",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "workbook-session-id",
+              "value": "={{ $json.sessionId }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ name: $json.sheet }) }}",
+        "options": {}
+      },
+      "id": "rt21-add-sheet",
+      "name": "Add Sheet",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2820,
+        -200
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "NdNx9ZJrAqeKJKtr",
+          "name": "MS Graph - n8n BC Read (client credentials)"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
         "method": "PATCH",
-        "url": "={{ 'https://graph.microsoft.com/v1.0/drives/' + $json.driveId + '/items/' + $json.fileId + \"/workbook/worksheets('\" + encodeURIComponent($json.sheet) + \"')/range(address='\" + $json.address + \"')\" }}",
+        "url": "=https://graph.microsoft.com/v1.0/drives/{{ $json.driveId }}/items/{{ $json.fileId }}/workbook/worksheets('{{ encodeURIComponent($json.sheet) }}')/range(address='{{ $json.address }}')",
         "authentication": "genericCredentialType",
         "genericAuthType": "oAuth2Api",
         "sendHeaders": true,
@@ -339,55 +617,25 @@
         "jsonBody": "={{ JSON.stringify({ values: $json.values }) }}",
         "options": {}
       },
-      "id": "rt21-write-range",
+      "id": "rt21-write",
       "name": "Write Range",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2400,
-        -50
+        2820,
+        -80
       ],
       "credentials": {
         "oAuth2Api": {
           "id": "NdNx9ZJrAqeKJKtr",
           "name": "MS Graph - n8n BC Read (client credentials)"
         }
-      },
-      "retryOnFail": true,
-      "maxTries": 5,
-      "waitBetweenTries": 5000
-    },
-    {
-      "parameters": {
-        "jsCode": "const store = $getWorkflowStaticData('global').rt21;\nconst init = $('Init').first().json;\nconst items = [];\nfor (const [sheet, r] of Object.entries(store.sheetRanges)) {\n  if (r.rows > 0) items.push({ json: { sheet, address: r.address, driveId: init.driveId, fileId: store.fileId, sessionId: store.sessionId } });\n}\nif (items.length === 0) items.push({ json: { sheet: 'Sales Orders', address: 'A1:A1', driveId: init.driveId, fileId: store.fileId, sessionId: store.sessionId } });\nreturn items;"
-      },
-      "id": "rt21-prep-tables",
-      "name": "Prepare Tables",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        2400,
-        -250
-      ]
-    },
-    {
-      "parameters": {
-        "batchSize": 1,
-        "options": {}
-      },
-      "id": "rt21-loop-tables",
-      "name": "Loop Tables",
-      "type": "n8n-nodes-base.splitInBatches",
-      "typeVersion": 3,
-      "position": [
-        2600,
-        -250
-      ]
+      }
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ 'https://graph.microsoft.com/v1.0/drives/' + $json.driveId + '/items/' + $json.fileId + \"/workbook/worksheets('\" + encodeURIComponent($json.sheet) + \"')/tables/add\" }}",
+        "url": "=https://graph.microsoft.com/v1.0/drives/{{ $json.driveId }}/items/{{ $json.fileId }}/workbook/worksheets('{{ encodeURIComponent($json.sheet) }}')/tables/add",
         "authentication": "genericCredentialType",
         "genericAuthType": "oAuth2Api",
         "sendHeaders": true,
@@ -409,178 +657,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2800,
-        -150
-      ],
-      "credentials": {
-        "oAuth2Api": {
-          "id": "NdNx9ZJrAqeKJKtr",
-          "name": "MS Graph - n8n BC Read (client credentials)"
-        }
-      },
-      "onError": "continueRegularOutput",
-      "retryOnFail": true,
-      "maxTries": 5,
-      "waitBetweenTries": 5000
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "={{ 'https://graph.microsoft.com/v1.0/drives/' + $('Prepare Write Chunks').first().json.driveId + '/items/' + $('Prepare Write Chunks').first().json.fileId + '/workbook/closeSession' }}",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "oAuth2Api",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "workbook-session-id",
-              "value": "={{ $('Prepare Write Chunks').first().json.sessionId }}"
-            }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({}) }}",
-        "options": {}
-      },
-      "id": "rt21-close-session",
-      "name": "Close Session",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        2800,
-        -350
-      ],
-      "credentials": {
-        "oAuth2Api": {
-          "id": "NdNx9ZJrAqeKJKtr",
-          "name": "MS Graph - n8n BC Read (client credentials)"
-        }
-      },
-      "retryOnFail": true,
-      "maxTries": 5,
-      "waitBetweenTries": 5000
-    },
-    {
-      "parameters": {
-        "jsCode": "const store = $getWorkflowStaticData('global').rt21;\nreturn [{ json: {\n  success: true,\n  orders: store.orders.length,\n  orderLines: store.orderLines.length,\n  invoices: store.invoices.length,\n  invoiceLines: store.invoiceLines.length,\n  combined: store.combinedCount,\n  file: 'RT21_Orders_and_Invoices.xlsx'\n} }];"
-      },
-      "id": "rt21-summary",
-      "name": "Summary",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        3000,
-        -350
-      ]
-    },
-    {
-      "parameters": {
-        "method": "DELETE",
-        "url": "={{ 'https://graph.microsoft.com/v1.0/drives/' + $('Init').first().json.driveId + '/items/' + $('Init').first().json.folderId + ':/' + $('Init').first().json.fileName + ':' }}",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "oAuth2Api",
-        "options": {}
-      },
-      "id": "rt21-delete-old",
-      "name": "Delete Old File",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        1300,
-        -150
-      ],
-      "credentials": {
-        "oAuth2Api": {
-          "id": "NdNx9ZJrAqeKJKtr",
-          "name": "MS Graph - n8n BC Read (client credentials)"
-        }
-      },
-      "onError": "continueRegularOutput",
-      "retryOnFail": true,
-      "maxTries": 5,
-      "waitBetweenTries": 5000
-    },
-    {
-      "parameters": {
-        "method": "GET",
-        "url": "={{ 'https://graph.microsoft.com/v1.0/drives/' + $('Init').first().json.driveId + '/items/' + $('Init').first().json.folderId + ':/' + $('Init').first().json.fileName + ':' }}",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "oAuth2Api",
-        "options": {}
-      },
-      "id": "rt21-get-file",
-      "name": "Get Working File",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        1700,
-        -150
-      ],
-      "credentials": {
-        "oAuth2Api": {
-          "id": "NdNx9ZJrAqeKJKtr",
-          "name": "MS Graph - n8n BC Read (client credentials)"
-        }
-      },
-      "retryOnFail": true,
-      "maxTries": 5,
-      "waitBetweenTries": 5000
-    },
-    {
-      "parameters": {
-        "jsCode": "const init = $('Init').first().json;\nconst fileId = $('Get Working File').first().json.id;\nconst sessionId = $json.id;\nconst names = ['Sales Orders', 'Order Lines', 'Invoices', 'Invoice Lines', 'Combined'];\nreturn names.map(name => ({ json: { name, driveId: init.driveId, fileId, sessionId } }));"
-      },
-      "id": "rt21-list-sheets",
-      "name": "List Required Sheets",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        1850,
-        -280
-      ]
-    },
-    {
-      "parameters": {
-        "batchSize": 1,
-        "options": {}
-      },
-      "id": "rt21-loop-sheets",
-      "name": "Loop Sheets",
-      "type": "n8n-nodes-base.splitInBatches",
-      "typeVersion": 3,
-      "position": [
-        1950,
-        -280
-      ]
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "={{ 'https://graph.microsoft.com/v1.0/drives/' + $json.driveId + '/items/' + $json.fileId + '/workbook/worksheets/add' }}",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "oAuth2Api",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "workbook-session-id",
-              "value": "={{ $json.sessionId }}"
-            }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ name: $json.name }) }}",
-        "options": {}
-      },
-      "id": "rt21-add-sheet",
-      "name": "Add Sheet If Missing",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        2050,
-        -200
+        2820,
+        60
       ],
       "credentials": {
         "oAuth2Api": {
@@ -589,6 +667,77 @@
         }
       },
       "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://graph.microsoft.com/v1.0/drives/{{ $('Loop Ops').first().json.driveId }}/items/{{ $('Loop Ops').first().json.fileId }}/workbook/tables/{{ $json.id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "workbook-session-id",
+              "value": "={{ $('Loop Ops').first().json.sessionId }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ name: $('Loop Ops').first().json.tableName }) }}",
+        "options": {}
+      },
+      "id": "rt21-rename-table",
+      "name": "Rename Table",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3040,
+        60
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "NdNx9ZJrAqeKJKtr",
+          "name": "MS Graph - n8n BC Read (client credentials)"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.microsoft.com/v1.0/drives/{{ $('Resolve File').first().json.driveId }}/items/{{ $('Resolve File').first().json.fileId }}/workbook/closeSession",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "workbook-session-id",
+              "value": "={{ $('Create Session').first().json.id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({}) }}",
+        "options": {}
+      },
+      "id": "rt21-close",
+      "name": "Close Session",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2820,
+        -440
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "NdNx9ZJrAqeKJKtr",
+          "name": "MS Graph - n8n BC Read (client credentials)"
+        }
+      }
     }
   ],
   "connections": {
@@ -673,7 +822,7 @@
       "main": [
         [
           {
-            "node": "Delete Old File",
+            "node": "Get Working File",
             "type": "main",
             "index": 0
           }
@@ -709,6 +858,35 @@
         ]
       ]
     },
+    "Get Working File": {
+      "main": [
+        [
+          {
+            "node": "File Exists?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "File Exists?": {
+      "main": [
+        [
+          {
+            "node": "Resolve File",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Template",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "Get Template": {
       "main": [
         [
@@ -724,7 +902,29 @@
       "main": [
         [
           {
-            "node": "Get Working File",
+            "node": "Get Working File After Create",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Working File After Create": {
+      "main": [
+        [
+          {
+            "node": "Resolve File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolve File": {
+      "main": [
+        [
+          {
+            "node": "Create Session",
             "type": "main",
             "index": 0
           }
@@ -735,29 +935,54 @@
       "main": [
         [
           {
-            "node": "List Required Sheets",
+            "node": "Prepare Ops",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Prepare Write Chunks": {
+    "Prepare Ops": {
       "main": [
         [
           {
-            "node": "Loop Writes",
+            "node": "Loop Ops",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Loop Writes": {
+    "Loop Ops": {
       "main": [
         [
           {
-            "node": "Prepare Tables",
+            "node": "Close Session",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Route Op",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route Op": {
+      "main": [
+        [
+          {
+            "node": "Delete Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Add Sheet",
             "type": "main",
             "index": 0
           }
@@ -765,39 +990,6 @@
         [
           {
             "node": "Write Range",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Write Range": {
-      "main": [
-        [
-          {
-            "node": "Loop Writes",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Prepare Tables": {
-      "main": [
-        [
-          {
-            "node": "Loop Tables",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Loop Tables": {
-      "main": [
-        [
-          {
-            "node": "Close Session",
             "type": "main",
             "index": 0
           }
@@ -811,11 +1003,55 @@
         ]
       ]
     },
+    "Delete Sheet": {
+      "main": [
+        [
+          {
+            "node": "Loop Ops",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add Sheet": {
+      "main": [
+        [
+          {
+            "node": "Loop Ops",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write Range": {
+      "main": [
+        [
+          {
+            "node": "Loop Ops",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "Add Table": {
       "main": [
         [
           {
-            "node": "Loop Tables",
+            "node": "Rename Table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rename Table": {
+      "main": [
+        [
+          {
+            "node": "Loop Ops",
             "type": "main",
             "index": 0
           }
@@ -827,68 +1063,6 @@
         [
           {
             "node": "Summary",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Delete Old File": {
-      "main": [
-        [
-          {
-            "node": "Get Template",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Get Working File": {
-      "main": [
-        [
-          {
-            "node": "Create Session",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "List Required Sheets": {
-      "main": [
-        [
-          {
-            "node": "Loop Sheets",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Loop Sheets": {
-      "main": [
-        [
-          {
-            "node": "Prepare Write Chunks",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Add Sheet If Missing",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Add Sheet If Missing": {
-      "main": [
-        [
-          {
-            "node": "Loop Sheets",
             "type": "main",
             "index": 0
           }
