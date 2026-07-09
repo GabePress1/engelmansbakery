@@ -1,5 +1,5 @@
 {
-  "name": "Credit Given Guard - Sync Ticket to CAPA",
+  "name": "3. Credit Given Guard - Sync Ticket to CAPA",
   "nodes": [
     {
       "parameters": {
@@ -12,7 +12,10 @@
       "name": "Webhook - Credit Given Changed",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [0, 0],
+      "position": [
+        0,
+        0
+      ],
       "webhookId": "credit-given-check"
     },
     {
@@ -23,7 +26,10 @@
       "name": "Extract Ticket Info",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [200, 0]
+      "position": [
+        208,
+        0
+      ]
     },
     {
       "parameters": {
@@ -33,7 +39,10 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Content-Type", "value": "application/json" }
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
           ]
         },
         "options": {}
@@ -42,7 +51,10 @@
       "name": "Get Associated Items",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [400, 0],
+      "position": [
+        400,
+        0
+      ],
       "credentials": {
         "hubspotAppToken": {
           "id": "vxGS6a3iorMrt7wb",
@@ -53,22 +65,35 @@
     {
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": true, "leftValue": "" },
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
           "conditions": [
             {
               "id": "cond-has-items",
               "leftValue": "={{ $json.results ? $json.results.length : 0 }}",
               "rightValue": 0,
-              "operator": { "type": "number", "operation": "gt" }
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
             }
-          ]
-        }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
       },
       "id": "cg-if-has-items",
       "name": "Has Items?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [600, 0]
+      "position": [
+        608,
+        0
+      ]
     },
     {
       "parameters": {
@@ -79,19 +104,25 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Content-Type", "value": "application/json" }
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
           ]
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ inputs: $json.results.map(a => ({ id: a.id || a.toObjectId })), properties: ['hs_pipeline_stage'] }) }}",
+        "jsonBody": "={{ JSON.stringify({ inputs: $json.results.map(a => ({ id: a.id || a.toObjectId })), properties: ['hs_pipeline_stage','item_no_','item_name','item_description','quantity','credit_approved','approved_credit_amount'] }) }}",
         "options": {}
       },
       "id": "cg-batch-read",
       "name": "Batch Read Item Stages",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [800, -80],
+      "position": [
+        800,
+        -80
+      ],
       "credentials": {
         "hubspotAppToken": {
           "id": "vxGS6a3iorMrt7wb",
@@ -101,33 +132,49 @@
     },
     {
       "parameters": {
-        "jsCode": "const items = $input.first().json.results || [];\nconst ticketId = $('Extract Ticket Info').first().json.ticketId;\n\nconst ITEM_VERIFICATION = '1386096010';\nconst ITEM_CREDIT_DECISION = '1388087301';\nconst ITEM_CAPA = '1388087302';\nconst ITEM_CLOSED = '1386096011';\n\nlet allReady = true;   // every item in CAPA or Closed\nlet hasEarly = false;  // any item still in Verification or Credit Decision\nconst stages = [];\n\nfor (const item of items) {\n  const stage = String(item.properties.hs_pipeline_stage);\n  stages.push(stage);\n  if (stage !== ITEM_CAPA && stage !== ITEM_CLOSED) {\n    allReady = false;\n  }\n  if (stage === ITEM_VERIFICATION || stage === ITEM_CREDIT_DECISION) {\n    hasEarly = true;\n  }\n}\n\nlet decision;\nif (items.length === 0) {\n  decision = 'none';\n} else if (allReady) {\n  decision = 'advance';\n} else if (hasEarly) {\n  decision = 'revert';\n} else {\n  decision = 'none';\n}\n\nreturn [{ json: { ticketId, decision, allReady, hasEarly, itemCount: items.length, stages } }];"
+        "jsCode": "const items = $input.first().json.results || [];\nconst ticketId = $('Extract Ticket Info').first().json.ticketId;\n\nconst ITEM_VERIFICATION = '1386096010';\nconst ITEM_CREDIT_DECISION = '1388087301';\nconst ITEM_CAPA = '1388087302';\nconst ITEM_CLOSED = '1386096011';\n\nlet allReady = true;\nlet hasEarly = false;\nconst stages = [];\n\nfor (const item of items) {\n  const stage = String(item.properties.hs_pipeline_stage);\n  stages.push(stage);\n  if (stage !== ITEM_CAPA && stage !== ITEM_CLOSED) {\n    allReady = false;\n  }\n  if (stage === ITEM_VERIFICATION || stage === ITEM_CREDIT_DECISION) {\n    hasEarly = true;\n  }\n}\n\nlet decision;\nif (items.length === 0) {\n  decision = 'none';\n} else if (allReady) {\n  decision = 'advance';\n} else if (hasEarly) {\n  decision = 'revert';\n} else {\n  decision = 'none';\n}\n\n// Build the credited / not-credited HTML for the decision email\nconst esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\nconst isYes = v => ['true', 'yes', 'y', '1'].includes(String(v || '').toLowerCase());\nconst credited = [];\nconst notCredited = [];\nfor (const item of items) {\n  const p = item.properties;\n  let label = '<strong>' + esc(p.item_no_ || p.item_name || item.id) + '</strong>';\n  if (p.item_description) label += ' — ' + esc(p.item_description);\n  if (p.quantity) label += ' × ' + esc(p.quantity);\n  if (isYes(p.credit_approved)) {\n    const amt = parseFloat(p.approved_credit_amount);\n    credited.push('<li>' + label + (!isNaN(amt) && amt > 0 ? ' — Credit: $' + amt.toFixed(2) : '') + '</li>');\n  } else {\n    notCredited.push('<li>' + label + '</li>');\n  }\n}\nconst decisionHtml =\n  '<p><strong>Items credited:</strong></p>' +\n  (credited.length ? '<ul>' + credited.join('') + '</ul>' : '<p>None</p>') +\n  '<p><strong>Items not credited:</strong></p>' +\n  (notCredited.length ? '<ul>' + notCredited.join('') + '</ul>' : '<p>None</p>');\n\nreturn [{ json: { ticketId, decision, allReady, hasEarly, itemCount: items.length, stages, decisionHtml } }];"
       },
       "id": "cg-evaluate",
       "name": "Evaluate Items",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1000, -80]
+      "position": [
+        1008,
+        -80
+      ]
     },
     {
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": true, "leftValue": "" },
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
           "conditions": [
             {
               "id": "cond-advance",
               "leftValue": "={{ $json.decision }}",
               "rightValue": "advance",
-              "operator": { "type": "string", "operation": "equals" }
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
             }
-          ]
-        }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
       },
       "id": "cg-if-advance",
       "name": "All Items Ready?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [1200, -80]
+      "position": [
+        1200,
+        -80
+      ]
     },
     {
       "parameters": {
@@ -138,7 +185,10 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Content-Type", "value": "application/json" }
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
           ]
         },
         "sendBody": true,
@@ -150,7 +200,10 @@
       "name": "Move Ticket to CAPA",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [1400, -180],
+      "position": [
+        1408,
+        -176
+      ],
       "credentials": {
         "hubspotAppToken": {
           "id": "vxGS6a3iorMrt7wb",
@@ -165,7 +218,10 @@
         "options": {
           "responseHeaders": {
             "entries": [
-              { "name": "Access-Control-Allow-Origin", "value": "*" }
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
             ]
           }
         }
@@ -174,27 +230,43 @@
       "name": "Advance Response",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [1600, -180]
+      "position": [
+        1600,
+        -176
+      ]
     },
     {
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": true, "leftValue": "" },
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
           "conditions": [
             {
               "id": "cond-revert",
               "leftValue": "={{ $json.decision }}",
               "rightValue": "revert",
-              "operator": { "type": "string", "operation": "equals" }
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
             }
-          ]
-        }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
       },
       "id": "cg-if-revert",
       "name": "Any Items Still Pending?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [1400, 40]
+      "position": [
+        1408,
+        48
+      ]
     },
     {
       "parameters": {
@@ -205,7 +277,10 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Content-Type", "value": "application/json" }
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
           ]
         },
         "sendBody": true,
@@ -217,7 +292,10 @@
       "name": "Clear Credit Given",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [1600, 0],
+      "position": [
+        1600,
+        0
+      ],
       "credentials": {
         "hubspotAppToken": {
           "id": "vxGS6a3iorMrt7wb",
@@ -232,7 +310,10 @@
         "options": {
           "responseHeaders": {
             "entries": [
-              { "name": "Access-Control-Allow-Origin", "value": "*" }
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
             ]
           }
         }
@@ -241,7 +322,10 @@
       "name": "Revert Response",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [1800, 0]
+      "position": [
+        1808,
+        0
+      ]
     },
     {
       "parameters": {
@@ -250,7 +334,10 @@
         "options": {
           "responseHeaders": {
             "entries": [
-              { "name": "Access-Control-Allow-Origin", "value": "*" }
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
             ]
           }
         }
@@ -259,61 +346,188 @@
       "name": "No Action Response",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [1000, 200]
+      "position": [
+        1008,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.hubapi.com/crm/v3/objects/tickets/{{ $('Evaluate Items').first().json.ticketId }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ properties: { credit_decision_summary_html: $('Evaluate Items').first().json.decisionHtml } }) }}",
+        "options": {}
+      },
+      "id": "cg-write-decision",
+      "name": "Write Decision Summary",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1500,
+        -220
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "vxGS6a3iorMrt7wb",
+          "name": "HubSpot Service Key Production"
+        }
+      }
     }
   ],
   "connections": {
     "Webhook - Credit Given Changed": {
       "main": [
-        [{ "node": "Extract Ticket Info", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Extract Ticket Info",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Extract Ticket Info": {
       "main": [
-        [{ "node": "Get Associated Items", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Get Associated Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Get Associated Items": {
       "main": [
-        [{ "node": "Has Items?", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Has Items?",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Has Items?": {
       "main": [
-        [{ "node": "Batch Read Item Stages", "type": "main", "index": 0 }],
-        [{ "node": "No Action Response", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Batch Read Item Stages",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Action Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Batch Read Item Stages": {
       "main": [
-        [{ "node": "Evaluate Items", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Evaluate Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Evaluate Items": {
       "main": [
-        [{ "node": "All Items Ready?", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "All Items Ready?",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "All Items Ready?": {
       "main": [
-        [{ "node": "Move Ticket to CAPA", "type": "main", "index": 0 }],
-        [{ "node": "Any Items Still Pending?", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Move Ticket to CAPA",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Any Items Still Pending?",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Move Ticket to CAPA": {
       "main": [
-        [{ "node": "Advance Response", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Write Decision Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Any Items Still Pending?": {
       "main": [
-        [{ "node": "Clear Credit Given", "type": "main", "index": 0 }],
-        [{ "node": "No Action Response", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Clear Credit Given",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Action Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Clear Credit Given": {
       "main": [
-        [{ "node": "Revert Response", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Revert Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write Decision Summary": {
+      "main": [
+        [
+          {
+            "node": "Advance Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     }
   },
