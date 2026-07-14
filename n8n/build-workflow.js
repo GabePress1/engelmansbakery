@@ -241,27 +241,13 @@ const nodes = [
     notes:
       "Zero dependencies (pure JS, base-14 fonts) — runs on n8n Cloud with no external modules or services. Builds the letter + statement as one PDF per customer.",
   },
-  {
-    // Cloud-compatible output: upload each PDF to OneDrive via Graph.
-    // Self-hosted alternative: swap this for a Read/Write File node writing to
-    // {{ $json.fullPath }} (the Keys.Output_Folder local path).
-    parameters: {
-      resource: "file",
-      operation: "upload",
-      fileName: "={{ $json.fileName }}",
-      parentId: "",
-      binaryData: true,
-      binaryPropertyName: "data",
-    },
-    id: "n_onedrive",
-    name: "Upload to OneDrive",
-    type: "n8n-nodes-base.microsoftOneDrive",
-    typeVersion: 1,
-    position: [900, 300],
-    notes:
-      "SET ME UP: select your Microsoft OneDrive credential, and set Parent ID to the target folder (e.g. 'Gabe's Projects'). Uploads each customer PDF from binary field 'data'.",
-  },
 ];
+// NOTE: The workflow ends at "Render & Merge PDFs", which outputs one PDF per
+// customer in binary field `data` — downloadable straight from the execution,
+// no credentials or external service. To auto-save instead, append EITHER a
+// Microsoft OneDrive "upload" node (fileName={{ $json.fileName }}, binary `data`)
+// on n8n Cloud, OR a Read/Write File node writing to {{ $json.fullPath }} on a
+// self-hosted n8n.
 
 const connections = {
   "When clicking Test workflow": { main: [[{ node: "Keys", type: "main", index: 0 }]] },
@@ -272,7 +258,7 @@ const connections = {
   "Qualifying Customer Nos": { main: [[{ node: "Get Customers", type: "main", index: 0 }]] },
   "Get Customers": { main: [[{ node: "Transform (group + tokens)", type: "main", index: 0 }]] },
   "Transform (group + tokens)": { main: [[{ node: "Render & Merge PDFs", type: "main", index: 0 }]] },
-  "Render & Merge PDFs": { main: [[{ node: "Upload to OneDrive", type: "main", index: 0 }]] },
+  // Terminal: PDFs are emitted here (binary `data`), downloadable from the run.
 };
 
 const workflow = {

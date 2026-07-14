@@ -27,8 +27,8 @@ test/        sample data + end-to-end and workflow-code validators
 3. **Group + tokenize**: group the invoices by customer and sum `Remaining_Amount`; a customer
    whose filtered open balance nets to zero still gets **no** letter.
 4. **Render** a letter (the seven merge tokens) + a statement (the open-invoice table) per
-   customer as **one PDF**, and **upload it to OneDrive** (Cloud-safe). On a self-hosted n8n you
-   can instead write to the local `Output_Folder` path.
+   customer as **one downloadable PDF** (binary field `data`). Optionally append an output node to
+   auto-save to OneDrive (Cloud) or the local `Output_Folder` (self-hosted).
 
 > **Only customers with an open 2023–2024 invoice are targeted — at two levels.** The customer
 > fetch itself is filtered to the qualifying set (step 2), and the Transform re-checks the window
@@ -119,12 +119,14 @@ statement detail.)
    imported placeholder one — the placeholders are not real secrets).
 3. Nothing to install for rendering — the render node is zero-dependency (see *Rendering* above).
 4. Confirm the **Get Ledger Entries** node points at your published page.
-5. On the **Upload to OneDrive** node: select your Microsoft OneDrive credential and set the
-   **Parent ID** to the target folder (e.g. `Gabe's Projects`). (Self-hosted alternative: replace
-   this node with a Read/Write File node writing to `{{ $json.fullPath }}`.)
-6. **Execute** once and check OneDrive. Hand-check 2–3 customer totals against BC's Customer Ledger.
+5. **Execute** once. The **Render & Merge PDFs** node is the terminal node: it outputs one PDF per
+   customer in binary field `data`, which you can **download directly from the execution** — no
+   credentials or external service needed. Hand-check 2–3 customer totals against BC's Customer Ledger.
+6. *(Optional auto-save)* Append an output node after Render: a **Microsoft OneDrive** upload node
+   (`fileName={{ $json.fileName }}`, binary `data`) on n8n Cloud, or a **Read/Write File** node
+   writing to `{{ $json.fullPath }}` on a self-hosted n8n.
 
-Flow: `Keys → Get Token → Get Ledger Entries → Qualifying Customer Nos → Get Customers → Transform → Render & Merge PDFs → Upload to OneDrive`.
+Flow: `Keys → Get Token → Get Ledger Entries → Qualifying Customer Nos → Get Customers → Transform → Render & Merge PDFs` (PDFs downloadable here).
 
 > If your qualifying set is very large, the `Get Customers` `$filter` (`No eq '…' or …`) can get
 > long; split it into batches to stay under URL-length limits. For a typical past-due run the set

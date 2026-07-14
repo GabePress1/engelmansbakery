@@ -217,25 +217,6 @@
         300
       ],
       "notes": "Zero dependencies (pure JS, base-14 fonts) — runs on n8n Cloud with no external modules or services. Builds the letter + statement as one PDF per customer."
-    },
-    {
-      "parameters": {
-        "resource": "file",
-        "operation": "upload",
-        "fileName": "={{ $json.fileName }}",
-        "parentId": "",
-        "binaryData": true,
-        "binaryPropertyName": "data"
-      },
-      "id": "n_onedrive",
-      "name": "Upload to OneDrive",
-      "type": "n8n-nodes-base.microsoftOneDrive",
-      "typeVersion": 1,
-      "position": [
-        900,
-        300
-      ],
-      "notes": "SET ME UP: select your Microsoft OneDrive credential, and set Parent ID to the target folder (e.g. 'Gabe's Projects'). Uploads each customer PDF from binary field 'data'."
     }
   ],
   "connections": {
@@ -310,17 +291,6 @@
         [
           {
             "node": "Render & Merge PDFs",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Render & Merge PDFs": {
-      "main": [
-        [
-          {
-            "node": "Upload to OneDrive",
             "type": "main",
             "index": 0
           }
