@@ -37,12 +37,41 @@ function makeDollar(nodeData) {
 let failures = 0;
 const assert = (c, m) => { if (!c) { failures++; console.error("  FAIL: " + m); } };
 
+// Emulate BC's server-side $filter on the ledger page (open + Invoice + in 2023-2024).
+function serverFilterLedger(entries) {
+  const inWin = (d) => { const s = String(d || "").slice(0, 10); return s >= "2023-01-01" && s <= "2024-12-31"; };
+  return entries.filter(
+    (e) => String(e.Document_Type) === "Invoice" && e.Open === true && inWin(e.Document_Date)
+  );
+}
+
 async function main() {
+  // ---- Node: Qualifying Customer Nos --------------------------------------
+  // In production the ledger response is already server-filtered; emulate that.
+  const ledgerResp = { value: serverFilterLedger(sample.ledgerEntries) };
+  const $forQualify = makeDollar({ "Get Ledger Entries": ledgerResp });
+  const qualifyFn = new AsyncFunction("$", "items", "require", codeOf("Qualifying Customer Nos"));
+  const qualifyOut = await qualifyFn.call({}, $forQualify, [], require);
+
+  const qNos = qualifyOut.length ? qualifyOut[0].json.customerNos : [];
+  assert(qualifyOut.length === 1, "Qualifying node should emit exactly one item");
+  assert(qNos.length === 2, `expected 2 qualifying customer Nos, got ${qNos.length}`);
+  assert(qNos.includes("C00010") && qNos.includes("C00021"), "C00010 and C00021 should qualify");
+  assert(!qNos.includes("C00034") && !qNos.includes("C00045"),
+    "C00034 (paid) and C00045 (2025, out of window) must NOT qualify");
+  console.log(`Qualifying node -> [${qNos.join(", ")}]`);
+
+  // ---- Emulate: Get Customers fetches ONLY the qualifying customers --------
+  const fetchedCustomers = sample.customers.filter((c) => qNos.includes(String(c.No)));
+  assert(fetchedCustomers.length === 2, "Get Customers should fetch only the 2 qualifying customers");
+  assert(!fetchedCustomers.some((c) => c.No === "C00045"),
+    "C00045 must never be fetched (not in the $filter)");
+
   // ---- Node: Transform -----------------------------------------------------
   const $forTransform = makeDollar({
     Keys: { Output_Folder: "C:\\Users\\GPress\\OneDrive\\Gabe's Projects" },
-    "Get Customers": { value: sample.customers },
-    "Get Ledger Entries": { value: sample.ledgerEntries },
+    "Get Customers": { value: fetchedCustomers },
+    "Get Ledger Entries": ledgerResp,
   });
   const transformFn = new AsyncFunction("$", "items", "require", codeOf("Transform (group + tokens)"));
   const records = await transformFn.call({}, $forTransform, [], require);

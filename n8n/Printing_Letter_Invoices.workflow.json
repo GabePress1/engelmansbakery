@@ -105,10 +105,28 @@
     },
     {
       "parameters": {
+        "jsCode": "const led = $('Get Ledger Entries').first().json;\nconst entries = led.value || (Array.isArray(led) ? led : []);\nconst inWindow = (d) => { const s = String(d || '').slice(0, 10); return s >= '2023-01-01' && s <= '2024-12-31'; };\n\nconst nos = [...new Set(\n  entries\n    .filter((e) =>\n      String(e.Document_Type) === 'Invoice' &&\n      (e.Open === true || e.Open === 'true' || e.Open === 1) &&\n      inWindow(e.Document_Date) &&\n      (Number(e.Remaining_Amount) || 0) !== 0\n    )\n    .map((e) => String(e.Customer_No))\n)];\n\n// Nobody qualifies -> stop here so NO customers are fetched and NO letters go out.\nif (nos.length === 0) return [];\n\n// Build \"No eq 'X' or No eq 'Y' ...\" (single-quotes doubled per OData escaping).\nconst customerFilter = nos.map((n) => \"No eq '\" + n.replace(/'/g, \"''\") + \"'\").join(' or ');\nreturn [{ json: { customerNos: nos, count: nos.length, customerFilter } }];"
+      },
+      "id": "n_qualify",
+      "name": "Qualifying Customer Nos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        400
+      ],
+      "notes": "Distinct customers with an open 2023-2024 invoice, derived from the ledger entries. Emits nothing if none qualify, so no letters go out."
+    },
+    {
+      "parameters": {
         "url": "=https://api.businesscentral.dynamics.com/v2.0/{{ $('Keys').first().json.Tenant_ID }}/{{ $('Keys').first().json.Environment }}/ODataV4/Company('{{ $('Keys').first().json.Company }}')/Customer",
         "sendQuery": true,
         "queryParameters": {
           "parameters": [
+            {
+              "name": "$filter",
+              "value": "={{ $('Qualifying Customer Nos').first().json.customerFilter }}"
+            },
             {
               "name": "$select",
               "value": "No,Name,Address,Address_2,City,County,Post_Code,Balance_Due_LCY"
@@ -131,9 +149,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        220,
-        200
-      ]
+        660,
+        400
+      ],
+      "notes": "Fetches ONLY qualifying customers (filtered by Qualifying Customer Nos). If your qualifying set is very large, split the $filter into batches to stay under URL-length limits."
     },
     {
       "parameters": {
@@ -243,11 +262,6 @@
       "main": [
         [
           {
-            "node": "Get Customers",
-            "type": "main",
-            "index": 0
-          },
-          {
             "node": "Get Ledger Entries",
             "type": "main",
             "index": 0
@@ -255,18 +269,29 @@
         ]
       ]
     },
-    "Get Customers": {
+    "Get Ledger Entries": {
       "main": [
         [
           {
-            "node": "Transform (group + tokens)",
+            "node": "Qualifying Customer Nos",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Get Ledger Entries": {
+    "Qualifying Customer Nos": {
+      "main": [
+        [
+          {
+            "node": "Get Customers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Customers": {
       "main": [
         [
           {

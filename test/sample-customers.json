@@ -29,6 +29,17 @@
       "County": "GA",
       "Post_Code": "31401",
       "Balance_Due_LCY": 0.0
+    },
+    {
+      "No": "C00045",
+      "Name": "Downtown Deli",
+      "Address": "12 Broad St",
+      "Address_2": "",
+      "City": "Rome",
+      "County": "GA",
+      "Post_Code": "30161",
+      "Balance_Due_LCY": 3500.0,
+      "_comment": "Has a nonzero Balance_Due_LCY but its ONLY open invoice is dated 2025 (out of window). Must NOT get a letter."
     }
   ],
   "ledgerEntries": [
@@ -94,6 +105,17 @@
       "Remaining_Amount": 0.0,
       "Open": false,
       "_comment": "Fully paid (closed): customer C00034 must NOT get a letter."
+    },
+    {
+      "Customer_No": "C00045",
+      "Document_Type": "Invoice",
+      "Document_No": "INV-120500",
+      "Document_Date": "2025-03-10",
+      "Due_Date": "2025-04-09",
+      "Amount": 3500.0,
+      "Remaining_Amount": 3500.0,
+      "Open": true,
+      "_comment": "Open but dated 2025 (out of window): customer C00045 must NOT get a letter."
     }
   ]
 }

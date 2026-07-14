@@ -17,13 +17,22 @@ test/        sample data + end-to-end and workflow-code validators
 
 ## What it does
 
-1. **Read BC** (OData V4): the `Customer` page for name/address/`Balance_Due_LCY`, and a
-   `Customer_Ledger_Entries` page for open invoices.
-2. **Filter + group**: keep invoices where `Open = true`, `Document_Type = 'Invoice'`, and
-   `Document_Date` is in **2023-01-01 … 2024-12-31**; group by customer and sum
-   `Remaining_Amount`. Customers whose filtered open balance is zero get **no** letter.
-3. **Render** a letter (the seven merge tokens) + a statement (the open-invoice table) per
+1. **Read the open invoices first** (OData V4): the `Customer_Ledger_Entries` page filtered to
+   `Open = true`, `Document_Type = 'Invoice'`, `Document_Date` in **2023-01-01 … 2024-12-31**.
+   **These invoices decide who gets a letter** — nobody else is ever fetched or processed.
+2. **Derive the qualifying customers**: the `Qualifying Customer Nos` node takes the distinct
+   `Customer_No` set from those invoices and builds the `$filter` used to fetch **only** those
+   customers from the `Customer` page (name/address/`Balance_Due_LCY`). If no invoices qualify,
+   it emits nothing and the run produces **zero** letters.
+3. **Group + tokenize**: group the invoices by customer and sum `Remaining_Amount`; a customer
+   whose filtered open balance nets to zero still gets **no** letter.
+4. **Render** a letter (the seven merge tokens) + a statement (the open-invoice table) per
    customer, **merge** them into one PDF, and write it to the output folder.
+
+> **Only customers with an open 2023–2024 invoice are targeted — at two levels.** The customer
+> fetch itself is filtered to the qualifying set (step 2), and the Transform re-checks the window
+> (step 3). Fully-paid customers and customers whose only open invoice falls outside 2023–2024 are
+> excluded (see the `C00034` and `C00045` cases in `test/sample-customers.json`).
 
 ### The seven merge tokens (Customer page → letter)
 
@@ -108,7 +117,11 @@ statement detail.)
 5. **Execute** once and check the output folder. Hand-check 2–3 customer totals against BC's
    Customer Ledger.
 
-Flow: `Keys → Get Token → (Get Customers + Get Ledger Entries) → Transform → Render & Merge PDFs → Write PDF to OneDrive`.
+Flow: `Keys → Get Token → Get Ledger Entries → Qualifying Customer Nos → Get Customers → Transform → Render & Merge PDFs → Write PDF to OneDrive`.
+
+> If your qualifying set is very large, the `Get Customers` `$filter` (`No eq '…' or …`) can get
+> long; split it into batches to stay under URL-length limits. For a typical past-due run the set
+> is small enough for a single request.
 
 ## Local development & verification
 

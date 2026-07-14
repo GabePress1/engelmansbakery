@@ -56,6 +56,8 @@ async function main() {
   // --- transform assertions -------------------------------------------------
   assert(records.length === 2, `expected 2 qualifying customers, got ${records.length}`);
   assert(!records.some((r) => r.customerNo === "C00034"), "C00034 (fully paid) must be excluded");
+  assert(!records.some((r) => r.customerNo === "C00045"),
+    "C00045 (open invoice but dated 2025, out of window) must be excluded");
   const sunrise = records.find((r) => r.customerNo === "C00010");
   assert(!!sunrise, "C00010 should qualify");
   if (sunrise) {

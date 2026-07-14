@@ -71,6 +71,33 @@ for (const item of items) {
 }
 return out;`;
 
+// ---- Code node 0: Qualifying Customer Nos (pure JS, no modules) -------------
+// Derives the DISTINCT set of customers that actually have an open invoice dated
+// 2023-2024 from the (already server-filtered) ledger entries, and builds the
+// OData $filter used to fetch ONLY those customers. If nobody qualifies it emits
+// no items, so nothing downstream runs and no letters are produced.
+const qualifyNodeCode = `const led = $('Get Ledger Entries').first().json;
+const entries = led.value || (Array.isArray(led) ? led : []);
+const inWindow = (d) => { const s = String(d || '').slice(0, 10); return s >= '2023-01-01' && s <= '2024-12-31'; };
+
+const nos = [...new Set(
+  entries
+    .filter((e) =>
+      String(e.Document_Type) === 'Invoice' &&
+      (e.Open === true || e.Open === 'true' || e.Open === 1) &&
+      inWindow(e.Document_Date) &&
+      (Number(e.Remaining_Amount) || 0) !== 0
+    )
+    .map((e) => String(e.Customer_No))
+)];
+
+// Nobody qualifies -> stop here so NO customers are fetched and NO letters go out.
+if (nos.length === 0) return [];
+
+// Build "No eq 'X' or No eq 'Y' ..." (single-quotes doubled per OData escaping).
+const customerFilter = nos.map((n) => "No eq '" + n.replace(/'/g, "''") + "'").join(' or ');
+return [{ json: { customerNos: nos, count: nos.length, customerFilter } }];`;
+
 // --- helpers to build nodes -------------------------------------------------
 const TENANT = "={{ $('Keys').first().json.Tenant_ID }}";
 const BC_BASE =
@@ -136,11 +163,23 @@ const nodes = [
     position: [0, 300],
   },
   {
+    parameters: { jsCode: qualifyNodeCode },
+    id: "n_qualify",
+    name: "Qualifying Customer Nos",
+    type: "n8n-nodes-base.code",
+    typeVersion: 2,
+    position: [440, 400],
+    notes:
+      "Distinct customers with an open 2023-2024 invoice, derived from the ledger entries. Emits nothing if none qualify, so no letters go out.",
+  },
+  {
     parameters: {
       url: `=${BC_BASE}/Customer`,
       sendQuery: true,
       queryParameters: {
         parameters: [
+          // ONLY the customers that have a qualifying 2023-2024 open invoice.
+          { name: "$filter", value: "={{ $('Qualifying Customer Nos').first().json.customerFilter }}" },
           { name: "$select", value: "No,Name,Address,Address_2,City,County,Post_Code,Balance_Due_LCY" },
         ],
       },
@@ -156,7 +195,9 @@ const nodes = [
     name: "Get Customers",
     type: "n8n-nodes-base.httpRequest",
     typeVersion: 4.2,
-    position: [220, 200],
+    position: [660, 400],
+    notes:
+      "Fetches ONLY qualifying customers (filtered by Qualifying Customer Nos). If your qualifying set is very large, split the $filter into batches to stay under URL-length limits.",
   },
   {
     parameters: {
@@ -227,14 +268,11 @@ const nodes = [
 const connections = {
   "When clicking Test workflow": { main: [[{ node: "Keys", type: "main", index: 0 }]] },
   Keys: { main: [[{ node: "Get Token", type: "main", index: 0 }]] },
-  "Get Token": {
-    main: [[
-      { node: "Get Customers", type: "main", index: 0 },
-      { node: "Get Ledger Entries", type: "main", index: 0 },
-    ]],
-  },
+  // Ledger-driven: the filtered 2023-2024 open invoices decide who gets a letter.
+  "Get Token": { main: [[{ node: "Get Ledger Entries", type: "main", index: 0 }]] },
+  "Get Ledger Entries": { main: [[{ node: "Qualifying Customer Nos", type: "main", index: 0 }]] },
+  "Qualifying Customer Nos": { main: [[{ node: "Get Customers", type: "main", index: 0 }]] },
   "Get Customers": { main: [[{ node: "Transform (group + tokens)", type: "main", index: 0 }]] },
-  "Get Ledger Entries": { main: [[{ node: "Transform (group + tokens)", type: "main", index: 0 }]] },
   "Transform (group + tokens)": { main: [[{ node: "Render & Merge PDFs", type: "main", index: 0 }]] },
   "Render & Merge PDFs": { main: [[{ node: "Write PDF to OneDrive", type: "main", index: 0 }]] },
 };
