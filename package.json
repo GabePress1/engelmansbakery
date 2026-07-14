@@ -1,0 +1,19 @@
+{
+  "name": "engelmansbakery-past-due-batch",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Generate personalized past-due collection letters + customer statements from Business Central, rendered to printable PDFs. Drives the n8n 'Printing Letter_Invoices' workflow.",
+  "type": "commonjs",
+  "scripts": {
+    "build:template": "node templates/build-template.js",
+    "build:workflow": "node n8n/build-workflow.js",
+    "test:local": "node test/run-local.js",
+    "test:workflow": "node test/validate-workflow.js",
+    "test": "node test/run-local.js && node test/validate-workflow.js"
+  },
+  "dependencies": {
+    "docxtemplater": "^3.50.0",
+    "pizzip": "^3.1.7",
+    "pdf-lib": "^1.17.1"
+  }
+}

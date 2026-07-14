@@ -1,0 +1,124 @@
+/*
+ * transform.js
+ * ------------
+ * Pure data transforms shared by the local test harness and the n8n Code node.
+ * No I/O, no dependencies — safe to paste into an n8n Code node.
+ *
+ * Inputs (arrays of plain objects, as returned by the BC OData V4 pages):
+ *   customers[]      : { No, Name, Address, Address_2, City, County, Post_Code, Balance_Due_LCY }
+ *   ledgerEntries[]  : { Customer_No, Document_Type, Document_No, Document_Date,
+ *                        Due_Date, Amount, Remaining_Amount, Open }
+ *
+ * Output: one record per QUALIFYING customer (>=1 open invoice dated in the window):
+ *   { customerNo, tokens{...seven merge tokens...}, statement{ lines[], total, balanceDue } }
+ */
+
+const WINDOW_START = "2023-01-01";
+const WINDOW_END = "2024-12-31";
+
+// Format a number as a USD amount WITHOUT the currency symbol: 1234.5 -> "1,234.50".
+// The letter template already prints a literal "$" before {Converted_balance}.
+function formatUSD(n) {
+  const num = Number(n) || 0;
+  return num.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+// Normalize a BC date (which may arrive as "2023-05-01" or full ISO) to YYYY-MM-DD.
+function isoDate(d) {
+  if (!d) return "";
+  return String(d).slice(0, 10);
+}
+
+function inWindow(dateStr) {
+  const d = isoDate(dateStr);
+  return d >= WINDOW_START && d <= WINDOW_END;
+}
+
+/**
+ * @param {Object[]} customers
+ * @param {Object[]} ledgerEntries
+ * @param {Object}   [options]
+ * @param {"filtered"|"balanceDue"} [options.amountSource="filtered"]
+ *        "filtered"   -> Converted_balance = sum of Remaining_Amount of the 2023-2024 open invoices
+ *        "balanceDue" -> Converted_balance = customer's Balance_Due_LCY (total open balance)
+ * @returns {Object[]} qualifying customer records
+ */
+function buildRecords(customers, ledgerEntries, options = {}) {
+  const amountSource = options.amountSource || "filtered";
+
+  // Index customers by their number for O(1) join.
+  const custByNo = new Map();
+  for (const c of customers || []) custByNo.set(String(c.No), c);
+
+  // Keep only OPEN invoices whose Document Date is inside the window.
+  const grouped = new Map(); // customerNo -> { lines[], filteredRemaining }
+  for (const e of ledgerEntries || []) {
+    const isInvoice = String(e.Document_Type) === "Invoice";
+    const isOpen = e.Open === true || e.Open === "true" || e.Open === 1;
+    if (!isInvoice || !isOpen || !inWindow(e.Document_Date)) continue;
+
+    const key = String(e.Customer_No);
+    if (!grouped.has(key)) grouped.set(key, { lines: [], filteredRemaining: 0 });
+    const g = grouped.get(key);
+    const remaining = Number(e.Remaining_Amount) || 0;
+    g.filteredRemaining += remaining;
+    g.lines.push({
+      documentDate: isoDate(e.Document_Date),
+      documentNo: e.Document_No || "",
+      dueDate: isoDate(e.Due_Date),
+      amount: Number(e.Amount) || 0,
+      remaining: remaining,
+    });
+  }
+
+  const records = [];
+  for (const [customerNo, g] of grouped) {
+    // Skip anyone whose filtered open balance nets to zero.
+    if (Math.round(g.filteredRemaining * 100) === 0) continue;
+
+    const c = custByNo.get(customerNo) || {};
+    const balanceDue = Number(c.Balance_Due_LCY) || 0;
+    const amount =
+      amountSource === "balanceDue" ? balanceDue : g.filteredRemaining;
+
+    const lines = g.lines.sort((a, b) =>
+      a.documentDate < b.documentDate ? -1 : a.documentDate > b.documentDate ? 1 : 0
+    );
+
+    records.push({
+      customerNo,
+      tokens: {
+        Description: c.Name || customerNo,
+        Address_1: c.Address || "",
+        Address_2: c.Address_2 || "",
+        City: c.City || "",
+        State: c.County || "",
+        Zipcode: c.Post_Code || "",
+        Converted_balance: formatUSD(amount),
+      },
+      statement: {
+        lines,
+        total: g.filteredRemaining,
+        balanceDue,
+      },
+    });
+  }
+
+  // Deterministic order: by customer name.
+  records.sort((a, b) =>
+    a.tokens.Description.localeCompare(b.tokens.Description)
+  );
+  return records;
+}
+
+module.exports = {
+  buildRecords,
+  formatUSD,
+  isoDate,
+  inWindow,
+  WINDOW_START,
+  WINDOW_END,
+};

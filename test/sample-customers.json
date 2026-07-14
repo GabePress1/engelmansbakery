@@ -1,0 +1,99 @@
+{
+  "customers": [
+    {
+      "No": "C00010",
+      "Name": "Sunrise Cafe LLC",
+      "Address": "1420 Peachtree St NE",
+      "Address_2": "Suite 200",
+      "City": "Atlanta",
+      "County": "GA",
+      "Post_Code": "30309",
+      "Balance_Due_LCY": 4820.75
+    },
+    {
+      "No": "C00021",
+      "Name": "Blue Ridge Market",
+      "Address": "88 Main Street",
+      "Address_2": "",
+      "City": "Blue Ridge",
+      "County": "GA",
+      "Post_Code": "30513",
+      "Balance_Due_LCY": 1290.0
+    },
+    {
+      "No": "C00034",
+      "Name": "Harbor Foods Inc",
+      "Address": "5 Dockside Way",
+      "Address_2": "Building C",
+      "City": "Savannah",
+      "County": "GA",
+      "Post_Code": "31401",
+      "Balance_Due_LCY": 0.0
+    }
+  ],
+  "ledgerEntries": [
+    {
+      "Customer_No": "C00010",
+      "Document_Type": "Invoice",
+      "Document_No": "INV-100234",
+      "Document_Date": "2023-05-12",
+      "Due_Date": "2023-06-11",
+      "Amount": 3200.5,
+      "Remaining_Amount": 3200.5,
+      "Open": true
+    },
+    {
+      "Customer_No": "C00010",
+      "Document_Type": "Invoice",
+      "Document_No": "INV-101987",
+      "Document_Date": "2024-02-03",
+      "Due_Date": "2024-03-04",
+      "Amount": 1620.25,
+      "Remaining_Amount": 1620.25,
+      "Open": true
+    },
+    {
+      "Customer_No": "C00010",
+      "Document_Type": "Invoice",
+      "Document_No": "INV-090010",
+      "Document_Date": "2022-11-01",
+      "Due_Date": "2022-12-01",
+      "Amount": 900.0,
+      "Remaining_Amount": 900.0,
+      "Open": true,
+      "_comment": "Outside 2023-2024 window: must be EXCLUDED from filtered total/statement."
+    },
+    {
+      "Customer_No": "C00021",
+      "Document_Type": "Invoice",
+      "Document_No": "INV-100500",
+      "Document_Date": "2023-09-20",
+      "Due_Date": "2023-10-20",
+      "Amount": 1290.0,
+      "Remaining_Amount": 1290.0,
+      "Open": true
+    },
+    {
+      "Customer_No": "C00021",
+      "Document_Type": "Payment",
+      "Document_No": "PMT-5501",
+      "Document_Date": "2023-10-15",
+      "Due_Date": "2023-10-15",
+      "Amount": -500.0,
+      "Remaining_Amount": 0.0,
+      "Open": false,
+      "_comment": "Payment, closed: must be EXCLUDED (not an open invoice)."
+    },
+    {
+      "Customer_No": "C00034",
+      "Document_Type": "Invoice",
+      "Document_No": "INV-099001",
+      "Document_Date": "2024-06-01",
+      "Due_Date": "2024-07-01",
+      "Amount": 2100.0,
+      "Remaining_Amount": 0.0,
+      "Open": false,
+      "_comment": "Fully paid (closed): customer C00034 must NOT get a letter."
+    }
+  ]
+}
