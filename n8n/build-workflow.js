@@ -25,8 +25,7 @@ function inlineable(src) {
 }
 
 const transformSrc = inlineable(read("scripts/transform.js"));
-const renderSrc = inlineable(read("scripts/render-pdf.js"));
-const mergeSrc = inlineable(read("scripts/merge-pdfs.js"));
+const pureSrc = inlineable(read("scripts/pure-pdf.js"));
 
 // ---- Code node 1: Transform (pure JS, no external modules) -----------------
 const transformNodeCode = `${transformSrc}
@@ -42,16 +41,10 @@ const ledgerEntries = ledResp.value || (Array.isArray(ledResp) ? ledResp : []);
 const records = buildRecords(customers, ledgerEntries, { amountSource: 'filtered' });
 return records.map((r) => ({ json: r }));`;
 
-// ---- Code node 2: Render & Merge (requires pdf-lib) ------------------------
-// pdf-lib must be importable: on self-hosted n8n set
-//   NODE_FUNCTION_ALLOW_EXTERNAL=pdf-lib
-// and `npm i pdf-lib` in the n8n custom-extensions / node_modules dir.
-const renderNodeCode = `const { PDFDocument, StandardFonts, rgb } = require('pdf-lib');
-function formatUSD(n){const num=Number(n)||0;return num.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
-
-${renderSrc}
-
-${mergeSrc}
+// ---- Code node 2: Render PDF (zero dependencies) ---------------------------
+// Pure JS, base-14 fonts, no require() of external modules and no external
+// service — so it runs on n8n Cloud as-is. Builds letter + statement as one PDF.
+const renderNodeCode = `${pureSrc}
 
 // --- n8n driver -------------------------------------------------------------
 const outFolder = ($('Keys').first().json.Output_Folder || '').replace(/[\\\\/]+$/,'');
@@ -59,14 +52,12 @@ const sep = outFolder.includes('\\\\') ? '\\\\' : '/';
 const out = [];
 for (const item of items) {
   const rec = item.json;
-  const letterPdf = await renderLetterPdf(rec.tokens);
-  const stmtPdf = await renderStatementPdf(rec.tokens, rec.statement, {});
-  const merged = await mergePdfs([letterPdf, stmtPdf]);
+  const pdf = buildCustomerPdf(rec.tokens, rec.statement, {});
   const base = String(rec.tokens.Description).replace(/[^a-z0-9]+/gi,'_').replace(/^_+|_+$/g,'') || rec.customerNo;
   const fileName = base + '.pdf';
   out.push({
     json: { customerNo: rec.customerNo, name: rec.tokens.Description, fileName, fullPath: outFolder ? outFolder + sep + fileName : fileName },
-    binary: { data: await this.helpers.prepareBinaryData(Buffer.from(merged), fileName, 'application/pdf') },
+    binary: { data: await this.helpers.prepareBinaryData(pdf, fileName, 'application/pdf') },
   });
 }
 return out;`;
@@ -248,7 +239,7 @@ const nodes = [
     typeVersion: 2,
     position: [680, 300],
     notes:
-      "Requires pdf-lib. On self-hosted n8n: set NODE_FUNCTION_ALLOW_EXTERNAL=pdf-lib and install pdf-lib where n8n can require it.",
+      "Zero dependencies (pure JS, base-14 fonts) — runs on n8n Cloud with no external modules or services. Builds the letter + statement as one PDF per customer.",
   },
   {
     parameters: {

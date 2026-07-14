@@ -2,7 +2,7 @@
  * run-local.js
  * ------------
  * End-to-end local proof of the pipeline WITHOUT Business Central or n8n:
- *   sample data -> transform -> render letter + statement PDFs (pure pdf-lib)
+ *   sample data -> transform -> render letter + statement PDFs (pure JS, no deps)
  *   -> merge letter+statement per customer -> batch PDF.
  * Also fills the Word template (docxtemplater) and ASSERTS the merge tokens
  * landed, so the "Word mail merge" path is verified too.
@@ -17,8 +17,7 @@ const PizZip = require("pizzip");
 
 const { buildRecords } = require("../scripts/transform");
 const { fillLetter } = require("../scripts/fill-letter");
-const { renderLetterPdf, renderStatementPdf } = require("../scripts/render-pdf");
-const { mergePdfs } = require("../scripts/merge-pdfs");
+const { buildCustomerPdf, buildBatchPdf } = require("../scripts/pure-pdf");
 
 const ROOT = path.join(__dirname, "..");
 const OUT = path.join(ROOT, "out");
@@ -83,14 +82,9 @@ async function main() {
       `docx still has unfilled tags for ${name}`);
     fs.writeFileSync(path.join(OUT, `${name}.docx`), letterDocx);
 
-    // 2) Default render path: pure-JS PDF for letter + statement
-    const letterPdf = await renderLetterPdf(rec.tokens);
-    const stmtPdf = await renderStatementPdf(rec.tokens, rec.statement, {
-      asOfDate: "2026-07-14",
-    });
-
-    // 3) Merge letter + statement
-    const merged = await mergePdfs([letterPdf, stmtPdf]);
+    // 2) Default render path: zero-dependency PDF (letter + statement as one doc)
+    const merged = buildCustomerPdf(rec.tokens, rec.statement, { asOfDate: "2026-07-14" });
+    assert(merged.slice(0, 5).toString() === "%PDF-", `${name}: output is not a PDF`);
     const outFile = path.join(OUT, `${name}.pdf`);
     fs.writeFileSync(outFile, merged);
     perCustomerPdfs.push(merged);
@@ -102,9 +96,10 @@ async function main() {
   }
 
   // 4) Combined batch PDF for the printer
-  const batch = await mergePdfs(perCustomerPdfs);
+  const batch = buildBatchPdf(records, { asOfDate: "2026-07-14" });
+  assert(batch.slice(0, 5).toString() === "%PDF-", "batch output is not a PDF");
   fs.writeFileSync(path.join(OUT, "batch-all.pdf"), batch);
-  console.log(`Batch: out/batch-all.pdf`);
+  console.log(`Batch: out/batch-all.pdf  (${perCustomerPdfs.length} customers)`);
 
   if (failures) {
     console.error(`\n${failures} assertion(s) failed.`);

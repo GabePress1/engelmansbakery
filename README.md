@@ -10,7 +10,7 @@ letter template, and the reusable scripts — all verified locally with a synthe
 
 ```
 templates/   past-due-letter.docx + generator (Word "mail merge" template)
-scripts/     transform, render (pdf-lib), docx fill (docxtemplater), pdf merge, docx→pdf
+scripts/     transform, pure-pdf (zero-dep renderer), docx fill (docxtemplater), docx→pdf
 n8n/         Printing_Letter_Invoices.workflow.json + its generator
 test/        sample data + end-to-end and workflow-code validators
 ```
@@ -60,16 +60,16 @@ These differ whenever a customer also has open invoices outside 2023–2024.
 
 ## Rendering: two paths
 
-- **Default — pure JavaScript (`pdf-lib`), no external services.** Runs inside the n8n Code node.
+- **Default — zero-dependency pure JavaScript (`scripts/pure-pdf.js`).** Builds the letter +
+  statement as one PDF using the base-14 PDF fonts. **No external npm modules, no external
+  service** — so it runs inside an **n8n Cloud** Code node with nothing to install or configure.
   This is what the workflow ships with and what the local tests exercise.
-  Requirement on self-hosted n8n:
-  - set env var `NODE_FUNCTION_ALLOW_EXTERNAL=pdf-lib`
-  - make `pdf-lib` requireable by n8n (e.g. `npm i pdf-lib` in your n8n user folder / custom
-    extensions dir, or bake it into your n8n image).
 - **High-fidelity Word "mail merge" (optional).** Fill `templates/past-due-letter.docx` with
   `docxtemplater` (`scripts/fill-letter.js`) and convert docx→PDF with **headless LibreOffice**
   (`scripts/docx-to-pdf.js`, `soffice --headless --convert-to pdf`) or **Gotenberg**
   (`POST /forms/libreoffice/convert`). Use this if you want pixel-exact fidelity to the Word file.
+  It needs LibreOffice/Gotenberg reachable from n8n, so it's a self-hosted / external-service path,
+  not a Cloud Code-node path.
 
 > The template here is a faithful **reconstruction** with a **text** letterhead placeholder
 > (`ENGELMAN'S BAKERY`). To keep the exact brand logo, either drop the logo image into
@@ -112,7 +112,7 @@ statement detail.)
    (Or merge its nodes into your existing `Printing Letter_Invoices` workflow.)
 2. Put your real values in the **`Keys`** node (or reuse your existing `Keys` node and delete the
    imported placeholder one — the placeholders are not real secrets).
-3. Ensure `pdf-lib` is available to the Code node (see *Rendering* above).
+3. Nothing to install for rendering — the render node is zero-dependency (see *Rendering* above).
 4. Confirm the **Get Ledger Entries** node points at your published page.
 5. **Execute** once and check the output folder. Hand-check 2–3 customer totals against BC's
    Customer Ledger.
