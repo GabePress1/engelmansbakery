@@ -220,19 +220,22 @@
     },
     {
       "parameters": {
-        "operation": "write",
-        "fileName": "={{ $json.fullPath }}",
-        "dataPropertyName": "data",
-        "options": {}
+        "resource": "file",
+        "operation": "upload",
+        "fileName": "={{ $json.fileName }}",
+        "parentId": "",
+        "binaryData": true,
+        "binaryPropertyName": "data"
       },
-      "id": "n_write",
-      "name": "Write PDF to OneDrive",
-      "type": "n8n-nodes-base.readWriteFile",
+      "id": "n_onedrive",
+      "name": "Upload to OneDrive",
+      "type": "n8n-nodes-base.microsoftOneDrive",
       "typeVersion": 1,
       "position": [
         900,
         300
-      ]
+      ],
+      "notes": "SET ME UP: select your Microsoft OneDrive credential, and set Parent ID to the target folder (e.g. 'Gabe's Projects'). Uploads each customer PDF from binary field 'data'."
     }
   ],
   "connections": {
@@ -317,7 +320,7 @@
       "main": [
         [
           {
-            "node": "Write PDF to OneDrive",
+            "node": "Upload to OneDrive",
             "type": "main",
             "index": 0
           }

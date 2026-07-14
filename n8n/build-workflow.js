@@ -242,17 +242,24 @@ const nodes = [
       "Zero dependencies (pure JS, base-14 fonts) — runs on n8n Cloud with no external modules or services. Builds the letter + statement as one PDF per customer.",
   },
   {
+    // Cloud-compatible output: upload each PDF to OneDrive via Graph.
+    // Self-hosted alternative: swap this for a Read/Write File node writing to
+    // {{ $json.fullPath }} (the Keys.Output_Folder local path).
     parameters: {
-      operation: "write",
-      fileName: "={{ $json.fullPath }}",
-      dataPropertyName: "data",
-      options: {},
+      resource: "file",
+      operation: "upload",
+      fileName: "={{ $json.fileName }}",
+      parentId: "",
+      binaryData: true,
+      binaryPropertyName: "data",
     },
-    id: "n_write",
-    name: "Write PDF to OneDrive",
-    type: "n8n-nodes-base.readWriteFile",
+    id: "n_onedrive",
+    name: "Upload to OneDrive",
+    type: "n8n-nodes-base.microsoftOneDrive",
     typeVersion: 1,
     position: [900, 300],
+    notes:
+      "SET ME UP: select your Microsoft OneDrive credential, and set Parent ID to the target folder (e.g. 'Gabe's Projects'). Uploads each customer PDF from binary field 'data'.",
   },
 ];
 
@@ -265,7 +272,7 @@ const connections = {
   "Qualifying Customer Nos": { main: [[{ node: "Get Customers", type: "main", index: 0 }]] },
   "Get Customers": { main: [[{ node: "Transform (group + tokens)", type: "main", index: 0 }]] },
   "Transform (group + tokens)": { main: [[{ node: "Render & Merge PDFs", type: "main", index: 0 }]] },
-  "Render & Merge PDFs": { main: [[{ node: "Write PDF to OneDrive", type: "main", index: 0 }]] },
+  "Render & Merge PDFs": { main: [[{ node: "Upload to OneDrive", type: "main", index: 0 }]] },
 };
 
 const workflow = {

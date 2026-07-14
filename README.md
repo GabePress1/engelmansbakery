@@ -27,7 +27,8 @@ test/        sample data + end-to-end and workflow-code validators
 3. **Group + tokenize**: group the invoices by customer and sum `Remaining_Amount`; a customer
    whose filtered open balance nets to zero still gets **no** letter.
 4. **Render** a letter (the seven merge tokens) + a statement (the open-invoice table) per
-   customer, **merge** them into one PDF, and write it to the output folder.
+   customer as **one PDF**, and **upload it to OneDrive** (Cloud-safe). On a self-hosted n8n you
+   can instead write to the local `Output_Folder` path.
 
 > **Only customers with an open 2023–2024 invoice are targeted — at two levels.** The customer
 > fetch itself is filtered to the qualifying set (step 2), and the Transform re-checks the window
@@ -89,10 +90,14 @@ real values):
 | `Client_Secret` | secret         | client-credentials auth |
 | `Environment`   | `Production`   | BC URL segment |
 | `Company`       | `Live-EB`      | `Company('…')` in the OData URL |
-| `Output_Folder` | the OneDrive path below | where PDFs are written |
+| `Output_Folder` | the OneDrive path below | local write path (self-hosted output only) |
 
-Output folder (default):
+Output folder (self-hosted local-write path):
 `C:\Users\GPress\OneDrive - engelmansbakery.com\2. Financial\C. Accounting\e. Controller's Folders\Gabe's Projects`
+
+> **On n8n Cloud** the workflow uploads via the **Upload to OneDrive** node (Microsoft Graph),
+> because Cloud has no access to a local Windows path. The `Output_Folder` value is only used by
+> the self-hosted local-write alternative.
 
 **OData V4 endpoints used** (base
 `https://api.businesscentral.dynamics.com/v2.0/{Tenant_ID}/{Environment}/ODataV4/Company('{Company}')`):
@@ -114,10 +119,12 @@ statement detail.)
    imported placeholder one — the placeholders are not real secrets).
 3. Nothing to install for rendering — the render node is zero-dependency (see *Rendering* above).
 4. Confirm the **Get Ledger Entries** node points at your published page.
-5. **Execute** once and check the output folder. Hand-check 2–3 customer totals against BC's
-   Customer Ledger.
+5. On the **Upload to OneDrive** node: select your Microsoft OneDrive credential and set the
+   **Parent ID** to the target folder (e.g. `Gabe's Projects`). (Self-hosted alternative: replace
+   this node with a Read/Write File node writing to `{{ $json.fullPath }}`.)
+6. **Execute** once and check OneDrive. Hand-check 2–3 customer totals against BC's Customer Ledger.
 
-Flow: `Keys → Get Token → Get Ledger Entries → Qualifying Customer Nos → Get Customers → Transform → Render & Merge PDFs → Write PDF to OneDrive`.
+Flow: `Keys → Get Token → Get Ledger Entries → Qualifying Customer Nos → Get Customers → Transform → Render & Merge PDFs → Upload to OneDrive`.
 
 > If your qualifying set is very large, the `Get Customers` `$filter` (`No eq '…' or …`) can get
 > long; split it into batches to stay under URL-length limits. For a typical past-due run the set
