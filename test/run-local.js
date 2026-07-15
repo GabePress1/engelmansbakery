@@ -48,7 +48,7 @@ async function main() {
   );
   const templateBuf = fs.readFileSync(TEMPLATE);
 
-  const records = buildRecords(data.customers, data.ledgerEntries, {
+  const records = buildRecords(data.customers, data.invoices, {
     amountSource: "filtered", // switch to "balanceDue" to use Balance_Due_LCY
   });
 

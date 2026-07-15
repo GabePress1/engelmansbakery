@@ -47,6 +47,12 @@
               "type": "string"
             },
             {
+              "id": "a7",
+              "name": "Company_ID",
+              "value": "REPLACE_WITH_COMPANY_GUID",
+              "type": "string"
+            },
+            {
               "id": "a6",
               "name": "Output_Folder",
               "value": "C:\\\\Users\\\\GPress\\\\OneDrive - engelmansbakery.com\\\\2. Financial\\\\C. Accounting\\\\e. Controller's Folders\\\\Gabe's Projects",
@@ -105,7 +111,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const led = $('Get Ledger Entries').first().json;\nconst entries = led.value || (Array.isArray(led) ? led : []);\nconst inWindow = (d) => { const s = String(d || '').slice(0, 10); return s >= '2023-01-01' && s <= '2024-12-31'; };\n\nconst nos = [...new Set(\n  entries\n    .filter((e) =>\n      String(e.Document_Type) === 'Invoice' &&\n      (e.Open === true || e.Open === 'true' || e.Open === 1) &&\n      inWindow(e.Document_Date) &&\n      (Number(e.Remaining_Amount) || 0) !== 0\n    )\n    .map((e) => String(e.Customer_No))\n)];\n\n// Nobody qualifies -> stop here so NO customers are fetched and NO letters go out.\nif (nos.length === 0) return [];\n\n// Build \"No eq 'X' or No eq 'Y' ...\" (single-quotes doubled per OData escaping).\nconst customerFilter = nos.map((n) => \"No eq '\" + n.replace(/'/g, \"''\") + \"'\").join(' or ');\nreturn [{ json: { customerNos: nos, count: nos.length, customerFilter } }];"
+        "jsCode": "const inv = $('Get Open Invoices').first().json;\nconst invoices = inv.value || (Array.isArray(inv) ? inv : []);\nconst inWindow = (d) => { const s = String(d || '').slice(0, 10); return s >= '2023-01-01' && s <= '2024-12-31'; };\nconst remaining = (e) => (e.remainingAmount != null && e.remainingAmount !== '') ? (Number(e.remainingAmount) || 0) : (Number(e.totalAmountIncludingTax) || 0);\n\nconst nos = [...new Set(\n  invoices\n    .filter((e) =>\n      String(e.status) === 'Open' &&\n      inWindow(e.invoiceDate) &&\n      remaining(e) !== 0\n    )\n    .map((e) => String(e.customerNumber))\n)];\n\n// Nobody qualifies -> stop here so NO customers are fetched and NO letters go out.\nif (nos.length === 0) return [];\n\n// Build \"No eq 'X' or No eq 'Y' ...\" (single-quotes doubled per OData escaping).\nconst customerFilter = nos.map((n) => \"No eq '\" + n.replace(/'/g, \"''\") + \"'\").join(' or ');\nreturn [{ json: { customerNos: nos, count: nos.length, customerFilter } }];"
       },
       "id": "n_qualify",
       "name": "Qualifying Customer Nos",
@@ -115,7 +121,7 @@
         440,
         400
       ],
-      "notes": "Distinct customers with an open 2023-2024 invoice, derived from the ledger entries. Emits nothing if none qualify, so no letters go out."
+      "notes": "Distinct customers with an open 2023-2024 invoice, derived from Get Open Invoices. Emits nothing if none qualify, so no letters go out."
     },
     {
       "parameters": {
@@ -156,17 +162,13 @@
     },
     {
       "parameters": {
-        "url": "=https://api.businesscentral.dynamics.com/v2.0/{{ $('Keys').first().json.Tenant_ID }}/{{ $('Keys').first().json.Environment }}/ODataV4/Company('{{ $('Keys').first().json.Company }}')/Customer_Ledger_Entries",
+        "url": "=https://api.businesscentral.dynamics.com/v2.0/{{ $('Keys').first().json.Tenant_ID }}/{{ $('Keys').first().json.Environment }}/api/v2.0/companies({{ $('Keys').first().json.Company_ID }})/salesInvoices",
         "sendQuery": true,
         "queryParameters": {
           "parameters": [
             {
               "name": "$filter",
-              "value": "Open eq true and Document_Type eq 'Invoice' and Document_Date ge 2023-01-01 and Document_Date le 2024-12-31"
-            },
-            {
-              "name": "$select",
-              "value": "Customer_No,Document_Type,Document_No,Document_Date,Due_Date,Amount,Remaining_Amount,Open"
+              "value": "status eq 'Open' and invoiceDate ge 2023-01-01 and invoiceDate le 2024-12-31"
             }
           ]
         },
@@ -181,19 +183,19 @@
         },
         "options": {}
       },
-      "id": "n_ledger",
-      "name": "Get Ledger Entries",
+      "id": "n_invoices",
+      "name": "Get Open Invoices",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
         220,
         400
       ],
-      "notes": "Requires a published web service named 'Customer_Ledger_Entries' exposing these fields. If your published page/query has a different name, change it here."
+      "notes": "Standard API v2.0 salesInvoices (status Open = posted & unpaid). Uses Company_ID (GUID) from Keys. Fields used: customerNumber, number, invoiceDate, dueDate, totalAmountIncludingTax, remainingAmount, status."
     },
     {
       "parameters": {
-        "jsCode": "/*\n * transform.js\n * ------------\n * Pure data transforms shared by the local test harness and the n8n Code node.\n * No I/O, no dependencies — safe to paste into an n8n Code node.\n *\n * Inputs (arrays of plain objects, as returned by the BC OData V4 pages):\n *   customers[]      : { No, Name, Address, Address_2, City, County, Post_Code, Balance_Due_LCY }\n *   ledgerEntries[]  : { Customer_No, Document_Type, Document_No, Document_Date,\n *                        Due_Date, Amount, Remaining_Amount, Open }\n *\n * Output: one record per QUALIFYING customer (>=1 open invoice dated in the window):\n *   { customerNo, tokens{...seven merge tokens...}, statement{ lines[], total, balanceDue } }\n */\n\nconst WINDOW_START = \"2023-01-01\";\nconst WINDOW_END = \"2024-12-31\";\n\n// Format a number as a USD amount WITHOUT the currency symbol: 1234.5 -> \"1,234.50\".\n// The letter template already prints a literal \"$\" before {Converted_balance}.\nfunction formatUSD(n) {\n  const num = Number(n) || 0;\n  return num.toLocaleString(\"en-US\", {\n    minimumFractionDigits: 2,\n    maximumFractionDigits: 2,\n  });\n}\n\n// Normalize a BC date (which may arrive as \"2023-05-01\" or full ISO) to YYYY-MM-DD.\nfunction isoDate(d) {\n  if (!d) return \"\";\n  return String(d).slice(0, 10);\n}\n\nfunction inWindow(dateStr) {\n  const d = isoDate(dateStr);\n  return d >= WINDOW_START && d <= WINDOW_END;\n}\n\n/**\n * @param {Object[]} customers\n * @param {Object[]} ledgerEntries\n * @param {Object}   [options]\n * @param {\"filtered\"|\"balanceDue\"} [options.amountSource=\"filtered\"]\n *        \"filtered\"   -> Converted_balance = sum of Remaining_Amount of the 2023-2024 open invoices\n *        \"balanceDue\" -> Converted_balance = customer's Balance_Due_LCY (total open balance)\n * @returns {Object[]} qualifying customer records\n */\nfunction buildRecords(customers, ledgerEntries, options = {}) {\n  const amountSource = options.amountSource || \"filtered\";\n\n  // Index customers by their number for O(1) join.\n  const custByNo = new Map();\n  for (const c of customers || []) custByNo.set(String(c.No), c);\n\n  // Keep only OPEN invoices whose Document Date is inside the window.\n  const grouped = new Map(); // customerNo -> { lines[], filteredRemaining }\n  for (const e of ledgerEntries || []) {\n    const isInvoice = String(e.Document_Type) === \"Invoice\";\n    const isOpen = e.Open === true || e.Open === \"true\" || e.Open === 1;\n    if (!isInvoice || !isOpen || !inWindow(e.Document_Date)) continue;\n\n    const key = String(e.Customer_No);\n    if (!grouped.has(key)) grouped.set(key, { lines: [], filteredRemaining: 0 });\n    const g = grouped.get(key);\n    const remaining = Number(e.Remaining_Amount) || 0;\n    g.filteredRemaining += remaining;\n    g.lines.push({\n      documentDate: isoDate(e.Document_Date),\n      documentNo: e.Document_No || \"\",\n      dueDate: isoDate(e.Due_Date),\n      amount: Number(e.Amount) || 0,\n      remaining: remaining,\n    });\n  }\n\n  const records = [];\n  for (const [customerNo, g] of grouped) {\n    // Skip anyone whose filtered open balance nets to zero.\n    if (Math.round(g.filteredRemaining * 100) === 0) continue;\n\n    const c = custByNo.get(customerNo) || {};\n    const balanceDue = Number(c.Balance_Due_LCY) || 0;\n    const amount =\n      amountSource === \"balanceDue\" ? balanceDue : g.filteredRemaining;\n\n    const lines = g.lines.sort((a, b) =>\n      a.documentDate < b.documentDate ? -1 : a.documentDate > b.documentDate ? 1 : 0\n    );\n\n    records.push({\n      customerNo,\n      tokens: {\n        Description: c.Name || customerNo,\n        Address_1: c.Address || \"\",\n        Address_2: c.Address_2 || \"\",\n        City: c.City || \"\",\n        State: c.County || \"\",\n        Zipcode: c.Post_Code || \"\",\n        Converted_balance: formatUSD(amount),\n      },\n      statement: {\n        lines,\n        total: g.filteredRemaining,\n        balanceDue,\n      },\n    });\n  }\n\n  // Deterministic order: by customer name.\n  records.sort((a, b) =>\n    a.tokens.Description.localeCompare(b.tokens.Description)\n  );\n  return records;\n}\n\n// --- n8n driver -------------------------------------------------------------\nconst custResp = $('Get Customers').first().json;\nconst customers = custResp.value || (Array.isArray(custResp) ? custResp : [custResp]);\nconst ledResp = $('Get Ledger Entries').first().json;\nconst ledgerEntries = ledResp.value || (Array.isArray(ledResp) ? ledResp : []);\n\n// amountSource: \"filtered\" = sum of 2023-2024 open invoices (default),\n//               \"balanceDue\" = customer's Balance_Due_LCY (total open balance).\nconst records = buildRecords(customers, ledgerEntries, { amountSource: 'filtered' });\nreturn records.map((r) => ({ json: r }));"
+        "jsCode": "/*\n * transform.js\n * ------------\n * Pure data transforms shared by the local test harness and the n8n Code node.\n * No I/O, no dependencies — safe to paste into an n8n Code node.\n *\n * Inputs (arrays of plain objects):\n *   customers[] (OData V4 Customer page):\n *     { No, Name, Address, Address_2, City, County, Post_Code, Balance_Due_LCY }\n *   invoices[] (standard API v2.0 salesInvoices entity):\n *     { number, customerNumber, invoiceDate, dueDate, totalAmountIncludingTax,\n *       remainingAmount, status }   // status 'Open' = posted & unpaid\n *\n * Output: one record per QUALIFYING customer (>=1 open invoice dated in the window):\n *   { customerNo, tokens{...seven merge tokens...}, statement{ lines[], total, balanceDue } }\n */\n\nconst WINDOW_START = \"2023-01-01\";\nconst WINDOW_END = \"2024-12-31\";\n\n// Format a number as a USD amount WITHOUT the currency symbol: 1234.5 -> \"1,234.50\".\n// The letter template already prints a literal \"$\" before {Converted_balance}.\nfunction formatUSD(n) {\n  const num = Number(n) || 0;\n  return num.toLocaleString(\"en-US\", {\n    minimumFractionDigits: 2,\n    maximumFractionDigits: 2,\n  });\n}\n\n// Normalize a BC date (which may arrive as \"2023-05-01\" or full ISO) to YYYY-MM-DD.\nfunction isoDate(d) {\n  if (!d) return \"\";\n  return String(d).slice(0, 10);\n}\n\nfunction inWindow(dateStr) {\n  const d = isoDate(dateStr);\n  return d >= WINDOW_START && d <= WINDOW_END;\n}\n\n// Remaining balance of a salesInvoice: prefer remainingAmount; if the field isn't\n// returned, fall back to the total (an open invoice with no partial payment).\nfunction invoiceRemaining(e) {\n  const r = e.remainingAmount;\n  if (r != null && r !== \"\") return Number(r) || 0;\n  return Number(e.totalAmountIncludingTax) || 0;\n}\n\n/**\n * @param {Object[]} customers\n * @param {Object[]} invoices    standard-API salesInvoices\n * @param {Object}   [options]\n * @param {\"filtered\"|\"balanceDue\"} [options.amountSource=\"filtered\"]\n *        \"filtered\"   -> Converted_balance = sum of remaining of the 2023-2024 open invoices\n *        \"balanceDue\" -> Converted_balance = customer's Balance_Due_LCY (total open balance)\n * @returns {Object[]} qualifying customer records\n */\nfunction buildRecords(customers, invoices, options = {}) {\n  const amountSource = options.amountSource || \"filtered\";\n\n  // Index customers by their number for O(1) join.\n  const custByNo = new Map();\n  for (const c of customers || []) custByNo.set(String(c.No), c);\n\n  // Keep only OPEN invoices whose invoice (document) date is inside the window.\n  const grouped = new Map(); // customerNo -> { lines[], filteredRemaining }\n  for (const e of invoices || []) {\n    const isOpen = String(e.status) === \"Open\";\n    if (!isOpen || !inWindow(e.invoiceDate)) continue;\n\n    const key = String(e.customerNumber);\n    if (!grouped.has(key)) grouped.set(key, { lines: [], filteredRemaining: 0 });\n    const g = grouped.get(key);\n    const remaining = invoiceRemaining(e);\n    g.filteredRemaining += remaining;\n    g.lines.push({\n      documentDate: isoDate(e.invoiceDate),\n      documentNo: e.number || \"\",\n      dueDate: isoDate(e.dueDate),\n      amount: Number(e.totalAmountIncludingTax) || 0,\n      remaining: remaining,\n    });\n  }\n\n  const records = [];\n  for (const [customerNo, g] of grouped) {\n    // Skip anyone whose filtered open balance nets to zero.\n    if (Math.round(g.filteredRemaining * 100) === 0) continue;\n\n    const c = custByNo.get(customerNo) || {};\n    const balanceDue = Number(c.Balance_Due_LCY) || 0;\n    const amount =\n      amountSource === \"balanceDue\" ? balanceDue : g.filteredRemaining;\n\n    const lines = g.lines.sort((a, b) =>\n      a.documentDate < b.documentDate ? -1 : a.documentDate > b.documentDate ? 1 : 0\n    );\n\n    records.push({\n      customerNo,\n      tokens: {\n        Description: c.Name || customerNo,\n        Address_1: c.Address || \"\",\n        Address_2: c.Address_2 || \"\",\n        City: c.City || \"\",\n        State: c.County || \"\",\n        Zipcode: c.Post_Code || \"\",\n        Converted_balance: formatUSD(amount),\n      },\n      statement: {\n        lines,\n        total: g.filteredRemaining,\n        balanceDue,\n      },\n    });\n  }\n\n  // Deterministic order: by customer name.\n  records.sort((a, b) =>\n    a.tokens.Description.localeCompare(b.tokens.Description)\n  );\n  return records;\n}\n\n// --- n8n driver -------------------------------------------------------------\nconst custResp = $('Get Customers').first().json;\nconst customers = custResp.value || (Array.isArray(custResp) ? custResp : [custResp]);\nconst invResp = $('Get Open Invoices').first().json;\nconst invoices = invResp.value || (Array.isArray(invResp) ? invResp : []);\n\n// amountSource: \"filtered\" = sum of 2023-2024 open invoices (default),\n//               \"balanceDue\" = customer's Balance_Due_LCY (total open balance).\nconst records = buildRecords(customers, invoices, { amountSource: 'filtered' });\nreturn records.map((r) => ({ json: r }));"
       },
       "id": "n_transform",
       "name": "Transform (group + tokens)",
@@ -246,14 +248,14 @@
       "main": [
         [
           {
-            "node": "Get Ledger Entries",
+            "node": "Get Open Invoices",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Get Ledger Entries": {
+    "Get Open Invoices": {
       "main": [
         [
           {

@@ -33,12 +33,12 @@ const transformNodeCode = `${transformSrc}
 // --- n8n driver -------------------------------------------------------------
 const custResp = $('Get Customers').first().json;
 const customers = custResp.value || (Array.isArray(custResp) ? custResp : [custResp]);
-const ledResp = $('Get Ledger Entries').first().json;
-const ledgerEntries = ledResp.value || (Array.isArray(ledResp) ? ledResp : []);
+const invResp = $('Get Open Invoices').first().json;
+const invoices = invResp.value || (Array.isArray(invResp) ? invResp : []);
 
 // amountSource: "filtered" = sum of 2023-2024 open invoices (default),
 //               "balanceDue" = customer's Balance_Due_LCY (total open balance).
-const records = buildRecords(customers, ledgerEntries, { amountSource: 'filtered' });
+const records = buildRecords(customers, invoices, { amountSource: 'filtered' });
 return records.map((r) => ({ json: r }));`;
 
 // ---- Code node 2: Render PDF (zero dependencies) ---------------------------
@@ -64,22 +64,22 @@ return out;`;
 
 // ---- Code node 0: Qualifying Customer Nos (pure JS, no modules) -------------
 // Derives the DISTINCT set of customers that actually have an open invoice dated
-// 2023-2024 from the (already server-filtered) ledger entries, and builds the
+// 2023-2024 from the (already server-filtered) salesInvoices, and builds the
 // OData $filter used to fetch ONLY those customers. If nobody qualifies it emits
 // no items, so nothing downstream runs and no letters are produced.
-const qualifyNodeCode = `const led = $('Get Ledger Entries').first().json;
-const entries = led.value || (Array.isArray(led) ? led : []);
+const qualifyNodeCode = `const inv = $('Get Open Invoices').first().json;
+const invoices = inv.value || (Array.isArray(inv) ? inv : []);
 const inWindow = (d) => { const s = String(d || '').slice(0, 10); return s >= '2023-01-01' && s <= '2024-12-31'; };
+const remaining = (e) => (e.remainingAmount != null && e.remainingAmount !== '') ? (Number(e.remainingAmount) || 0) : (Number(e.totalAmountIncludingTax) || 0);
 
 const nos = [...new Set(
-  entries
+  invoices
     .filter((e) =>
-      String(e.Document_Type) === 'Invoice' &&
-      (e.Open === true || e.Open === 'true' || e.Open === 1) &&
-      inWindow(e.Document_Date) &&
-      (Number(e.Remaining_Amount) || 0) !== 0
+      String(e.status) === 'Open' &&
+      inWindow(e.invoiceDate) &&
+      remaining(e) !== 0
     )
-    .map((e) => String(e.Customer_No))
+    .map((e) => String(e.customerNumber))
 )];
 
 // Nobody qualifies -> stop here so NO customers are fetched and NO letters go out.
@@ -91,8 +91,12 @@ return [{ json: { customerNos: nos, count: nos.length, customerFilter } }];`;
 
 // --- helpers to build nodes -------------------------------------------------
 const TENANT = "={{ $('Keys').first().json.Tenant_ID }}";
-const BC_BASE =
+// OData V4 custom pages (used for the Customer page).
+const BC_ODATA =
   "https://api.businesscentral.dynamics.com/v2.0/{{ $('Keys').first().json.Tenant_ID }}/{{ $('Keys').first().json.Environment }}/ODataV4/Company('{{ $('Keys').first().json.Company }}')";
+// Standard API v2.0 (used for salesInvoices — has status + remainingAmount).
+const BC_API =
+  "https://api.businesscentral.dynamics.com/v2.0/{{ $('Keys').first().json.Tenant_ID }}/{{ $('Keys').first().json.Environment }}/api/v2.0/companies({{ $('Keys').first().json.Company_ID }})";
 
 const nodes = [
   {
@@ -112,6 +116,7 @@ const nodes = [
           { id: "a3", name: "Client_Secret", value: "REPLACE_WITH_CLIENT_SECRET", type: "string" },
           { id: "a4", name: "Environment", value: "Production", type: "string" },
           { id: "a5", name: "Company", value: "Live-EB", type: "string" },
+          { id: "a7", name: "Company_ID", value: "REPLACE_WITH_COMPANY_GUID", type: "string" },
           {
             id: "a6",
             name: "Output_Folder",
@@ -161,11 +166,11 @@ const nodes = [
     typeVersion: 2,
     position: [440, 400],
     notes:
-      "Distinct customers with an open 2023-2024 invoice, derived from the ledger entries. Emits nothing if none qualify, so no letters go out.",
+      "Distinct customers with an open 2023-2024 invoice, derived from Get Open Invoices. Emits nothing if none qualify, so no letters go out.",
   },
   {
     parameters: {
-      url: `=${BC_BASE}/Customer`,
+      url: `=${BC_ODATA}/Customer`,
       sendQuery: true,
       queryParameters: {
         parameters: [
@@ -192,19 +197,17 @@ const nodes = [
   },
   {
     parameters: {
-      url: `=${BC_BASE}/Customer_Ledger_Entries`,
+      url: `=${BC_API}/salesInvoices`,
       sendQuery: true,
       queryParameters: {
         parameters: [
+          // Posted & unpaid (status Open) invoices whose Document Date is in 2023-2024.
           {
             name: "$filter",
-            value:
-              "Open eq true and Document_Type eq 'Invoice' and Document_Date ge 2023-01-01 and Document_Date le 2024-12-31",
+            value: "status eq 'Open' and invoiceDate ge 2023-01-01 and invoiceDate le 2024-12-31",
           },
-          {
-            name: "$select",
-            value: "Customer_No,Document_Type,Document_No,Document_Date,Due_Date,Amount,Remaining_Amount,Open",
-          },
+          // No $select on purpose: returns every property so you can see the field
+          // names in the node output. Add a $select later to trim the payload.
         ],
       },
       sendHeaders: true,
@@ -215,13 +218,13 @@ const nodes = [
       },
       options: {},
     },
-    id: "n_ledger",
-    name: "Get Ledger Entries",
+    id: "n_invoices",
+    name: "Get Open Invoices",
     type: "n8n-nodes-base.httpRequest",
     typeVersion: 4.2,
     position: [220, 400],
     notes:
-      "Requires a published web service named 'Customer_Ledger_Entries' exposing these fields. If your published page/query has a different name, change it here.",
+      "Standard API v2.0 salesInvoices (status Open = posted & unpaid). Uses Company_ID (GUID) from Keys. Fields used: customerNumber, number, invoiceDate, dueDate, totalAmountIncludingTax, remainingAmount, status.",
   },
   {
     parameters: { jsCode: transformNodeCode },
@@ -252,9 +255,9 @@ const nodes = [
 const connections = {
   "When clicking Test workflow": { main: [[{ node: "Keys", type: "main", index: 0 }]] },
   Keys: { main: [[{ node: "Get Token", type: "main", index: 0 }]] },
-  // Ledger-driven: the filtered 2023-2024 open invoices decide who gets a letter.
-  "Get Token": { main: [[{ node: "Get Ledger Entries", type: "main", index: 0 }]] },
-  "Get Ledger Entries": { main: [[{ node: "Qualifying Customer Nos", type: "main", index: 0 }]] },
+  // Invoice-driven: the filtered 2023-2024 open invoices decide who gets a letter.
+  "Get Token": { main: [[{ node: "Get Open Invoices", type: "main", index: 0 }]] },
+  "Get Open Invoices": { main: [[{ node: "Qualifying Customer Nos", type: "main", index: 0 }]] },
   "Qualifying Customer Nos": { main: [[{ node: "Get Customers", type: "main", index: 0 }]] },
   "Get Customers": { main: [[{ node: "Transform (group + tokens)", type: "main", index: 0 }]] },
   "Transform (group + tokens)": { main: [[{ node: "Render & Merge PDFs", type: "main", index: 0 }]] },

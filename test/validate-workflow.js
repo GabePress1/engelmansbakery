@@ -37,19 +37,17 @@ function makeDollar(nodeData) {
 let failures = 0;
 const assert = (c, m) => { if (!c) { failures++; console.error("  FAIL: " + m); } };
 
-// Emulate BC's server-side $filter on the ledger page (open + Invoice + in 2023-2024).
-function serverFilterLedger(entries) {
+// Emulate BC's server-side $filter on salesInvoices (status Open + invoiceDate in 2023-2024).
+function serverFilterInvoices(invoices) {
   const inWin = (d) => { const s = String(d || "").slice(0, 10); return s >= "2023-01-01" && s <= "2024-12-31"; };
-  return entries.filter(
-    (e) => String(e.Document_Type) === "Invoice" && e.Open === true && inWin(e.Document_Date)
-  );
+  return invoices.filter((e) => String(e.status) === "Open" && inWin(e.invoiceDate));
 }
 
 async function main() {
   // ---- Node: Qualifying Customer Nos --------------------------------------
-  // In production the ledger response is already server-filtered; emulate that.
-  const ledgerResp = { value: serverFilterLedger(sample.ledgerEntries) };
-  const $forQualify = makeDollar({ "Get Ledger Entries": ledgerResp });
+  // In production the salesInvoices response is already server-filtered; emulate that.
+  const invoiceResp = { value: serverFilterInvoices(sample.invoices) };
+  const $forQualify = makeDollar({ "Get Open Invoices": invoiceResp });
   const qualifyFn = new AsyncFunction("$", "items", "require", codeOf("Qualifying Customer Nos"));
   const qualifyOut = await qualifyFn.call({}, $forQualify, [], require);
 
@@ -71,7 +69,7 @@ async function main() {
   const $forTransform = makeDollar({
     Keys: { Output_Folder: "C:\\Users\\GPress\\OneDrive\\Gabe's Projects" },
     "Get Customers": { value: fetchedCustomers },
-    "Get Ledger Entries": ledgerResp,
+    "Get Open Invoices": invoiceResp,
   });
   const transformFn = new AsyncFunction("$", "items", "require", codeOf("Transform (group + tokens)"));
   const records = await transformFn.call({}, $forTransform, [], require);

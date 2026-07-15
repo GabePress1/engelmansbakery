@@ -17,8 +17,8 @@ test/        sample data + end-to-end and workflow-code validators
 
 ## What it does
 
-1. **Read the open invoices first** (OData V4): the `Customer_Ledger_Entries` page filtered to
-   `Open = true`, `Document_Type = 'Invoice'`, `Document_Date` in **2023-01-01 … 2024-12-31**.
+1. **Read the open invoices first** (standard API `salesInvoices`): filtered to `status = 'Open'`
+   and `invoiceDate` in **2023-01-01 … 2024-12-31**.
    **These invoices decide who gets a letter** — nobody else is ever fetched or processed.
 2. **Derive the qualifying customers**: the `Qualifying Customer Nos` node takes the distinct
    `Customer_No` set from those invoices and builds the `$filter` used to fetch **only** those
@@ -89,7 +89,8 @@ real values):
 | `Client_ID`     | GUID           | client-credentials auth |
 | `Client_Secret` | secret         | client-credentials auth |
 | `Environment`   | `Production`   | BC URL segment |
-| `Company`       | `Live-EB`      | `Company('…')` in the OData URL |
+| `Company`       | `Live-EB`      | `Company('…')` in the OData V4 (Customer) URL |
+| `Company_ID`    | GUID           | `companies({id})` in the standard-API (salesInvoices) URL |
 | `Output_Folder` | the OneDrive path below | local write path (self-hosted output only) |
 
 Output folder (self-hosted local-write path):
@@ -99,17 +100,19 @@ Output folder (self-hosted local-write path):
 > because Cloud has no access to a local Windows path. The `Output_Folder` value is only used by
 > the self-hosted local-write alternative.
 
-**OData V4 endpoints used** (base
-`https://api.businesscentral.dynamics.com/v2.0/{Tenant_ID}/{Environment}/ODataV4/Company('{Company}')`):
+**Endpoints used** — the workflow reads from two BC surfaces:
 
-- `…/Customer?$select=No,Name,Address,Address_2,City,County,Post_Code,Balance_Due_LCY`
-- `…/Customer_Ledger_Entries?$filter=Open eq true and Document_Type eq 'Invoice' and Document_Date ge 2023-01-01 and Document_Date le 2024-12-31&$select=Customer_No,Document_Type,Document_No,Document_Date,Due_Date,Amount,Remaining_Amount,Open`
+1. **Open invoices — standard API v2.0 `salesInvoices`** (has `status` + `remainingAmount`):
+   `…/{Environment}/api/v2.0/companies({Company_ID})/salesInvoices?$filter=status eq 'Open' and invoiceDate ge 2023-01-01 and invoiceDate le 2024-12-31`
+   Fields used: `customerNumber, number, invoiceDate, dueDate, totalAmountIncludingTax, remainingAmount, status`.
+2. **Customer name/address — OData V4 `Customer` page** (has `Balance_Due_LCY`):
+   `…/{Environment}/ODataV4/Company('{Company}')/Customer?$filter=<qualifying No's>&$select=No,Name,Address,Address_2,City,County,Post_Code,Balance_Due_LCY`
 
-If your published ledger web service has a different name or field names, edit the
-**Get Ledger Entries** node. (You confirmed the `Customer` page exposes `Balance_Due_LCY`; the
-`Customer_Ledger_Entries` page must be published for the date-filtered invoice detail — if it
-isn't, publish page 25 as a web service, or switch `amountSource` to `balanceDue` and drop the
-statement detail.)
+> **Why two surfaces:** the custom OData V4 `Customer_Ledger_Entries` page is **not published** in
+> this tenant (it returns 404), so open/unpaid status comes from the standard-API `salesInvoices`
+> entity instead — which is what the other BC workflows here already use. The **Get Open Invoices**
+> node deliberately omits `$select` so its output shows every available property name; add a
+> `$select` later to trim the payload.
 
 ## Import & run in n8n
 
@@ -118,7 +121,7 @@ statement detail.)
 2. Put your real values in the **`Keys`** node (or reuse your existing `Keys` node and delete the
    imported placeholder one — the placeholders are not real secrets).
 3. Nothing to install for rendering — the render node is zero-dependency (see *Rendering* above).
-4. Confirm the **Get Ledger Entries** node points at your published page.
+4. Confirm the **Get Open Invoices** node's `Company_ID` (Company GUID) is set in `Keys`.
 5. **Execute** once. The **Render & Merge PDFs** node is the terminal node: it outputs one PDF per
    customer in binary field `data`, which you can **download directly from the execution** — no
    credentials or external service needed. Hand-check 2–3 customer totals against BC's Customer Ledger.
@@ -126,7 +129,7 @@ statement detail.)
    (`fileName={{ $json.fileName }}`, binary `data`) on n8n Cloud, or a **Read/Write File** node
    writing to `{{ $json.fullPath }}` on a self-hosted n8n.
 
-Flow: `Keys → Get Token → Get Ledger Entries → Qualifying Customer Nos → Get Customers → Transform → Render & Merge PDFs` (PDFs downloadable here).
+Flow: `Keys → Get Token → Get Open Invoices → Qualifying Customer Nos → Get Customers → Transform → Render & Merge PDFs` (PDFs downloadable here).
 
 > If your qualifying set is very large, the `Get Customers` `$filter` (`No eq '…' or …`) can get
 > long; split it into batches to stay under URL-length limits. For a typical past-due run the set
