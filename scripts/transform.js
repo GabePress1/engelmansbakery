@@ -43,32 +43,40 @@ function inWindow(dateStr) {
  * @param {Object[]} customers
  * @param {Object[]} entries     Customer Ledger Entries (OData V4 CustomerLedgerEntries)
  * @param {Object}   [options]
+ * @param {string}   [options.qualifyCutoff="2024-12-31"] a customer is counted only if they
+ *        have >= 1 open invoice with Document_Date on/before this date; once counted, ALL of
+ *        their open invoices (incl. 2025/2026) are included on the statement and in the total.
  * @param {"filtered"|"balanceDue"} [options.amountSource="filtered"]
- *        "filtered"   -> Converted_balance = sum of Remaining_Amount of the 2023-2024 open invoices
+ *        "filtered"   -> Converted_balance = sum of Remaining_Amount of ALL open invoices
  *        "balanceDue" -> Converted_balance = customer's Balance_Due_LCY (total open balance)
  * @returns {Object[]} qualifying customer records
  */
 function buildRecords(customers, entries, options = {}) {
   const amountSource = options.amountSource || "filtered";
+  // A customer is "counted" if they have >= 1 OPEN invoice dated on/before this cutoff.
+  const qualifyCutoff = options.qualifyCutoff || "2024-12-31";
 
   // Index customers by their number for O(1) join.
   const custByNo = new Map();
   for (const c of customers || []) custByNo.set(String(c.No), c);
 
-  // Keep only OPEN invoice entries whose Document Date is inside the window.
-  const grouped = new Map(); // customerNo -> { lines[], filteredRemaining }
+  // Group ALL open invoice entries by customer (no date window here). We also flag
+  // whether each customer has an open invoice on/before the qualify cutoff.
+  const grouped = new Map(); // customerNo -> { lines[], total, hasPreCutoff }
   for (const e of entries || []) {
     const isInvoice = String(e.Document_Type) === "Invoice";
     const isOpen = e.Open === true || e.Open === "true" || e.Open === 1;
-    if (!isInvoice || !isOpen || !inWindow(e.Document_Date)) continue;
+    if (!isInvoice || !isOpen) continue;
 
     const key = String(e.Customer_No);
-    if (!grouped.has(key)) grouped.set(key, { lines: [], filteredRemaining: 0 });
+    if (!grouped.has(key)) grouped.set(key, { lines: [], total: 0, hasPreCutoff: false });
     const g = grouped.get(key);
     const remaining = Number(e.Remaining_Amount) || 0;
-    g.filteredRemaining += remaining;
+    const documentDate = isoDate(e.Document_Date);
+    g.total += remaining;
+    if (documentDate && documentDate <= qualifyCutoff) g.hasPreCutoff = true;
     g.lines.push({
-      documentDate: isoDate(e.Document_Date),
+      documentDate: documentDate,
       documentNo: e.Document_No || "",
       dueDate: isoDate(e.Due_Date),
       amount: Number(e.Amount) || 0,
@@ -78,13 +86,14 @@ function buildRecords(customers, entries, options = {}) {
 
   const records = [];
   for (const [customerNo, g] of grouped) {
-    // Skip anyone whose filtered open balance nets to zero.
-    if (Math.round(g.filteredRemaining * 100) === 0) continue;
+    // Only customers with an open invoice on/before the cutoff are counted.
+    if (!g.hasPreCutoff) continue;
+    // Skip anyone whose total open balance nets to zero.
+    if (Math.round(g.total * 100) === 0) continue;
 
     const c = custByNo.get(customerNo) || {};
     const balanceDue = Number(c.Balance_Due_LCY) || 0;
-    const amount =
-      amountSource === "balanceDue" ? balanceDue : g.filteredRemaining;
+    const amount = amountSource === "balanceDue" ? balanceDue : g.total;
 
     const lines = g.lines.sort((a, b) =>
       a.documentDate < b.documentDate ? -1 : a.documentDate > b.documentDate ? 1 : 0
@@ -94,6 +103,7 @@ function buildRecords(customers, entries, options = {}) {
       customerNo,
       tokens: {
         Description: c.Name || customerNo,
+        AccountNumber: customerNo,
         Address_1: c.Address || "",
         Address_2: c.Address_2 || "",
         City: c.City || "",
@@ -103,7 +113,7 @@ function buildRecords(customers, entries, options = {}) {
       },
       statement: {
         lines,
-        total: g.filteredRemaining,
+        total: g.total,
         balanceDue,
       },
     });

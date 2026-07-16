@@ -62,21 +62,20 @@ return [{
 // block above with a loop calling buildCustomerPdf(rec.tokens, rec.statement, {}).`;
 
 // ---- Code node 0: Qualifying Customer Nos (pure JS, no modules) -------------
-// Derives the DISTINCT set of customers that actually have an open invoice dated
-// 2023-2024 from the (already server-filtered) Customer Ledger Entries, and builds
-// the OData $filter used to fetch ONLY those customers. If nobody qualifies it emits
-// no items, so nothing downstream runs and no letters are produced.
+// A customer is "counted" if they have >= 1 OPEN invoice dated on/before the cutoff
+// (12/31/2024). Builds the OData $filter used to fetch ONLY those customers. If
+// nobody qualifies it emits no items, so nothing downstream runs and no letters go out.
 const qualifyNodeCode = `const inv = $('Get Open Invoices').first().json;
 const entries = inv.value || (Array.isArray(inv) ? inv : []);
-const inWindow = (d) => { const s = String(d || '').slice(0, 10); return s >= '2023-01-01' && s <= '2024-12-31'; };
+const CUTOFF = '2024-12-31';
 
 const nos = [...new Set(
   entries
     .filter((e) =>
       String(e.Document_Type) === 'Invoice' &&
       (e.Open === true || e.Open === 'true' || e.Open === 1) &&
-      inWindow(e.Document_Date) &&
-      (Number(e.Remaining_Amount) || 0) !== 0
+      (Number(e.Remaining_Amount) || 0) !== 0 &&
+      String(e.Document_Date || '').slice(0, 10) <= CUTOFF
     )
     .map((e) => String(e.Customer_No))
 )];
@@ -199,10 +198,12 @@ const nodes = [
       sendQuery: true,
       queryParameters: {
         parameters: [
-          // Open (unpaid) invoice entries whose Document Date is in 2023-2024.
+          // ALL open (unpaid) invoice entries — no date bound. The Qualifying node
+          // gates on Document_Date <= 12/31/2024; counted customers then get ALL their
+          // open invoices (incl. 2025/2026) on the statement.
           {
             name: "$filter",
-            value: "Open eq true and Document_Type eq 'Invoice' and Document_Date ge 2023-01-01 and Document_Date le 2024-12-31",
+            value: "Open eq true and Document_Type eq 'Invoice'",
           },
           {
             name: "$select",

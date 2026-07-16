@@ -58,13 +58,15 @@ async function main() {
   assert(!records.some((r) => r.customerNo === "C00045"),
     "C00045 (open invoice but dated 2025, out of window) must be excluded");
   const stiles = records.find((r) => r.customerNo === "20382");
-  assert(!!stiles, "20382 should qualify");
+  assert(!!stiles, "20382 should qualify (has open invoices <= 2024-12-31)");
   if (stiles) {
-    // 3200.50 + 1620.25 in-window; the 900.00 (2022) and the Payment must be excluded.
-    assert(stiles.tokens.Converted_balance === "4,820.75",
-      `20382 balance expected 4,820.75, got ${stiles.tokens.Converted_balance}`);
-    assert(stiles.statement.lines.length === 2,
-      `20382 expected 2 in-window invoices, got ${stiles.statement.lines.length}`);
+    // Counted via 2022/2024 opens; total = ALL open incl. 2025: 900 + 3200.50 + 1620.25 + 500.
+    assert(stiles.tokens.Converted_balance === "6,220.75",
+      `20382 balance expected 6,220.75, got ${stiles.tokens.Converted_balance}`);
+    assert(stiles.statement.lines.length === 4,
+      `20382 expected 4 open invoices, got ${stiles.statement.lines.length}`);
+    assert(stiles.tokens.AccountNumber === "20382",
+      `20382 AccountNumber token missing/wrong: ${stiles.tokens.AccountNumber}`);
   }
 
   console.log(`Qualifying customers: ${records.length}`);

@@ -146,11 +146,17 @@ function statementPages(t, statement, opts) {
     y -= 30;
     if (withHeader) {
       c += text(MARGIN, y, `Statement Date: ${asOf}`, "F1", 10); y -= 18;
-      const bill = [t.Description, t.Address_1, t.Address_2, `${t.City}, ${t.State} ${t.Zipcode}`]
-        .filter((l) => l && String(l).trim() && String(l).trim() !== ",");
+      // Bill-to block: Company Name, Account Number, then address.
+      const bill = [
+        t.Description,
+        t.AccountNumber ? "Account Number: " + t.AccountNumber : null,
+        t.Address_1,
+        t.Address_2,
+        `${t.City}, ${t.State} ${t.Zipcode}`,
+      ].filter((l) => l && String(l).trim() && String(l).trim() !== ",");
       for (const l of bill) { c += text(MARGIN, y, l, "F1", 10); y -= 13; }
       y -= 10;
-      c += text(MARGIN, y, "Open invoices (Document Date 2023–2024):", "F2", 10); y -= 18;
+      c += text(MARGIN, y, "Open Invoices:", "F2", 10); y -= 18;
     }
     // column header
     for (const col of cols) {

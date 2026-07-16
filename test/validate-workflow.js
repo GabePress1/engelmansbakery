@@ -37,12 +37,9 @@ function makeDollar(nodeData) {
 let failures = 0;
 const assert = (c, m) => { if (!c) { failures++; console.error("  FAIL: " + m); } };
 
-// Emulate BC's server-side $filter on the ledger page (Open + Invoice + Document_Date in window).
+// Emulate BC's server-side $filter on the ledger page (ALL open Invoice entries, no date bound).
 function serverFilterEntries(entries) {
-  const inWin = (d) => { const s = String(d || "").slice(0, 10); return s >= "2023-01-01" && s <= "2024-12-31"; };
-  return entries.filter(
-    (e) => String(e.Document_Type) === "Invoice" && e.Open === true && inWin(e.Document_Date)
-  );
+  return entries.filter((e) => String(e.Document_Type) === "Invoice" && e.Open === true);
 }
 
 async function main() {
@@ -78,8 +75,10 @@ async function main() {
 
   assert(records.length === 2, `expected 2 records, got ${records.length}`);
   const stiles = records.find((r) => r.json.customerNo === "20382");
-  assert(stiles && stiles.json.tokens.Converted_balance === "4,820.75",
-    "20382 balance should be 4,820.75");
+  assert(stiles && stiles.json.tokens.Converted_balance === "6,220.75",
+    "20382 balance should be 6,220.75 (all open incl. 2025)");
+  assert(stiles && stiles.json.tokens.AccountNumber === "20382",
+    "20382 record should carry AccountNumber token");
   console.log(`Transform node -> ${records.length} qualifying customers`);
 
   // ---- Node: Render & Merge PDFs ------------------------------------------

@@ -72,7 +72,18 @@
       "Amount": 900.0,
       "Remaining_Amount": 900.0,
       "Open": true,
-      "_comment": "Outside 2023-2024 window: must be EXCLUDED from filtered total/statement."
+      "_comment": "Open, dated 2022 (<= cutoff): now INCLUDED (counts + on statement)."
+    },
+    {
+      "Customer_No": "20382",
+      "Document_Type": "Invoice",
+      "Document_No": "6000001",
+      "Document_Date": "2025-06-15",
+      "Due_Date": "2025-07-15",
+      "Amount": 500.0,
+      "Remaining_Amount": 500.0,
+      "Open": true,
+      "_comment": "Open 2025 invoice: INCLUDED because 20382 is counted (has a pre-2025 open invoice)."
     },
     {
       "Customer_No": "20382",
@@ -115,7 +126,7 @@
       "Amount": 3500.0,
       "Remaining_Amount": 3500.0,
       "Open": true,
-      "_comment": "Open but dated 2025 (out of window): customer C00045 must NOT get a letter."
+      "_comment": "Only open invoice is dated 2025 (no pre-2025 open): C00045 is NOT counted, no letter."
     }
   ]
 }
