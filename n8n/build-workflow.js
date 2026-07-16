@@ -47,20 +47,19 @@ return records.map((r) => ({ json: r }));`;
 const renderNodeCode = `${pureSrc}
 
 // --- n8n driver -------------------------------------------------------------
-const outFolder = ($('Keys').first().json.Output_Folder || '').replace(/[\\\\/]+$/,'');
-const sep = outFolder.includes('\\\\') ? '\\\\' : '/';
-const out = [];
-for (const item of items) {
-  const rec = item.json;
-  const pdf = buildCustomerPdf(rec.tokens, rec.statement, {});
-  const base = String(rec.tokens.Description).replace(/[^a-z0-9]+/gi,'_').replace(/^_+|_+$/g,'') || rec.customerNo;
-  const fileName = base + '.pdf';
-  out.push({
-    json: { customerNo: rec.customerNo, name: rec.tokens.Description, fileName, fullPath: outFolder ? outFolder + sep + fileName : fileName },
-    binary: { data: await this.helpers.prepareBinaryData(pdf, fileName, 'application/pdf') },
-  });
-}
-return out;`;
+// Build ONE combined PDF for the whole run: for each customer, the letter pages
+// then that customer's statement pages, in customer order ->
+//   Letter 1, Statement 1, Letter 2, Statement 2, ...
+const records = items.map((i) => i.json);
+const pdf = buildBatchPdf(records, {});
+const fileName = 'Past-Due-Letters-Batch.pdf';
+return [{
+  json: { customers: records.length, fileName },
+  binary: { data: await this.helpers.prepareBinaryData(pdf, fileName, 'application/pdf') },
+}];
+
+// To instead emit ONE PDF per customer (e.g. for individual mailing), replace the
+// block above with a loop calling buildCustomerPdf(rec.tokens, rec.statement, {}).`;
 
 // ---- Code node 0: Qualifying Customer Nos (pure JS, no modules) -------------
 // Derives the DISTINCT set of customers that actually have an open invoice dated
@@ -243,7 +242,7 @@ const nodes = [
     typeVersion: 2,
     position: [680, 300],
     notes:
-      "Zero dependencies (pure JS, base-14 fonts) — runs on n8n Cloud with no external modules or services. Builds the letter + statement as one PDF per customer.",
+      "Zero dependencies (pure JS, base-14 fonts) — runs on n8n Cloud with no external modules or services. Outputs ONE combined PDF: Letter 1, Statement 1, Letter 2, Statement 2, ... in the 'data' binary field.",
   },
 ];
 // NOTE: The workflow ends at "Render & Merge PDFs", which outputs one PDF per

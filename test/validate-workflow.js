@@ -97,14 +97,16 @@ async function main() {
   const renderFn = new AsyncFunction("$", "items", "require", codeOf("Render & Merge PDFs"));
   const rendered = await renderFn.call(thisCtx, $forRender, records, require);
 
-  assert(rendered.length === 2, `expected 2 rendered items, got ${rendered.length}`);
-  for (const r of rendered) {
-    assert(r.binary && r.binary.data && r.binary.data.size > 800,
-      `${r.json.name}: PDF looks too small (${r.binary && r.binary.data && r.binary.data.size})`);
-    assert(r.json.fullPath.endsWith(".pdf") && r.json.fullPath.includes("\\"),
-      `${r.json.name}: fullPath not a Windows path (${r.json.fullPath})`);
-    console.log(`Render node -> ${r.json.name}: ${r.binary.data.size} bytes -> ${r.json.fullPath}`);
-  }
+  // New behavior: ONE combined batch PDF for the whole run.
+  assert(rendered.length === 1, `expected 1 combined PDF, got ${rendered.length}`);
+  const batch = rendered[0];
+  assert(batch.json.customers === records.length,
+    `batch should cover all ${records.length} customers, got ${batch.json.customers}`);
+  assert(batch.json.fileName === "Past-Due-Letters-Batch.pdf",
+    `unexpected batch fileName: ${batch.json.fileName}`);
+  assert(batch.binary && batch.binary.data && batch.binary.data.size > 1500,
+    `combined PDF looks too small (${batch.binary && batch.binary.data && batch.binary.data.size})`);
+  console.log(`Render node -> 1 combined PDF, ${batch.json.customers} customers, ${batch.binary.data.size} bytes`);
 
   if (failures) { console.error(`\n${failures} check(s) failed.`); process.exit(1); }
   console.log("\nWorkflow Code nodes execute correctly against sample data.");
