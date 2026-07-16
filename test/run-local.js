@@ -48,7 +48,7 @@ async function main() {
   );
   const templateBuf = fs.readFileSync(TEMPLATE);
 
-  const records = buildRecords(data.customers, data.invoices, {
+  const records = buildRecords(data.customers, data.ledgerEntries, {
     amountSource: "filtered", // switch to "balanceDue" to use Balance_Due_LCY
   });
 
@@ -57,14 +57,14 @@ async function main() {
   assert(!records.some((r) => r.customerNo === "C00034"), "C00034 (fully paid) must be excluded");
   assert(!records.some((r) => r.customerNo === "C00045"),
     "C00045 (open invoice but dated 2025, out of window) must be excluded");
-  const sunrise = records.find((r) => r.customerNo === "C00010");
-  assert(!!sunrise, "C00010 should qualify");
-  if (sunrise) {
-    // 3200.50 + 1620.25 in-window; the 900.00 (2022) must be excluded.
-    assert(sunrise.tokens.Converted_balance === "4,820.75",
-      `C00010 balance expected 4,820.75, got ${sunrise.tokens.Converted_balance}`);
-    assert(sunrise.statement.lines.length === 2,
-      `C00010 expected 2 in-window invoices, got ${sunrise.statement.lines.length}`);
+  const stiles = records.find((r) => r.customerNo === "20382");
+  assert(!!stiles, "20382 should qualify");
+  if (stiles) {
+    // 3200.50 + 1620.25 in-window; the 900.00 (2022) and the Payment must be excluded.
+    assert(stiles.tokens.Converted_balance === "4,820.75",
+      `20382 balance expected 4,820.75, got ${stiles.tokens.Converted_balance}`);
+    assert(stiles.statement.lines.length === 2,
+      `20382 expected 2 in-window invoices, got ${stiles.statement.lines.length}`);
   }
 
   console.log(`Qualifying customers: ${records.length}`);

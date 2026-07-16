@@ -34,11 +34,11 @@ const transformNodeCode = `${transformSrc}
 const custResp = $('Get Customers').first().json;
 const customers = custResp.value || (Array.isArray(custResp) ? custResp : [custResp]);
 const invResp = $('Get Open Invoices').first().json;
-const invoices = invResp.value || (Array.isArray(invResp) ? invResp : []);
+const entries = invResp.value || (Array.isArray(invResp) ? invResp : []);
 
 // amountSource: "filtered" = sum of 2023-2024 open invoices (default),
 //               "balanceDue" = customer's Balance_Due_LCY (total open balance).
-const records = buildRecords(customers, invoices, { amountSource: 'filtered' });
+const records = buildRecords(customers, entries, { amountSource: 'filtered' });
 return records.map((r) => ({ json: r }));`;
 
 // ---- Code node 2: Render PDF (zero dependencies) ---------------------------
@@ -64,22 +64,22 @@ return out;`;
 
 // ---- Code node 0: Qualifying Customer Nos (pure JS, no modules) -------------
 // Derives the DISTINCT set of customers that actually have an open invoice dated
-// 2023-2024 from the (already server-filtered) salesInvoices, and builds the
-// OData $filter used to fetch ONLY those customers. If nobody qualifies it emits
+// 2023-2024 from the (already server-filtered) Customer Ledger Entries, and builds
+// the OData $filter used to fetch ONLY those customers. If nobody qualifies it emits
 // no items, so nothing downstream runs and no letters are produced.
 const qualifyNodeCode = `const inv = $('Get Open Invoices').first().json;
-const invoices = inv.value || (Array.isArray(inv) ? inv : []);
+const entries = inv.value || (Array.isArray(inv) ? inv : []);
 const inWindow = (d) => { const s = String(d || '').slice(0, 10); return s >= '2023-01-01' && s <= '2024-12-31'; };
-const remaining = (e) => (e.remainingAmount != null && e.remainingAmount !== '') ? (Number(e.remainingAmount) || 0) : (Number(e.totalAmountIncludingTax) || 0);
 
 const nos = [...new Set(
-  invoices
+  entries
     .filter((e) =>
-      String(e.status) === 'Open' &&
-      inWindow(e.invoiceDate) &&
-      remaining(e) !== 0
+      String(e.Document_Type) === 'Invoice' &&
+      (e.Open === true || e.Open === 'true' || e.Open === 1) &&
+      inWindow(e.Document_Date) &&
+      (Number(e.Remaining_Amount) || 0) !== 0
     )
-    .map((e) => String(e.customerNumber))
+    .map((e) => String(e.Customer_No))
 )];
 
 // Nobody qualifies -> stop here so NO customers are fetched and NO letters go out.
@@ -91,12 +91,9 @@ return [{ json: { customerNos: nos, count: nos.length, customerFilter } }];`;
 
 // --- helpers to build nodes -------------------------------------------------
 const TENANT = "={{ $('Keys').first().json.Tenant_ID }}";
-// OData V4 custom pages (used for the Customer page).
+// OData V4 custom pages (Customer page + published CustomerLedgerEntries page).
 const BC_ODATA =
   "https://api.businesscentral.dynamics.com/v2.0/{{ $('Keys').first().json.Tenant_ID }}/{{ $('Keys').first().json.Environment }}/ODataV4/Company('{{ $('Keys').first().json.Company }}')";
-// Standard API v2.0 (used for salesInvoices — has status + remainingAmount).
-const BC_API =
-  "https://api.businesscentral.dynamics.com/v2.0/{{ $('Keys').first().json.Tenant_ID }}/{{ $('Keys').first().json.Environment }}/api/v2.0/companies({{ $('Keys').first().json.Company_ID }})";
 
 const nodes = [
   {
@@ -116,7 +113,6 @@ const nodes = [
           { id: "a3", name: "Client_Secret", value: "REPLACE_WITH_CLIENT_SECRET", type: "string" },
           { id: "a4", name: "Environment", value: "Production", type: "string" },
           { id: "a5", name: "Company", value: "Live-EB", type: "string" },
-          { id: "a7", name: "Company_ID", value: "REPLACE_WITH_COMPANY_GUID", type: "string" },
           {
             id: "a6",
             name: "Output_Folder",
@@ -197,17 +193,22 @@ const nodes = [
   },
   {
     parameters: {
-      url: `=${BC_API}/salesInvoices`,
+      // OData V4 web service for Customer Ledger Entries (table 21). This must be
+      // PUBLISHED in BC (Web Services). If your Service Name differs, change the
+      // "/CustomerLedgerEntries" segment to match.
+      url: `=${BC_ODATA}/CustomerLedgerEntries`,
       sendQuery: true,
       queryParameters: {
         parameters: [
-          // Posted & unpaid (status Open) invoices whose Document Date is in 2023-2024.
+          // Open (unpaid) invoice entries whose Document Date is in 2023-2024.
           {
             name: "$filter",
-            value: "status eq 'Open' and invoiceDate ge 2023-01-01 and invoiceDate le 2024-12-31",
+            value: "Open eq true and Document_Type eq 'Invoice' and Document_Date ge 2023-01-01 and Document_Date le 2024-12-31",
           },
-          // No $select on purpose: returns every property so you can see the field
-          // names in the node output. Add a $select later to trim the payload.
+          {
+            name: "$select",
+            value: "Customer_No,Document_Type,Document_No,Document_Date,Due_Date,Amount,Remaining_Amount,Open",
+          },
         ],
       },
       sendHeaders: true,
@@ -224,7 +225,7 @@ const nodes = [
     typeVersion: 4.2,
     position: [220, 400],
     notes:
-      "Standard API v2.0 salesInvoices (status Open = posted & unpaid). Uses Company_ID (GUID) from Keys. Fields used: customerNumber, number, invoiceDate, dueDate, totalAmountIncludingTax, remainingAmount, status.",
+      "OData V4 CustomerLedgerEntries (table 21) — the real open A/R, incl. migrated/opening-balance entries that salesInvoices can't see. Requires the page published as a web service. Fields: Customer_No, Document_Type, Document_No, Document_Date, Due_Date, Amount, Remaining_Amount, Open.",
   },
   {
     parameters: { jsCode: transformNodeCode },

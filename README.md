@@ -17,9 +17,9 @@ test/        sample data + end-to-end and workflow-code validators
 
 ## What it does
 
-1. **Read the open invoices first** (standard API `salesInvoices`): filtered to `status = 'Open'`
-   and `invoiceDate` in **2023-01-01 … 2024-12-31**.
-   **These invoices decide who gets a letter** — nobody else is ever fetched or processed.
+1. **Read the open invoices first** (OData V4 `CustomerLedgerEntries`, table 21): filtered to
+   `Open = true`, `Document_Type = 'Invoice'`, `Document_Date` in **2023-01-01 … 2024-12-31**.
+   **These entries decide who gets a letter** — nobody else is ever fetched or processed.
 2. **Derive the qualifying customers**: the `Qualifying Customer Nos` node takes the distinct
    `Customer_No` set from those invoices and builds the `$filter` used to fetch **only** those
    customers from the `Customer` page (name/address/`Balance_Due_LCY`). If no invoices qualify,
@@ -89,8 +89,7 @@ real values):
 | `Client_ID`     | GUID           | client-credentials auth |
 | `Client_Secret` | secret         | client-credentials auth |
 | `Environment`   | `Production`   | BC URL segment |
-| `Company`       | `Live-EB`      | `Company('…')` in the OData V4 (Customer) URL |
-| `Company_ID`    | GUID           | `companies({id})` in the standard-API (salesInvoices) URL |
+| `Company`       | `Live-EB`      | `Company('…')` in the OData V4 URLs (Customer + CustomerLedgerEntries) |
 | `Output_Folder` | the OneDrive path below | local write path (self-hosted output only) |
 
 Output folder (self-hosted local-write path):
@@ -100,19 +99,25 @@ Output folder (self-hosted local-write path):
 > because Cloud has no access to a local Windows path. The `Output_Folder` value is only used by
 > the self-hosted local-write alternative.
 
-**Endpoints used** — the workflow reads from two BC surfaces:
+**Endpoints used** — the workflow reads from two OData V4 pages
+(base `…/{Environment}/ODataV4/Company('{Company}')`):
 
-1. **Open invoices — standard API v2.0 `salesInvoices`** (has `status` + `remainingAmount`):
-   `…/{Environment}/api/v2.0/companies({Company_ID})/salesInvoices?$filter=status eq 'Open' and invoiceDate ge 2023-01-01 and invoiceDate le 2024-12-31`
-   Fields used: `customerNumber, number, invoiceDate, dueDate, totalAmountIncludingTax, remainingAmount, status`.
-2. **Customer name/address — OData V4 `Customer` page** (has `Balance_Due_LCY`):
-   `…/{Environment}/ODataV4/Company('{Company}')/Customer?$filter=<qualifying No's>&$select=No,Name,Address,Address_2,City,County,Post_Code,Balance_Due_LCY`
+1. **Open invoices — `CustomerLedgerEntries`** (table 21; has `Open` + `Remaining_Amount`):
+   `…/CustomerLedgerEntries?$filter=Open eq true and Document_Type eq 'Invoice' and Document_Date ge 2023-01-01 and Document_Date le 2024-12-31`
+   Fields used: `Customer_No, Document_Type, Document_No, Document_Date, Due_Date, Amount, Remaining_Amount, Open`.
+2. **Customer name/address — `Customer` page** (has `Balance_Due_LCY`):
+   `…/Customer?$filter=<qualifying No's>&$select=No,Name,Address,Address_2,City,County,Post_Code,Balance_Due_LCY`
 
-> **Why two surfaces:** the custom OData V4 `Customer_Ledger_Entries` page is **not published** in
-> this tenant (it returns 404), so open/unpaid status comes from the standard-API `salesInvoices`
-> entity instead — which is what the other BC workflows here already use. The **Get Open Invoices**
-> node deliberately omits `$select` so its output shows every available property name; add a
-> `$select` later to trim the payload.
+> **Why the ledger, not `salesInvoices`:** much of this A/R was brought into BC as
+> **opening-balance / migrated Customer Ledger Entries** (whole customers post on one date, e.g.
+> 5/8/2025, with original Document Dates preserved). Those never created posted **Sales Invoice
+> documents**, so the standard-API `salesInvoices` entity returns nothing for them. The Customer
+> Ledger Entries table is the true source of open A/R and carries the real `Document_Date`, `Open`,
+> and `Remaining_Amount`.
+>
+> **Prerequisite:** the `CustomerLedgerEntries` page must be **published as a web service** in BC
+> (Web Services → Page 25). If you publish it under a different **Service Name**, change the
+> `…/CustomerLedgerEntries` segment in the **Get Open Invoices** node to match.
 
 ## Import & run in n8n
 
@@ -121,7 +126,8 @@ Output folder (self-hosted local-write path):
 2. Put your real values in the **`Keys`** node (or reuse your existing `Keys` node and delete the
    imported placeholder one — the placeholders are not real secrets).
 3. Nothing to install for rendering — the render node is zero-dependency (see *Rendering* above).
-4. Confirm the **Get Open Invoices** node's `Company_ID` (Company GUID) is set in `Keys`.
+4. Publish the **Customer Ledger Entries** page as a web service (BC → Web Services → Page 25) and,
+   if your Service Name isn't `CustomerLedgerEntries`, update that segment in the **Get Open Invoices** node.
 5. **Execute** once. The **Render & Merge PDFs** node is the terminal node: it outputs one PDF per
    customer in binary field `data`, which you can **download directly from the execution** — no
    credentials or external service needed. Hand-check 2–3 customer totals against BC's Customer Ledger.

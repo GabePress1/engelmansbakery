@@ -37,16 +37,18 @@ function makeDollar(nodeData) {
 let failures = 0;
 const assert = (c, m) => { if (!c) { failures++; console.error("  FAIL: " + m); } };
 
-// Emulate BC's server-side $filter on salesInvoices (status Open + invoiceDate in 2023-2024).
-function serverFilterInvoices(invoices) {
+// Emulate BC's server-side $filter on the ledger page (Open + Invoice + Document_Date in window).
+function serverFilterEntries(entries) {
   const inWin = (d) => { const s = String(d || "").slice(0, 10); return s >= "2023-01-01" && s <= "2024-12-31"; };
-  return invoices.filter((e) => String(e.status) === "Open" && inWin(e.invoiceDate));
+  return entries.filter(
+    (e) => String(e.Document_Type) === "Invoice" && e.Open === true && inWin(e.Document_Date)
+  );
 }
 
 async function main() {
   // ---- Node: Qualifying Customer Nos --------------------------------------
-  // In production the salesInvoices response is already server-filtered; emulate that.
-  const invoiceResp = { value: serverFilterInvoices(sample.invoices) };
+  // In production the ledger response is already server-filtered; emulate that.
+  const invoiceResp = { value: serverFilterEntries(sample.ledgerEntries) };
   const $forQualify = makeDollar({ "Get Open Invoices": invoiceResp });
   const qualifyFn = new AsyncFunction("$", "items", "require", codeOf("Qualifying Customer Nos"));
   const qualifyOut = await qualifyFn.call({}, $forQualify, [], require);
@@ -54,7 +56,7 @@ async function main() {
   const qNos = qualifyOut.length ? qualifyOut[0].json.customerNos : [];
   assert(qualifyOut.length === 1, "Qualifying node should emit exactly one item");
   assert(qNos.length === 2, `expected 2 qualifying customer Nos, got ${qNos.length}`);
-  assert(qNos.includes("C00010") && qNos.includes("C00021"), "C00010 and C00021 should qualify");
+  assert(qNos.includes("20382") && qNos.includes("C00021"), "20382 and C00021 should qualify");
   assert(!qNos.includes("C00034") && !qNos.includes("C00045"),
     "C00034 (paid) and C00045 (2025, out of window) must NOT qualify");
   console.log(`Qualifying node -> [${qNos.join(", ")}]`);
@@ -75,9 +77,9 @@ async function main() {
   const records = await transformFn.call({}, $forTransform, [], require);
 
   assert(records.length === 2, `expected 2 records, got ${records.length}`);
-  const sunrise = records.find((r) => r.json.customerNo === "C00010");
-  assert(sunrise && sunrise.json.tokens.Converted_balance === "4,820.75",
-    "C00010 balance should be 4,820.75");
+  const stiles = records.find((r) => r.json.customerNo === "20382");
+  assert(stiles && stiles.json.tokens.Converted_balance === "4,820.75",
+    "20382 balance should be 4,820.75");
   console.log(`Transform node -> ${records.length} qualifying customers`);
 
   // ---- Node: Render & Merge PDFs ------------------------------------------

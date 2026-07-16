@@ -1,13 +1,13 @@
 {
   "customers": [
     {
-      "No": "C00010",
-      "Name": "Sunrise Cafe LLC",
-      "Address": "1420 Peachtree St NE",
-      "Address_2": "Suite 200",
-      "City": "Atlanta",
+      "No": "20382",
+      "Name": "W.H. Stiles Fish Camp",
+      "Address": "100 Harbor Rd",
+      "Address_2": "",
+      "City": "Norcross",
       "County": "GA",
-      "Post_Code": "30309",
+      "Post_Code": "30092",
       "Balance_Due_LCY": 4820.75
     },
     {
@@ -42,62 +42,79 @@
       "_comment": "Only open invoice is dated 2025 (out of window). Must NOT get a letter."
     }
   ],
-  "invoices": [
+  "ledgerEntries": [
     {
-      "number": "INV-100234",
-      "customerNumber": "C00010",
-      "invoiceDate": "2023-05-12",
-      "dueDate": "2023-06-11",
-      "totalAmountIncludingTax": 3200.5,
-      "remainingAmount": 3200.5,
-      "status": "Open"
+      "Customer_No": "20382",
+      "Document_Type": "Invoice",
+      "Document_No": "5192222",
+      "Document_Date": "2024-01-30",
+      "Due_Date": "2024-03-01",
+      "Amount": 3200.5,
+      "Remaining_Amount": 3200.5,
+      "Open": true
     },
     {
-      "number": "INV-101987",
-      "customerNumber": "C00010",
-      "invoiceDate": "2024-02-03",
-      "dueDate": "2024-03-04",
-      "totalAmountIncludingTax": 1620.25,
-      "remainingAmount": 1620.25,
-      "status": "Open"
+      "Customer_No": "20382",
+      "Document_Type": "Invoice",
+      "Document_No": "5202454",
+      "Document_Date": "2024-02-07",
+      "Due_Date": "2024-03-08",
+      "Amount": 1620.25,
+      "Remaining_Amount": 1620.25,
+      "Open": true
     },
     {
-      "number": "INV-090010",
-      "customerNumber": "C00010",
-      "invoiceDate": "2022-11-01",
-      "dueDate": "2022-12-01",
-      "totalAmountIncludingTax": 900.0,
-      "remainingAmount": 900.0,
-      "status": "Open",
+      "Customer_No": "20382",
+      "Document_Type": "Invoice",
+      "Document_No": "4900010",
+      "Document_Date": "2022-11-01",
+      "Due_Date": "2022-12-01",
+      "Amount": 900.0,
+      "Remaining_Amount": 900.0,
+      "Open": true,
       "_comment": "Outside 2023-2024 window: must be EXCLUDED from filtered total/statement."
     },
     {
-      "number": "INV-100500",
-      "customerNumber": "C00021",
-      "invoiceDate": "2023-09-20",
-      "dueDate": "2023-10-20",
-      "totalAmountIncludingTax": 1290.0,
-      "remainingAmount": 1290.0,
-      "status": "Open"
+      "Customer_No": "20382",
+      "Document_Type": "Payment",
+      "Document_No": "14969",
+      "Document_Date": "2022-10-24",
+      "Due_Date": "2022-10-24",
+      "Amount": -500.0,
+      "Remaining_Amount": 0.0,
+      "Open": false,
+      "_comment": "Payment (not an Invoice): must be EXCLUDED."
     },
     {
-      "number": "INV-099001",
-      "customerNumber": "C00034",
-      "invoiceDate": "2024-06-01",
-      "dueDate": "2024-07-01",
-      "totalAmountIncludingTax": 2100.0,
-      "remainingAmount": 0.0,
-      "status": "Paid",
-      "_comment": "Fully paid (status Paid): customer C00034 must NOT get a letter."
+      "Customer_No": "C00021",
+      "Document_Type": "Invoice",
+      "Document_No": "5100500",
+      "Document_Date": "2023-09-20",
+      "Due_Date": "2023-10-20",
+      "Amount": 1290.0,
+      "Remaining_Amount": 1290.0,
+      "Open": true
     },
     {
-      "number": "INV-120500",
-      "customerNumber": "C00045",
-      "invoiceDate": "2025-03-10",
-      "dueDate": "2025-04-09",
-      "totalAmountIncludingTax": 3500.0,
-      "remainingAmount": 3500.0,
-      "status": "Open",
+      "Customer_No": "C00034",
+      "Document_Type": "Invoice",
+      "Document_No": "5099001",
+      "Document_Date": "2024-06-01",
+      "Due_Date": "2024-07-01",
+      "Amount": 2100.0,
+      "Remaining_Amount": 0.0,
+      "Open": false,
+      "_comment": "Fully paid (Open=false): customer C00034 must NOT get a letter."
+    },
+    {
+      "Customer_No": "C00045",
+      "Document_Type": "Invoice",
+      "Document_No": "5120500",
+      "Document_Date": "2025-03-10",
+      "Due_Date": "2025-04-09",
+      "Amount": 3500.0,
+      "Remaining_Amount": 3500.0,
+      "Open": true,
       "_comment": "Open but dated 2025 (out of window): customer C00045 must NOT get a letter."
     }
   ]

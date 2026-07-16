@@ -7,9 +7,9 @@
  * Inputs (arrays of plain objects):
  *   customers[] (OData V4 Customer page):
  *     { No, Name, Address, Address_2, City, County, Post_Code, Balance_Due_LCY }
- *   invoices[] (standard API v2.0 salesInvoices entity):
- *     { number, customerNumber, invoiceDate, dueDate, totalAmountIncludingTax,
- *       remainingAmount, status }   // status 'Open' = posted & unpaid
+ *   entries[] (OData V4 CustomerLedgerEntries page — table 21):
+ *     { Customer_No, Document_Type, Document_No, Document_Date, Due_Date,
+ *       Amount, Remaining_Amount, Open }   // Open=true & Document_Type='Invoice' = unpaid invoice
  *
  * Output: one record per QUALIFYING customer (>=1 open invoice dated in the window):
  *   { customerNo, tokens{...seven merge tokens...}, statement{ lines[], total, balanceDue } }
@@ -39,46 +39,39 @@ function inWindow(dateStr) {
   return d >= WINDOW_START && d <= WINDOW_END;
 }
 
-// Remaining balance of a salesInvoice: prefer remainingAmount; if the field isn't
-// returned, fall back to the total (an open invoice with no partial payment).
-function invoiceRemaining(e) {
-  const r = e.remainingAmount;
-  if (r != null && r !== "") return Number(r) || 0;
-  return Number(e.totalAmountIncludingTax) || 0;
-}
-
 /**
  * @param {Object[]} customers
- * @param {Object[]} invoices    standard-API salesInvoices
+ * @param {Object[]} entries     Customer Ledger Entries (OData V4 CustomerLedgerEntries)
  * @param {Object}   [options]
  * @param {"filtered"|"balanceDue"} [options.amountSource="filtered"]
- *        "filtered"   -> Converted_balance = sum of remaining of the 2023-2024 open invoices
+ *        "filtered"   -> Converted_balance = sum of Remaining_Amount of the 2023-2024 open invoices
  *        "balanceDue" -> Converted_balance = customer's Balance_Due_LCY (total open balance)
  * @returns {Object[]} qualifying customer records
  */
-function buildRecords(customers, invoices, options = {}) {
+function buildRecords(customers, entries, options = {}) {
   const amountSource = options.amountSource || "filtered";
 
   // Index customers by their number for O(1) join.
   const custByNo = new Map();
   for (const c of customers || []) custByNo.set(String(c.No), c);
 
-  // Keep only OPEN invoices whose invoice (document) date is inside the window.
+  // Keep only OPEN invoice entries whose Document Date is inside the window.
   const grouped = new Map(); // customerNo -> { lines[], filteredRemaining }
-  for (const e of invoices || []) {
-    const isOpen = String(e.status) === "Open";
-    if (!isOpen || !inWindow(e.invoiceDate)) continue;
+  for (const e of entries || []) {
+    const isInvoice = String(e.Document_Type) === "Invoice";
+    const isOpen = e.Open === true || e.Open === "true" || e.Open === 1;
+    if (!isInvoice || !isOpen || !inWindow(e.Document_Date)) continue;
 
-    const key = String(e.customerNumber);
+    const key = String(e.Customer_No);
     if (!grouped.has(key)) grouped.set(key, { lines: [], filteredRemaining: 0 });
     const g = grouped.get(key);
-    const remaining = invoiceRemaining(e);
+    const remaining = Number(e.Remaining_Amount) || 0;
     g.filteredRemaining += remaining;
     g.lines.push({
-      documentDate: isoDate(e.invoiceDate),
-      documentNo: e.number || "",
-      dueDate: isoDate(e.dueDate),
-      amount: Number(e.totalAmountIncludingTax) || 0,
+      documentDate: isoDate(e.Document_Date),
+      documentNo: e.Document_No || "",
+      dueDate: isoDate(e.Due_Date),
+      amount: Number(e.Amount) || 0,
       remaining: remaining,
     });
   }
