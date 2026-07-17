@@ -67,9 +67,24 @@ function hline(x1, x2, y) {
 const PAGE_W = 612, PAGE_H = 792, MARGIN = 72;
 const HEAD = "ENGELMAN'S BAKERY";
 
-function letterhead(size, y) {
+// Embedded brand logo (baseline JPEG). Populated by scripts/embed-logo.js.
+const LOGO = null;
+
+// Draw the letterhead centered at the top: the logo image if present, else grey text.
+// Returns { content, bottom } where `bottom` is the y just below the header.
+function header(topY, dispW, textSize) {
+  if (LOGO && LOGO.b64) {
+    const w = dispW;
+    const h = dispW * (LOGO.h / LOGO.w);
+    const x = (PAGE_W - w) / 2;
+    const bottom = topY - h;
+    const content =
+      `q ${w.toFixed(2)} 0 0 ${h.toFixed(2)} ${x.toFixed(2)} ${bottom.toFixed(2)} cm /Im0 Do Q\n`;
+    return { content, bottom };
+  }
+  const size = textSize || 22;
   const w = approxWidth(HEAD, size);
-  return text((PAGE_W - w) / 2, y - size, HEAD, "F4", size, "0.5");
+  return { content: text((PAGE_W - w) / 2, topY - size, HEAD, "F4", size, "0.5"), bottom: topY - size };
 }
 
 // --- letter (2 pages) -------------------------------------------------------
@@ -78,8 +93,9 @@ function letterPages(t) {
   const size = 11, lh = 15;
 
   // Page 1
-  let c = letterhead(22, PAGE_H - MARGIN);
-  let y = PAGE_H - MARGIN - 22 - 40;
+  const h1 = header(PAGE_H - MARGIN, 170, 22);
+  let c = h1.content;
+  let y = h1.bottom - 30;
   c += text(MARGIN, y, "Subject:", "F4", size);
   c += text(MARGIN + approxWidth("Subject:  ", size), y, "Past Due Balance – Immediate Attention Required", "F3", size);
   y -= lh + 12;
@@ -104,7 +120,7 @@ function letterPages(t) {
   c += text(MARGIN, y, "770-248-1444", "F3", size);
 
   // Page 2 — mailing address block (window-envelope position)
-  let c2 = letterhead(22, PAGE_H - MARGIN);
+  let c2 = header(PAGE_H - MARGIN, 170, 22).content;
   const addr = [
     t.Description,
     t.Address_1,
@@ -144,8 +160,9 @@ function statementPages(t, statement, opts) {
   let c = "";
   let y;
   const startPage = (withHeader) => {
-    c = letterhead(20, PAGE_H - MARGIN);
-    y = PAGE_H - MARGIN - 20 - 18;
+    const hd = header(PAGE_H - MARGIN, 150, 20);
+    c = hd.content;
+    y = hd.bottom - 16;
     const title = "Account Statement";
     c += text((PAGE_W - approxWidth(title, 16)) / 2, y, title, "F4", 16);
     y -= 30;
@@ -203,8 +220,14 @@ function buildPdf(pageContents) {
     offsets[num] = file.length;
     file += `${num} 0 obj\n${body}\nendobj\n`;
   };
+  // Optional logo image XObject is object 7; content/page objects start after it.
+  const hasLogo = !!(LOGO && LOGO.b64);
+  const imgObj = 7;
+  const base = hasLogo ? 7 : 6; // last non-page object number
+  const xobjRes = hasLogo ? ` /XObject << /Im0 ${imgObj} 0 R >>` : "";
+
   const pageNums = [];
-  for (let i = 0; i < P; i++) pageNums.push(8 + i * 2);
+  for (let i = 0; i < P; i++) pageNums.push(base + 2 + i * 2);
 
   emit(1, "<< /Type /Catalog /Pages 2 0 R >>");
   emit(2, `<< /Type /Pages /Kids [ ${pageNums.map((n) => n + " 0 R").join(" ")} ] /Count ${P} >>`);
@@ -212,18 +235,27 @@ function buildPdf(pageContents) {
   emit(4, "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>");
   emit(5, "<< /Type /Font /Subtype /Type1 /BaseFont /Times-Roman /Encoding /WinAnsiEncoding >>");
   emit(6, "<< /Type /Font /Subtype /Type1 /BaseFont /Times-Bold /Encoding /WinAnsiEncoding >>");
+  if (hasLogo) {
+    const jpeg = Buffer.from(LOGO.b64, "base64").toString("latin1");
+    emit(
+      imgObj,
+      `<< /Type /XObject /Subtype /Image /Width ${LOGO.w} /Height ${LOGO.h} ` +
+        `/ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpeg.length} >>\n` +
+        `stream\n${jpeg}\nendstream`
+    );
+  }
   for (let i = 0; i < P; i++) {
-    const contentNum = 7 + i * 2;
-    const pageNum = 8 + i * 2;
+    const contentNum = base + 1 + i * 2;
+    const pageNum = base + 2 + i * 2;
     const content = pageContents[i];
     emit(contentNum, `<< /Length ${content.length} >>\nstream\n${content}\nendstream`);
     emit(
       pageNum,
       `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${PAGE_W} ${PAGE_H}] ` +
-        `/Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R /F4 6 0 R >> >> /Contents ${contentNum} 0 R >>`
+        `/Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R /F4 6 0 R >>${xobjRes} >> /Contents ${contentNum} 0 R >>`
     );
   }
-  const lastObj = 6 + 2 * P;
+  const lastObj = base + 2 * P;
   const xrefOffset = file.length;
   let xref = `xref\n0 ${lastObj + 1}\n0000000000 65535 f \n`;
   for (let n = 1; n <= lastObj; n++) {
