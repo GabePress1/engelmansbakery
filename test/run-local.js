@@ -50,21 +50,27 @@ async function main() {
 
   const records = buildRecords(data.customers, data.ledgerEntries, {
     amountSource: "filtered", // switch to "balanceDue" to use Balance_Due_LCY
+    today: "2026-07-17",
   });
 
   // --- transform assertions -------------------------------------------------
   assert(records.length === 2, `expected 2 qualifying customers, got ${records.length}`);
   assert(!records.some((r) => r.customerNo === "C00034"), "C00034 (fully paid) must be excluded");
-  assert(!records.some((r) => r.customerNo === "C00045"),
-    "C00045 (open invoice but dated 2025, out of window) must be excluded");
+  assert(!records.some((r) => r.customerNo === "C00050"),
+    "C00050 (negative net balance) must be excluded");
+  assert(!records.some((r) => r.customerNo === "C00060"),
+    "C00060 (no past-due invoice) must be excluded");
   const stiles = records.find((r) => r.customerNo === "20382");
-  assert(!!stiles, "20382 should qualify (has open invoices <= 2024-12-31)");
+  assert(!!stiles, "20382 should qualify (positive net past-due balance)");
   if (stiles) {
-    // Counted via 2022/2024 opens; total = ALL open incl. 2025: 900 + 3200.50 + 1620.25 + 500.
-    assert(stiles.tokens.Converted_balance === "6,220.75",
-      `20382 balance expected 6,220.75, got ${stiles.tokens.Converted_balance}`);
-    assert(stiles.statement.lines.length === 4,
-      `20382 expected 4 open invoices, got ${stiles.statement.lines.length}`);
+    // 3200.50 + 500.00 past-due invoices - 200.00 open credit = 3500.50.
+    // The 290.11 invoice (not yet due) is excluded.
+    assert(stiles.tokens.Converted_balance === "3,500.50",
+      `20382 balance expected 3,500.50, got ${stiles.tokens.Converted_balance}`);
+    assert(stiles.statement.lines.length === 3,
+      `20382 expected 3 lines (2 past-due invoices + 1 credit), got ${stiles.statement.lines.length}`);
+    assert(stiles.statement.lines.some((l) => l.kind === "credit" && l.remaining < 0),
+      "20382 statement should include a negative credit line");
     assert(stiles.tokens.AccountNumber === "20382",
       `20382 AccountNumber token missing/wrong: ${stiles.tokens.AccountNumber}`);
   }

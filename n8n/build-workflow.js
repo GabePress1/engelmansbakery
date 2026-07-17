@@ -62,23 +62,28 @@ return [{
 // block above with a loop calling buildCustomerPdf(rec.tokens, rec.statement, {}).`;
 
 // ---- Code node 0: Qualifying Customer Nos (pure JS, no modules) -------------
-// A customer is "counted" if they have >= 1 OPEN invoice dated on/before the cutoff
-// (12/31/2024). Builds the OData $filter used to fetch ONLY those customers. If
-// nobody qualifies it emits no items, so nothing downstream runs and no letters go out.
+// A customer is "counted" if their NET PAST-DUE balance is positive:
+//   sum(past-due open invoices) + sum(open payments/credits, which are negative) > 0.
+// Builds the OData $filter used to fetch ONLY those customers. If nobody qualifies it
+// emits no items, so nothing downstream runs and no letters go out.
 const qualifyNodeCode = `const inv = $('Get Open Invoices').first().json;
 const entries = inv.value || (Array.isArray(inv) ? inv : []);
-const CUTOFF = '2024-12-31';
+const today = new Date().toISOString().slice(0, 10);
 
-const nos = [...new Set(
-  entries
-    .filter((e) =>
-      String(e.Document_Type) === 'Invoice' &&
-      (e.Open === true || e.Open === 'true' || e.Open === 1) &&
-      (Number(e.Remaining_Amount) || 0) !== 0 &&
-      String(e.Document_Date || '').slice(0, 10) <= CUTOFF
-    )
-    .map((e) => String(e.Customer_No))
-)];
+const net = {}; // customerNo -> net past-due balance
+for (const e of entries) {
+  const isOpen = e.Open === true || e.Open === 'true' || e.Open === 1;
+  if (!isOpen) continue;
+  const key = String(e.Customer_No);
+  const remaining = Number(e.Remaining_Amount) || 0;
+  const due = String(e.Due_Date || '').slice(0, 10);
+  if (String(e.Document_Type) === 'Invoice') {
+    if (due && due < today) net[key] = (net[key] || 0) + remaining; // past-due invoice
+  } else {
+    net[key] = (net[key] || 0) + remaining; // open payment/credit (negative)
+  }
+}
+const nos = Object.keys(net).filter((k) => Math.round(net[k] * 100) > 0);
 
 // Nobody qualifies -> stop here so NO customers are fetched and NO letters go out.
 if (nos.length === 0) return [];
@@ -198,12 +203,12 @@ const nodes = [
       sendQuery: true,
       queryParameters: {
         parameters: [
-          // ALL open (unpaid) invoice entries — no date bound. The Qualifying node
-          // gates on Document_Date <= 12/31/2024; counted customers then get ALL their
-          // open invoices (incl. 2025/2026) on the statement.
+          // ALL open entries (invoices AND unapplied payments/credits). Invoices are
+          // positive; open payments/credits are negative (they reduce the balance).
+          // The Transform keeps only PAST-DUE invoices + open credits and nets them.
           {
             name: "$filter",
-            value: "Open eq true and Document_Type eq 'Invoice'",
+            value: "Open eq true",
           },
           {
             name: "$select",

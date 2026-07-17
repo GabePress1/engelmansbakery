@@ -8,7 +8,7 @@
       "City": "Norcross",
       "County": "GA",
       "Post_Code": "30092",
-      "Balance_Due_LCY": 4820.75
+      "Balance_Due_LCY": 3500.5
     },
     {
       "No": "C00021",
@@ -21,6 +21,26 @@
       "Balance_Due_LCY": 1290.0
     },
     {
+      "No": "C00050",
+      "Name": "Coastal Catering",
+      "Address": "9 Marsh Ln",
+      "Address_2": "",
+      "City": "Brunswick",
+      "County": "GA",
+      "Post_Code": "31520",
+      "Balance_Due_LCY": -200.0
+    },
+    {
+      "No": "C00060",
+      "Name": "Future Foods",
+      "Address": "1 Tomorrow Way",
+      "Address_2": "",
+      "City": "Macon",
+      "County": "GA",
+      "Post_Code": "31201",
+      "Balance_Due_LCY": 400.0
+    },
+    {
       "No": "C00034",
       "Name": "Harbor Foods Inc",
       "Address": "5 Dockside Way",
@@ -29,17 +49,6 @@
       "County": "GA",
       "Post_Code": "31401",
       "Balance_Due_LCY": 0.0
-    },
-    {
-      "No": "C00045",
-      "Name": "Downtown Deli",
-      "Address": "12 Broad St",
-      "Address_2": "",
-      "City": "Rome",
-      "County": "GA",
-      "Post_Code": "30161",
-      "Balance_Due_LCY": 3500.0,
-      "_comment": "Only open invoice is dated 2025 (out of window). Must NOT get a letter."
     }
   ],
   "ledgerEntries": [
@@ -51,28 +60,8 @@
       "Due_Date": "2024-03-01",
       "Amount": 3200.5,
       "Remaining_Amount": 3200.5,
-      "Open": true
-    },
-    {
-      "Customer_No": "20382",
-      "Document_Type": "Invoice",
-      "Document_No": "5202454",
-      "Document_Date": "2024-02-07",
-      "Due_Date": "2024-03-08",
-      "Amount": 1620.25,
-      "Remaining_Amount": 1620.25,
-      "Open": true
-    },
-    {
-      "Customer_No": "20382",
-      "Document_Type": "Invoice",
-      "Document_No": "4900010",
-      "Document_Date": "2022-11-01",
-      "Due_Date": "2022-12-01",
-      "Amount": 900.0,
-      "Remaining_Amount": 900.0,
       "Open": true,
-      "_comment": "Open, dated 2022 (<= cutoff): now INCLUDED (counts + on statement)."
+      "_comment": "Past-due invoice (due 2024): included."
     },
     {
       "Customer_No": "20382",
@@ -83,18 +72,29 @@
       "Amount": 500.0,
       "Remaining_Amount": 500.0,
       "Open": true,
-      "_comment": "Open 2025 invoice: INCLUDED because 20382 is counted (has a pre-2025 open invoice)."
+      "_comment": "Past-due invoice (due 2025-07-15 < today): included."
+    },
+    {
+      "Customer_No": "20382",
+      "Document_Type": "Invoice",
+      "Document_No": "7000002",
+      "Document_Date": "2026-07-01",
+      "Due_Date": "2026-09-29",
+      "Amount": 290.11,
+      "Remaining_Amount": 290.11,
+      "Open": true,
+      "_comment": "Open but NOT past due (due 2026-09-29 > today): EXCLUDED from statement."
     },
     {
       "Customer_No": "20382",
       "Document_Type": "Payment",
-      "Document_No": "14969",
-      "Document_Date": "2022-10-24",
-      "Due_Date": "2022-10-24",
-      "Amount": -500.0,
-      "Remaining_Amount": 0.0,
-      "Open": false,
-      "_comment": "Payment (not an Invoice): must be EXCLUDED."
+      "Document_No": "G92161",
+      "Document_Date": "2026-06-23",
+      "Due_Date": "2026-06-23",
+      "Amount": -200.0,
+      "Remaining_Amount": -200.0,
+      "Open": true,
+      "_comment": "Unapplied payment (open credit): included as a negative line, nets the total."
     },
     {
       "Customer_No": "C00021",
@@ -104,7 +104,41 @@
       "Due_Date": "2023-10-20",
       "Amount": 1290.0,
       "Remaining_Amount": 1290.0,
-      "Open": true
+      "Open": true,
+      "_comment": "Past-due invoice: included."
+    },
+    {
+      "Customer_No": "C00050",
+      "Document_Type": "Invoice",
+      "Document_No": "5300100",
+      "Document_Date": "2024-05-01",
+      "Due_Date": "2024-06-01",
+      "Amount": 300.0,
+      "Remaining_Amount": 300.0,
+      "Open": true,
+      "_comment": "Past-due invoice 300, but a larger open credit makes the net negative."
+    },
+    {
+      "Customer_No": "C00050",
+      "Document_Type": "Payment",
+      "Document_No": "88001",
+      "Document_Date": "2024-07-01",
+      "Due_Date": "2024-07-01",
+      "Amount": -500.0,
+      "Remaining_Amount": -500.0,
+      "Open": true,
+      "_comment": "Open credit 500 > 300 past-due -> net -200 -> C00050 NOT counted (negative balance)."
+    },
+    {
+      "Customer_No": "C00060",
+      "Document_Type": "Invoice",
+      "Document_No": "5400200",
+      "Document_Date": "2026-07-05",
+      "Due_Date": "2026-12-01",
+      "Amount": 400.0,
+      "Remaining_Amount": 400.0,
+      "Open": true,
+      "_comment": "Open but not yet due (2026-12-01): no past-due invoice -> C00060 NOT counted."
     },
     {
       "Customer_No": "C00034",
@@ -115,18 +149,7 @@
       "Amount": 2100.0,
       "Remaining_Amount": 0.0,
       "Open": false,
-      "_comment": "Fully paid (Open=false): customer C00034 must NOT get a letter."
-    },
-    {
-      "Customer_No": "C00045",
-      "Document_Type": "Invoice",
-      "Document_No": "5120500",
-      "Document_Date": "2025-03-10",
-      "Due_Date": "2025-04-09",
-      "Amount": 3500.0,
-      "Remaining_Amount": 3500.0,
-      "Open": true,
-      "_comment": "Only open invoice is dated 2025 (no pre-2025 open): C00045 is NOT counted, no letter."
+      "_comment": "Fully paid (Open=false): C00034 not counted."
     }
   ]
 }

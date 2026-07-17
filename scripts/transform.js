@@ -43,53 +43,69 @@ function inWindow(dateStr) {
  * @param {Object[]} customers
  * @param {Object[]} entries     Customer Ledger Entries (OData V4 CustomerLedgerEntries)
  * @param {Object}   [options]
- * @param {string}   [options.qualifyCutoff="2024-12-31"] a customer is counted only if they
- *        have >= 1 open invoice with Document_Date on/before this date; once counted, ALL of
- *        their open invoices (incl. 2025/2026) are included on the statement and in the total.
+ * @param {string}   [options.today] ISO date used for the past-due test (default: today). An
+ *        invoice is past due when its Due Date is strictly before this date.
  * @param {"filtered"|"balanceDue"} [options.amountSource="filtered"]
- *        "filtered"   -> Converted_balance = sum of Remaining_Amount of ALL open invoices
+ *        "filtered"   -> Converted_balance = past-due invoices minus open credits/payments
  *        "balanceDue" -> Converted_balance = customer's Balance_Due_LCY (total open balance)
+ *
+ * Counted customers = those with a POSITIVE net past-due balance. The statement lists the
+ * past-due invoices plus open credits/payments (negative lines); the total nets to the letter
+ * amount.
  * @returns {Object[]} qualifying customer records
  */
 function buildRecords(customers, entries, options = {}) {
   const amountSource = options.amountSource || "filtered";
-  // A customer is "counted" if they have >= 1 OPEN invoice dated on/before this cutoff.
-  const qualifyCutoff = options.qualifyCutoff || "2024-12-31";
+  // "Past due" = an open invoice whose Due Date is strictly before `today`.
+  const today = options.today || new Date().toISOString().slice(0, 10);
 
   // Index customers by their number for O(1) join.
   const custByNo = new Map();
   for (const c of customers || []) custByNo.set(String(c.No), c);
 
-  // Group ALL open invoice entries by customer (no date window here). We also flag
-  // whether each customer has an open invoice on/before the qualify cutoff.
-  const grouped = new Map(); // customerNo -> { lines[], total, hasPreCutoff }
+  // Per customer, collect: PAST-DUE invoice lines, plus OPEN credit/payment lines
+  // (any date). Non-invoice open entries (Payment/Credit Memo/Refund) are credits
+  // with a negative Remaining_Amount that reduce the balance.
+  const grouped = new Map(); // customerNo -> { lines[], total }
   for (const e of entries || []) {
-    const isInvoice = String(e.Document_Type) === "Invoice";
     const isOpen = e.Open === true || e.Open === "true" || e.Open === 1;
-    if (!isInvoice || !isOpen) continue;
+    if (!isOpen) continue;
 
-    const key = String(e.Customer_No);
-    if (!grouped.has(key)) grouped.set(key, { lines: [], total: 0, hasPreCutoff: false });
-    const g = grouped.get(key);
+    const type = String(e.Document_Type);
     const remaining = Number(e.Remaining_Amount) || 0;
     const documentDate = isoDate(e.Document_Date);
+    const dueDate = isoDate(e.Due_Date);
+    const key = String(e.Customer_No);
+
+    let include = false;
+    let kind = "invoice";
+    if (type === "Invoice") {
+      // Only past-due invoices count / show.
+      if (dueDate && dueDate < today) include = true;
+    } else {
+      // Open payment/credit/refund — an unapplied credit, included regardless of date.
+      include = true;
+      kind = "credit";
+    }
+    if (!include) continue;
+
+    if (!grouped.has(key)) grouped.set(key, { lines: [], total: 0 });
+    const g = grouped.get(key);
     g.total += remaining;
-    if (documentDate && documentDate <= qualifyCutoff) g.hasPreCutoff = true;
     g.lines.push({
       documentDate: documentDate,
       documentNo: e.Document_No || "",
-      dueDate: isoDate(e.Due_Date),
+      dueDate: dueDate,
       amount: Number(e.Amount) || 0,
       remaining: remaining,
+      kind: kind,
     });
   }
 
   const records = [];
   for (const [customerNo, g] of grouped) {
-    // Only customers with an open invoice on/before the cutoff are counted.
-    if (!g.hasPreCutoff) continue;
-    // Skip anyone whose total open balance nets to zero.
-    if (Math.round(g.total * 100) === 0) continue;
+    // Only customers with a POSITIVE net past-due balance are counted.
+    if (Math.round(g.total * 100) <= 0) continue;
 
     const c = custByNo.get(customerNo) || {};
     const balanceDue = Number(c.Balance_Due_LCY) || 0;

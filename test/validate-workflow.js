@@ -37,9 +37,9 @@ function makeDollar(nodeData) {
 let failures = 0;
 const assert = (c, m) => { if (!c) { failures++; console.error("  FAIL: " + m); } };
 
-// Emulate BC's server-side $filter on the ledger page (ALL open Invoice entries, no date bound).
+// Emulate BC's server-side $filter on the ledger page (ALL open entries: Open eq true).
 function serverFilterEntries(entries) {
-  return entries.filter((e) => String(e.Document_Type) === "Invoice" && e.Open === true);
+  return entries.filter((e) => e.Open === true);
 }
 
 async function main() {
@@ -54,15 +54,15 @@ async function main() {
   assert(qualifyOut.length === 1, "Qualifying node should emit exactly one item");
   assert(qNos.length === 2, `expected 2 qualifying customer Nos, got ${qNos.length}`);
   assert(qNos.includes("20382") && qNos.includes("C00021"), "20382 and C00021 should qualify");
-  assert(!qNos.includes("C00034") && !qNos.includes("C00045"),
-    "C00034 (paid) and C00045 (2025, out of window) must NOT qualify");
+  assert(!qNos.includes("C00050") && !qNos.includes("C00060") && !qNos.includes("C00034"),
+    "C00050 (negative), C00060 (not past due), C00034 (paid) must NOT qualify");
   console.log(`Qualifying node -> [${qNos.join(", ")}]`);
 
   // ---- Emulate: Get Customers fetches ONLY the qualifying customers --------
   const fetchedCustomers = sample.customers.filter((c) => qNos.includes(String(c.No)));
   assert(fetchedCustomers.length === 2, "Get Customers should fetch only the 2 qualifying customers");
-  assert(!fetchedCustomers.some((c) => c.No === "C00045"),
-    "C00045 must never be fetched (not in the $filter)");
+  assert(!fetchedCustomers.some((c) => c.No === "C00050"),
+    "C00050 must never be fetched (not in the $filter)");
 
   // ---- Node: Transform -----------------------------------------------------
   const $forTransform = makeDollar({
@@ -75,8 +75,8 @@ async function main() {
 
   assert(records.length === 2, `expected 2 records, got ${records.length}`);
   const stiles = records.find((r) => r.json.customerNo === "20382");
-  assert(stiles && stiles.json.tokens.Converted_balance === "6,220.75",
-    "20382 balance should be 6,220.75 (all open incl. 2025)");
+  assert(stiles && stiles.json.tokens.Converted_balance === "3,500.50",
+    "20382 balance should be 3,500.50 (past-due invoices minus open credit)");
   assert(stiles && stiles.json.tokens.AccountNumber === "20382",
     "20382 record should carry AccountNumber token");
   console.log(`Transform node -> ${records.length} qualifying customers`);

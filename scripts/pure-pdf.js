@@ -124,6 +124,11 @@ function formatUSD(n) {
   const num = Number(n) || 0;
   return num.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
+// Signed dollar amount: 1234.5 -> "$1,234.50", -200 -> "-$200.00".
+function money(n) {
+  const num = Number(n) || 0;
+  return (num < 0 ? "-$" : "$") + formatUSD(Math.abs(num));
+}
 function statementPages(t, statement, opts) {
   const asOf = (opts && opts.asOfDate) || new Date().toISOString().slice(0, 10);
   const cols = [
@@ -172,7 +177,7 @@ function statementPages(t, statement, opts) {
   for (const ln of statement.lines) {
     if (y < 110) { pages.push(c); startPage(false); }
     for (const col of cols) {
-      const v = col.money ? "$" + formatUSD(ln[col.key]) : String(ln[col.key] || "");
+      const v = col.money ? money(ln[col.key]) : String(ln[col.key] || "");
       if (col.right) c += text(col.right - approxWidth(v, size), y, v, "F1", size);
       else c += text(col.x, y, v, "F1", size);
     }
@@ -182,7 +187,7 @@ function statementPages(t, statement, opts) {
   c += hline(MARGIN, PAGE_W - MARGIN, y);
   y -= 16;
   const totLabel = "Total Due:";
-  const totVal = "$" + formatUSD(statement.total);
+  const totVal = money(statement.total);
   c += text(MARGIN + 300, y, totLabel, "F2", 10);
   c += text((PAGE_W - MARGIN) - approxWidth(totVal, 10), y, totVal, "F2", 10);
   pages.push(c);
