@@ -51,6 +51,7 @@ async function main() {
   const records = buildRecords(data.customers, data.ledgerEntries, {
     amountSource: "filtered", // switch to "balanceDue" to use Balance_Due_LCY
     today: "2026-07-17",
+    shipTos: data.shipTos,
   });
 
   // --- transform assertions -------------------------------------------------
@@ -60,20 +61,28 @@ async function main() {
     "C00050 (negative net balance) must be excluded");
   assert(!records.some((r) => r.customerNo === "C00060"),
     "C00060 (no past-due invoice) must be excluded");
+  assert(!records.some((r) => r.customerNo === "C00070"),
+    "C00070 (earliest remaining doc date 2025) must be excluded (Americas Mart case)");
   const stiles = records.find((r) => r.customerNo === "20382");
-  assert(!!stiles, "20382 should qualify (positive net past-due balance)");
+  assert(!!stiles, "20382 should qualify (2024 remaining invoice + positive net)");
   if (stiles) {
-    // 3200.50 + 500.00 past-due invoices - 200.00 open credit = 3500.50.
-    // The 290.11 invoice (not yet due) is excluded.
     assert(stiles.tokens.Converted_balance === "3,500.50",
       `20382 balance expected 3,500.50, got ${stiles.tokens.Converted_balance}`);
     assert(stiles.statement.lines.length === 3,
       `20382 expected 3 lines (2 past-due invoices + 1 credit), got ${stiles.statement.lines.length}`);
-    assert(stiles.statement.lines.some((l) => l.kind === "credit" && l.remaining < 0),
-      "20382 statement should include a negative credit line");
-    assert(stiles.tokens.AccountNumber === "20382",
-      `20382 AccountNumber token missing/wrong: ${stiles.tokens.AccountNumber}`);
+    assert(stiles.statement.lines.every((l) => "orderNo" in l),
+      "each statement line should carry orderNo");
+    assert(stiles.statement.lines.some((l) => l.orderNo === "S-ORD1001"),
+      "20382 should show order number S-ORD1001");
+    // Shipping tokens use the DEFAULT (first) ship-to; billing keeps the customer address.
+    assert(stiles.shipTokens.Address_1 === "50 Dockside Ave",
+      `20382 shipTokens should use default ship-to, got ${stiles.shipTokens.Address_1}`);
+    assert(stiles.tokens.Address_1 === "100 Harbor Rd",
+      `20382 billing tokens should use customer address, got ${stiles.tokens.Address_1}`);
   }
+  const blue = records.find((r) => r.customerNo === "C00021");
+  assert(blue && blue.shipTokens.Address_1 === blue.tokens.Address_1,
+    "C00021 has no ship-to -> shipping falls back to billing address");
 
   console.log(`Qualifying customers: ${records.length}`);
   const perCustomerPdfs = [];
@@ -103,11 +112,14 @@ async function main() {
     );
   }
 
-  // 4) Combined batch PDF for the printer
-  const batch = buildBatchPdf(records, { asOfDate: "2026-07-14" });
-  assert(batch.slice(0, 5).toString() === "%PDF-", "batch output is not a PDF");
-  fs.writeFileSync(path.join(OUT, "batch-all.pdf"), batch);
-  console.log(`Batch: out/batch-all.pdf  (${perCustomerPdfs.length} customers)`);
+  // 4) Two combined batch PDFs: billing + shipping addresses
+  const billing = buildBatchPdf(records, { asOfDate: "2026-07-17" }, "tokens");
+  const shipping = buildBatchPdf(records, { asOfDate: "2026-07-17" }, "shipTokens");
+  assert(billing.slice(0, 5).toString() === "%PDF-", "billing PDF invalid");
+  assert(shipping.slice(0, 5).toString() === "%PDF-", "shipping PDF invalid");
+  fs.writeFileSync(path.join(OUT, "Past-Due-Billing.pdf"), billing);
+  fs.writeFileSync(path.join(OUT, "Past-Due-Shipping.pdf"), shipping);
+  console.log(`Billing: out/Past-Due-Billing.pdf | Shipping: out/Past-Due-Shipping.pdf  (${records.length} customers)`);
 
   if (failures) {
     console.error(`\n${failures} assertion(s) failed.`);

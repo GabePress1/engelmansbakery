@@ -37,12 +37,18 @@ const customers = $('Get Customers').all().flatMap((it) => {
   const j = it.json;
   return j.value || (Array.isArray(j) ? j : j && j.No ? [j] : []);
 });
+// Ship-to addresses (for the shipping-address PDF); combine every batch's .value.
+let shipTos = [];
+try {
+  shipTos = $('Get Ship-to Addresses').all().flatMap((it) => {
+    const j = it.json;
+    return j.value || (Array.isArray(j) ? j : j && j.HFSCustomerNo ? [j] : []);
+  });
+} catch (e) { shipTos = []; }
 const invResp = $('Get Open Invoices').first().json;
 const entries = invResp.value || (Array.isArray(invResp) ? invResp : []);
 
-// amountSource: "filtered" = sum of 2023-2024 open invoices (default),
-//               "balanceDue" = customer's Balance_Due_LCY (total open balance).
-const records = buildRecords(customers, entries, { amountSource: 'filtered' });
+const records = buildRecords(customers, entries, { amountSource: 'filtered', shipTos });
 return records.map((r) => ({ json: r }));`;
 
 // ---- Code node 2: Render PDF (zero dependencies) ---------------------------
@@ -59,12 +65,20 @@ const all = items.map((i) => i.json);
 // stale item can never crash the whole batch. 'skipped' surfaces any bad input.
 const records = all.filter((r) => r && r.tokens);
 const skipped = all.length - records.length;
-const pdf = buildBatchPdf(records, {});
-const fileName = 'Past-Due-Letters-Batch.pdf';
-return [{
-  json: { customers: records.length, skipped, fileName },
-  binary: { data: await this.helpers.prepareBinaryData(pdf, fileName, 'application/pdf') },
-}];
+
+// Two combined PDFs: one using the billing address, one using the shipping address.
+const billingPdf = buildBatchPdf(records, {}, 'tokens');
+const shippingPdf = buildBatchPdf(records, {}, 'shipTokens');
+return [
+  {
+    json: { type: 'billing', customers: records.length, skipped, fileName: 'Past-Due-Billing.pdf' },
+    binary: { data: await this.helpers.prepareBinaryData(billingPdf, 'Past-Due-Billing.pdf', 'application/pdf') },
+  },
+  {
+    json: { type: 'shipping', customers: records.length, skipped, fileName: 'Past-Due-Shipping.pdf' },
+    binary: { data: await this.helpers.prepareBinaryData(shippingPdf, 'Past-Due-Shipping.pdf', 'application/pdf') },
+  },
+];
 
 // To instead emit ONE PDF per customer (e.g. for individual mailing), replace the
 // block above with a loop calling buildCustomerPdf(rec.tokens, rec.statement, {}).`;
@@ -78,21 +92,26 @@ return [{
 const qualifyNodeCode = `const inv = $('Get Open Invoices').first().json;
 const entries = inv.value || (Array.isArray(inv) ? inv : []);
 const today = new Date().toISOString().slice(0, 10);
+const CUTOFF = '2024-12-31'; // must have a remaining invoice dated on/before this
 
-const net = {}; // customerNo -> net past-due balance
+const net = {};    // customerNo -> net past-due balance
+const hasOld = {}; // customerNo -> has a remaining invoice dated <= CUTOFF
 for (const e of entries) {
   const isOpen = e.Open === true || e.Open === 'true' || e.Open === 1;
   if (!isOpen) continue;
   const key = String(e.Customer_No);
   const remaining = Number(e.Remaining_Amount) || 0;
   const due = String(e.Due_Date || '').slice(0, 10);
+  const doc = String(e.Document_Date || '').slice(0, 10);
   if (String(e.Document_Type) === 'Invoice') {
+    if (remaining !== 0 && doc && doc <= CUTOFF) hasOld[key] = true;
     if (due && due < today) net[key] = (net[key] || 0) + remaining; // past-due invoice
   } else {
     net[key] = (net[key] || 0) + remaining; // open payment/credit (negative)
   }
 }
-const nos = Object.keys(net).filter((k) => Math.round(net[k] * 100) > 0);
+// Counted: a remaining invoice dated 2024-or-older AND a positive net past-due balance.
+const nos = Object.keys(net).filter((k) => hasOld[k] && Math.round(net[k] * 100) > 0);
 
 // Nobody qualifies -> stop here so NO customers are fetched and NO letters go out.
 if (nos.length === 0) return [];
@@ -209,7 +228,37 @@ const nodes = [
     typeVersion: 4.2,
     position: [660, 400],
     notes:
-      "Fetches ONLY qualifying customers (filtered by Qualifying Customer Nos). If your qualifying set is very large, split the $filter into batches to stay under URL-length limits.",
+      "Fetches ONLY qualifying customers in batches (one request per Qualifying Customer Nos batch item) so each URL stays short.",
+  },
+  {
+    parameters: {
+      url: `=${BC_ODATA}/ShiptoAddressList`,
+      sendQuery: true,
+      queryParameters: {
+        parameters: [
+          // Runs once per Get Customers batch; filter ship-tos to THIS batch's customers.
+          {
+            name: "$filter",
+            value: "={{ $json.value.map(c => \"HFSCustomerNo eq '\" + c.No + \"'\").join(\" or \") }}",
+          },
+          { name: "$select", value: "HFSCustomerNo,Code,Address,Address_2,City,Post_Code" },
+        ],
+      },
+      sendHeaders: true,
+      headerParameters: {
+        parameters: [
+          { name: "Authorization", value: "=Bearer {{ $('Get Token').first().json.access_token }}" },
+        ],
+      },
+      options: {},
+    },
+    id: "n_shipto",
+    name: "Get Ship-to Addresses",
+    type: "n8n-nodes-base.httpRequest",
+    typeVersion: 4.2,
+    position: [820, 400],
+    notes:
+      "Ship-to addresses (ShiptoAddressList, keyed by HFSCustomerNo) for the shipping-address PDF. Runs once per Get Customers batch. Customers with no ship-to fall back to the billing address in Transform.",
   },
   {
     parameters: {
@@ -229,7 +278,7 @@ const nodes = [
           },
           {
             name: "$select",
-            value: "Customer_No,Document_Type,Document_No,Document_Date,Due_Date,Amount,Remaining_Amount,Open",
+            value: "Customer_No,Document_Type,Document_No,Order_No,Document_Date,Due_Date,Amount,Remaining_Amount,Open",
           },
         ],
       },
@@ -265,7 +314,7 @@ const nodes = [
     typeVersion: 2,
     position: [680, 300],
     notes:
-      "Zero dependencies (pure JS, base-14 fonts) — runs on n8n Cloud with no external modules or services. Outputs ONE combined PDF: Letter 1, Statement 1, Letter 2, Statement 2, ... in the 'data' binary field.",
+      "Zero dependencies (pure JS, base-14 fonts). Outputs TWO combined PDFs in binary field 'data': item 1 = Past-Due-Billing.pdf (billing address), item 2 = Past-Due-Shipping.pdf (shipping address).",
   },
 ];
 // NOTE: The workflow ends at "Render & Merge PDFs", which outputs one PDF per
@@ -282,9 +331,10 @@ const connections = {
   "Get Token": { main: [[{ node: "Get Open Invoices", type: "main", index: 0 }]] },
   "Get Open Invoices": { main: [[{ node: "Qualifying Customer Nos", type: "main", index: 0 }]] },
   "Qualifying Customer Nos": { main: [[{ node: "Get Customers", type: "main", index: 0 }]] },
-  "Get Customers": { main: [[{ node: "Transform (group + tokens)", type: "main", index: 0 }]] },
+  "Get Customers": { main: [[{ node: "Get Ship-to Addresses", type: "main", index: 0 }]] },
+  "Get Ship-to Addresses": { main: [[{ node: "Transform (group + tokens)", type: "main", index: 0 }]] },
   "Transform (group + tokens)": { main: [[{ node: "Render & Merge PDFs", type: "main", index: 0 }]] },
-  // Terminal: PDFs are emitted here (binary `data`), downloadable from the run.
+  // Terminal: two PDFs (billing + shipping) are emitted here, downloadable from the run.
 };
 
 const workflow = {

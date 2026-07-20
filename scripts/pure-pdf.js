@@ -125,7 +125,7 @@ function letterPages(t) {
     t.Description,
     t.Address_1,
     t.Address_2,
-    `${t.City}, ${t.State} ${t.Zipcode}`,
+    cityStateZip(t),
   ].filter((l) => l && String(l).trim() && String(l).trim() !== ",");
   let ay = 150;
   for (const ln of addr) {
@@ -145,13 +145,18 @@ function money(n) {
   const num = Number(n) || 0;
   return (num < 0 ? "-$" : "$") + formatUSD(Math.abs(num));
 }
+// "City, State Zip" — omits the state/zip cleanly when missing (ship-to has no state).
+function cityStateZip(t) {
+  const cs = [t.City, t.State].filter((x) => x && String(x).trim()).join(", ");
+  return [cs, t.Zipcode].filter((x) => x && String(x).trim()).join(" ");
+}
 function statementPages(t, statement, opts) {
   const asOf = (opts && opts.asOfDate) || new Date().toISOString().slice(0, 10);
   const cols = [
     { key: "documentDate", label: "Document Date", x: MARGIN },
-    { key: "documentNo", label: "Invoice No.", x: MARGIN + 110 },
-    { key: "dueDate", label: "Due Date", x: MARGIN + 220 },
-    { key: "amount", label: "Amount", x: MARGIN + 300, money: true, right: MARGIN + 390 },
+    { key: "orderNo", label: "Order No.", x: MARGIN + 92 },
+    { key: "documentNo", label: "Invoice No.", x: MARGIN + 200 },
+    { key: "dueDate", label: "Due Date", x: MARGIN + 300 },
     { key: "remaining", label: "Remaining", x: MARGIN + 410, money: true, right: PAGE_W - MARGIN },
   ];
   const size = 9, lh = 14;
@@ -162,7 +167,7 @@ function statementPages(t, statement, opts) {
   const startPage = (withHeader) => {
     const hd = header(PAGE_H - MARGIN, 150, 20);
     c = hd.content;
-    y = hd.bottom - 16;
+    y = hd.bottom - 34; // extra space between the logo and the title
     const title = "Account Statement";
     c += text((PAGE_W - approxWidth(title, 16)) / 2, y, title, "F4", 16);
     y -= 30;
@@ -174,7 +179,7 @@ function statementPages(t, statement, opts) {
         t.AccountNumber ? "Account Number: " + t.AccountNumber : null,
         t.Address_1,
         t.Address_2,
-        `${t.City}, ${t.State} ${t.Zipcode}`,
+        cityStateZip(t),
       ].filter((l) => l && String(l).trim() && String(l).trim() !== ",");
       for (const l of bill) { c += text(MARGIN, y, l, "F1", 10); y -= 13; }
       y -= 10;
@@ -279,12 +284,15 @@ function buildCustomerPdf(tokens, statement, opts) {
   return buildPdf(customerPages(tokens, statement, opts));
 }
 
-// One combined batch PDF for a list of records ({ tokens, statement }).
-function buildBatchPdf(records, opts) {
+// One combined batch PDF for a list of records. tokenKey selects the address set:
+// "tokens" (billing, default) or "shipTokens" (shipping).
+function buildBatchPdf(records, opts, tokenKey) {
+  const key = tokenKey || "tokens";
   const pages = [];
   for (const r of records || []) {
-    if (!r || !r.tokens) continue; // skip malformed records instead of crashing
-    pages.push(...customerPages(r.tokens, r.statement, opts));
+    const tok = r && (r[key] || r.tokens);
+    if (!tok) continue; // skip malformed records instead of crashing
+    pages.push(...customerPages(tok, r.statement, opts));
   }
   return buildPdf(pages);
 }

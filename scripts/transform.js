@@ -58,15 +58,26 @@ function buildRecords(customers, entries, options = {}) {
   const amountSource = options.amountSource || "filtered";
   // "Past due" = an open invoice whose Due Date is strictly before `today`.
   const today = options.today || new Date().toISOString().slice(0, 10);
+  // A customer is counted only if they have an open invoice with remaining balance
+  // dated on/before this cutoff (Document Date 2024 or older).
+  const qualifyCutoff = options.qualifyCutoff || "2024-12-31";
 
   // Index customers by their number for O(1) join.
   const custByNo = new Map();
   for (const c of customers || []) custByNo.set(String(c.No), c);
 
+  // First ship-to per customer = the default; used for the shipping-address PDF.
+  const shipByNo = new Map();
+  for (const st of options.shipTos || []) {
+    const k = String(st.HFSCustomerNo);
+    if (!shipByNo.has(k)) shipByNo.set(k, st);
+  }
+
   // Per customer, collect: PAST-DUE invoice lines, plus OPEN credit/payment lines
   // (any date). Non-invoice open entries (Payment/Credit Memo/Refund) are credits
-  // with a negative Remaining_Amount that reduce the balance.
-  const grouped = new Map(); // customerNo -> { lines[], total }
+  // with a negative Remaining_Amount that reduce the balance. `hasOld` flags an open
+  // invoice with remaining dated on/before the qualify cutoff.
+  const grouped = new Map(); // customerNo -> { lines[], total, hasOld }
   for (const e of entries || []) {
     const isOpen = e.Open === true || e.Open === "true" || e.Open === 1;
     if (!isOpen) continue;
@@ -76,69 +87,69 @@ function buildRecords(customers, entries, options = {}) {
     const documentDate = isoDate(e.Document_Date);
     const dueDate = isoDate(e.Due_Date);
     const key = String(e.Customer_No);
+    if (!grouped.has(key)) grouped.set(key, { lines: [], total: 0, hasOld: false });
+    const g = grouped.get(key);
 
-    let include = false;
-    let kind = "invoice";
     if (type === "Invoice") {
-      // Only past-due invoices count / show.
-      if (dueDate && dueDate < today) include = true;
+      // Qualify gate: an open invoice with a remaining balance dated <= cutoff.
+      if (remaining !== 0 && documentDate && documentDate <= qualifyCutoff) g.hasOld = true;
+      // Statement shows only PAST-DUE invoices.
+      if (dueDate && dueDate < today) {
+        g.total += remaining;
+        g.lines.push({
+          documentDate, orderNo: e.Order_No || "", documentNo: e.Document_No || "",
+          dueDate, remaining, kind: "invoice",
+        });
+      }
     } else {
       // Open payment/credit/refund — an unapplied credit, included regardless of date.
-      include = true;
-      kind = "credit";
+      g.total += remaining;
+      g.lines.push({
+        documentDate, orderNo: e.Order_No || "", documentNo: e.Document_No || "",
+        dueDate, remaining, kind: "credit",
+      });
     }
-    if (!include) continue;
-
-    if (!grouped.has(key)) grouped.set(key, { lines: [], total: 0 });
-    const g = grouped.get(key);
-    g.total += remaining;
-    g.lines.push({
-      documentDate: documentDate,
-      documentNo: e.Document_No || "",
-      dueDate: dueDate,
-      amount: Number(e.Amount) || 0,
-      remaining: remaining,
-      kind: kind,
-    });
   }
 
   const records = [];
   for (const [customerNo, g] of grouped) {
-    // Only customers with a POSITIVE net past-due balance are counted.
+    // Counted only if they have a remaining invoice dated 2024-or-older AND a
+    // positive net past-due balance.
+    if (!g.hasOld) continue;
     if (Math.round(g.total * 100) <= 0) continue;
 
     const c = custByNo.get(customerNo) || {};
     const balanceDue = Number(c.Balance_Due_LCY) || 0;
     const amount = amountSource === "balanceDue" ? balanceDue : g.total;
+    const Converted_balance = formatUSD(amount);
+    const name = c.Name || customerNo;
 
     const lines = g.lines.sort((a, b) =>
       a.documentDate < b.documentDate ? -1 : a.documentDate > b.documentDate ? 1 : 0
     );
 
-    records.push({
-      customerNo,
-      tokens: {
-        Description: c.Name || customerNo,
-        AccountNumber: customerNo,
-        Address_1: c.Address || "",
-        Address_2: c.Address_2 || "",
-        City: c.City || "",
-        State: c.County || "",
-        Zipcode: c.Post_Code || "",
-        Converted_balance: formatUSD(amount),
-      },
-      statement: {
-        lines,
-        total: g.total,
-        balanceDue,
-      },
-    });
+    const tokens = {
+      Description: name, AccountNumber: customerNo,
+      Address_1: c.Address || "", Address_2: c.Address_2 || "",
+      City: c.City || "", State: c.County || "", Zipcode: c.Post_Code || "",
+      Converted_balance,
+    };
+    // Shipping tokens: default ship-to address (fall back to billing when none).
+    const st = shipByNo.get(customerNo);
+    const shipTokens = st
+      ? {
+          Description: name, AccountNumber: customerNo,
+          Address_1: st.Address || "", Address_2: st.Address_2 || "",
+          City: st.City || "", State: st.County || st.State || "", Zipcode: st.Post_Code || "",
+          Converted_balance,
+        }
+      : { ...tokens };
+
+    records.push({ customerNo, tokens, shipTokens, statement: { lines, total: g.total, balanceDue } });
   }
 
   // Deterministic order: by customer name.
-  records.sort((a, b) =>
-    a.tokens.Description.localeCompare(b.tokens.Description)
-  );
+  records.sort((a, b) => a.tokens.Description.localeCompare(b.tokens.Description));
   return records;
 }
 

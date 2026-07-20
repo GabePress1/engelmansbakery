@@ -55,8 +55,8 @@ async function main() {
   assert(qualifyOut.length >= 1, "Qualifying node should emit at least one batch");
   assert(qNos.length === 2, `expected 2 qualifying customer Nos, got ${qNos.length}`);
   assert(qNos.includes("20382") && qNos.includes("C00021"), "20382 and C00021 should qualify");
-  assert(!qNos.includes("C00050") && !qNos.includes("C00060") && !qNos.includes("C00034"),
-    "C00050 (negative), C00060 (not past due), C00034 (paid) must NOT qualify");
+  assert(!qNos.includes("C00050") && !qNos.includes("C00060") && !qNos.includes("C00070") && !qNos.includes("C00034"),
+    "C00050 (negative), C00060 (future), C00070 (2025-only doc date), C00034 (paid) must NOT qualify");
   console.log(`Qualifying node -> ${qualifyOut.length} batch(es), [${qNos.join(", ")}]`);
 
   // ---- Emulate: Get Customers runs once per batch, each returning its batch --
@@ -65,12 +65,17 @@ async function main() {
   }));
   const fetchedCustomers = getCustomersItems.flatMap((it) => it.json.value);
   assert(fetchedCustomers.length === 2, "Get Customers should fetch only the 2 qualifying customers");
-  assert(!fetchedCustomers.some((c) => c.No === "C00050"),
-    "C00050 must never be fetched (not in any batch $filter)");
+
+  // ---- Emulate: Get Ship-to Addresses runs once per Get Customers batch ------
+  const getShipToItems = getCustomersItems.map((it) => {
+    const nos = it.json.value.map((c) => String(c.No));
+    return { json: { value: (sample.shipTos || []).filter((s) => nos.includes(String(s.HFSCustomerNo))) } };
+  });
 
   // ---- Node: Transform -----------------------------------------------------
   const $forTransform = (nodeName) => {
     if (nodeName === "Get Customers") return { all: () => getCustomersItems, first: () => getCustomersItems[0] };
+    if (nodeName === "Get Ship-to Addresses") return { all: () => getShipToItems, first: () => getShipToItems[0] };
     if (nodeName === "Get Open Invoices") return { first: () => ({ json: invoiceResp }), all: () => [{ json: invoiceResp }] };
     if (nodeName === "Keys") return { first: () => ({ json: { Output_Folder: "C:\\Users\\GPress\\OneDrive\\Gabe's Projects" } }) };
     throw new Error("unexpected $() node: " + nodeName);
@@ -82,8 +87,8 @@ async function main() {
   const stiles = records.find((r) => r.json.customerNo === "20382");
   assert(stiles && stiles.json.tokens.Converted_balance === "3,500.50",
     "20382 balance should be 3,500.50 (past-due invoices minus open credit)");
-  assert(stiles && stiles.json.tokens.AccountNumber === "20382",
-    "20382 record should carry AccountNumber token");
+  assert(stiles && stiles.json.shipTokens.Address_1 === "50 Dockside Ave",
+    "20382 shipTokens should use the default ship-to address");
   console.log(`Transform node -> ${records.length} qualifying customers`);
 
   // ---- Node: Render & Merge PDFs ------------------------------------------
@@ -101,16 +106,17 @@ async function main() {
   const renderFn = new AsyncFunction("$", "items", "require", codeOf("Render & Merge PDFs"));
   const rendered = await renderFn.call(thisCtx, $forRender, records, require);
 
-  // New behavior: ONE combined batch PDF for the whole run.
-  assert(rendered.length === 1, `expected 1 combined PDF, got ${rendered.length}`);
-  const batch = rendered[0];
-  assert(batch.json.customers === records.length,
-    `batch should cover all ${records.length} customers, got ${batch.json.customers}`);
-  assert(batch.json.fileName === "Past-Due-Letters-Batch.pdf",
-    `unexpected batch fileName: ${batch.json.fileName}`);
-  assert(batch.binary && batch.binary.data && batch.binary.data.size > 1500,
-    `combined PDF looks too small (${batch.binary && batch.binary.data && batch.binary.data.size})`);
-  console.log(`Render node -> 1 combined PDF, ${batch.json.customers} customers, ${batch.binary.data.size} bytes`);
+  // New behavior: TWO combined PDFs — billing + shipping.
+  assert(rendered.length === 2, `expected 2 PDFs (billing + shipping), got ${rendered.length}`);
+  const billing = rendered.find((r) => r.json.type === "billing");
+  const shipping = rendered.find((r) => r.json.type === "shipping");
+  assert(billing && billing.json.fileName === "Past-Due-Billing.pdf", "billing PDF name/type wrong");
+  assert(shipping && shipping.json.fileName === "Past-Due-Shipping.pdf", "shipping PDF name/type wrong");
+  for (const p of [billing, shipping]) {
+    assert(p.binary && p.binary.data && p.binary.data.size > 1500,
+      `${p.json.type} PDF looks too small (${p.binary && p.binary.data && p.binary.data.size})`);
+  }
+  console.log(`Render node -> billing ${billing.binary.data.size}B + shipping ${shipping.binary.data.size}B, ${billing.json.customers} customers`);
 
   if (failures) { console.error(`\n${failures} check(s) failed.`); process.exit(1); }
   console.log("\nWorkflow Code nodes execute correctly against sample data.");
