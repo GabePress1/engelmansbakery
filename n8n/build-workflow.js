@@ -31,8 +31,12 @@ const pureSrc = inlineable(read("scripts/pure-pdf.js"));
 const transformNodeCode = `${transformSrc}
 
 // --- n8n driver -------------------------------------------------------------
-const custResp = $('Get Customers').first().json;
-const customers = custResp.value || (Array.isArray(custResp) ? custResp : [custResp]);
+// Get Customers runs once per batch (chunked to keep each URL short), so combine
+// the .value array from every Get Customers item.
+const customers = $('Get Customers').all().flatMap((it) => {
+  const j = it.json;
+  return j.value || (Array.isArray(j) ? j : j && j.No ? [j] : []);
+});
 const invResp = $('Get Open Invoices').first().json;
 const entries = invResp.value || (Array.isArray(invResp) ? invResp : []);
 
@@ -64,8 +68,9 @@ return [{
 // ---- Code node 0: Qualifying Customer Nos (pure JS, no modules) -------------
 // A customer is "counted" if their NET PAST-DUE balance is positive:
 //   sum(past-due open invoices) + sum(open payments/credits, which are negative) > 0.
-// Builds the OData $filter used to fetch ONLY those customers. If nobody qualifies it
-// emits no items, so nothing downstream runs and no letters go out.
+// Emits ONE ITEM PER BATCH of customers (chunked so each Get Customers URL stays
+// short — BC returns HTTP 414 if the $filter has hundreds of "No eq '...'" clauses).
+// If nobody qualifies it emits no items, so nothing downstream runs.
 const qualifyNodeCode = `const inv = $('Get Open Invoices').first().json;
 const entries = inv.value || (Array.isArray(inv) ? inv : []);
 const today = new Date().toISOString().slice(0, 10);
@@ -88,9 +93,16 @@ const nos = Object.keys(net).filter((k) => Math.round(net[k] * 100) > 0);
 // Nobody qualifies -> stop here so NO customers are fetched and NO letters go out.
 if (nos.length === 0) return [];
 
-// Build "No eq 'X' or No eq 'Y' ..." (single-quotes doubled per OData escaping).
-const customerFilter = nos.map((n) => "No eq '" + n.replace(/'/g, "''") + "'").join(' or ');
-return [{ json: { customerNos: nos, count: nos.length, customerFilter } }];`;
+// Chunk the customer numbers so each Get Customers request URL stays well under
+// the length limit. ~40 numbers => a $filter of ~800 chars per request.
+const CHUNK = 40;
+const out = [];
+for (let i = 0; i < nos.length; i += CHUNK) {
+  const part = nos.slice(i, i + CHUNK);
+  const customerFilter = part.map((n) => "No eq '" + n.replace(/'/g, "''") + "'").join(' or ');
+  out.push({ json: { batch: i / CHUNK, count: nos.length, customerNos: part, customerFilter } });
+}
+return out;`;
 
 // --- helpers to build nodes -------------------------------------------------
 const TENANT = "={{ $('Keys').first().json.Tenant_ID }}";
@@ -173,8 +185,9 @@ const nodes = [
       sendQuery: true,
       queryParameters: {
         parameters: [
-          // ONLY the customers that have a qualifying 2023-2024 open invoice.
-          { name: "$filter", value: "={{ $('Qualifying Customer Nos').first().json.customerFilter }}" },
+          // This node runs once per batch item from Qualifying Customer Nos; use THIS
+          // batch's filter so each request URL stays short (avoids HTTP 414).
+          { name: "$filter", value: "={{ $json.customerFilter }}" },
           { name: "$select", value: "No,Name,Address,Address_2,City,County,Post_Code,Balance_Due_LCY" },
         ],
       },

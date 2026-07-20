@@ -50,26 +50,31 @@ async function main() {
   const qualifyFn = new AsyncFunction("$", "items", "require", codeOf("Qualifying Customer Nos"));
   const qualifyOut = await qualifyFn.call({}, $forQualify, [], require);
 
-  const qNos = qualifyOut.length ? qualifyOut[0].json.customerNos : [];
-  assert(qualifyOut.length === 1, "Qualifying node should emit exactly one item");
+  // Qualifying now emits ONE ITEM PER BATCH; combine their customerNos.
+  const qNos = qualifyOut.flatMap((o) => o.json.customerNos);
+  assert(qualifyOut.length >= 1, "Qualifying node should emit at least one batch");
   assert(qNos.length === 2, `expected 2 qualifying customer Nos, got ${qNos.length}`);
   assert(qNos.includes("20382") && qNos.includes("C00021"), "20382 and C00021 should qualify");
   assert(!qNos.includes("C00050") && !qNos.includes("C00060") && !qNos.includes("C00034"),
     "C00050 (negative), C00060 (not past due), C00034 (paid) must NOT qualify");
-  console.log(`Qualifying node -> [${qNos.join(", ")}]`);
+  console.log(`Qualifying node -> ${qualifyOut.length} batch(es), [${qNos.join(", ")}]`);
 
-  // ---- Emulate: Get Customers fetches ONLY the qualifying customers --------
-  const fetchedCustomers = sample.customers.filter((c) => qNos.includes(String(c.No)));
+  // ---- Emulate: Get Customers runs once per batch, each returning its batch --
+  const getCustomersItems = qualifyOut.map((o) => ({
+    json: { value: sample.customers.filter((c) => o.json.customerNos.includes(String(c.No))) },
+  }));
+  const fetchedCustomers = getCustomersItems.flatMap((it) => it.json.value);
   assert(fetchedCustomers.length === 2, "Get Customers should fetch only the 2 qualifying customers");
   assert(!fetchedCustomers.some((c) => c.No === "C00050"),
-    "C00050 must never be fetched (not in the $filter)");
+    "C00050 must never be fetched (not in any batch $filter)");
 
   // ---- Node: Transform -----------------------------------------------------
-  const $forTransform = makeDollar({
-    Keys: { Output_Folder: "C:\\Users\\GPress\\OneDrive\\Gabe's Projects" },
-    "Get Customers": { value: fetchedCustomers },
-    "Get Open Invoices": invoiceResp,
-  });
+  const $forTransform = (nodeName) => {
+    if (nodeName === "Get Customers") return { all: () => getCustomersItems, first: () => getCustomersItems[0] };
+    if (nodeName === "Get Open Invoices") return { first: () => ({ json: invoiceResp }), all: () => [{ json: invoiceResp }] };
+    if (nodeName === "Keys") return { first: () => ({ json: { Output_Folder: "C:\\Users\\GPress\\OneDrive\\Gabe's Projects" } }) };
+    throw new Error("unexpected $() node: " + nodeName);
+  };
   const transformFn = new AsyncFunction("$", "items", "require", codeOf("Transform (group + tokens)"));
   const records = await transformFn.call({}, $forTransform, [], require);
 
