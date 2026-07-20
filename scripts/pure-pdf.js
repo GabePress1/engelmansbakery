@@ -267,8 +267,11 @@ function buildPdf(pageContents) {
 }
 
 // Page-content array for one customer (letter pages + statement pages).
+// Null-safe: a missing tokens/statement can never throw (renders empty fields).
 function customerPages(tokens, statement, opts) {
-  return [...letterPages(tokens), ...statementPages(tokens, statement, opts || {})];
+  const t = tokens || {};
+  const s = statement && statement.lines ? statement : { lines: [], total: 0 };
+  return [...letterPages(t), ...statementPages(t, s, opts || {})];
 }
 
 // One PDF (letter + statement) for a single customer.
@@ -279,7 +282,10 @@ function buildCustomerPdf(tokens, statement, opts) {
 // One combined batch PDF for a list of records ({ tokens, statement }).
 function buildBatchPdf(records, opts) {
   const pages = [];
-  for (const r of records) pages.push(...customerPages(r.tokens, r.statement, opts));
+  for (const r of records || []) {
+    if (!r || !r.tokens) continue; // skip malformed records instead of crashing
+    pages.push(...customerPages(r.tokens, r.statement, opts));
+  }
   return buildPdf(pages);
 }
 

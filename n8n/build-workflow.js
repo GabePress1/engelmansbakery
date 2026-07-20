@@ -54,11 +54,15 @@ const renderNodeCode = `${pureSrc}
 // Build ONE combined PDF for the whole run: for each customer, the letter pages
 // then that customer's statement pages, in customer order ->
 //   Letter 1, Statement 1, Letter 2, Statement 2, ...
-const records = items.map((i) => i.json);
+const all = items.map((i) => i.json);
+// Defensive: only render records that actually carry tokens, so one malformed or
+// stale item can never crash the whole batch. 'skipped' surfaces any bad input.
+const records = all.filter((r) => r && r.tokens);
+const skipped = all.length - records.length;
 const pdf = buildBatchPdf(records, {});
 const fileName = 'Past-Due-Letters-Batch.pdf';
 return [{
-  json: { customers: records.length, fileName },
+  json: { customers: records.length, skipped, fileName },
   binary: { data: await this.helpers.prepareBinaryData(pdf, fileName, 'application/pdf') },
 }];
 
