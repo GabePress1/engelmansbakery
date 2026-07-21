@@ -182,8 +182,7 @@ function statementPages(t, statement, opts) {
         cityStateZip(t),
       ].filter((l) => l && String(l).trim() && String(l).trim() !== ",");
       for (const l of bill) { c += text(MARGIN, y, l, "F1", 10); y -= 13; }
-      y -= 10;
-      c += text(MARGIN, y, "Open Invoices:", "F2", 10); y -= 18;
+      y -= 18;
     }
     // column header
     for (const col of cols) {
@@ -217,7 +216,8 @@ function statementPages(t, statement, opts) {
 }
 
 // --- low-level PDF assembler ------------------------------------------------
-function buildPdf(pageContents) {
+function buildPdf(pageContents, docOpts) {
+  const title = docOpts && docOpts.title;
   const P = pageContents.length;
   const offsets = [];
   let file = "%PDF-1.4\n%\xe2\xe3\xcf\xd3\n";
@@ -260,14 +260,21 @@ function buildPdf(pageContents) {
         `/Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R /F4 6 0 R >>${xobjRes} >> /Contents ${contentNum} 0 R >>`
     );
   }
-  const lastObj = base + 2 * P;
+  // Optional document Title (shows in the PDF viewer's title bar / tab).
+  let infoObj = 0;
+  if (title) {
+    infoObj = base + 2 * P + 1;
+    emit(infoObj, `<< /Title (${esc(title)}) >>`);
+  }
+  const lastObj = base + 2 * P + (infoObj ? 1 : 0);
   const xrefOffset = file.length;
   let xref = `xref\n0 ${lastObj + 1}\n0000000000 65535 f \n`;
   for (let n = 1; n <= lastObj; n++) {
     xref += String(offsets[n] || 0).padStart(10, "0") + " 00000 n \n";
   }
   file += xref;
-  file += `trailer\n<< /Size ${lastObj + 1} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF\n`;
+  const infoRef = infoObj ? ` /Info ${infoObj} 0 R` : "";
+  file += `trailer\n<< /Size ${lastObj + 1} /Root 1 0 R${infoRef} >>\nstartxref\n${xrefOffset}\n%%EOF\n`;
   return Buffer.from(file, "latin1");
 }
 
@@ -294,7 +301,7 @@ function buildBatchPdf(records, opts, tokenKey) {
     if (!tok) continue; // skip malformed records instead of crashing
     pages.push(...customerPages(tok, r.statement, opts));
   }
-  return buildPdf(pages);
+  return buildPdf(pages, opts);
 }
 
 module.exports = { buildCustomerPdf, buildBatchPdf, customerPages };

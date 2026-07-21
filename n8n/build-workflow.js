@@ -66,17 +66,20 @@ const all = items.map((i) => i.json);
 const records = all.filter((r) => r && r.tokens);
 const skipped = all.length - records.length;
 
-// Two combined PDFs: one using the billing address, one using the shipping address.
-const billingPdf = buildBatchPdf(records, {}, 'tokens');
-const shippingPdf = buildBatchPdf(records, {}, 'shipTokens');
+// Two combined PDFs (billing + shipping). Filenames and PDF /Title both carry the date.
+const today = new Date().toISOString().slice(0, 10);
+const billingName = 'Past-Due-Billing-' + today + '.pdf';
+const shippingName = 'Past-Due-Shipping-' + today + '.pdf';
+const billingPdf = buildBatchPdf(records, { title: 'Past-Due Billing ' + today }, 'tokens');
+const shippingPdf = buildBatchPdf(records, { title: 'Past-Due Shipping ' + today }, 'shipTokens');
 return [
   {
-    json: { type: 'billing', customers: records.length, skipped, fileName: 'Past-Due-Billing.pdf' },
-    binary: { data: await this.helpers.prepareBinaryData(billingPdf, 'Past-Due-Billing.pdf', 'application/pdf') },
+    json: { type: 'billing', customers: records.length, skipped, fileName: billingName },
+    binary: { data: await this.helpers.prepareBinaryData(billingPdf, billingName, 'application/pdf') },
   },
   {
-    json: { type: 'shipping', customers: records.length, skipped, fileName: 'Past-Due-Shipping.pdf' },
-    binary: { data: await this.helpers.prepareBinaryData(shippingPdf, 'Past-Due-Shipping.pdf', 'application/pdf') },
+    json: { type: 'shipping', customers: records.length, skipped, fileName: shippingName },
+    binary: { data: await this.helpers.prepareBinaryData(shippingPdf, shippingName, 'application/pdf') },
   },
 ];
 

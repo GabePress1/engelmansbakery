@@ -110,8 +110,10 @@ async function main() {
   assert(rendered.length === 2, `expected 2 PDFs (billing + shipping), got ${rendered.length}`);
   const billing = rendered.find((r) => r.json.type === "billing");
   const shipping = rendered.find((r) => r.json.type === "shipping");
-  assert(billing && billing.json.fileName === "Past-Due-Billing.pdf", "billing PDF name/type wrong");
-  assert(shipping && shipping.json.fileName === "Past-Due-Shipping.pdf", "shipping PDF name/type wrong");
+  assert(billing && /^Past-Due-Billing-\d{4}-\d{2}-\d{2}\.pdf$/.test(billing.json.fileName),
+    `billing PDF name should be dated, got ${billing && billing.json.fileName}`);
+  assert(shipping && /^Past-Due-Shipping-\d{4}-\d{2}-\d{2}\.pdf$/.test(shipping.json.fileName),
+    `shipping PDF name should be dated, got ${shipping && shipping.json.fileName}`);
   for (const p of [billing, shipping]) {
     assert(p.binary && p.binary.data && p.binary.data.size > 1500,
       `${p.json.type} PDF looks too small (${p.binary && p.binary.data && p.binary.data.size})`);
