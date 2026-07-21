@@ -84,7 +84,7 @@
       "Customer_No": "20382",
       "Document_Type": "Invoice",
       "Document_No": "5192222",
-      "External_Document_No": "PO-77001",
+      "Description": "Order S-ORD1001",
       "Document_Date": "2024-01-30",
       "Due_Date": "2024-03-01",
       "Amount": 3200.5,

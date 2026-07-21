@@ -72,11 +72,11 @@ async function main() {
       `20382 expected 3 lines (2 past-due invoices + 1 credit), got ${stiles.statement.lines.length}`);
     assert(stiles.statement.lines.every((l) => "orderNo" in l),
       "each statement line should carry orderNo");
-    // Order No. now comes from Document_No; Invoice No. from External_Document_No.
-    const inv1 = stiles.statement.lines.find((l) => l.orderNo === "5192222");
-    assert(inv1, "Order No. should be Document_No (5192222)");
-    assert(inv1 && inv1.documentNo === "PO-77001",
-      "Invoice No. should be External_Document_No (PO-77001)");
+    // Order No. now comes from Description; Invoice No. from Document_No.
+    const inv1 = stiles.statement.lines.find((l) => l.documentNo === "5192222");
+    assert(inv1, "Invoice No. should be Document_No (5192222)");
+    assert(inv1 && inv1.orderNo === "Order S-ORD1001",
+      "Order No. should be the Description (Order S-ORD1001)");
     // Shipping tokens use the DEFAULT (first) ship-to; billing keeps the customer address.
     assert(stiles.shipTokens.Address_1 === "50 Dockside Ave",
       `20382 shipTokens should use default ship-to, got ${stiles.shipTokens.Address_1}`);
