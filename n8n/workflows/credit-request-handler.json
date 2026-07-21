@@ -1,5 +1,5 @@
 {
-  "name": "Credit Request – Form Handler",
+  "name": "1a. Credit Request – Form Handler",
   "nodes": [
     {
       "parameters": {
@@ -14,7 +14,7 @@
       "typeVersion": 2,
       "position": [
         0,
-        0
+        352
       ],
       "webhookId": "credit-request-handler"
     },
@@ -27,8 +27,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        220,
-        0
+        224,
+        352
       ]
     },
     {
@@ -36,7 +36,9 @@
         "conditions": {
           "options": {
             "caseSensitive": true,
-            "leftValue": ""
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
           },
           "conditions": [
             {
@@ -51,15 +53,16 @@
             }
           ],
           "combinator": "and"
-        }
+        },
+        "options": {}
       },
       "id": "cr-handler-003",
       "name": "Validation OK?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        440,
-        0
+        448,
+        352
       ]
     },
     {
@@ -83,8 +86,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        660,
-        200
+        672,
+        448
       ]
     },
     {
@@ -112,8 +115,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        660,
-        -200
+        672,
+        256
       ],
       "credentials": {
         "hubspotAppToken": {
@@ -127,7 +130,9 @@
         "conditions": {
           "options": {
             "caseSensitive": true,
-            "leftValue": ""
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
           },
           "conditions": [
             {
@@ -141,15 +146,16 @@
             }
           ],
           "combinator": "and"
-        }
+        },
+        "options": {}
       },
       "id": "cr-handler-006",
       "name": "Company Found?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        880,
-        -200
+        896,
+        256
       ]
     },
     {
@@ -173,8 +179,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        1100,
-        0
+        1120,
+        272
       ]
     },
     {
@@ -186,8 +192,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1100,
-        -400
+        1120,
+        80
       ]
     },
     {
@@ -215,8 +221,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        1320,
-        -400
+        1344,
+        80
       ],
       "credentials": {
         "hubspotAppToken": {
@@ -234,8 +240,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2640,
-        -400
+        2240,
+        32
       ]
     },
     {
@@ -263,8 +269,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        2860,
-        -400
+        2464,
+        224
       ],
       "credentials": {
         "hubspotAppToken": {
@@ -282,8 +288,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3080,
-        -400
+        2688,
+        224
       ]
     },
     {
@@ -311,8 +317,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        3300,
-        -400
+        2912,
+        224
       ],
       "credentials": {
         "hubspotAppToken": {
@@ -346,8 +352,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        3520,
-        -400
+        3136,
+        224
       ],
       "credentials": {
         "hubspotAppToken": {
@@ -365,13 +371,12 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3740,
-        -400
+        3360,
+        224
       ]
     },
     {
       "parameters": {
-        "batchSize": 1,
         "options": {}
       },
       "id": "cr-handler-016",
@@ -379,8 +384,8 @@
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
       "position": [
-        3960,
-        -400
+        3584,
+        224
       ]
     },
     {
@@ -393,7 +398,7 @@
       "typeVersion": 2,
       "position": [
         3808,
-        -288
+        272
       ]
     },
     {
@@ -421,8 +426,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        4180,
-        -400
+        4032,
+        272
       ],
       "credentials": {
         "hubspotAppToken": {
@@ -456,8 +461,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        4400,
-        -400
+        4256,
+        272
       ],
       "credentials": {
         "hubspotAppToken": {
@@ -475,8 +480,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4620,
-        -200
+        4480,
+        320
       ]
     },
     {
@@ -499,8 +504,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        4180,
-        -600
+        5376,
+        80
       ]
     },
     {
@@ -512,8 +517,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1430,
-        -400
+        1568,
+        80
       ]
     },
     {
@@ -521,7 +526,9 @@
         "conditions": {
           "options": {
             "caseSensitive": true,
-            "leftValue": ""
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
           },
           "conditions": [
             {
@@ -536,15 +543,16 @@
             }
           ],
           "combinator": "and"
-        }
+        },
+        "options": {}
       },
       "id": "cr-handler-021",
       "name": "Files to Upload?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        1650,
-        -400
+        1792,
+        80
       ]
     },
     {
@@ -556,8 +564,8 @@
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
       "position": [
-        1870,
-        -400
+        2016,
+        -16
       ]
     },
     {
@@ -576,12 +584,10 @@
               "inputDataFieldName": "data"
             },
             {
-              "parameterType": "formData",
               "name": "options",
               "value": "{\"access\":\"PRIVATE\"}"
             },
             {
-              "parameterType": "formData",
               "name": "folderPath",
               "value": "/credit-requests"
             }
@@ -594,8 +600,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2090,
-        -600
+        2240,
+        -160
       ],
       "credentials": {
         "hubspotAppToken": {
@@ -613,8 +619,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2310,
-        -600
+        2464,
+        16
       ]
     },
     {
@@ -626,8 +632,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4600,
-        -400
+        3808,
+        80
       ]
     },
     {
@@ -655,8 +661,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        4820,
-        -400
+        4032,
+        80
       ],
       "credentials": {
         "hubspotAppToken": {
@@ -674,13 +680,12 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4900,
-        -600
+        4256,
+        80
       ]
     },
     {
       "parameters": {
-        "method": "GET",
         "url": "=https://api.hubapi.com/crm/v3/objects/tickets/{{ $json.ticketId }}/associations/2-48651243",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "hubspotAppToken",
@@ -693,7 +698,6 @@
             }
           ]
         },
-        "sendBody": false,
         "options": {}
       },
       "id": "cr-handler-030",
@@ -701,8 +705,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        5040,
-        -600
+        4480,
+        80
       ],
       "credentials": {
         "hubspotAppToken": {
@@ -713,28 +717,28 @@
     },
     {
       "parameters": {
-        "jsCode": "const response = $input.first().json;\nconst results = response.results || [];\n\nif (results.length === 0) {\n  // If no associated items found, use the ticket's current stage\n  const store = $getWorkflowStaticData('global');\n  return [{ json: { lowestStage: store.itemStage, message: 'No associated items found, using determined stage' } }];\n}\n\nconst stages = results.map(item => {\n  const stageValue = item.properties && item.properties.hs_pipeline_stage;\n  return stageValue ? parseInt(stageValue) : null;\n}).filter(s => s !== null);\n\nif (stages.length === 0) {\n  const store = $getWorkflowStaticData('global');\n  return [{ json: { lowestStage: store.itemStage, message: 'No stages found in items, using determined stage' } }];\n}\n\nconst lowestStage = Math.min(...stages);\nreturn [{ json: { lowestStage: String(lowestStage), itemCount: results.length, allStages: stages, success: true } }];"
+        "jsCode": "const items = $input.first().json.results || [];\nconst store = $getWorkflowStaticData('global');\nconst STAGE_ORDER = {\n  '1386096010': 0, // Verification\n  '1388087301': 1, // Credit Decision\n  '1388087302': 2, // CAPA\n  '1386096011': 3  // Closed\n};\nlet lowestStage = null, lowestRank = Infinity;\nconst stages = [];\nfor (const item of items) {\n  const stage = String((item.properties && item.properties.hs_pipeline_stage) || '');\n  if (!stage) continue;\n  stages.push(stage);\n  const rank = STAGE_ORDER[stage];\n  if (rank !== undefined && rank < lowestRank) { lowestRank = rank; lowestStage = stage; }\n}\nif (lowestStage === null) {\n  return [{ json: { lowestStage: store.itemStage, message: 'No recognized item stages, using determined stage' } }];\n}\nreturn [{ json: { lowestStage, itemCount: items.length, allStages: stages, success: true } }];"
       },
       "id": "cr-handler-031",
       "name": "Find Lowest Item Stage",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        5260,
-        -600
+        4704,
+        80
       ]
     },
     {
       "parameters": {
-        "jsCode": "const store = $getWorkflowStaticData('global');\nconst itemStage = $json.lowestStage;\nconst stageMapping = {\n  '1386096010': '1385996039',\n  '1388087301': '1387983013',\n  '1388087302': '1387983014'\n};\n\nconst ticketStage = stageMapping[itemStage] || itemStage;\n\nif (!stageMapping[itemStage]) {\n  console.warn(`Unknown item stage ${itemStage}, using as-is`);\n}\n\nreturn [{ json: { ticketStage: ticketStage, itemStage: itemStage, ticketId: store.ticketId } }];"
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst itemStage = $json.lowestStage;\nconst stageMapping = {\n  '1386096010': '1385996039',\n  '1388087301': '1387983013',\n  '1388087302': '1387983014',\n  '1386096011': '1385996040'\n};\n\nconst ticketStage = stageMapping[itemStage] || itemStage;\n\nif (!stageMapping[itemStage]) {\n  console.warn(`Unknown item stage ${itemStage}, using as-is`);\n}\n\nreturn [{ json: { ticketStage: ticketStage, itemStage: itemStage, ticketId: store.ticketId } }];"
       },
       "id": "cr-handler-034",
       "name": "Map Item Stage to Ticket Stage",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        5700,
-        -600
+        4928,
+        80
       ]
     },
     {
@@ -762,8 +766,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        5480,
-        -600
+        5152,
+        80
       ],
       "credentials": {
         "hubspotAppToken": {
@@ -781,8 +785,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4820,
-        -600
+        0,
+        -608
       ]
     },
     {
@@ -810,8 +814,43 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        5040,
-        -400
+        0,
+        -384
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "vxGS6a3iorMrt7wb",
+          "name": "HubSpot Service Key Production"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/2-48651243/batch/read",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ inputs: $json.results.map(a => ({ id: a.id || a.toObjectId })), properties: ['hs_pipeline_stage'] }) }}",
+        "options": {}
+      },
+      "id": "crh-batch-read-lowest",
+      "name": "Batch Read Item Stages",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        5150,
+        -600
       ],
       "credentials": {
         "hubspotAppToken": {
@@ -983,14 +1022,14 @@
       "main": [
         [
           {
-            "node": "Determine Item Stage",
+            "node": "Determine Route",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "Determine Route",
+            "node": "Determine Item Stage",
             "type": "main",
             "index": 0
           }
@@ -1045,7 +1084,7 @@
       "main": [
         [
           {
-            "node": "Find Lowest Item Stage",
+            "node": "Batch Read Item Stages",
             "type": "main",
             "index": 0
           }
@@ -1151,14 +1190,14 @@
       "main": [
         [
           {
-            "node": "Upload to HubSpot Files",
+            "node": "Build Ticket",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "Build Ticket",
+            "node": "Upload to HubSpot Files",
             "type": "main",
             "index": 0
           }
@@ -1181,6 +1220,17 @@
         [
           {
             "node": "File Upload Loop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Batch Read Item Stages": {
+      "main": [
+        [
+          {
+            "node": "Find Lowest Item Stage",
             "type": "main",
             "index": 0
           }
