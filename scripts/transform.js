@@ -97,7 +97,7 @@ function buildRecords(customers, entries, options = {}) {
       if (dueDate && dueDate < today) {
         g.total += remaining;
         g.lines.push({
-          documentDate, orderNo: e.Order_No || "", documentNo: e.Document_No || "",
+          documentDate, orderNo: e.Document_No || "", documentNo: e.External_Document_No || "",
           dueDate, remaining, kind: "invoice",
         });
       }

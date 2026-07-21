@@ -278,7 +278,7 @@ const nodes = [
           },
           {
             name: "$select",
-            value: "Customer_No,Document_Type,Document_No,Order_No,Document_Date,Due_Date,Amount,Remaining_Amount,Open",
+            value: "Customer_No,Document_Type,Document_No,External_Document_No,Document_Date,Due_Date,Amount,Remaining_Amount,Open",
           },
         ],
       },
