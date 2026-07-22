@@ -39,6 +39,17 @@ function inWindow(dateStr) {
   return d >= WINDOW_START && d <= WINDOW_END;
 }
 
+// Map the BC Document_Type to a short label for the statement's "Document Type"
+// column: Invoice / Credit / Payment / Refund (unknown types pass through as-is).
+function displayDocType(type) {
+  const t = String(type == null ? "" : type).trim();
+  if (t === "Credit Memo" || t === "Credit") return "Credit";
+  if (t === "Invoice") return "Invoice";
+  if (t === "Payment") return "Payment";
+  if (t === "Refund") return "Refund";
+  return t;
+}
+
 /**
  * @param {Object[]} customers
  * @param {Object[]} entries     Customer Ledger Entries (OData V4 CustomerLedgerEntries)
@@ -97,7 +108,8 @@ function buildRecords(customers, entries, options = {}) {
       if (dueDate && dueDate < today) {
         g.total += remaining;
         g.lines.push({
-          documentDate, orderNo: e.Description || "", documentNo: e.Document_No || "",
+          documentDate, docType: "Invoice",
+          orderNo: e.Description || "", documentNo: e.Document_No || "",
           dueDate, remaining, kind: "invoice",
         });
       }
@@ -105,7 +117,8 @@ function buildRecords(customers, entries, options = {}) {
       // Open payment/credit/refund — an unapplied credit, included regardless of date.
       g.total += remaining;
       g.lines.push({
-        documentDate, orderNo: e.Order_No || "", documentNo: e.Document_No || "",
+        documentDate, docType: displayDocType(type),
+        orderNo: e.Order_No || "", documentNo: e.Document_No || "",
         dueDate, remaining, kind: "credit",
       });
     }

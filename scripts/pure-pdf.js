@@ -154,12 +154,13 @@ function statementPages(t, statement, opts) {
   const asOf = (opts && opts.asOfDate) || new Date().toISOString().slice(0, 10);
   const cols = [
     { key: "documentDate", label: "Document Date", x: MARGIN },
-    { key: "orderNo", label: "Order No.", x: MARGIN + 92 },
-    { key: "documentNo", label: "Invoice No.", x: MARGIN + 200 },
-    { key: "dueDate", label: "Due Date", x: MARGIN + 300 },
-    { key: "remaining", label: "Remaining", x: MARGIN + 410, money: true, right: PAGE_W - MARGIN },
+    { key: "docType", label: "Document Type", x: MARGIN + 66 },
+    { key: "documentNo", label: "Document No.", x: MARGIN + 128 },
+    { key: "orderNo", label: "Order No.", x: MARGIN + 188 },
+    { key: "dueDate", label: "Due Date", x: MARGIN + 268 },
+    { key: "remaining", label: "Remaining Balance", x: MARGIN + 340, money: true, right: PAGE_W - MARGIN },
   ];
-  const size = 9, lh = 14;
+  const size = 8, lh = 14;
 
   const pages = [];
   let c = "";
@@ -168,7 +169,7 @@ function statementPages(t, statement, opts) {
     const hd = header(PAGE_H - MARGIN, 150, 20);
     c = hd.content;
     y = hd.bottom - 34; // extra space between the logo and the title
-    const title = "Account Statement";
+    const title = "Past Due Invoices";
     c += text((PAGE_W - approxWidth(title, 16)) / 2, y, title, "F4", 16);
     y -= 30;
     if (withHeader) {
@@ -207,7 +208,7 @@ function statementPages(t, statement, opts) {
   y -= 4;
   c += hline(MARGIN, PAGE_W - MARGIN, y);
   y -= 16;
-  const totLabel = "Total Due:";
+  const totLabel = "Total Past Due:";
   const totVal = money(statement.total);
   c += text(MARGIN + 300, y, totLabel, "F2", 10);
   c += text((PAGE_W - MARGIN) - approxWidth(totVal, 10), y, totVal, "F2", 10);
