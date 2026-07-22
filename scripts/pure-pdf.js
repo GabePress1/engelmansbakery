@@ -152,13 +152,16 @@ function cityStateZip(t) {
 }
 function statementPages(t, statement, opts) {
   const asOf = (opts && opts.asOfDate) || new Date().toISOString().slice(0, 10);
+  // Left edges spread evenly across the content width (72..540) so the six columns
+  // are balanced — no left-side crowding and no dead gap before the right-aligned
+  // Remaining Balance column.
   const cols = [
     { key: "documentDate", label: "Document Date", x: MARGIN },
-    { key: "docType", label: "Document Type", x: MARGIN + 66 },
-    { key: "documentNo", label: "Document No.", x: MARGIN + 128 },
-    { key: "orderNo", label: "Order No.", x: MARGIN + 188 },
-    { key: "dueDate", label: "Due Date", x: MARGIN + 268 },
-    { key: "remaining", label: "Remaining Balance", x: MARGIN + 340, money: true, right: PAGE_W - MARGIN },
+    { key: "docType", label: "Document Type", x: MARGIN + 84 },
+    { key: "documentNo", label: "Document No.", x: MARGIN + 164 },
+    { key: "orderNo", label: "Order No.", x: MARGIN + 241 },
+    { key: "dueDate", label: "Due Date", x: MARGIN + 339 },
+    { key: "remaining", label: "Remaining Balance", x: MARGIN + 410, money: true, right: PAGE_W - MARGIN },
   ];
   const size = 8, lh = 14;
 
