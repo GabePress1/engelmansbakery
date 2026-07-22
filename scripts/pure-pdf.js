@@ -217,14 +217,23 @@ function statementPages(t, statement, opts) {
 }
 
 // --- low-level PDF assembler ------------------------------------------------
+// Memory-conscious: streams every object into a chunk array (each chunk becomes a
+// small Buffer, joined once at the end) instead of growing one multi-MB string,
+// and frees each page's content as soon as it is serialized. This keeps peak
+// memory near one copy of the output — important for large batches inside the
+// memory-capped n8n Cloud Code node. All emitted text is latin1 (bytes 0-255),
+// so a string's .length equals its byte length and can drive the xref offsets.
 function buildPdf(pageContents, docOpts) {
   const title = docOpts && docOpts.title;
   const P = pageContents.length;
   const offsets = [];
-  let file = "%PDF-1.4\n%\xe2\xe3\xcf\xd3\n";
+  const chunks = [];
+  let pos = 0;
+  const push = (s) => { chunks.push(s); pos += s.length; };
+  push("%PDF-1.4\n%\xe2\xe3\xcf\xd3\n");
   const emit = (num, body) => {
-    offsets[num] = file.length;
-    file += `${num} 0 obj\n${body}\nendobj\n`;
+    offsets[num] = pos;
+    push(`${num} 0 obj\n${body}\nendobj\n`);
   };
   // Optional logo image XObject is object 7; content/page objects start after it.
   const hasLogo = !!(LOGO && LOGO.b64);
@@ -254,6 +263,7 @@ function buildPdf(pageContents, docOpts) {
     const contentNum = base + 1 + i * 2;
     const pageNum = base + 2 + i * 2;
     const content = pageContents[i];
+    pageContents[i] = null; // release the source string once we've consumed it
     emit(contentNum, `<< /Length ${content.length} >>\nstream\n${content}\nendstream`);
     emit(
       pageNum,
@@ -268,15 +278,18 @@ function buildPdf(pageContents, docOpts) {
     emit(infoObj, `<< /Title (${esc(title)}) >>`);
   }
   const lastObj = base + 2 * P + (infoObj ? 1 : 0);
-  const xrefOffset = file.length;
+  const xrefOffset = pos;
   let xref = `xref\n0 ${lastObj + 1}\n0000000000 65535 f \n`;
   for (let n = 1; n <= lastObj; n++) {
     xref += String(offsets[n] || 0).padStart(10, "0") + " 00000 n \n";
   }
-  file += xref;
+  push(xref);
   const infoRef = infoObj ? ` /Info ${infoObj} 0 R` : "";
-  file += `trailer\n<< /Size ${lastObj + 1} /Root 1 0 R${infoRef} >>\nstartxref\n${xrefOffset}\n%%EOF\n`;
-  return Buffer.from(file, "latin1");
+  push(`trailer\n<< /Size ${lastObj + 1} /Root 1 0 R${infoRef} >>\nstartxref\n${xrefOffset}\n%%EOF\n`);
+  // Join once. Small per-chunk Buffers avoid a giant intermediate latin1 string.
+  const out = Buffer.concat(chunks.map((c) => Buffer.from(c, "latin1")));
+  chunks.length = 0;
+  return out;
 }
 
 // Page-content array for one customer (letter pages + statement pages).

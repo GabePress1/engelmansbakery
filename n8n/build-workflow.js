@@ -67,19 +67,26 @@ const records = all.filter((r) => r && r.tokens);
 const skipped = all.length - records.length;
 
 // Two combined PDFs (billing + shipping). Filenames and PDF /Title both carry the date.
+// Build one PDF at a time and hand it straight to prepareBinaryData (which offloads
+// the bytes to n8n's binary store) BEFORE building the next, so we never hold two
+// multi-MB buffers at once — keeps the Code node under its memory cap on big batches.
 const today = new Date().toISOString().slice(0, 10);
 const billingName = 'Past-Due-Billing-' + today + '.pdf';
 const shippingName = 'Past-Due-Shipping-' + today + '.pdf';
-const billingPdf = buildBatchPdf(records, { title: 'Past-Due Billing ' + today }, 'tokens');
-const shippingPdf = buildBatchPdf(records, { title: 'Past-Due Shipping ' + today }, 'shipTokens');
+const billingData = await this.helpers.prepareBinaryData(
+  buildBatchPdf(records, { title: 'Past-Due Billing ' + today }, 'tokens'),
+  billingName, 'application/pdf');
+const shippingData = await this.helpers.prepareBinaryData(
+  buildBatchPdf(records, { title: 'Past-Due Shipping ' + today }, 'shipTokens'),
+  shippingName, 'application/pdf');
 return [
   {
     json: { type: 'billing', customers: records.length, skipped, fileName: billingName },
-    binary: { data: await this.helpers.prepareBinaryData(billingPdf, billingName, 'application/pdf') },
+    binary: { data: billingData },
   },
   {
     json: { type: 'shipping', customers: records.length, skipped, fileName: shippingName },
-    binary: { data: await this.helpers.prepareBinaryData(shippingPdf, shippingName, 'application/pdf') },
+    binary: { data: shippingData },
   },
 ];
 
