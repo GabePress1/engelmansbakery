@@ -2,34 +2,21 @@
  * run-local.js
  * ------------
  * End-to-end local proof of the pipeline WITHOUT Business Central or n8n:
- *   sample data -> transform -> render letter + statement PDFs (pure JS, no deps)
- *   -> merge letter+statement per customer -> batch PDF.
- * Also fills the Word template (docxtemplater) and ASSERTS the merge tokens
- * landed, so the "Word mail merge" path is verified too.
- *
- * Outputs land in ./out (PDFs + filled .docx). Run:
- *   node templates/build-template.js   # once, to (re)build the template
+ *   sample data -> transform -> render statement PDFs (pure JS, no deps).
+ * Outputs land in ./out. Run:
  *   node test/run-local.js
  */
 const fs = require("fs");
 const path = require("path");
-const PizZip = require("pizzip");
 
 const { buildRecords } = require("../scripts/transform");
-const { fillLetter } = require("../scripts/fill-letter");
-const { buildCustomerPdf, buildBatchPdf, sameAddress } = require("../scripts/pure-pdf");
+const { buildCustomerPdf, buildBatchPdf, customerPages } = require("../scripts/pure-pdf");
 
 const ROOT = path.join(__dirname, "..");
 const OUT = path.join(ROOT, "out");
-const TEMPLATE = path.join(ROOT, "templates", "past-due-letter.docx");
 
 function safeName(s) {
   return String(s).replace(/[^a-z0-9]+/gi, "_").replace(/^_+|_+$/g, "");
-}
-
-// Read the text of word/document.xml out of a .docx buffer (for assertions).
-function docxText(buf) {
-  return new PizZip(buf).file("word/document.xml").asText();
 }
 
 let failures = 0;
@@ -37,106 +24,89 @@ function assert(cond, msg) {
   if (!cond) { failures++; console.error("  ASSERT FAILED: " + msg); }
 }
 
+// Count page objects in a PDF ("/Type /Page " but not "/Type /Pages").
+function countPages(pdf) {
+  return (pdf.toString("latin1").match(/\/Type\s*\/Page\s/g) || []).length;
+}
+
 async function main() {
-  if (!fs.existsSync(TEMPLATE)) {
-    throw new Error("Template missing. Run: node templates/build-template.js");
-  }
   fs.mkdirSync(OUT, { recursive: true });
 
   const data = JSON.parse(
     fs.readFileSync(path.join(__dirname, "sample-customers.json"), "utf8")
   );
-  const templateBuf = fs.readFileSync(TEMPLATE);
 
   const records = buildRecords(data.customers, data.ledgerEntries, {
     amountSource: "filtered", // switch to "balanceDue" to use Balance_Due_LCY
     today: "2026-07-17",
-    shipTos: data.shipTos,
+    salesOrders: data.salesOrders, // tomorrow's orders -> gate + route
   });
 
   // --- transform assertions -------------------------------------------------
   assert(records.length === 2, `expected 2 qualifying customers, got ${records.length}`);
   assert(!records.some((r) => r.customerNo === "C00034"), "C00034 (fully paid) must be excluded");
-  assert(!records.some((r) => r.customerNo === "C00050"),
-    "C00050 (negative net balance) must be excluded");
-  assert(!records.some((r) => r.customerNo === "C00060"),
-    "C00060 (no past-due invoice) must be excluded");
-  assert(!records.some((r) => r.customerNo === "C00070"),
-    "C00070 (earliest remaining doc date 2025) must be excluded (Americas Mart case)");
+  assert(!records.some((r) => r.customerNo === "C00050"), "C00050 (negative net) must be excluded");
+  assert(!records.some((r) => r.customerNo === "C00060"), "C00060 (not past due) must be excluded");
+  assert(!records.some((r) => r.customerNo === "C00070"), "C00070 (2025-only doc date) must be excluded");
+  assert(!records.some((r) => r.customerNo === "C00080"),
+    "C00080 (ordering tomorrow but route RT 21) must be excluded");
+  assert(!records.some((r) => r.customerNo === "C00090"),
+    "C00090 (past due but NOT ordering tomorrow) must be excluded");
+
+  // Sorted by Route: RT 5 (20382) before RT 8 (C00021).
+  assert(records[0].customerNo === "20382" && records[1].customerNo === "C00021",
+    `records should sort by Route (RT 5 then RT 8), got ` +
+      records.map((r) => r.customerNo + "/" + r.tokens.Route).join(", "));
+
   const stiles = records.find((r) => r.customerNo === "20382");
-  assert(!!stiles, "20382 should qualify (2024 remaining invoice + positive net)");
+  assert(!!stiles, "20382 should qualify (past due + ordering tomorrow on RT 5)");
   if (stiles) {
+    assert(stiles.tokens.Route === "RT 5", `20382 route should be RT 5, got ${stiles.tokens.Route}`);
     assert(stiles.tokens.Converted_balance === "3,500.50",
       `20382 balance expected 3,500.50, got ${stiles.tokens.Converted_balance}`);
+    assert(!("Address_1" in stiles.tokens), "tokens should carry NO mailing address (route replaces it)");
     assert(stiles.statement.lines.length === 3,
       `20382 expected 3 lines (2 past-due invoices + 1 credit), got ${stiles.statement.lines.length}`);
-    assert(stiles.statement.lines.every((l) => "orderNo" in l),
-      "each statement line should carry orderNo");
-    // Order No. now comes from Description; Invoice No. from Document_No.
     const inv1 = stiles.statement.lines.find((l) => l.documentNo === "5192222");
-    assert(inv1, "Invoice No. should be Document_No (5192222)");
-    assert(inv1 && inv1.orderNo === "Order S-ORD1001",
-      "Order No. should be the Description (Order S-ORD1001)");
-    // Shipping tokens use the DEFAULT (first) ship-to; billing keeps the customer address.
-    assert(stiles.shipTokens.Address_1 === "50 Dockside Ave",
-      `20382 shipTokens should use default ship-to, got ${stiles.shipTokens.Address_1}`);
-    assert(stiles.tokens.Address_1 === "100 Harbor Rd",
-      `20382 billing tokens should use customer address, got ${stiles.tokens.Address_1}`);
+    assert(inv1 && inv1.orderNo === "Order S-ORD1001", "Order No. should be the Description");
+    assert(inv1 && inv1.docType === "Invoice", "docType should be Invoice");
   }
   const blue = records.find((r) => r.customerNo === "C00021");
-  assert(blue && blue.shipTokens.Address_1 === blue.tokens.Address_1,
-    "C00021 has no ship-to -> shipping falls back to billing address");
+  assert(blue && blue.tokens.Route === "RT 8", `C00021 route should be RT 8, got ${blue && blue.tokens.Route}`);
 
   // --- minimum-balance threshold (the "Settings" node) ----------------------
   const highBar = buildRecords(data.customers, data.ledgerEntries, {
-    amountSource: "filtered", today: "2026-07-17", shipTos: data.shipTos, minBalance: 1500,
+    amountSource: "filtered", today: "2026-07-17", salesOrders: data.salesOrders, minBalance: 1500,
   });
-  assert(highBar.length === 1, `minBalance 1500 should leave 1 customer, got ${highBar.length}`);
-  assert(highBar[0] && highBar[0].customerNo === "20382",
-    "only 20382 (net 3,500.50) clears the $1,500 bar; C00021 ($1,290) is excluded");
+  assert(highBar.length === 1 && highBar[0].customerNo === "20382",
+    "minBalance 1500 -> only 20382 (net 3,500.50); C00021 ($1,290) excluded");
 
   console.log(`Qualifying customers: ${records.length}`);
-  const perCustomerPdfs = [];
 
   for (const rec of records) {
     const name = safeName(rec.tokens.Description) || rec.customerNo;
 
-    // 1) Word mail-merge path: fill template + assert tokens landed
-    const letterDocx = fillLetter(templateBuf, rec.tokens);
-    const xml = docxText(letterDocx);
-    assert(xml.includes(rec.tokens.Description), `docx missing name for ${name}`);
-    assert(xml.includes(rec.tokens.Converted_balance), `docx missing balance for ${name}`);
-    assert(!xml.includes("{Description}") && !xml.includes("{Converted_balance}"),
-      `docx still has unfilled tags for ${name}`);
-    fs.writeFileSync(path.join(OUT, `${name}.docx`), letterDocx);
-
-    // 2) Default render path: zero-dependency PDF (statement only, no letter page)
-    const merged = buildCustomerPdf(rec.tokens, rec.statement, { asOfDate: "2026-07-14" });
-    assert(merged.slice(0, 5).toString() === "%PDF-", `${name}: output is not a PDF`);
-    const outFile = path.join(OUT, `${name}.pdf`);
-    fs.writeFileSync(outFile, merged);
-    perCustomerPdfs.push(merged);
+    // Statement-only PDF (no letter, no address). Padded to even pages for duplex.
+    const pdf = buildCustomerPdf(rec.tokens, rec.statement, { asOfDate: "2026-07-14" });
+    assert(pdf.slice(0, 5).toString() === "%PDF-", `${name}: output is not a PDF`);
+    const pages = customerPages(rec.tokens, rec.statement, { asOfDate: "2026-07-14" }).length;
+    assert(pages % 2 === 0 && pages >= 2,
+      `${name}: each statement should be padded to an even page count, got ${pages}`);
+    fs.writeFileSync(path.join(OUT, `${name}.pdf`), pdf);
 
     console.log(
-      `  ${rec.tokens.Description}: $${rec.tokens.Converted_balance}  ` +
-        `(${rec.statement.lines.length} open invoice(s)) -> out/${name}.pdf (+ .docx)`
+      `  ${rec.tokens.Description} (Route ${rec.tokens.Route}): $${rec.tokens.Converted_balance}  ` +
+        `${rec.statement.lines.length} line(s), ${pages} page(s) -> out/${name}.pdf`
     );
   }
 
-  // 4) Two combined batch PDFs: billing (all) + shipping (only where the shipping
-  //    address differs from billing — same-address customers stay billing-only).
-  const shippingRecords = records.filter((r) => r.shipTokens && !sameAddress(r.tokens, r.shipTokens));
-  assert(shippingRecords.length === 1,
-    `shipping PDF should hold 1 customer (distinct ship-to), got ${shippingRecords.length}`);
-  assert(shippingRecords[0] && shippingRecords[0].customerNo === "20382",
-    "20382 has a distinct ship-to -> in shipping; C00021 (same as billing) -> billing only");
-  const billing = buildBatchPdf(records, { asOfDate: "2026-07-17" }, "tokens");
-  const shipping = buildBatchPdf(shippingRecords, { asOfDate: "2026-07-17" }, "shipTokens");
-  assert(billing.slice(0, 5).toString() === "%PDF-", "billing PDF invalid");
-  assert(shipping.slice(0, 5).toString() === "%PDF-", "shipping PDF invalid");
-  fs.writeFileSync(path.join(OUT, "Past-Due-Billing.pdf"), billing);
-  fs.writeFileSync(path.join(OUT, "Past-Due-Shipping.pdf"), shipping);
-  console.log(`Billing: out/Past-Due-Billing.pdf (${records.length}) | Shipping: out/Past-Due-Shipping.pdf (${shippingRecords.length})`);
+  // One combined PDF: statements only, sorted by route, each padded to even pages.
+  const notice = buildBatchPdf(records, { asOfDate: "2026-07-17", title: "Past Due Notice" }, "tokens");
+  assert(notice.slice(0, 5).toString() === "%PDF-", "combined PDF invalid");
+  const totalPages = countPages(notice);
+  assert(totalPages === 4, `combined PDF should be 4 pages (2 customers x 2), got ${totalPages}`);
+  fs.writeFileSync(path.join(OUT, "Past-Due-Notice.pdf"), notice);
+  console.log(`Combined: out/Past-Due-Notice.pdf  (${records.length} customers, ${totalPages} pages)`);
 
   if (failures) {
     console.error(`\n${failures} assertion(s) failed.`);

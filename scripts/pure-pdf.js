@@ -124,21 +124,30 @@ function statementPages(t, statement, opts) {
     const hd = header(PAGE_H - MARGIN, 150, 20);
     c = hd.content;
     y = hd.bottom - 34; // extra space between the logo and the title
-    const title = "Past Due Invoices";
+    const title = "PAST DUE NOTICE";
     c += text((PAGE_W - approxWidth(title, 16)) / 2, y, title, "F4", 16);
     y -= 30;
     if (withHeader) {
       c += text(MARGIN, y, `Statement Date: ${asOf}`, "F1", 10); y -= 18;
-      // Bill-to block: Company Name, Account Number, then address.
-      const bill = [
+      // Header block: Company Name, Account Number, Route (no mailing address).
+      const info = [
         t.Description,
         t.AccountNumber ? "Account Number: " + t.AccountNumber : null,
-        t.Address_1,
-        t.Address_2,
-        cityStateZip(t),
-      ].filter((l) => l && String(l).trim() && String(l).trim() !== ",");
-      for (const l of bill) { c += text(MARGIN, y, l, "F1", 10); y -= 13; }
-      y -= 18;
+        t.Route ? "Route: " + t.Route : null,
+      ].filter((l) => l && String(l).trim());
+      for (const l of info) { c += text(MARGIN, y, l, "F1", 10); y -= 13; }
+      y -= 12;
+      // Notice paragraph (appears on the first page only).
+      const cw = PAGE_W - 2 * MARGIN;
+      const paras = [
+        "Please see the past due invoice(s) listed below. We kindly request that payment be submitted as soon as possible to keep your account in good standing and avoid any interruption in service.",
+        "If you have any questions regarding your account balance or are experiencing an issue with payment, please contact our Accounting department at 770-248-1444, ext. 2, or email ar@engelmansbakery.com. We are happy to assist you.",
+      ];
+      for (const p of paras) {
+        for (const ln of wrap(p, 10, cw)) { c += text(MARGIN, y, ln, "F1", 10); y -= 14; }
+        y -= 8;
+      }
+      y -= 6;
     }
     // column header
     for (const col of cols) {
@@ -249,10 +258,14 @@ function buildPdf(pageContents, docOpts) {
 
 // Page-content array for one customer — the STATEMENT only (no letter/address page).
 // Null-safe: a missing tokens/statement can never throw (renders empty fields).
+// Pads to an EVEN page count (adds a blank page when odd) so, when printed double
+// sided, every customer's statement starts on the front of a fresh sheet.
 function customerPages(tokens, statement, opts) {
   const t = tokens || {};
   const s = statement && statement.lines ? statement : { lines: [], total: 0 };
-  return statementPages(t, s, opts || {});
+  const pages = statementPages(t, s, opts || {});
+  if (pages.length % 2 === 1) pages.push(""); // blank back page for duplex printing
+  return pages;
 }
 
 // One statement PDF for a single customer.

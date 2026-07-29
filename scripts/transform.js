@@ -10,9 +10,13 @@
  *   entries[] (OData V4 CustomerLedgerEntries page — table 21):
  *     { Customer_No, Document_Type, Document_No, Document_Date, Due_Date,
  *       Amount, Remaining_Amount, Open }   // Open=true & Document_Type='Invoice' = unpaid invoice
+ *   options.salesOrders[] (OData V4 SalesOrder page — tomorrow's orders):
+ *     { Sell_to_Customer_No, Shipping_Agent_Code, Requested_Delivery_Date }
  *
- * Output: one record per QUALIFYING customer (>=1 open invoice dated in the window):
- *   { customerNo, tokens{...seven merge tokens...}, statement{ lines[], total, balanceDue } }
+ * Output: one record per QUALIFYING customer — past-due AND ordering tomorrow on a
+ * non-excluded route:
+ *   { customerNo, tokens{ Description, AccountNumber, Route, Converted_balance },
+ *     statement{ lines[], total, balanceDue } }
  */
 
 const WINDOW_START = "2023-01-01";
@@ -81,11 +85,17 @@ function buildRecords(customers, entries, options = {}) {
   const custByNo = new Map();
   for (const c of customers || []) custByNo.set(String(c.No), c);
 
-  // First ship-to per customer = the default; used for the shipping-address PDF.
-  const shipByNo = new Map();
-  for (const st of options.shipTos || []) {
-    const k = String(st.HFSCustomerNo);
-    if (!shipByNo.has(k)) shipByNo.set(k, st);
+  // Route per customer from tomorrow's Sales Orders (Shipping_Agent_Code). Orders on
+  // the excluded route (default "RT 21") are skipped. When salesOrders is provided we
+  // also GATE output to customers who are actually ordering tomorrow.
+  const normRoute = (s) => String(s == null ? "" : s).toUpperCase().replace(/[^A-Z0-9]/g, "");
+  const excludeRoute = normRoute(options.excludeRoute || "RT 21");
+  const gateByOrder = Array.isArray(options.salesOrders);
+  const routeByNo = new Map();
+  for (const o of options.salesOrders || []) {
+    if (normRoute(o.Shipping_Agent_Code) === excludeRoute) continue;
+    const k = String(o.Sell_to_Customer_No);
+    if (!routeByNo.has(k)) routeByNo.set(k, o.Shipping_Agent_Code || "");
   }
 
   // Per customer, collect: PAST-DUE invoice lines, plus OPEN credit/payment lines
@@ -135,6 +145,8 @@ function buildRecords(customers, entries, options = {}) {
     if (!g.hasOld) continue;
     if (Math.round(g.total * 100) <= 0) continue;
     if (Math.round(g.total * 100) < Math.round(minBalance * 100)) continue;
+    // Only customers ordering tomorrow (present in Sales Orders on a non-excluded route).
+    if (gateByOrder && !routeByNo.has(customerNo)) continue;
 
     const c = custByNo.get(customerNo) || {};
     const balanceDue = Number(c.Balance_Due_LCY) || 0;
@@ -146,28 +158,23 @@ function buildRecords(customers, entries, options = {}) {
       a.documentDate < b.documentDate ? -1 : a.documentDate > b.documentDate ? 1 : 0
     );
 
+    // The header shows the Route (Shipping_Agent_Code) instead of the mailing address.
     const tokens = {
       Description: name, AccountNumber: customerNo,
-      Address_1: c.Address || "", Address_2: c.Address_2 || "",
-      City: c.City || "", State: c.County || "", Zipcode: c.Post_Code || "",
+      Route: routeByNo.get(customerNo) || "",
       Converted_balance,
     };
-    // Shipping tokens: default ship-to address (fall back to billing when none).
-    const st = shipByNo.get(customerNo);
-    const shipTokens = st
-      ? {
-          Description: name, AccountNumber: customerNo,
-          Address_1: st.Address || "", Address_2: st.Address_2 || "",
-          City: st.City || "", State: st.County || st.State || "", Zipcode: st.Post_Code || "",
-          Converted_balance,
-        }
-      : { ...tokens };
 
-    records.push({ customerNo, tokens, shipTokens, statement: { lines, total: g.total, balanceDue } });
+    records.push({ customerNo, tokens, statement: { lines, total: g.total, balanceDue } });
   }
 
-  // Deterministic order: by customer name.
-  records.sort((a, b) => a.tokens.Description.localeCompare(b.tokens.Description));
+  // Deterministic order: by Route (natural sort on the number), then customer name.
+  const routeKey = (r) => String(r || "").toUpperCase().replace(/\d+/g, (m) => m.padStart(6, "0"));
+  records.sort((a, b) => {
+    const ra = routeKey(a.tokens.Route), rb = routeKey(b.tokens.Route);
+    if (ra !== rb) return ra < rb ? -1 : 1;
+    return a.tokens.Description.localeCompare(b.tokens.Description);
+  });
   return records;
 }
 

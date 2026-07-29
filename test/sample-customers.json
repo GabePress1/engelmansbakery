@@ -59,24 +59,46 @@
       "County": "GA",
       "Post_Code": "31401",
       "Balance_Due_LCY": 0.0
-    }
-  ],
-  "shipTos": [
-    {
-      "HFSCustomerNo": "20382",
-      "Code": "DOCK",
-      "Address": "50 Dockside Ave",
-      "Address_2": "Pier 3",
-      "City": "Savannah",
-      "Post_Code": "31401"
     },
     {
-      "HFSCustomerNo": "20382",
-      "Code": "ALT",
-      "Address": "999 Secondary Rd",
+      "No": "C00080",
+      "Name": "Route21 Diner",
+      "Address": "21 Route Way",
       "Address_2": "",
-      "City": "Pooler",
-      "Post_Code": "31322"
+      "City": "Atlanta",
+      "County": "GA",
+      "Post_Code": "30303",
+      "Balance_Due_LCY": 1600.0
+    },
+    {
+      "No": "C00090",
+      "Name": "No-Order Bakery",
+      "Address": "9 Quiet St",
+      "Address_2": "",
+      "City": "Decatur",
+      "County": "GA",
+      "Post_Code": "30030",
+      "Balance_Due_LCY": 1600.0
+    }
+  ],
+  "salesOrders": [
+    {
+      "Sell_to_Customer_No": "20382",
+      "Shipping_Agent_Code": "RT 5",
+      "Requested_Delivery_Date": "2026-07-18",
+      "_comment": "Ordering tomorrow, route RT 5 -> included; route shown on statement."
+    },
+    {
+      "Sell_to_Customer_No": "C00021",
+      "Shipping_Agent_Code": "RT 8",
+      "Requested_Delivery_Date": "2026-07-18",
+      "_comment": "Ordering tomorrow, route RT 8 -> included. RT 5 sorts before RT 8."
+    },
+    {
+      "Sell_to_Customer_No": "C00080",
+      "Shipping_Agent_Code": "RT 21",
+      "Requested_Delivery_Date": "2026-07-18",
+      "_comment": "Ordering tomorrow but route RT 21 is excluded -> NOT included."
     }
   ],
   "ledgerEntries": [
@@ -186,6 +208,30 @@
       "Remaining_Amount": 0.0,
       "Open": false,
       "_comment": "Fully paid (Open=false) -> not counted."
+    },
+    {
+      "Customer_No": "C00080",
+      "Document_Type": "Invoice",
+      "Document_No": "5080001",
+      "Description": "Order S-ORD8001",
+      "Document_Date": "2024-03-10",
+      "Due_Date": "2024-04-10",
+      "Amount": 1600.0,
+      "Remaining_Amount": 1600.0,
+      "Open": true,
+      "_comment": "Past-due 2024 invoice (would qualify) BUT tomorrow's order is route RT 21 -> excluded."
+    },
+    {
+      "Customer_No": "C00090",
+      "Document_Type": "Invoice",
+      "Document_No": "5090001",
+      "Description": "Order S-ORD9001",
+      "Document_Date": "2024-03-12",
+      "Due_Date": "2024-04-12",
+      "Amount": 1600.0,
+      "Remaining_Amount": 1600.0,
+      "Open": true,
+      "_comment": "Past-due 2024 invoice (would qualify) BUT not ordering tomorrow (no sales order) -> excluded."
     }
   ]
 }

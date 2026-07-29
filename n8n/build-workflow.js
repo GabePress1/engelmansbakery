@@ -37,22 +37,17 @@ const customers = $('Get Customers').all().flatMap((it) => {
   const j = it.json;
   return j.value || (Array.isArray(j) ? j : j && j.No ? [j] : []);
 });
-// Ship-to addresses (for the shipping-address PDF); combine every batch's .value.
-let shipTos = [];
-try {
-  shipTos = $('Get Ship-to Addresses').all().flatMap((it) => {
-    const j = it.json;
-    return j.value || (Array.isArray(j) ? j : j && j.HFSCustomerNo ? [j] : []);
-  });
-} catch (e) { shipTos = []; }
 const invResp = $('Get Open Invoices').first().json;
 const entries = invResp.value || (Array.isArray(invResp) ? invResp : []);
+// Tomorrow's Sales Orders -> who is ordering + their route (Shipping_Agent_Code).
+const soResp = $('Get Sales Orders').first().json;
+const salesOrders = soResp.value || (Array.isArray(soResp) ? soResp : []);
 
 // Minimum overdue balance from the editable "Settings" node (default $1,500).
 let minBalance = 1500;
 try { const v = Number($('Settings').first().json.Min_Overdue_Balance); if (isFinite(v)) minBalance = v; } catch (e) {}
 
-const records = buildRecords(customers, entries, { amountSource: 'filtered', shipTos, minBalance });
+const records = buildRecords(customers, entries, { amountSource: 'filtered', minBalance, salesOrders });
 return records.map((r) => ({ json: r }));`;
 
 // ---- Code node 2: Render PDF (zero dependencies) ---------------------------
@@ -61,41 +56,22 @@ return records.map((r) => ({ json: r }));`;
 const renderNodeCode = `${pureSrc}
 
 // --- n8n driver -------------------------------------------------------------
-// Build combined STATEMENT-only PDFs (no letter/address page): one statement per
-// customer, back to back, in customer order.
+// Build ONE combined PDF: each customer's statement (no letter, no address), sorted
+// by Route (done in Transform), each statement padded to an even page count for
+// double-sided printing.
 const all = items.map((i) => i.json);
 // Defensive: only render records that actually carry tokens, so one malformed or
 // stale item can never crash the whole batch. 'skipped' surfaces any bad input.
 const records = all.filter((r) => r && r.tokens);
 const skipped = all.length - records.length;
 
-// The billing PDF has every qualifying customer. The shipping PDF has ONLY the
-// customers whose shipping address differs from their billing address — when the
-// two match (or there's no ship-to), that customer appears in the billing PDF only.
-const shippingRecords = records.filter((r) => r.shipTokens && !sameAddress(r.tokens, r.shipTokens));
-
-// Two combined PDFs (billing + shipping). Filenames and PDF /Title both carry the date.
-// Build one PDF at a time and hand it straight to prepareBinaryData (which offloads
-// the bytes to n8n's binary store) BEFORE building the next, so we never hold two
-// multi-MB buffers at once — keeps the Code node under its memory cap on big batches.
 const today = new Date().toISOString().slice(0, 10);
-const billingName = 'Past-Due-Billing-' + today + '.pdf';
-const shippingName = 'Past-Due-Shipping-' + today + '.pdf';
-const billingData = await this.helpers.prepareBinaryData(
-  buildBatchPdf(records, { title: 'Past-Due Billing ' + today }, 'tokens'),
-  billingName, 'application/pdf');
-const shippingData = await this.helpers.prepareBinaryData(
-  buildBatchPdf(shippingRecords, { title: 'Past-Due Shipping ' + today }, 'shipTokens'),
-  shippingName, 'application/pdf');
+const fileName = 'Past-Due-Notice-' + today + '.pdf';
+const data = await this.helpers.prepareBinaryData(
+  buildBatchPdf(records, { title: 'Past Due Notice ' + today }, 'tokens'),
+  fileName, 'application/pdf');
 return [
-  {
-    json: { type: 'billing', customers: records.length, skipped, fileName: billingName },
-    binary: { data: billingData },
-  },
-  {
-    json: { type: 'shipping', customers: shippingRecords.length, skipped, fileName: shippingName },
-    binary: { data: shippingData },
-  },
+  { json: { customers: records.length, skipped, fileName }, binary: { data } },
 ];
 
 // To instead emit ONE PDF per customer (e.g. for individual mailing), replace the
@@ -115,6 +91,17 @@ const CUTOFF = '2024-12-31'; // must have a remaining invoice dated on/before th
 let MIN = 1500;
 try { const v = Number($('Settings').first().json.Min_Overdue_Balance); if (isFinite(v)) MIN = v; } catch (e) {}
 
+// Who is ordering tomorrow, from Sales Orders (already date-filtered to tomorrow by
+// the Get Sales Orders node). Exclude route RT 21. Only these customers get a notice.
+const so = $('Get Sales Orders').first().json;
+const orders = so.value || (Array.isArray(so) ? so : []);
+const normRoute = (s) => String(s == null ? '' : s).toUpperCase().replace(/[^A-Z0-9]/g, '');
+const orderingTomorrow = new Set();
+for (const o of orders) {
+  if (normRoute(o.Shipping_Agent_Code) === 'RT21') continue; // filter out RT 21
+  orderingTomorrow.add(String(o.Sell_to_Customer_No));
+}
+
 const net = {};    // customerNo -> net past-due balance
 const hasOld = {}; // customerNo -> has a remaining invoice dated <= CUTOFF
 for (const e of entries) {
@@ -131,10 +118,11 @@ for (const e of entries) {
     net[key] = (net[key] || 0) + remaining; // open payment/credit (negative)
   }
 }
-// Counted: a remaining invoice dated 2024-or-older AND a net past-due balance that
-// is positive AND at least the MIN threshold from the Settings node.
+// Counted: a remaining invoice dated 2024-or-older, a net past-due balance that is
+// positive AND >= the MIN threshold, AND the customer is ordering tomorrow (non-RT 21).
 const nos = Object.keys(net).filter(
   (k) => hasOld[k] && Math.round(net[k] * 100) > 0 && Math.round(net[k] * 100) >= Math.round(MIN * 100)
+    && orderingTomorrow.has(k)
 );
 
 // Nobody qualifies -> stop here so NO customers are fetched and NO statements go out.
@@ -273,36 +261,6 @@ const nodes = [
   },
   {
     parameters: {
-      url: `=${BC_ODATA}/ShiptoAddressList`,
-      sendQuery: true,
-      queryParameters: {
-        parameters: [
-          // Runs once per Get Customers batch; filter ship-tos to THIS batch's customers.
-          {
-            name: "$filter",
-            value: "={{ $json.value.map(c => \"HFSCustomerNo eq '\" + c.No + \"'\").join(\" or \") }}",
-          },
-          { name: "$select", value: "HFSCustomerNo,Code,Address,Address_2,City,Post_Code" },
-        ],
-      },
-      sendHeaders: true,
-      headerParameters: {
-        parameters: [
-          { name: "Authorization", value: "=Bearer {{ $('Get Token').first().json.access_token }}" },
-        ],
-      },
-      options: {},
-    },
-    id: "n_shipto",
-    name: "Get Ship-to Addresses",
-    type: "n8n-nodes-base.httpRequest",
-    typeVersion: 4.2,
-    position: [820, 400],
-    notes:
-      "Ship-to addresses (ShiptoAddressList, keyed by HFSCustomerNo) for the shipping-address PDF. Runs once per Get Customers batch. Customers with no ship-to fall back to the billing address in Transform.",
-  },
-  {
-    parameters: {
       // OData V4 web service for Customer Ledger Entries (table 21). This must be
       // PUBLISHED in BC (Web Services). If your Service Name differs, change the
       // "/CustomerLedgerEntries" segment to match.
@@ -340,6 +298,36 @@ const nodes = [
       "OData V4 CustomerLedgerEntries (table 21) — the real open A/R, incl. migrated/opening-balance entries that salesInvoices can't see. Requires the page published as a web service. Fields: Customer_No, Document_Type, Document_No, Document_Date, Due_Date, Amount, Remaining_Amount, Open.",
   },
   {
+    parameters: {
+      url: `=${BC_ODATA}/SalesOrder`,
+      sendQuery: true,
+      queryParameters: {
+        parameters: [
+          // Orders whose Requested Delivery Date is TOMORROW (relative to run time).
+          {
+            name: "$filter",
+            value: "=Requested_Delivery_Date eq {{ $today.plus({ days: 1 }).toFormat('yyyy-MM-dd') }}",
+          },
+          { name: "$select", value: "No,Sell_to_Customer_No,Shipping_Agent_Code,Requested_Delivery_Date" },
+        ],
+      },
+      sendHeaders: true,
+      headerParameters: {
+        parameters: [
+          { name: "Authorization", value: "=Bearer {{ $('Get Token').first().json.access_token }}" },
+        ],
+      },
+      options: {},
+    },
+    id: "n_salesorders",
+    name: "Get Sales Orders",
+    type: "n8n-nodes-base.httpRequest",
+    typeVersion: 4.2,
+    position: [110, 400],
+    notes:
+      "SalesOrder page filtered to Requested_Delivery_Date = tomorrow. Determines who is ordering tomorrow and their Route (Shipping_Agent_Code). Route RT 21 is excluded downstream. To change 'tomorrow', edit the $filter date expression.",
+  },
+  {
     parameters: { jsCode: transformNodeCode },
     id: "n_transform",
     name: "Transform (group + tokens)",
@@ -355,7 +343,7 @@ const nodes = [
     typeVersion: 2,
     position: [680, 300],
     notes:
-      "Zero dependencies (pure JS, base-14 fonts). Outputs TWO combined PDFs in binary field 'data': item 1 = Past-Due-Billing.pdf (billing address), item 2 = Past-Due-Shipping.pdf (shipping address).",
+      "Zero dependencies (pure JS, base-14 fonts). Outputs ONE combined PDF in binary field 'data' = Past-Due-Notice-<date>.pdf: each qualifying customer's statement (no letter, no address), sorted by Route, each statement padded to an even page count for double-sided printing.",
   },
 ];
 // NOTE: The workflow ends at "Render & Merge PDFs", which outputs one PDF per
@@ -369,14 +357,14 @@ const connections = {
   "When clicking Test workflow": { main: [[{ node: "Settings", type: "main", index: 0 }]] },
   Settings: { main: [[{ node: "Keys", type: "main", index: 0 }]] },
   Keys: { main: [[{ node: "Get Token", type: "main", index: 0 }]] },
-  // Invoice-driven: the filtered 2023-2024 open invoices decide who gets a letter.
-  "Get Token": { main: [[{ node: "Get Open Invoices", type: "main", index: 0 }]] },
+  // Sales Orders (tomorrow) then ledger entries feed the qualification.
+  "Get Token": { main: [[{ node: "Get Sales Orders", type: "main", index: 0 }]] },
+  "Get Sales Orders": { main: [[{ node: "Get Open Invoices", type: "main", index: 0 }]] },
   "Get Open Invoices": { main: [[{ node: "Qualifying Customer Nos", type: "main", index: 0 }]] },
   "Qualifying Customer Nos": { main: [[{ node: "Get Customers", type: "main", index: 0 }]] },
-  "Get Customers": { main: [[{ node: "Get Ship-to Addresses", type: "main", index: 0 }]] },
-  "Get Ship-to Addresses": { main: [[{ node: "Transform (group + tokens)", type: "main", index: 0 }]] },
+  "Get Customers": { main: [[{ node: "Transform (group + tokens)", type: "main", index: 0 }]] },
   "Transform (group + tokens)": { main: [[{ node: "Render & Merge PDFs", type: "main", index: 0 }]] },
-  // Terminal: two PDFs (billing + shipping) are emitted here, downloadable from the run.
+  // Terminal: ONE combined PDF (Past-Due-Notice) is emitted here, downloadable from the run.
 };
 
 const workflow = {

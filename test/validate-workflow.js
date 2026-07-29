@@ -46,24 +46,23 @@ async function main() {
   // ---- Node: Qualifying Customer Nos --------------------------------------
   // In production the ledger response is already server-filtered; emulate that.
   const invoiceResp = { value: serverFilterEntries(sample.ledgerEntries) };
+  // Get Sales Orders is already server-filtered to tomorrow; pass the fixture through.
+  const salesResp = { value: sample.salesOrders };
   // Settings node: threshold low enough that both sample customers still qualify,
   // so the 2-customer pipeline is exercised end-to-end.
   const settingsResp = { Min_Overdue_Balance: 1000 };
-  const $forQualify = (nodeName) => {
-    if (nodeName === "Get Open Invoices") return makeDollar({ "Get Open Invoices": invoiceResp })(nodeName);
-    if (nodeName === "Settings") return { first: () => ({ json: settingsResp }) };
+  const qualifyDollar = (settings) => (nodeName) => {
+    if (nodeName === "Get Open Invoices") return { first: () => ({ json: invoiceResp }) };
+    if (nodeName === "Get Sales Orders") return { first: () => ({ json: salesResp }) };
+    if (nodeName === "Settings") return { first: () => ({ json: settings }) };
     throw new Error("unexpected $() node: " + nodeName);
   };
   const qualifyFn = new AsyncFunction("$", "items", "require", codeOf("Qualifying Customer Nos"));
-  const qualifyOut = await qualifyFn.call({}, $forQualify, [], require);
+  const qualifyOut = await qualifyFn.call({}, qualifyDollar(settingsResp), [], require);
 
   // Threshold check: at $2,000 only 20382 (net 3,500.50) clears; C00021 ($1,290) drops.
-  const $qualifyHigh = (nodeName) => {
-    if (nodeName === "Get Open Invoices") return makeDollar({ "Get Open Invoices": invoiceResp })(nodeName);
-    if (nodeName === "Settings") return { first: () => ({ json: { Min_Overdue_Balance: 2000 } }) };
-    throw new Error("unexpected $() node: " + nodeName);
-  };
-  const qHigh = (await qualifyFn.call({}, $qualifyHigh, [], require)).flatMap((o) => o.json.customerNos);
+  const qHigh = (await qualifyFn.call({}, qualifyDollar({ Min_Overdue_Balance: 2000 }), [], require))
+    .flatMap((o) => o.json.customerNos);
   assert(qHigh.length === 1 && qHigh[0] === "20382",
     `minBalance 2000 should leave only 20382, got [${qHigh.join(", ")}]`);
 
@@ -72,6 +71,8 @@ async function main() {
   assert(qualifyOut.length >= 1, "Qualifying node should emit at least one batch");
   assert(qNos.length === 2, `expected 2 qualifying customer Nos, got ${qNos.length}`);
   assert(qNos.includes("20382") && qNos.includes("C00021"), "20382 and C00021 should qualify");
+  assert(!qNos.includes("C00080"), "C00080 (route RT 21) must NOT qualify");
+  assert(!qNos.includes("C00090"), "C00090 (not ordering tomorrow) must NOT qualify");
   assert(!qNos.includes("C00050") && !qNos.includes("C00060") && !qNos.includes("C00070") && !qNos.includes("C00034"),
     "C00050 (negative), C00060 (future), C00070 (2025-only doc date), C00034 (paid) must NOT qualify");
   console.log(`Qualifying node -> ${qualifyOut.length} batch(es), [${qNos.join(", ")}]`);
@@ -83,17 +84,11 @@ async function main() {
   const fetchedCustomers = getCustomersItems.flatMap((it) => it.json.value);
   assert(fetchedCustomers.length === 2, "Get Customers should fetch only the 2 qualifying customers");
 
-  // ---- Emulate: Get Ship-to Addresses runs once per Get Customers batch ------
-  const getShipToItems = getCustomersItems.map((it) => {
-    const nos = it.json.value.map((c) => String(c.No));
-    return { json: { value: (sample.shipTos || []).filter((s) => nos.includes(String(s.HFSCustomerNo))) } };
-  });
-
   // ---- Node: Transform -----------------------------------------------------
   const $forTransform = (nodeName) => {
     if (nodeName === "Get Customers") return { all: () => getCustomersItems, first: () => getCustomersItems[0] };
-    if (nodeName === "Get Ship-to Addresses") return { all: () => getShipToItems, first: () => getShipToItems[0] };
     if (nodeName === "Get Open Invoices") return { first: () => ({ json: invoiceResp }), all: () => [{ json: invoiceResp }] };
+    if (nodeName === "Get Sales Orders") return { first: () => ({ json: salesResp }), all: () => [{ json: salesResp }] };
     if (nodeName === "Settings") return { first: () => ({ json: settingsResp }) };
     if (nodeName === "Keys") return { first: () => ({ json: { Output_Folder: "C:\\Users\\GPress\\OneDrive\\Gabe's Projects" } }) };
     throw new Error("unexpected $() node: " + nodeName);
@@ -105,8 +100,9 @@ async function main() {
   const stiles = records.find((r) => r.json.customerNo === "20382");
   assert(stiles && stiles.json.tokens.Converted_balance === "3,500.50",
     "20382 balance should be 3,500.50 (past-due invoices minus open credit)");
-  assert(stiles && stiles.json.shipTokens.Address_1 === "50 Dockside Ave",
-    "20382 shipTokens should use the default ship-to address");
+  assert(stiles && stiles.json.tokens.Route === "RT 5", "20382 route should be RT 5 (from its sales order)");
+  assert(records[0].json.customerNo === "20382" && records[1].json.customerNo === "C00021",
+    "records should be sorted by Route (RT 5 before RT 8)");
   console.log(`Transform node -> ${records.length} qualifying customers`);
 
   // ---- Node: Render & Merge PDFs ------------------------------------------
@@ -124,22 +120,15 @@ async function main() {
   const renderFn = new AsyncFunction("$", "items", "require", codeOf("Render & Merge PDFs"));
   const rendered = await renderFn.call(thisCtx, $forRender, records, require);
 
-  // New behavior: TWO combined PDFs — billing (all) + shipping (distinct ship-to only).
-  assert(rendered.length === 2, `expected 2 PDFs (billing + shipping), got ${rendered.length}`);
-  const billing = rendered.find((r) => r.json.type === "billing");
-  const shipping = rendered.find((r) => r.json.type === "shipping");
-  assert(billing && /^Past-Due-Billing-\d{4}-\d{2}-\d{2}\.pdf$/.test(billing.json.fileName),
-    `billing PDF name should be dated, got ${billing && billing.json.fileName}`);
-  assert(shipping && /^Past-Due-Shipping-\d{4}-\d{2}-\d{2}\.pdf$/.test(shipping.json.fileName),
-    `shipping PDF name should be dated, got ${shipping && shipping.json.fileName}`);
-  assert(billing && billing.json.customers === 2, `billing should list 2 customers, got ${billing && billing.json.customers}`);
-  assert(shipping && shipping.json.customers === 1,
-    `shipping should list only the 1 customer with a distinct ship-to, got ${shipping && shipping.json.customers}`);
-  for (const p of [billing, shipping]) {
-    assert(p.binary && p.binary.data && p.binary.data.size > 1500,
-      `${p.json.type} PDF looks too small (${p.binary && p.binary.data && p.binary.data.size})`);
-  }
-  console.log(`Render node -> billing ${billing.binary.data.size}B + shipping ${shipping.binary.data.size}B, ${billing.json.customers} customers`);
+  // New behavior: ONE combined statement PDF (no letter, no address).
+  assert(rendered.length === 1, `expected 1 PDF (combined notice), got ${rendered.length}`);
+  const notice = rendered[0];
+  assert(notice && /^Past-Due-Notice-\d{4}-\d{2}-\d{2}\.pdf$/.test(notice.json.fileName),
+    `PDF name should be dated Past-Due-Notice, got ${notice && notice.json.fileName}`);
+  assert(notice && notice.json.customers === 2, `notice should list 2 customers, got ${notice && notice.json.customers}`);
+  assert(notice.binary && notice.binary.data && notice.binary.data.size > 1500,
+    `notice PDF looks too small (${notice.binary && notice.binary.data && notice.binary.data.size})`);
+  console.log(`Render node -> notice ${notice.binary.data.size}B, ${notice.json.customers} customers`);
 
   if (failures) { console.error(`\n${failures} check(s) failed.`); process.exit(1); }
   console.log("\nWorkflow Code nodes execute correctly against sample data.");
