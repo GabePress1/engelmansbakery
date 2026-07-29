@@ -46,9 +46,26 @@ async function main() {
   // ---- Node: Qualifying Customer Nos --------------------------------------
   // In production the ledger response is already server-filtered; emulate that.
   const invoiceResp = { value: serverFilterEntries(sample.ledgerEntries) };
-  const $forQualify = makeDollar({ "Get Open Invoices": invoiceResp });
+  // Settings node: threshold low enough that both sample customers still qualify,
+  // so the 2-customer pipeline is exercised end-to-end.
+  const settingsResp = { Min_Overdue_Balance: 1000 };
+  const $forQualify = (nodeName) => {
+    if (nodeName === "Get Open Invoices") return makeDollar({ "Get Open Invoices": invoiceResp })(nodeName);
+    if (nodeName === "Settings") return { first: () => ({ json: settingsResp }) };
+    throw new Error("unexpected $() node: " + nodeName);
+  };
   const qualifyFn = new AsyncFunction("$", "items", "require", codeOf("Qualifying Customer Nos"));
   const qualifyOut = await qualifyFn.call({}, $forQualify, [], require);
+
+  // Threshold check: at $2,000 only 20382 (net 3,500.50) clears; C00021 ($1,290) drops.
+  const $qualifyHigh = (nodeName) => {
+    if (nodeName === "Get Open Invoices") return makeDollar({ "Get Open Invoices": invoiceResp })(nodeName);
+    if (nodeName === "Settings") return { first: () => ({ json: { Min_Overdue_Balance: 2000 } }) };
+    throw new Error("unexpected $() node: " + nodeName);
+  };
+  const qHigh = (await qualifyFn.call({}, $qualifyHigh, [], require)).flatMap((o) => o.json.customerNos);
+  assert(qHigh.length === 1 && qHigh[0] === "20382",
+    `minBalance 2000 should leave only 20382, got [${qHigh.join(", ")}]`);
 
   // Qualifying now emits ONE ITEM PER BATCH; combine their customerNos.
   const qNos = qualifyOut.flatMap((o) => o.json.customerNos);
@@ -77,6 +94,7 @@ async function main() {
     if (nodeName === "Get Customers") return { all: () => getCustomersItems, first: () => getCustomersItems[0] };
     if (nodeName === "Get Ship-to Addresses") return { all: () => getShipToItems, first: () => getShipToItems[0] };
     if (nodeName === "Get Open Invoices") return { first: () => ({ json: invoiceResp }), all: () => [{ json: invoiceResp }] };
+    if (nodeName === "Settings") return { first: () => ({ json: settingsResp }) };
     if (nodeName === "Keys") return { first: () => ({ json: { Output_Folder: "C:\\Users\\GPress\\OneDrive\\Gabe's Projects" } }) };
     throw new Error("unexpected $() node: " + nodeName);
   };
@@ -106,7 +124,7 @@ async function main() {
   const renderFn = new AsyncFunction("$", "items", "require", codeOf("Render & Merge PDFs"));
   const rendered = await renderFn.call(thisCtx, $forRender, records, require);
 
-  // New behavior: TWO combined PDFs — billing + shipping.
+  // New behavior: TWO combined PDFs — billing (all) + shipping (distinct ship-to only).
   assert(rendered.length === 2, `expected 2 PDFs (billing + shipping), got ${rendered.length}`);
   const billing = rendered.find((r) => r.json.type === "billing");
   const shipping = rendered.find((r) => r.json.type === "shipping");
@@ -114,6 +132,9 @@ async function main() {
     `billing PDF name should be dated, got ${billing && billing.json.fileName}`);
   assert(shipping && /^Past-Due-Shipping-\d{4}-\d{2}-\d{2}\.pdf$/.test(shipping.json.fileName),
     `shipping PDF name should be dated, got ${shipping && shipping.json.fileName}`);
+  assert(billing && billing.json.customers === 2, `billing should list 2 customers, got ${billing && billing.json.customers}`);
+  assert(shipping && shipping.json.customers === 1,
+    `shipping should list only the 1 customer with a distinct ship-to, got ${shipping && shipping.json.customers}`);
   for (const p of [billing, shipping]) {
     assert(p.binary && p.binary.data && p.binary.data.size > 1500,
       `${p.json.type} PDF looks too small (${p.binary && p.binary.data && p.binary.data.size})`);

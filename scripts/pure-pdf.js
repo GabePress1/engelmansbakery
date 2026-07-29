@@ -1,9 +1,9 @@
 /*
  * pure-pdf.js
  * -----------
- * Zero-dependency PDF generator. Emits the past-due letter + statement as ONE
- * multi-page PDF per customer using the base-14 fonts (no embedding, no modules,
- * no external service) — so it runs inside an n8n Cloud Code node as-is.
+ * Zero-dependency PDF generator. Emits the past-due STATEMENT (one or more pages
+ * per customer) using the base-14 fonts (no embedding, no modules, no external
+ * service) — so it runs inside an n8n Cloud Code node as-is.
  *
  * Exports buildCustomerPdf(tokens, statement, opts) -> Buffer.
  *
@@ -85,54 +85,6 @@ function header(topY, dispW, textSize) {
   const size = textSize || 22;
   const w = approxWidth(HEAD, size);
   return { content: text((PAGE_W - w) / 2, topY - size, HEAD, "F4", size, "0.5"), bottom: topY - size };
-}
-
-// --- letter (2 pages) -------------------------------------------------------
-function letterPages(t) {
-  const cw = PAGE_W - 2 * MARGIN;
-  const size = 11, lh = 15;
-
-  // Page 1
-  const h1 = header(PAGE_H - MARGIN, 170, 22);
-  let c = h1.content;
-  let y = h1.bottom - 30;
-  c += text(MARGIN, y, "Subject:", "F4", size);
-  c += text(MARGIN + approxWidth("Subject:  ", size), y, "Past Due Balance – Immediate Attention Required", "F3", size);
-  y -= lh + 12;
-  c += text(MARGIN, y, `Dear ${t.Description},`, "F3", size);
-  y -= lh + 12;
-
-  const paras = [
-    `We are writing to inform you that your account with Engelman's Bakery is currently past due. As of today, your overdue balance is $${t.Converted_balance}. We have enclosed an account statement for your convenience.`,
-    "We kindly request that you remit payment in full to satisfy your payment obligation. Please contact us at 770-248-1444 ext. 2 to arrange payment or discuss any questions regarding your account. If the account is not paid, further collection proceedings will be taken.",
-    "We appreciate your prompt attention to this matter and look forward to resolving it quickly.",
-  ];
-  for (const p of paras) {
-    for (const ln of wrap(p, size, cw)) {
-      c += text(MARGIN, y, ln, "F3", size);
-      y -= lh;
-    }
-    y -= 10;
-  }
-  y -= 12;
-  c += text(MARGIN, y, "Best Regards,", "F3", size); y -= lh;
-  c += text(MARGIN, y, "Engelman's Bakery", "F3", size); y -= lh;
-  c += text(MARGIN, y, "770-248-1444", "F3", size);
-
-  // Page 2 — mailing address block (window-envelope position)
-  let c2 = header(PAGE_H - MARGIN, 170, 22).content;
-  const addr = [
-    t.Description,
-    t.Address_1,
-    t.Address_2,
-    cityStateZip(t),
-  ].filter((l) => l && String(l).trim() && String(l).trim() !== ",");
-  let ay = 150;
-  for (const ln of addr) {
-    c2 += text(MARGIN, ay, ln, "F3", size);
-    ay -= lh;
-  }
-  return [c, c2];
 }
 
 // --- statement (1+ pages) ---------------------------------------------------
@@ -295,17 +247,31 @@ function buildPdf(pageContents, docOpts) {
   return out;
 }
 
-// Page-content array for one customer (letter pages + statement pages).
+// Page-content array for one customer — the STATEMENT only (no letter/address page).
 // Null-safe: a missing tokens/statement can never throw (renders empty fields).
 function customerPages(tokens, statement, opts) {
   const t = tokens || {};
   const s = statement && statement.lines ? statement : { lines: [], total: 0 };
-  return [...letterPages(t), ...statementPages(t, s, opts || {})];
+  return statementPages(t, s, opts || {});
 }
 
-// One PDF (letter + statement) for a single customer.
+// One statement PDF for a single customer.
 function buildCustomerPdf(tokens, statement, opts) {
   return buildPdf(customerPages(tokens, statement, opts));
+}
+
+// Normalize an address token set to a comparable key (case/space-insensitive).
+function normAddr(t) {
+  const x = t || {};
+  return [x.Address_1, x.Address_2, x.City, x.State, x.Zipcode]
+    .map((v) => String(v == null ? "" : v).trim().toLowerCase())
+    .join("|");
+}
+// True when two token sets carry the same mailing address (ignores Description).
+// Used to skip customers whose shipping address equals their billing address from
+// the shipping PDF — they appear only in the billing PDF.
+function sameAddress(a, b) {
+  return normAddr(a) === normAddr(b);
 }
 
 // One combined batch PDF for a list of records. tokenKey selects the address set:
@@ -321,4 +287,4 @@ function buildBatchPdf(records, opts, tokenKey) {
   return buildPdf(pages, opts);
 }
 
-module.exports = { buildCustomerPdf, buildBatchPdf, customerPages };
+module.exports = { buildCustomerPdf, buildBatchPdf, customerPages, sameAddress };

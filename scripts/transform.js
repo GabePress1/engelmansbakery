@@ -72,6 +72,10 @@ function buildRecords(customers, entries, options = {}) {
   // A customer is counted only if they have an open invoice with remaining balance
   // dated on/before this cutoff (Document Date 2024 or older).
   const qualifyCutoff = options.qualifyCutoff || "2024-12-31";
+  // Minimum net past-due balance to include a customer (default 0 = any positive
+  // balance). The workflow's "Settings" node sets this to 1500 so only customers
+  // owing $1,500 or more get a statement.
+  const minBalance = Number(options.minBalance) || 0;
 
   // Index customers by their number for O(1) join.
   const custByNo = new Map();
@@ -127,9 +131,10 @@ function buildRecords(customers, entries, options = {}) {
   const records = [];
   for (const [customerNo, g] of grouped) {
     // Counted only if they have a remaining invoice dated 2024-or-older AND a
-    // positive net past-due balance.
+    // positive net past-due balance that meets the minimum threshold.
     if (!g.hasOld) continue;
     if (Math.round(g.total * 100) <= 0) continue;
+    if (Math.round(g.total * 100) < Math.round(minBalance * 100)) continue;
 
     const c = custByNo.get(customerNo) || {};
     const balanceDue = Number(c.Balance_Due_LCY) || 0;

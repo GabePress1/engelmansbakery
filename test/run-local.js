@@ -17,7 +17,7 @@ const PizZip = require("pizzip");
 
 const { buildRecords } = require("../scripts/transform");
 const { fillLetter } = require("../scripts/fill-letter");
-const { buildCustomerPdf, buildBatchPdf } = require("../scripts/pure-pdf");
+const { buildCustomerPdf, buildBatchPdf, sameAddress } = require("../scripts/pure-pdf");
 
 const ROOT = path.join(__dirname, "..");
 const OUT = path.join(ROOT, "out");
@@ -87,6 +87,14 @@ async function main() {
   assert(blue && blue.shipTokens.Address_1 === blue.tokens.Address_1,
     "C00021 has no ship-to -> shipping falls back to billing address");
 
+  // --- minimum-balance threshold (the "Settings" node) ----------------------
+  const highBar = buildRecords(data.customers, data.ledgerEntries, {
+    amountSource: "filtered", today: "2026-07-17", shipTos: data.shipTos, minBalance: 1500,
+  });
+  assert(highBar.length === 1, `minBalance 1500 should leave 1 customer, got ${highBar.length}`);
+  assert(highBar[0] && highBar[0].customerNo === "20382",
+    "only 20382 (net 3,500.50) clears the $1,500 bar; C00021 ($1,290) is excluded");
+
   console.log(`Qualifying customers: ${records.length}`);
   const perCustomerPdfs = [];
 
@@ -102,7 +110,7 @@ async function main() {
       `docx still has unfilled tags for ${name}`);
     fs.writeFileSync(path.join(OUT, `${name}.docx`), letterDocx);
 
-    // 2) Default render path: zero-dependency PDF (letter + statement as one doc)
+    // 2) Default render path: zero-dependency PDF (statement only, no letter page)
     const merged = buildCustomerPdf(rec.tokens, rec.statement, { asOfDate: "2026-07-14" });
     assert(merged.slice(0, 5).toString() === "%PDF-", `${name}: output is not a PDF`);
     const outFile = path.join(OUT, `${name}.pdf`);
@@ -115,14 +123,20 @@ async function main() {
     );
   }
 
-  // 4) Two combined batch PDFs: billing + shipping addresses
+  // 4) Two combined batch PDFs: billing (all) + shipping (only where the shipping
+  //    address differs from billing — same-address customers stay billing-only).
+  const shippingRecords = records.filter((r) => r.shipTokens && !sameAddress(r.tokens, r.shipTokens));
+  assert(shippingRecords.length === 1,
+    `shipping PDF should hold 1 customer (distinct ship-to), got ${shippingRecords.length}`);
+  assert(shippingRecords[0] && shippingRecords[0].customerNo === "20382",
+    "20382 has a distinct ship-to -> in shipping; C00021 (same as billing) -> billing only");
   const billing = buildBatchPdf(records, { asOfDate: "2026-07-17" }, "tokens");
-  const shipping = buildBatchPdf(records, { asOfDate: "2026-07-17" }, "shipTokens");
+  const shipping = buildBatchPdf(shippingRecords, { asOfDate: "2026-07-17" }, "shipTokens");
   assert(billing.slice(0, 5).toString() === "%PDF-", "billing PDF invalid");
   assert(shipping.slice(0, 5).toString() === "%PDF-", "shipping PDF invalid");
   fs.writeFileSync(path.join(OUT, "Past-Due-Billing.pdf"), billing);
   fs.writeFileSync(path.join(OUT, "Past-Due-Shipping.pdf"), shipping);
-  console.log(`Billing: out/Past-Due-Billing.pdf | Shipping: out/Past-Due-Shipping.pdf  (${records.length} customers)`);
+  console.log(`Billing: out/Past-Due-Billing.pdf (${records.length}) | Shipping: out/Past-Due-Shipping.pdf (${shippingRecords.length})`);
 
   if (failures) {
     console.error(`\n${failures} assertion(s) failed.`);

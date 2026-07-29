@@ -48,7 +48,11 @@ try {
 const invResp = $('Get Open Invoices').first().json;
 const entries = invResp.value || (Array.isArray(invResp) ? invResp : []);
 
-const records = buildRecords(customers, entries, { amountSource: 'filtered', shipTos });
+// Minimum overdue balance from the editable "Settings" node (default $1,500).
+let minBalance = 1500;
+try { const v = Number($('Settings').first().json.Min_Overdue_Balance); if (isFinite(v)) minBalance = v; } catch (e) {}
+
+const records = buildRecords(customers, entries, { amountSource: 'filtered', shipTos, minBalance });
 return records.map((r) => ({ json: r }));`;
 
 // ---- Code node 2: Render PDF (zero dependencies) ---------------------------
@@ -57,14 +61,18 @@ return records.map((r) => ({ json: r }));`;
 const renderNodeCode = `${pureSrc}
 
 // --- n8n driver -------------------------------------------------------------
-// Build ONE combined PDF for the whole run: for each customer, the letter pages
-// then that customer's statement pages, in customer order ->
-//   Letter 1, Statement 1, Letter 2, Statement 2, ...
+// Build combined STATEMENT-only PDFs (no letter/address page): one statement per
+// customer, back to back, in customer order.
 const all = items.map((i) => i.json);
 // Defensive: only render records that actually carry tokens, so one malformed or
 // stale item can never crash the whole batch. 'skipped' surfaces any bad input.
 const records = all.filter((r) => r && r.tokens);
 const skipped = all.length - records.length;
+
+// The billing PDF has every qualifying customer. The shipping PDF has ONLY the
+// customers whose shipping address differs from their billing address — when the
+// two match (or there's no ship-to), that customer appears in the billing PDF only.
+const shippingRecords = records.filter((r) => r.shipTokens && !sameAddress(r.tokens, r.shipTokens));
 
 // Two combined PDFs (billing + shipping). Filenames and PDF /Title both carry the date.
 // Build one PDF at a time and hand it straight to prepareBinaryData (which offloads
@@ -77,7 +85,7 @@ const billingData = await this.helpers.prepareBinaryData(
   buildBatchPdf(records, { title: 'Past-Due Billing ' + today }, 'tokens'),
   billingName, 'application/pdf');
 const shippingData = await this.helpers.prepareBinaryData(
-  buildBatchPdf(records, { title: 'Past-Due Shipping ' + today }, 'shipTokens'),
+  buildBatchPdf(shippingRecords, { title: 'Past-Due Shipping ' + today }, 'shipTokens'),
   shippingName, 'application/pdf');
 return [
   {
@@ -85,7 +93,7 @@ return [
     binary: { data: billingData },
   },
   {
-    json: { type: 'shipping', customers: records.length, skipped, fileName: shippingName },
+    json: { type: 'shipping', customers: shippingRecords.length, skipped, fileName: shippingName },
     binary: { data: shippingData },
   },
 ];
@@ -103,6 +111,9 @@ const qualifyNodeCode = `const inv = $('Get Open Invoices').first().json;
 const entries = inv.value || (Array.isArray(inv) ? inv : []);
 const today = new Date().toISOString().slice(0, 10);
 const CUTOFF = '2024-12-31'; // must have a remaining invoice dated on/before this
+// Minimum overdue balance, editable in the "Settings" node (default $1,500).
+let MIN = 1500;
+try { const v = Number($('Settings').first().json.Min_Overdue_Balance); if (isFinite(v)) MIN = v; } catch (e) {}
 
 const net = {};    // customerNo -> net past-due balance
 const hasOld = {}; // customerNo -> has a remaining invoice dated <= CUTOFF
@@ -120,10 +131,13 @@ for (const e of entries) {
     net[key] = (net[key] || 0) + remaining; // open payment/credit (negative)
   }
 }
-// Counted: a remaining invoice dated 2024-or-older AND a positive net past-due balance.
-const nos = Object.keys(net).filter((k) => hasOld[k] && Math.round(net[k] * 100) > 0);
+// Counted: a remaining invoice dated 2024-or-older AND a net past-due balance that
+// is positive AND at least the MIN threshold from the Settings node.
+const nos = Object.keys(net).filter(
+  (k) => hasOld[k] && Math.round(net[k] * 100) > 0 && Math.round(net[k] * 100) >= Math.round(MIN * 100)
+);
 
-// Nobody qualifies -> stop here so NO customers are fetched and NO letters go out.
+// Nobody qualifies -> stop here so NO customers are fetched and NO statements go out.
 if (nos.length === 0) return [];
 
 // Chunk the customer numbers so each Get Customers request URL stays well under
@@ -150,7 +164,24 @@ const nodes = [
     name: "When clicking Test workflow",
     type: "n8n-nodes-base.manualTrigger",
     typeVersion: 1,
+    position: [-600, 300],
+  },
+  {
+    parameters: {
+      assignments: {
+        assignments: [
+          { id: "s1", name: "Min_Overdue_Balance", value: 1500, type: "number" },
+        ],
+      },
+      options: {},
+    },
+    id: "n_settings",
+    name: "Settings",
+    type: "n8n-nodes-base.set",
+    typeVersion: 3.4,
     position: [-400, 300],
+    notes:
+      "Editable settings. Min_Overdue_Balance: only customers whose net past-due balance is at least this amount get a statement. Change this value (e.g. 1500) any time — no code edits needed.",
   },
   {
     parameters: {
@@ -335,7 +366,8 @@ const nodes = [
 // self-hosted n8n.
 
 const connections = {
-  "When clicking Test workflow": { main: [[{ node: "Keys", type: "main", index: 0 }]] },
+  "When clicking Test workflow": { main: [[{ node: "Settings", type: "main", index: 0 }]] },
+  Settings: { main: [[{ node: "Keys", type: "main", index: 0 }]] },
   Keys: { main: [[{ node: "Get Token", type: "main", index: 0 }]] },
   // Invoice-driven: the filtered 2023-2024 open invoices decide who gets a letter.
   "Get Token": { main: [[{ node: "Get Open Invoices", type: "main", index: 0 }]] },
