@@ -1,0 +1,191 @@
+{
+  "customers": [
+    {
+      "No": "20382",
+      "Name": "W.H. Stiles Fish Camp",
+      "Address": "100 Harbor Rd",
+      "Address_2": "",
+      "City": "Norcross",
+      "County": "GA",
+      "Post_Code": "30092",
+      "Balance_Due_LCY": 3500.5
+    },
+    {
+      "No": "C00021",
+      "Name": "Blue Ridge Market",
+      "Address": "88 Main Street",
+      "Address_2": "",
+      "City": "Blue Ridge",
+      "County": "GA",
+      "Post_Code": "30513",
+      "Balance_Due_LCY": 1290.0
+    },
+    {
+      "No": "C00050",
+      "Name": "Coastal Catering",
+      "Address": "9 Marsh Ln",
+      "Address_2": "",
+      "City": "Brunswick",
+      "County": "GA",
+      "Post_Code": "31520",
+      "Balance_Due_LCY": -200.0
+    },
+    {
+      "No": "C00060",
+      "Name": "Future Foods",
+      "Address": "1 Tomorrow Way",
+      "Address_2": "",
+      "City": "Macon",
+      "County": "GA",
+      "Post_Code": "31201",
+      "Balance_Due_LCY": 400.0
+    },
+    {
+      "No": "C00070",
+      "Name": "Americas Mart - Building 1",
+      "Address": "240 Peachtree St NW",
+      "Address_2": "",
+      "City": "Atlanta",
+      "County": "GA",
+      "Post_Code": "30303",
+      "Balance_Due_LCY": 644.7
+    },
+    {
+      "No": "C00034",
+      "Name": "Harbor Foods Inc",
+      "Address": "5 Dockside Way",
+      "Address_2": "Building C",
+      "City": "Savannah",
+      "County": "GA",
+      "Post_Code": "31401",
+      "Balance_Due_LCY": 0.0
+    }
+  ],
+  "shipTos": [
+    {
+      "HFSCustomerNo": "20382",
+      "Code": "DOCK",
+      "Address": "50 Dockside Ave",
+      "Address_2": "Pier 3",
+      "City": "Savannah",
+      "Post_Code": "31401"
+    },
+    {
+      "HFSCustomerNo": "20382",
+      "Code": "ALT",
+      "Address": "999 Secondary Rd",
+      "Address_2": "",
+      "City": "Pooler",
+      "Post_Code": "31322"
+    }
+  ],
+  "ledgerEntries": [
+    {
+      "Customer_No": "20382",
+      "Document_Type": "Invoice",
+      "Document_No": "5192222",
+      "Description": "Order S-ORD1001",
+      "Document_Date": "2024-01-30",
+      "Due_Date": "2024-03-01",
+      "Amount": 3200.5,
+      "Remaining_Amount": 3200.5,
+      "Open": true,
+      "_comment": "2024 remaining invoice -> hasOld; past-due -> on statement."
+    },
+    {
+      "Customer_No": "20382",
+      "Document_Type": "Invoice",
+      "Document_No": "6000001",
+      "Order_No": "S-ORD1002",
+      "Document_Date": "2025-06-15",
+      "Due_Date": "2025-07-15",
+      "Amount": 500.0,
+      "Remaining_Amount": 500.0,
+      "Open": true,
+      "_comment": "Past-due 2025 invoice: shown because customer is counted (has a 2024 invoice)."
+    },
+    {
+      "Customer_No": "20382",
+      "Document_Type": "Payment",
+      "Document_No": "G92161",
+      "Order_No": "",
+      "Document_Date": "2026-06-23",
+      "Due_Date": "2026-06-23",
+      "Amount": -200.0,
+      "Remaining_Amount": -200.0,
+      "Open": true,
+      "_comment": "Unapplied payment (open credit): negative line, nets the total."
+    },
+    {
+      "Customer_No": "C00021",
+      "Document_Type": "Invoice",
+      "Document_No": "5100500",
+      "Order_No": "S-ORD2001",
+      "Document_Date": "2023-09-20",
+      "Due_Date": "2023-10-20",
+      "Amount": 1290.0,
+      "Remaining_Amount": 1290.0,
+      "Open": true,
+      "_comment": "2023 remaining invoice -> hasOld; past-due. No ship-to -> shipping falls back to billing."
+    },
+    {
+      "Customer_No": "C00050",
+      "Document_Type": "Invoice",
+      "Document_No": "5300100",
+      "Order_No": "S-ORD3001",
+      "Document_Date": "2024-05-01",
+      "Due_Date": "2024-06-01",
+      "Amount": 300.0,
+      "Remaining_Amount": 300.0,
+      "Open": true,
+      "_comment": "Has a 2024 invoice (hasOld) but the credit below makes net negative -> excluded."
+    },
+    {
+      "Customer_No": "C00050",
+      "Document_Type": "Payment",
+      "Document_No": "88001",
+      "Order_No": "",
+      "Document_Date": "2024-07-01",
+      "Due_Date": "2024-07-01",
+      "Amount": -500.0,
+      "Remaining_Amount": -500.0,
+      "Open": true
+    },
+    {
+      "Customer_No": "C00060",
+      "Document_Type": "Invoice",
+      "Document_No": "5400200",
+      "Order_No": "S-ORD4001",
+      "Document_Date": "2026-07-05",
+      "Due_Date": "2026-12-01",
+      "Amount": 400.0,
+      "Remaining_Amount": 400.0,
+      "Open": true,
+      "_comment": "Not past due and dated 2026 -> excluded."
+    },
+    {
+      "Customer_No": "C00070",
+      "Document_Type": "Invoice",
+      "Document_No": "PS-INV151921",
+      "Order_No": "S-ORD5001",
+      "Document_Date": "2025-10-09",
+      "Due_Date": "2025-11-08",
+      "Amount": 164.29,
+      "Remaining_Amount": 164.29,
+      "Open": true,
+      "_comment": "Americas Mart case: past-due & positive, but earliest remaining doc date is 2025 (> 2024 cutoff) -> NOT counted."
+    },
+    {
+      "Customer_No": "C00034",
+      "Document_Type": "Invoice",
+      "Document_No": "5099001",
+      "Order_No": "S-ORD6001",
+      "Document_Date": "2024-06-01",
+      "Due_Date": "2024-07-01",
+      "Amount": 2100.0,
+      "Remaining_Amount": 0.0,
+      "Open": false,
+      "_comment": "Fully paid (Open=false) -> not counted."
+    }
+  ]
+}
