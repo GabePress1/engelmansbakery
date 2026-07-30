@@ -46,8 +46,11 @@ const salesOrders = soResp.value || (Array.isArray(soResp) ? soResp : []);
 // Minimum overdue balance from the editable "Settings" node (default $1,500).
 let minBalance = 1500;
 try { const v = Number($('Settings').first().json.Min_Overdue_Balance); if (isFinite(v)) minBalance = v; } catch (e) {}
+// Oldest_Open_Invoice cutoff from Settings (BLANK -> any overdue invoice qualifies).
+let qualifyCutoff = '2024-12-31';
+try { const v = $('Settings').first().json.Oldest_Open_Invoice; if (v !== undefined) qualifyCutoff = String(v == null ? '' : v).slice(0, 10); } catch (e) {}
 
-const records = buildRecords(customers, entries, { amountSource: 'filtered', minBalance, salesOrders });
+const records = buildRecords(customers, entries, { amountSource: 'filtered', minBalance, qualifyCutoff, salesOrders });
 return records.map((r) => ({ json: r }));`;
 
 // ---- Code node 2: Render PDF (zero dependencies) ---------------------------
@@ -86,7 +89,10 @@ return [
 const qualifyNodeCode = `const inv = $('Get Open Invoices').first().json;
 const entries = inv.value || (Array.isArray(inv) ? inv : []);
 const today = new Date().toISOString().slice(0, 10);
-const CUTOFF = '2024-12-31'; // must have a remaining invoice dated on/before this
+// Oldest_Open_Invoice from Settings: the customer must have an open invoice dated
+// on/before this date. BLANK -> no age rule (any overdue invoice qualifies).
+let CUTOFF = '2024-12-31';
+try { const v = $('Settings').first().json.Oldest_Open_Invoice; if (v !== undefined) CUTOFF = String(v == null ? '' : v).slice(0, 10); } catch (e) {}
 // Minimum overdue balance, editable in the "Settings" node (default $1,500).
 let MIN = 1500;
 try { const v = Number($('Settings').first().json.Min_Overdue_Balance); if (isFinite(v)) MIN = v; } catch (e) {}
@@ -112,7 +118,7 @@ for (const e of entries) {
   const due = String(e.Due_Date || '').slice(0, 10);
   const doc = String(e.Document_Date || '').slice(0, 10);
   if (String(e.Document_Type) === 'Invoice') {
-    if (remaining !== 0 && doc && doc <= CUTOFF) hasOld[key] = true;
+    if (remaining !== 0 && doc && (!CUTOFF || doc <= CUTOFF)) hasOld[key] = true;
     if (due && due < today) net[key] = (net[key] || 0) + remaining; // past-due invoice
   } else {
     net[key] = (net[key] || 0) + remaining; // open payment/credit (negative)
@@ -159,6 +165,7 @@ const nodes = [
       assignments: {
         assignments: [
           { id: "s1", name: "Min_Overdue_Balance", value: 1500, type: "number" },
+          { id: "s2", name: "Oldest_Open_Invoice", value: "2024-12-31", type: "string" },
         ],
       },
       options: {},
@@ -169,7 +176,7 @@ const nodes = [
     typeVersion: 3.4,
     position: [-400, 300],
     notes:
-      "Editable settings. Min_Overdue_Balance: only customers whose net past-due balance is at least this amount get a statement. Change this value (e.g. 1500) any time — no code edits needed.",
+      "Editable settings, no code changes needed.\n• Min_Overdue_Balance: only customers whose net past-due balance is at least this amount get a statement (e.g. 1500).\n• Oldest_Open_Invoice (YYYY-MM-DD): the customer must have an open invoice dated on or before this date to qualify. Leave BLANK to drop the age rule — then any overdue invoice qualifies.",
   },
   {
     parameters: {

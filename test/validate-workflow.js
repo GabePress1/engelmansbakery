@@ -49,8 +49,8 @@ async function main() {
   // Get Sales Orders is already server-filtered to tomorrow; pass the fixture through.
   const salesResp = { value: sample.salesOrders };
   // Settings node: threshold low enough that both sample customers still qualify,
-  // so the 2-customer pipeline is exercised end-to-end.
-  const settingsResp = { Min_Overdue_Balance: 1000 };
+  // so the 2-customer pipeline is exercised end-to-end. Default 2024 cutoff.
+  const settingsResp = { Min_Overdue_Balance: 1000, Oldest_Open_Invoice: "2024-12-31" };
   const qualifyDollar = (settings) => (nodeName) => {
     if (nodeName === "Get Open Invoices") return { first: () => ({ json: invoiceResp }) };
     if (nodeName === "Get Sales Orders") return { first: () => ({ json: salesResp }) };
@@ -65,6 +65,13 @@ async function main() {
     .flatMap((o) => o.json.customerNos);
   assert(qHigh.length === 1 && qHigh[0] === "20382",
     `minBalance 2000 should leave only 20382, got [${qHigh.join(", ")}]`);
+
+  // Blank Oldest_Open_Invoice -> age rule dropped: C00070 (2025 overdue, ordering
+  // tomorrow) now qualifies alongside 20382 and C00021.
+  const qAnyAge = (await qualifyFn.call({}, qualifyDollar({ Min_Overdue_Balance: 100, Oldest_Open_Invoice: "" }), [], require))
+    .flatMap((o) => o.json.customerNos);
+  assert(qAnyAge.includes("C00070") && qAnyAge.length === 3,
+    `blank Oldest_Open_Invoice should add C00070 (3 total), got [${qAnyAge.join(", ")}]`);
 
   // Qualifying now emits ONE ITEM PER BATCH; combine their customerNos.
   const qNos = qualifyOut.flatMap((o) => o.json.customerNos);

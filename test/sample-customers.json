@@ -99,6 +99,12 @@
       "Shipping_Agent_Code": "RT 21",
       "Requested_Delivery_Date": "2026-07-18",
       "_comment": "Ordering tomorrow but route RT 21 is excluded -> NOT included."
+    },
+    {
+      "Sell_to_Customer_No": "C00070",
+      "Shipping_Agent_Code": "RT 3",
+      "Requested_Delivery_Date": "2026-07-18",
+      "_comment": "Ordering tomorrow. Excluded under the default 2024 cutoff (2025-only doc date), but INCLUDED when Oldest_Open_Invoice is left blank."
     }
   ],
   "ledgerEntries": [

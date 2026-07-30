@@ -74,12 +74,26 @@ async function main() {
   const blue = records.find((r) => r.customerNo === "C00021");
   assert(blue && blue.tokens.Route === "RT 8", `C00021 route should be RT 8, got ${blue && blue.tokens.Route}`);
 
+  // With the default 2024 cutoff, C00070 (2025-only doc date) is excluded even though
+  // it is ordering tomorrow.
+  assert(!records.some((r) => r.customerNo === "C00070"),
+    "C00070 (2025-only doc date) excluded under the default Oldest_Open_Invoice cutoff");
+
   // --- minimum-balance threshold (the "Settings" node) ----------------------
   const highBar = buildRecords(data.customers, data.ledgerEntries, {
     amountSource: "filtered", today: "2026-07-17", salesOrders: data.salesOrders, minBalance: 1500,
   });
   assert(highBar.length === 1 && highBar[0].customerNo === "20382",
     "minBalance 1500 -> only 20382 (net 3,500.50); C00021 ($1,290) excluded");
+
+  // --- blank Oldest_Open_Invoice -> any overdue invoice qualifies -----------
+  const anyAge = buildRecords(data.customers, data.ledgerEntries, {
+    amountSource: "filtered", today: "2026-07-17", salesOrders: data.salesOrders, qualifyCutoff: "",
+  });
+  assert(anyAge.some((r) => r.customerNo === "C00070"),
+    "blank Oldest_Open_Invoice -> C00070 (2025 overdue invoice, ordering tomorrow) now qualifies");
+  assert(anyAge.length === 3,
+    `blank cutoff -> 3 customers (20382, C00021, C00070), got ${anyAge.length}`);
 
   console.log(`Qualifying customers: ${records.length}`);
 
