@@ -122,6 +122,14 @@ async function main() {
   fs.writeFileSync(path.join(OUT, "Past-Due-Notice.pdf"), notice);
   console.log(`Combined: out/Past-Due-Notice.pdf  (${records.length} customers, ${totalPages} pages)`);
 
+  // pad:false -> compact copy: no blank filler pages (each 1-page statement stays 1 page).
+  const oneCompact = customerPages(records[0].tokens, records[0].statement, { asOfDate: "2026-07-17", pad: false }).length;
+  assert(oneCompact === 1, `pad:false single customer (1-page stmt) should be 1 page, got ${oneCompact}`);
+  const compact = buildBatchPdf(records, { asOfDate: "2026-07-17", pad: false }, "tokens");
+  const compactPages = countPages(compact);
+  assert(compactPages === 2, `compact (pad:false) should be 2 pages (no blanks), got ${compactPages}`);
+  console.log(`Compact (pad:false): ${compactPages} pages`);
+
   if (failures) {
     console.error(`\n${failures} assertion(s) failed.`);
     process.exit(1);

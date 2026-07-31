@@ -30,9 +30,11 @@ const rawId = String(b.jobId || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64);
 const jobId = rawId || (Date.now().toString(36) + Math.random().toString(36).slice(2, 10));
 const minBalance = (b.minBalance === '' || b.minBalance == null) ? 0 : Number(b.minBalance);
 const oldestInvoice = (b.oldestInvoice == null) ? '' : String(b.oldestInvoice).slice(0, 10);
+// pad = add blank pages for double-sided printing (default true). false = compact copy.
+const pad = (b.pad === false || b.pad === 'false' || b.pad === 0 || b.pad === '0') ? false : true;
 const sd = $getWorkflowStaticData('global');
 sd['job_' + jobId] = { status: 'running', at: Date.now() };
-return [{ json: { jobId, minBalance, oldestInvoice } }];
+return [{ json: { jobId, minBalance, oldestInvoice, pad } }];
 `.trim();
 
 const STORE_RESULT = `

@@ -261,10 +261,13 @@ function buildPdf(pageContents, docOpts) {
 // Pads to an EVEN page count (adds a blank page when odd) so, when printed double
 // sided, every customer's statement starts on the front of a fresh sheet.
 function customerPages(tokens, statement, opts) {
+  const o = opts || {};
   const t = tokens || {};
   const s = statement && statement.lines ? statement : { lines: [], total: 0 };
-  const pages = statementPages(t, s, opts || {});
-  if (pages.length % 2 === 1) pages.push(""); // blank back page for duplex printing
+  const pages = statementPages(t, s, o);
+  // Pad to an even page count so double-sided printing keeps each account on its
+  // own sheet. Pass pad:false for a compact on-screen copy (no blank filler pages).
+  if (o.pad !== false && pages.length % 2 === 1) pages.push("");
   return pages;
 }
 

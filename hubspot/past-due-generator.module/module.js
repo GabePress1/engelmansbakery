@@ -17,12 +17,14 @@
     var statusEl = root.querySelector(".pdg-status");
     var minEl = root.querySelector(".pdg-min");
     var oldestEl = root.querySelector(".pdg-oldest");
+    var padEl = root.querySelector(".pdg-pad");
     if (!runBtn) return;
 
     function setStatus(m, c) { statusEl.textContent = m; statusEl.className = "pdg-status" + (c ? " " + c : ""); }
     function done(m, c) { setStatus(m, c); runBtn.disabled = false; }
+    function plural(n) { return n + " customer" + (Number(n) === 1 ? "" : "s"); }
 
-    function download(id) {
+    function download(id, count) {
       fetch(BASE + "/sw-statements-download?jobId=" + encodeURIComponent(id) + "&secret=" + encodeURIComponent(SECRET))
         .then(function (r) { return r.blob(); })
         .then(function (blob) {
@@ -32,7 +34,7 @@
           a.href = url; a.download = "Past-Due-Notice-" + today + ".pdf";
           document.body.appendChild(a); a.click(); a.remove();
           setTimeout(function () { URL.revokeObjectURL(url); }, 10000);
-          done("Downloaded. You can generate another.", "ok");
+          done("Downloaded " + plural(count) + "' statement(s). You can generate another.", "ok");
         })
         .catch(function (e) { done("Generated, but the download failed: " + e.message, "err"); });
     }
@@ -46,8 +48,8 @@
         .then(function (s) {
           if (s.status === "done") {
             if (!s.customers) { return done("Finished — no customers matched your filters for tomorrow's orders.", "ok"); }
-            setStatus("Ready — downloading " + s.customers + " statement(s)…", "ok");
-            return download(id);
+            setStatus("Ready — " + plural(s.customers) + " on the list. Downloading…", "ok");
+            return download(id, s.customers);
           }
           if (s.status === "error") { return done("The run reported an error. Please check n8n.", "err"); }
           if (s.status === "unauthorized") { return done("Not authorized (check the shared secret).", "err"); }
@@ -63,6 +65,7 @@
         jobId: id,
         minBalance: minEl.value === "" ? "" : Number(minEl.value),
         oldestInvoice: oldestEl.value || "",
+        pad: padEl ? !!padEl.checked : true,
         secret: SECRET
       };
       runBtn.disabled = true;

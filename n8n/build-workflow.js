@@ -71,10 +71,15 @@ const all = items.map((i) => i.json);
 const records = all.filter((r) => r && r.tokens);
 const skipped = all.length - records.length;
 
+// Double-sided padding is on by default; the HubSpot page can turn it off (pad:false)
+// for a compact, screen/one-sided copy with no blank filler pages.
+let pad = true;
+try { const ov = $('SW Make Job').first().json; if (ov && ov.pad === false) pad = false; } catch (e) {}
+
 const today = new Date().toISOString().slice(0, 10);
 const fileName = 'Past-Due-Notice-' + today + '.pdf';
 const data = await this.helpers.prepareBinaryData(
-  buildBatchPdf(records, { title: 'Past Due Notice ' + today }, 'tokens'),
+  buildBatchPdf(records, { title: 'Past Due Notice ' + today, pad }, 'tokens'),
   fileName, 'application/pdf');
 return [
   { json: { customers: records.length, skipped, fileName }, binary: { data } },

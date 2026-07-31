@@ -2,32 +2,43 @@
 <div class="pdg" data-base="{{ module.webhook_base }}" data-secret="{{ module.secret }}">
   <h2 class="pdg-title">Generate Past Due Notices</h2>
 
-  <div class="pdg-about">
-    <p>This tool builds one combined <strong>Past Due Notice</strong> PDF &mdash; a printable
-      statement per customer &mdash; for customers who:</p>
-    <ul>
-      <li>have at least one <strong>open, past&#8209;due invoice</strong>, and</li>
-      <li>are scheduled to <strong>receive an order tomorrow</strong> (based on the Sales Order's
-        Requested Delivery Date).</li>
-    </ul>
-    <p>Customers on <strong>Route&nbsp;21 (RT&nbsp;21)</strong> are excluded. Statements are grouped
-      and sorted by route, and each account prints on 2 pages (letter-free notice, double&#8209;sided ready).</p>
-    <p class="pdg-note">Set the two filters below, click <em>Generate</em>, and the PDF downloads when
-      it&rsquo;s ready. Large runs can take a few minutes &mdash; keep this page open.</p>
+  <div class="pdg-cols">
+    <div class="pdg-about">
+      <p>This tool builds one combined <strong>Past Due Notice</strong> PDF &mdash; a printable
+        statement per customer &mdash; for customers who:</p>
+      <ul>
+        <li>have at least one <strong>open, past&#8209;due invoice</strong>, and</li>
+        <li>are scheduled to <strong>receive an order tomorrow</strong> (based on the Sales Order's
+          Requested Delivery Date).</li>
+      </ul>
+      <p>Customers on <strong>Route&nbsp;21 (RT&nbsp;21)</strong> are excluded. Statements are grouped
+        and sorted by route.</p>
+      <p class="pdg-note">Set the filters, click <em>Generate</em>, and the PDF downloads when it&rsquo;s
+        ready. Large runs can take a few minutes &mdash; keep this page open.</p>
+    </div>
+
+    <div class="pdg-form">
+      <label class="pdg-field">
+        <span>Minimum overdue balance ($)</span>
+        <small>Only include customers who owe at least this amount.</small>
+        <input class="pdg-min" type="number" min="0" step="1" value="1000" inputmode="numeric" />
+      </label>
+
+      <label class="pdg-field">
+        <span>Oldest open invoice date</span>
+        <small>The customer must have an open invoice dated on or before this. Leave blank to include any overdue invoice.</small>
+        <input class="pdg-oldest" type="date" />
+      </label>
+
+      <label class="pdg-check">
+        <input class="pdg-pad" type="checkbox" checked />
+        <span>Format for double&#8209;sided printing
+          <small>Adds a blank page after any single&#8209;page statement so each account prints on its own sheet. Uncheck for a compact on&#8209;screen copy.</small>
+        </span>
+      </label>
+
+      <button class="pdg-run" type="button">Generate PDF</button>
+      <p class="pdg-status" role="status" aria-live="polite"></p>
+    </div>
   </div>
-
-  <label class="pdg-field">
-    <span>Minimum overdue balance ($)</span>
-    <small>Only include customers who owe at least this amount.</small>
-    <input class="pdg-min" type="number" min="0" step="1" value="1000" inputmode="numeric" />
-  </label>
-
-  <label class="pdg-field">
-    <span>Oldest open invoice date</span>
-    <small>The customer must have an open invoice dated on or before this. Leave blank to include any overdue invoice.</small>
-    <input class="pdg-oldest" type="date" />
-  </label>
-
-  <button class="pdg-run" type="button">Generate PDF</button>
-  <p class="pdg-status" role="status" aria-live="polite"></p>
 </div>
