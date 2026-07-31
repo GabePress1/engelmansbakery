@@ -1,6 +1,6 @@
 .pdg {
   max-width: 920px;
-  margin: 48px auto;
+  margin: 110px auto 56px; /* extra top margin clears the site's fixed header */
   padding: 32px 36px 36px;
   border: 1px solid #eadfdf;
   border-radius: 12px;
@@ -82,6 +82,6 @@
 
 /* Stack to one column on narrow screens. */
 @media (max-width: 720px) {
-  .pdg { padding: 24px 20px 28px; margin: 24px auto; }
+  .pdg { padding: 24px 20px 28px; margin: 90px auto 32px; }
   .pdg-form { flex-basis: 100%; }
 }
