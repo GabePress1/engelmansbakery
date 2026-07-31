@@ -1,0 +1,124 @@
+<!--
+  Self-Serve "Past Due Notice" generator — HubSpot custom-HTML module.
+  Paste this into a Custom HTML module on a MEMBERSHIP-GATED (staff-only) page.
+
+  Before publishing, set the two values in the CONFIG block below:
+    WEBHOOK_BASE = https://engelmansbakery.app.n8n.cloud/webhook
+    SECRET       = (the shared secret provided separately)
+
+  The page is login-gated, so the secret is only exposed to signed-in staff.
+  Flow: POST run -> poll status -> download the PDF (async, handles long runs).
+-->
+<div id="sw-statements" class="sw-card">
+  <h2>Generate Past Due Notices</h2>
+  <p class="sw-sub">Enter your filters, then click Generate. The PDF downloads when it's ready.</p>
+
+  <label class="sw-field">
+    <span>Minimum overdue balance ($)</span>
+    <input id="sw-min" type="number" min="0" step="1" value="1000" inputmode="numeric" />
+  </label>
+
+  <label class="sw-field">
+    <span>Oldest open invoice date <em>(leave blank = any overdue)</em></span>
+    <input id="sw-oldest" type="date" />
+  </label>
+
+  <button id="sw-run" type="button">Generate PDF</button>
+  <p id="sw-status" class="sw-status" role="status" aria-live="polite"></p>
+</div>
+
+<style>
+  #sw-statements { max-width: 460px; margin: 0 auto; font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; color: #1f1010; }
+  #sw-statements h2 { margin: 0 0 4px; font-size: 1.4rem; }
+  #sw-statements .sw-sub { margin: 0 0 20px; color: #6b5b5b; font-size: .92rem; }
+  #sw-statements .sw-field { display: block; margin-bottom: 16px; }
+  #sw-statements .sw-field span { display: block; font-weight: 600; margin-bottom: 6px; font-size: .9rem; }
+  #sw-statements .sw-field em { font-weight: 400; color: #8a7a7a; font-style: normal; }
+  #sw-statements input { width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #d8cccc; border-radius: 8px; font-size: 1rem; }
+  #sw-statements button { width: 100%; padding: 12px 16px; border: 0; border-radius: 8px; background: #E8722B; color: #fff; font-size: 1rem; font-weight: 700; cursor: pointer; }
+  #sw-statements button:disabled { opacity: .6; cursor: default; }
+  #sw-statements .sw-status { margin-top: 14px; min-height: 1.2em; font-size: .95rem; }
+  #sw-statements .sw-status.err { color: #b3261e; }
+  #sw-statements .sw-status.ok  { color: #1e7d3c; }
+</style>
+
+<script>
+(function () {
+  // ---- CONFIG (fill these in) ---------------------------------------------
+  var WEBHOOK_BASE = "__WEBHOOK_BASE__";     // e.g. https://engelmansbakery.app.n8n.cloud/webhook
+  var SECRET       = "__SW_SECRET__";        // shared secret (provided separately)
+  var POLL_MS      = 5000;                    // how often to check status
+  var MAX_MINUTES  = 8;                       // give up after this long
+  // -------------------------------------------------------------------------
+
+  var runBtn = document.getElementById("sw-run");
+  var statusEl = document.getElementById("sw-status");
+  var minEl = document.getElementById("sw-min");
+  var oldestEl = document.getElementById("sw-oldest");
+
+  function setStatus(msg, cls) { statusEl.textContent = msg; statusEl.className = "sw-status" + (cls ? " " + cls : ""); }
+  function jobId() {
+    try { return crypto.randomUUID(); } catch (e) { return "job-" + Date.now() + "-" + Math.random().toString(36).slice(2, 10); }
+  }
+
+  runBtn.addEventListener("click", function () {
+    var id = jobId();
+    var body = {
+      jobId: id,
+      minBalance: minEl.value === "" ? "" : Number(minEl.value),
+      oldestInvoice: oldestEl.value || "",   // "" = any overdue
+      secret: SECRET
+    };
+    runBtn.disabled = true;
+    setStatus("Starting…");
+
+    fetch(WEBHOOK_BASE + "/sw-statements-run", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body)
+    }).then(function () {
+      setStatus("Generating… this can take a few minutes. Please keep this page open.");
+      poll(id, Date.now());
+    }).catch(function (e) {
+      done("Could not start the run: " + e.message, "err");
+    });
+  });
+
+  function poll(id, startedAt) {
+    if (Date.now() - startedAt > MAX_MINUTES * 60000) {
+      return done("Timed out. It may still be processing, or no customers matched — try again or check n8n.", "err");
+    }
+    fetch(WEBHOOK_BASE + "/sw-statements-status?jobId=" + encodeURIComponent(id) + "&secret=" + encodeURIComponent(SECRET))
+      .then(function (r) { return r.json(); })
+      .then(function (s) {
+        if (s.status === "done") {
+          if (!s.customers) { return done("Finished — no customers matched your filters for tomorrow's orders.", "ok"); }
+          setStatus("Ready — downloading " + s.customers + " statement(s)…", "ok");
+          return download(id);
+        }
+        if (s.status === "error") { return done("The run reported an error. Please check n8n.", "err"); }
+        if (s.status === "unauthorized") { return done("Not authorized (bad secret).", "err"); }
+        // running / unknown -> keep waiting
+        setTimeout(function () { poll(id, startedAt); }, POLL_MS);
+      })
+      .catch(function () { setTimeout(function () { poll(id, startedAt); }, POLL_MS); });
+  }
+
+  function download(id) {
+    fetch(WEBHOOK_BASE + "/sw-statements-download?jobId=" + encodeURIComponent(id) + "&secret=" + encodeURIComponent(SECRET))
+      .then(function (r) { return r.blob(); })
+      .then(function (blob) {
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement("a");
+        var today = new Date().toISOString().slice(0, 10);
+        a.href = url; a.download = "Past-Due-Notice-" + today + ".pdf";
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(function () { URL.revokeObjectURL(url); }, 10000);
+        done("Downloaded. You can generate another.", "ok");
+      })
+      .catch(function (e) { done("Generated, but the download failed: " + e.message, "err"); });
+  }
+
+  function done(msg, cls) { setStatus(msg, cls); runBtn.disabled = false; }
+})();
+</script>

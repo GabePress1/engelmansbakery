@@ -43,12 +43,15 @@ const entries = invResp.value || (Array.isArray(invResp) ? invResp : []);
 const soResp = $('Get Sales Orders').first().json;
 const salesOrders = soResp.value || (Array.isArray(soResp) ? soResp : []);
 
-// Minimum overdue balance from the editable "Settings" node (default $1,500).
+// Per-run override from the HubSpot page ("SW Make Job", webhook runs only) beats
+// the manual Settings node.
+let ov = null; try { ov = $('SW Make Job').first().json; } catch (e) {}
 let minBalance = 1500;
-try { const v = Number($('Settings').first().json.Min_Overdue_Balance); if (isFinite(v)) minBalance = v; } catch (e) {}
-// Oldest_Open_Invoice cutoff from Settings (BLANK -> any overdue invoice qualifies).
+if (ov && ov.minBalance !== undefined && ov.minBalance !== '') { const m = Number(ov.minBalance); if (isFinite(m)) minBalance = m; }
+else { try { const v = Number($('Settings').first().json.Min_Overdue_Balance); if (isFinite(v)) minBalance = v; } catch (e) {} }
 let qualifyCutoff = '2024-12-31';
-try { const v = $('Settings').first().json.Oldest_Open_Invoice; if (v !== undefined) qualifyCutoff = String(v == null ? '' : v).slice(0, 10); } catch (e) {}
+if (ov && ov.oldestInvoice !== undefined) { qualifyCutoff = String(ov.oldestInvoice).slice(0, 10); }
+else { try { const v = $('Settings').first().json.Oldest_Open_Invoice; if (v !== undefined) qualifyCutoff = String(v == null ? '' : v).slice(0, 10); } catch (e) {} }
 
 const records = buildRecords(customers, entries, { amountSource: 'filtered', minBalance, qualifyCutoff, salesOrders });
 return records.map((r) => ({ json: r }));`;
@@ -89,13 +92,18 @@ return [
 const qualifyNodeCode = `const inv = $('Get Open Invoices').first().json;
 const entries = inv.value || (Array.isArray(inv) ? inv : []);
 const today = new Date().toISOString().slice(0, 10);
-// Oldest_Open_Invoice from Settings: the customer must have an open invoice dated
-// on/before this date. BLANK -> no age rule (any overdue invoice qualifies).
+// Per-run override from the HubSpot page (the "SW Make Job" node, present only on
+// webhook runs) takes priority over the manual Settings node.
+let ov = null; try { ov = $('SW Make Job').first().json; } catch (e) {}
+// Oldest_Open_Invoice: the customer must have an open invoice dated on/before this
+// date. BLANK -> no age rule (any overdue invoice qualifies).
 let CUTOFF = '2024-12-31';
-try { const v = $('Settings').first().json.Oldest_Open_Invoice; if (v !== undefined) CUTOFF = String(v == null ? '' : v).slice(0, 10); } catch (e) {}
-// Minimum overdue balance, editable in the "Settings" node (default $1,500).
+if (ov && ov.oldestInvoice !== undefined) { CUTOFF = String(ov.oldestInvoice).slice(0, 10); }
+else { try { const v = $('Settings').first().json.Oldest_Open_Invoice; if (v !== undefined) CUTOFF = String(v == null ? '' : v).slice(0, 10); } catch (e) {} }
+// Minimum overdue balance (default $1,500 if neither override nor Settings present).
 let MIN = 1500;
-try { const v = Number($('Settings').first().json.Min_Overdue_Balance); if (isFinite(v)) MIN = v; } catch (e) {}
+if (ov && ov.minBalance !== undefined && ov.minBalance !== '') { const m = Number(ov.minBalance); if (isFinite(m)) MIN = m; }
+else { try { const v = Number($('Settings').first().json.Min_Overdue_Balance); if (isFinite(v)) MIN = v; } catch (e) {} }
 
 // Who is ordering tomorrow, from Sales Orders (already date-filtered to tomorrow by
 // the Get Sales Orders node). Exclude route RT 21. Only these customers get a notice.
@@ -132,7 +140,14 @@ const nos = Object.keys(net).filter(
 );
 
 // Nobody qualifies -> stop here so NO customers are fetched and NO statements go out.
-if (nos.length === 0) return [];
+// On a webhook (self-serve) run, mark the job done-empty so the page stops waiting.
+if (nos.length === 0) {
+  try {
+    let jobId = null; try { jobId = $('SW Make Job').first().json.jobId; } catch (e) {}
+    if (jobId) { const sd = $getWorkflowStaticData('global'); sd['job_' + jobId] = { status: 'done', at: Date.now(), customers: 0, empty: true }; }
+  } catch (e) {}
+  return [];
+}
 
 // Chunk the customer numbers so each Get Customers request URL stays well under
 // the length limit. ~40 numbers => a $filter of ~800 chars per request.
