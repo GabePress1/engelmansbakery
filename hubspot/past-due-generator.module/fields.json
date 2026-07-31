@@ -1,0 +1,18 @@
+[
+  {
+    "name": "webhook_base",
+    "label": "Webhook base URL",
+    "help_text": "The n8n webhook base, e.g. https://engelmansbakery.app.n8n.cloud/webhook (no trailing slash).",
+    "type": "text",
+    "required": true,
+    "default": "https://engelmansbakery.app.n8n.cloud/webhook"
+  },
+  {
+    "name": "secret",
+    "label": "Shared secret",
+    "help_text": "The shared secret that authorizes runs. Set this in the page editor; it is not stored in the module files.",
+    "type": "text",
+    "required": true,
+    "default": ""
+  }
+]
