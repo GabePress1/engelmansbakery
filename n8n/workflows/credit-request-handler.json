@@ -390,7 +390,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const store = $getWorkflowStaticData('global');\nconst line = $json;\nconst totalCreditQty = store.totalCreditQuantity;\n\nlet itemStage;\n\nif (line.requestType === 'Complaint') {\n  itemStage = '1388087302';\n} else if (line.requestType === 'Credit') {\n  itemStage = totalCreditQty >= 10 ? '1386096010' : '1388087301';\n} else {\n  itemStage = '1388087301';\n}\n\nconst accountNumber = $('Validate Payload').first().json.account.accountNumber;\nconst accountName = $('Validate Payload').first().json.account.accountName || store.companyName || '';\nconst submittedAt = $('Validate Payload').first().json.submittedAt;\nconst d = new Date(submittedAt);\nconst e = new Date(d.toLocaleString('en-US', { timeZone: 'America/New_York' }));\nconst formattedDate = String(e.getFullYear()).slice(2) + '-' + String(e.getMonth()+1).padStart(2,'0') + '-' + String(e.getDate()).padStart(2,'0');\n\nreturn [{ json: {\n  properties: {\n    item_name: accountNumber + ' - ' + formattedDate + ' - ' + line.productNumber,\n    erp_account_number: String(accountNumber),\n    company_name: store.companyName || accountName,\n    item_no_: line.productNumber,\n    item_description: line.productDescription || '',\n    julian_code: line.julianCode || '',\n    quantity: String(line.quantity),\n    request_type: line.requestType,\n    complaint_type: line.issueClassification,\n    line_notes: line.notes || '',\n    photosdocumentation: (line.uploadedPhotoUrls || []).join('\\n'),\n    hs_pipeline: '912368291',\n    hs_pipeline_stage: itemStage\n  }\n} }];"
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst line = $json;\nconst totalCreditQty = store.totalCreditQuantity;\n\nlet itemStage;\n\nif (line.requestType === 'Complaint') {\n  itemStage = '1388087302';\n} else if (line.requestType === 'Credit') {\n  itemStage = totalCreditQty >= 10 ? '1386096010' : '1388087301';\n} else {\n  itemStage = '1388087301';\n}\n\nconst accountNumber = $('Validate Payload').first().json.account.accountNumber;\nconst accountName = $('Validate Payload').first().json.account.accountName || store.companyName || '';\nconst submittedAt = $('Validate Payload').first().json.submittedAt;\nconst d = new Date(submittedAt);\nconst e = new Date(d.toLocaleString('en-US', { timeZone: 'America/New_York' }));\nconst formattedDate = String(e.getFullYear()).slice(2) + '-' + String(e.getMonth()+1).padStart(2,'0') + '-' + String(e.getDate()).padStart(2,'0');\n\nconst _OWNER={grant:'90350604',jessica:'583682960',barbara:'967443664'};\nconst _GRANT=['Shortage','Wrong Substitution','Mispick']; const _JESSICA=['Incorrect Price','Order Error'];\nconst _itemOwner=(()=>{ if(itemStage==='1386096011')return null; if(itemStage==='1388087301')return _OWNER.jessica; if(_GRANT.includes(line.issueClassification))return _OWNER.grant; if(_JESSICA.includes(line.issueClassification))return _OWNER.jessica; return _OWNER.barbara; })();\n\nreturn [{ json: {\n  properties: {\n    item_name: accountNumber + ' - ' + formattedDate + ' - ' + line.productNumber,\n    erp_account_number: String(accountNumber),\n    company_name: store.companyName || accountName,\n    item_no_: line.productNumber,\n    item_description: line.productDescription || '',\n    julian_code: line.julianCode || '',\n    quantity: String(line.quantity),\n    request_type: line.requestType,\n    complaint_type: line.issueClassification,\n    line_notes: line.notes || '',\n    photosdocumentation: (line.uploadedPhotoUrls || []).join('\\n'),\n    hs_pipeline: '912368291',\n    hs_pipeline_stage: itemStage,\n    ...(_itemOwner ? { hubspot_owner_id: String(_itemOwner) } : {})\n  }\n} }];"
       },
       "id": "cr-handler-017b",
       "name": "Determine Item Stage",
@@ -504,7 +504,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        5376,
+        5600,
         80
       ]
     },
@@ -724,20 +724,20 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4704,
+        4928,
         80
       ]
     },
     {
       "parameters": {
-        "jsCode": "const store = $getWorkflowStaticData('global');\nconst itemStage = $json.lowestStage;\nconst stageMapping = {\n  '1386096010': '1385996039',\n  '1388087301': '1387983013',\n  '1388087302': '1387983014',\n  '1386096011': '1385996040'\n};\n\nconst ticketStage = stageMapping[itemStage] || itemStage;\n\nif (!stageMapping[itemStage]) {\n  console.warn(`Unknown item stage ${itemStage}, using as-is`);\n}\n\nreturn [{ json: { ticketStage: ticketStage, itemStage: itemStage, ticketId: store.ticketId } }];"
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst itemStage = $json.lowestStage;\nconst stageMapping = {\n  '1386096010': '1385996039',\n  '1388087301': '1387983013',\n  '1388087302': '1387983014',\n  '1386096011': '1385996040'\n};\n\nconst ticketStage = stageMapping[itemStage] || itemStage;\n\nif (!stageMapping[itemStage]) {\n  console.warn(`Unknown item stage ${itemStage}, using as-is`);\n}\n\nconst _O={grant:'90350604',jessica:'583682960',barbara:'967443664'};\nconst ticketOwner = (itemStage==='1386096010')?_O.barbara:(itemStage==='1388087301')?_O.jessica:(itemStage==='1388087302')?_O.barbara:null;\nreturn [{ json: { ticketStage: ticketStage, itemStage: itemStage, ticketId: store.ticketId, ticketOwner } }];"
       },
       "id": "cr-handler-034",
       "name": "Map Item Stage to Ticket Stage",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4928,
+        5152,
         80
       ]
     },
@@ -758,7 +758,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ properties: { hs_pipeline_stage: $json.ticketStage } }) }}",
+        "jsonBody": "={{ JSON.stringify({ properties: Object.assign({ hs_pipeline_stage: $json.ticketStage }, $json.ticketOwner ? { hubspot_owner_id: String($json.ticketOwner) } : {}) }) }}",
         "options": {}
       },
       "id": "cr-handler-032",
@@ -766,7 +766,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        5152,
+        5376,
         80
       ],
       "credentials": {
@@ -849,8 +849,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        5150,
-        -600
+        4704,
+        80
       ],
       "credentials": {
         "hubspotAppToken": {

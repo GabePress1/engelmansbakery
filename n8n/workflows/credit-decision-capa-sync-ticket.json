@@ -12,7 +12,10 @@
       "name": "Webhook - Item Stage Changed",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [0, 96],
+      "position": [
+        0,
+        96
+      ],
       "webhookId": "80574754-67d6-4e79-b7a7-932bc8fdccc7"
     },
     {
@@ -23,7 +26,10 @@
       "name": "Extract Item Info",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [224, 96]
+      "position": [
+        224,
+        96
+      ]
     },
     {
       "parameters": {
@@ -33,7 +39,10 @@
       "name": "Validate Stage (Credit Decision or CAPA)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [448, 96]
+      "position": [
+        448,
+        96
+      ]
     },
     {
       "parameters": {
@@ -43,7 +52,10 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Content-Type", "value": "application/json" }
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
           ]
         },
         "options": {}
@@ -52,7 +64,10 @@
       "name": "Get Associated Ticket",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [672, 0],
+      "position": [
+        672,
+        0
+      ],
       "credentials": {
         "hubspotAppToken": {
           "id": "vxGS6a3iorMrt7wb",
@@ -68,7 +83,10 @@
       "name": "Extract Ticket ID",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [896, 0]
+      "position": [
+        896,
+        0
+      ]
     },
     {
       "parameters": {
@@ -78,7 +96,10 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Content-Type", "value": "application/json" }
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
           ]
         },
         "options": {}
@@ -87,7 +108,10 @@
       "name": "Get All Associated Items",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [1120, 0],
+      "position": [
+        1120,
+        0
+      ],
       "credentials": {
         "hubspotAppToken": {
           "id": "vxGS6a3iorMrt7wb",
@@ -104,19 +128,25 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Content-Type", "value": "application/json" }
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
           ]
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ inputs: $json.results.map(a => ({ id: a.id || a.toObjectId })), properties: ['hs_pipeline_stage'] }) }}",
+        "jsonBody": "={{ JSON.stringify({ inputs: $json.results.map(a => ({ id: a.id || a.toObjectId })), properties: ['hs_pipeline_stage','complaint_type'] }) }}",
         "options": {}
       },
       "id": "cd-capa-batch-read",
       "name": "Batch Read Item Stages",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [1344, 0],
+      "position": [
+        1344,
+        0
+      ],
       "credentials": {
         "hubspotAppToken": {
           "id": "vxGS6a3iorMrt7wb",
@@ -126,23 +156,29 @@
     },
     {
       "parameters": {
-        "jsCode": "const items = $input.first().json.results || [];\n\nif (items.length === 0) {\n  return [{ json: { error: 'No associated items' } }];\n}\n\n// Item pipeline stage order (earliest -> latest)\nconst STAGE_ORDER = {\n  '1386096010': 0, // Verification\n  '1388087301': 1, // Credit Decision\n  '1388087302': 2, // CAPA\n  '1386096011': 3  // Closed\n};\n\nlet lowestStage = null;\nlet lowestRank = Infinity;\nconst stages = [];\n\nfor (const item of items) {\n  const stage = String(item.properties.hs_pipeline_stage);\n  stages.push(stage);\n  const rank = STAGE_ORDER[stage];\n  if (rank !== undefined && rank < lowestRank) {\n    lowestRank = rank;\n    lowestStage = stage;\n  }\n}\n\nif (lowestStage === null) {\n  return [{ json: { error: 'No recognized item stages', stages } }];\n}\n\nreturn [{ json: { itemStage: lowestStage, allStages: stages, itemCount: items.length, success: true } }];"
+        "jsCode": "const items = $input.first().json.results || [];\nif (items.length === 0) { return [{ json: { error: 'No associated items' } }]; }\nconst STAGE_ORDER = { '1386096010':0, '1388087301':1, '1388087302':2, '1386096011':3 };\nlet lowestStage=null, lowestRank=Infinity; const stages=[];\nfor (const item of items){ const st=String(item.properties.hs_pipeline_stage); stages.push(st); const r=STAGE_ORDER[st]; if(r!==undefined && r<lowestRank){lowestRank=r; lowestStage=st;} }\nif (lowestStage===null){ return [{ json:{ error:'No recognized item stages', stages } }]; }\nconst _OWNER={grant:'90350604',jessica:'583682960',barbara:'967443664'};\nconst _GRANT=['Shortage','Wrong Substitution','Mispick']; const _JESSICA=['Incorrect Price','Order Error'];\nconst _itemOwnerFn=(stage,ct)=>{ if(stage==='1386096011')return null; if(stage==='1388087301')return _OWNER.jessica; if(_GRANT.includes(ct))return _OWNER.grant; if(_JESSICA.includes(ct))return _OWNER.jessica; return _OWNER.barbara; };\nconst _ticketOwnerFn=(s)=>{ if(s==='1386096010')return _OWNER.barbara; if(s==='1388087301')return _OWNER.jessica; if(s==='1388087302')return _OWNER.barbara; return null; };\nconst triggerId = String($('Extract Item Info').first().json.itemId || '');\nconst trig = items.find(i=>String(i.id)===triggerId);\nlet triggerItemOwner=null;\nif (trig){ triggerItemOwner=_itemOwnerFn(String(trig.properties.hs_pipeline_stage), trig.properties.complaint_type||''); }\nconst ticketOwner=_ticketOwnerFn(lowestStage);\nreturn [{ json: { itemStage: lowestStage, triggerItemId: triggerId, triggerItemOwner, ticketOwner, allStages: stages, itemCount: items.length, success: true } }];"
       },
       "id": "2175c935-457a-4ef4-8114-6bd6bda80ee7",
       "name": "Get Item Stage",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1568, 0]
+      "position": [
+        1568,
+        0
+      ]
     },
     {
       "parameters": {
-        "jsCode": "const itemStage = $json.itemStage;\nconst stageMapping = {\n  '1386096010': '1385996039', // Verification\n  '1388087301': '1387983013', // Credit Decision\n  '1388087302': '1387983014', // CAPA\n  '1386096011': '1385996040'  // Closed\n};\n\nconst ticketStage = stageMapping[itemStage];\n\nif (!ticketStage) {\n  return [{ json: { error: 'No ticket stage mapping for item stage: ' + itemStage } }];\n}\n\nreturn [{ json: { ticketStage: ticketStage, itemStage: itemStage } }];"
+        "jsCode": "const itemStage = $json.itemStage;\nconst stageMapping = { '1386096010':'1385996039','1388087301':'1387983013','1388087302':'1387983014','1386096011':'1385996040' };\nconst ticketStage = stageMapping[itemStage];\nif (!ticketStage){ return [{ json:{ error:'No ticket stage mapping for item stage: '+itemStage } }]; }\nreturn [{ json: { ticketStage, itemStage, ticketOwner: $json.ticketOwner || null } }];"
       },
       "id": "db993a4c-484b-4477-9bd9-122164471e9c",
       "name": "Map Item Stage to Ticket Stage",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1792, 0]
+      "position": [
+        1792,
+        0
+      ]
     },
     {
       "parameters": {
@@ -153,19 +189,25 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Content-Type", "value": "application/json" }
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
           ]
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ properties: { hs_pipeline_stage: $json.ticketStage } }) }}",
+        "jsonBody": "={{ JSON.stringify({ properties: Object.assign({ hs_pipeline_stage: $json.ticketStage }, $json.ticketOwner ? { hubspot_owner_id: String($json.ticketOwner) } : {}) }) }}",
         "options": {}
       },
       "id": "6146fd25-6ac7-48e3-abe6-934b69bb2552",
       "name": "Update Ticket Stage",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [2016, 0],
+      "position": [
+        2016,
+        0
+      ],
       "credentials": {
         "hubspotAppToken": {
           "id": "vxGS6a3iorMrt7wb",
@@ -180,7 +222,10 @@
         "options": {
           "responseHeaders": {
             "entries": [
-              { "name": "Access-Control-Allow-Origin", "value": "*" }
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
             ]
           }
         }
@@ -189,7 +234,10 @@
       "name": "Success Response",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [2240, 0]
+      "position": [
+        2240,
+        0
+      ]
     },
     {
       "parameters": {
@@ -198,7 +246,10 @@
         "options": {
           "responseHeaders": {
             "entries": [
-              { "name": "Access-Control-Allow-Origin", "value": "*" }
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
             ]
           }
         }
@@ -207,59 +258,169 @@
       "name": "Skip Response",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [672, 192]
+      "position": [
+        672,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.hubapi.com/crm/v3/objects/2-48651243/{{ $('Extract Item Info').first().json.itemId }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ properties: $('Get Item Stage').first().json.triggerItemOwner ? { hubspot_owner_id: String($('Get Item Stage').first().json.triggerItemOwner) } : {} }) }}",
+        "options": {}
+      },
+      "id": "sync-set-item-owner",
+      "name": "Set Item Owner",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1568,
+        180
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "vxGS6a3iorMrt7wb",
+          "name": "HubSpot Service Key Production"
+        }
+      },
+      "onError": "continueRegularOutput"
     }
   ],
   "connections": {
     "Webhook - Item Stage Changed": {
       "main": [
-        [{ "node": "Extract Item Info", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Extract Item Info",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Extract Item Info": {
       "main": [
-        [{ "node": "Validate Stage (Credit Decision or CAPA)", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Validate Stage (Credit Decision or CAPA)",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Validate Stage (Credit Decision or CAPA)": {
       "main": [
-        [{ "node": "Get Associated Ticket", "type": "main", "index": 0 }],
-        [{ "node": "Skip Response", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Get Associated Ticket",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Skip Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Get Associated Ticket": {
       "main": [
-        [{ "node": "Extract Ticket ID", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Extract Ticket ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Extract Ticket ID": {
       "main": [
-        [{ "node": "Get All Associated Items", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Get All Associated Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Get All Associated Items": {
       "main": [
-        [{ "node": "Batch Read Item Stages", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Batch Read Item Stages",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Batch Read Item Stages": {
       "main": [
-        [{ "node": "Get Item Stage", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Get Item Stage",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Get Item Stage": {
       "main": [
-        [{ "node": "Map Item Stage to Ticket Stage", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Map Item Stage to Ticket Stage",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Set Item Owner",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Map Item Stage to Ticket Stage": {
       "main": [
-        [{ "node": "Update Ticket Stage", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Update Ticket Stage",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Update Ticket Stage": {
       "main": [
-        [{ "node": "Success Response", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Success Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     }
   },

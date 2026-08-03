@@ -193,7 +193,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ properties: { hs_pipeline_stage: '1387983014' } }) }}",
+        "jsonBody": "={{ JSON.stringify({ properties: { hs_pipeline_stage: '1387983014', hubspot_owner_id: '967443664' } }) }}",
         "options": {}
       },
       "id": "cg-advance",
