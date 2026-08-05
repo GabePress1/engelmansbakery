@@ -70,15 +70,17 @@ async function main() {
   // tomorrow) now qualifies alongside 20382 and C00021.
   const qAnyAge = (await qualifyFn.call({}, qualifyDollar({ Min_Overdue_Balance: 100, Oldest_Open_Invoice: "" }), [], require))
     .flatMap((o) => o.json.customerNos);
-  assert(qAnyAge.includes("C00070") && qAnyAge.length === 3,
-    `blank Oldest_Open_Invoice should add C00070 (3 total), got [${qAnyAge.join(", ")}]`);
+  assert(qAnyAge.includes("C00070") && qAnyAge.length === 4,
+    `blank Oldest_Open_Invoice should add C00070 (4 total incl C00080), got [${qAnyAge.join(", ")}]`);
 
   // Qualifying now emits ONE ITEM PER BATCH; combine their customerNos.
   const qNos = qualifyOut.flatMap((o) => o.json.customerNos);
   assert(qualifyOut.length >= 1, "Qualifying node should emit at least one batch");
-  assert(qNos.length === 2, `expected 2 qualifying customer Nos, got ${qNos.length}`);
+  assert(qNos.length === 3, `expected 3 qualifying customer Nos (incl C00080, dropped later), got ${qNos.length}`);
   assert(qNos.includes("20382") && qNos.includes("C00021"), "20382 and C00021 should qualify");
-  assert(!qNos.includes("C00080"), "C00080 (route RT 21) must NOT qualify");
+  // C00080 orders tomorrow (any route), so Qualifying fetches it; Transform drops it
+  // by the customer's default route (RT 21).
+  assert(qNos.includes("C00080"), "C00080 (ordering tomorrow) should be fetched by Qualifying");
   assert(!qNos.includes("C00090"), "C00090 (not ordering tomorrow) must NOT qualify");
   assert(!qNos.includes("C00050") && !qNos.includes("C00060") && !qNos.includes("C00070") && !qNos.includes("C00034"),
     "C00050 (negative), C00060 (future), C00070 (2025-only doc date), C00034 (paid) must NOT qualify");
@@ -89,7 +91,7 @@ async function main() {
     json: { value: sample.customers.filter((c) => o.json.customerNos.includes(String(c.No))) },
   }));
   const fetchedCustomers = getCustomersItems.flatMap((it) => it.json.value);
-  assert(fetchedCustomers.length === 2, "Get Customers should fetch only the 2 qualifying customers");
+  assert(fetchedCustomers.length === 3, "Get Customers fetches the 3 tomorrow-ordering customers (incl C00080)");
 
   // ---- Node: Transform -----------------------------------------------------
   const $forTransform = (nodeName) => {
@@ -104,6 +106,8 @@ async function main() {
   const records = await transformFn.call({}, $forTransform, [], require);
 
   assert(records.length === 2, `expected 2 records, got ${records.length}`);
+  assert(!records.some((r) => r.json.customerNo === "C00080"),
+    "Transform must drop C00080 by the customer's default route (RT 21)");
   const stiles = records.find((r) => r.json.customerNo === "20382");
   assert(stiles && stiles.json.tokens.Converted_balance === "3,500.50",
     "20382 balance should be 3,500.50 (past-due invoices minus open credit)");

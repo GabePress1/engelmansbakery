@@ -88,15 +88,15 @@ function buildRecords(customers, entries, options = {}) {
   const custByNo = new Map();
   for (const c of customers || []) custByNo.set(String(c.No), c);
 
-  // Route per customer from tomorrow's Sales Orders (Shipping_Agent_Code). Orders on
-  // the excluded route (default "RT 21") are skipped. When salesOrders is provided we
-  // also GATE output to customers who are actually ordering tomorrow.
+  // Route per customer from tomorrow's Sales Orders (Shipping_Agent_Code) — used to
+  // GATE output to customers ordering tomorrow and to DISPLAY/sort by the delivery
+  // route. The RT 21 EXCLUSION is applied separately, off the customer's DEFAULT route
+  // (Customer.Shipping_Agent_Code), so both tools use the same source.
   const normRoute = (s) => String(s == null ? "" : s).toUpperCase().replace(/[^A-Z0-9]/g, "");
-  const excludeRoute = normRoute(options.excludeRoute || "RT 21");
+  const excludeRoute = options.excludeRoute === null ? "" : normRoute(options.excludeRoute || "RT 21");
   const gateByOrder = Array.isArray(options.salesOrders);
   const routeByNo = new Map();
   for (const o of options.salesOrders || []) {
-    if (normRoute(o.Shipping_Agent_Code) === excludeRoute) continue;
     const k = String(o.Sell_to_Customer_No);
     if (!routeByNo.has(k)) routeByNo.set(k, o.Shipping_Agent_Code || "");
   }
@@ -149,10 +149,13 @@ function buildRecords(customers, entries, options = {}) {
     if (!g.hasOld) continue;
     if (Math.round(g.total * 100) <= 0) continue;
     if (Math.round(g.total * 100) < Math.round(minBalance * 100)) continue;
-    // Only customers ordering tomorrow (present in Sales Orders on a non-excluded route).
+    // Only customers ordering tomorrow (present in the Sales Orders).
     if (gateByOrder && !routeByNo.has(customerNo)) continue;
 
     const c = custByNo.get(customerNo) || {};
+    // Exclude the RT 21 route from the customer's DEFAULT route (same source as the
+    // mailing tool). Fail-open: a missing/blank route is never excluded.
+    if (excludeRoute && normRoute(c.Shipping_Agent_Code) === excludeRoute) continue;
     const balanceDue = Number(c.Balance_Due_LCY) || 0;
     const amount = amountSource === "balanceDue" ? balanceDue : g.total;
     const Converted_balance = formatUSD(amount);

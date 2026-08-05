@@ -49,7 +49,7 @@ async function main() {
   assert(!records.some((r) => r.customerNo === "C00060"), "C00060 (not past due) must be excluded");
   assert(!records.some((r) => r.customerNo === "C00070"), "C00070 (2025-only doc date) must be excluded");
   assert(!records.some((r) => r.customerNo === "C00080"),
-    "C00080 (ordering tomorrow but route RT 21) must be excluded");
+    "C00080 excluded: its DEFAULT route is RT 21 (even though tomorrow's order is RT 8) — proves the exclusion uses the customer's route");
   assert(!records.some((r) => r.customerNo === "C00090"),
     "C00090 (past due but NOT ordering tomorrow) must be excluded");
 

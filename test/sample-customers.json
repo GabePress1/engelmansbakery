@@ -8,7 +8,8 @@
       "City": "Norcross",
       "County": "GA",
       "Post_Code": "30092",
-      "Balance_Due_LCY": 3500.5
+      "Balance_Due_LCY": 3500.5,
+      "Shipping_Agent_Code": "RT 5"
     },
     {
       "No": "C00021",
@@ -18,7 +19,8 @@
       "City": "Blue Ridge",
       "County": "GA",
       "Post_Code": "30513",
-      "Balance_Due_LCY": 1290.0
+      "Balance_Due_LCY": 1290.0,
+      "Shipping_Agent_Code": "RT 8"
     },
     {
       "No": "C00050",
@@ -68,7 +70,8 @@
       "City": "Atlanta",
       "County": "GA",
       "Post_Code": "30303",
-      "Balance_Due_LCY": 1600.0
+      "Balance_Due_LCY": 1600.0,
+      "Shipping_Agent_Code": "RT 21"
     },
     {
       "No": "C00090",
@@ -96,9 +99,9 @@
     },
     {
       "Sell_to_Customer_No": "C00080",
-      "Shipping_Agent_Code": "RT 21",
+      "Shipping_Agent_Code": "RT 8",
       "Requested_Delivery_Date": "2026-07-18",
-      "_comment": "Ordering tomorrow but route RT 21 is excluded -> NOT included."
+      "_comment": "Orders tomorrow on RT 8, but the customer's DEFAULT route is RT 21 -> excluded (proves customer-route source)."
     },
     {
       "Sell_to_Customer_No": "C00070",

@@ -117,7 +117,8 @@ const orders = so.value || (Array.isArray(so) ? so : []);
 const normRoute = (s) => String(s == null ? '' : s).toUpperCase().replace(/[^A-Z0-9]/g, '');
 const orderingTomorrow = new Set();
 for (const o of orders) {
-  if (normRoute(o.Shipping_Agent_Code) === 'RT21') continue; // filter out RT 21
+  // Include every customer ordering tomorrow (any route). RT 21 is excluded later in
+  // Transform, off the customer's DEFAULT route — the same source the mailing tool uses.
   orderingTomorrow.add(String(o.Sell_to_Customer_No));
 }
 
@@ -267,7 +268,7 @@ const nodes = [
           // This node runs once per batch item from Qualifying Customer Nos; use THIS
           // batch's filter so each request URL stays short (avoids HTTP 414).
           { name: "$filter", value: "={{ $json.customerFilter }}" },
-          { name: "$select", value: "No,Name,Address,Address_2,City,County,Post_Code,Balance_Due_LCY" },
+          { name: "$select", value: "No,Name,Address,Address_2,City,County,Post_Code,Balance_Due_LCY,Shipping_Agent_Code" },
         ],
       },
       sendHeaders: true,
