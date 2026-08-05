@@ -70,8 +70,11 @@ function buildRecords(customers, entries, options = {}) {
   // "Past due" = an open invoice whose Due Date is strictly before `today`.
   const today = options.today || new Date().toISOString().slice(0, 10);
   // A customer is counted only if they have an open invoice with remaining balance
-  // dated on/before this cutoff (Document Date 2024 or older).
-  const qualifyCutoff = options.qualifyCutoff || "2024-12-31";
+  // dated on/before this cutoff (default 2024 or older). BLANK ("") drops the age
+  // rule so any overdue invoice qualifies.
+  const qualifyCutoff = options.qualifyCutoff == null
+    ? "2024-12-31"
+    : String(options.qualifyCutoff).slice(0, 10);
   // Minimum net past-due balance to include a customer (default 0). The workflow's
   // "Settings" node sets this to 1000 so only customers owing >= $1,000 get a letter.
   const minBalance = Number(options.minBalance) || 0;
@@ -106,7 +109,8 @@ function buildRecords(customers, entries, options = {}) {
 
     if (type === "Invoice") {
       // Qualify gate: an open invoice with a remaining balance dated <= cutoff.
-      if (remaining !== 0 && documentDate && documentDate <= qualifyCutoff) g.hasOld = true;
+      // Blank cutoff -> any remaining invoice satisfies the gate.
+      if (remaining !== 0 && documentDate && (!qualifyCutoff || documentDate <= qualifyCutoff)) g.hasOld = true;
       // Statement shows only PAST-DUE invoices.
       if (dueDate && dueDate < today) {
         g.total += remaining;

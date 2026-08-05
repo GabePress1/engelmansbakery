@@ -50,7 +50,20 @@ async function main() {
   assert(gated.length === 1 && gated[0].customerNo === "20382",
     `minBalance 1300 -> only 20382, got ${gated.map((r) => r.customerNo).join(",")}`);
 
-  console.log(`Unit -> ${records.length} customers, each 4 pages, shipping ${shippingRecords.length}, gated(1300) ${gated.length}`);
+  // (4) pad:false -> compact: letter (2) + statement (1, unpadded) = 3 pages/account.
+  for (const r of records) {
+    const pages = customerPages(r.tokens, r.statement, { asOfDate: "2026-07-14", pad: false }).length;
+    assert(pages === 3, `${r.customerNo}: compact account should be 3 pages, got ${pages}`);
+  }
+
+  // (5) Editable cutoff: blank -> the 2025-only customer (C00070) now qualifies.
+  const anyAge = buildRecords(sample.customers, sample.ledgerEntries, {
+    amountSource: "filtered", today: "2026-07-17", shipTos: sample.shipTos, qualifyCutoff: "",
+  });
+  assert(anyAge.some((r) => r.customerNo === "C00070"),
+    "blank cutoff -> C00070 (2025-only overdue) now qualifies");
+
+  console.log(`Unit -> ${records.length} customers, each 4 pages (3 compact), shipping ${shippingRecords.length}, gated(1300) ${gated.length}, blankCutoff ${anyAge.length}`);
 
   // ---- Execute the generated Code nodes with n8n-style mocks --------------
   const invoiceResp = { value: sample.ledgerEntries.filter((e) => e.Open === true) };

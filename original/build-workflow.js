@@ -48,11 +48,17 @@ try {
 const invResp = $('Get Open Invoices').first().json;
 const entries = invResp.value || (Array.isArray(invResp) ? invResp : []);
 
-// Minimum overdue balance from the editable "Settings" node (default $1,000).
+// Per-run override from the HubSpot page ("SW Make Job", webhook runs only) beats
+// the manual Settings node.
+let ov = null; try { ov = $('SW Make Job').first().json; } catch (e) {}
 let minBalance = 1000;
-try { const v = Number($('Settings').first().json.Min_Overdue_Balance); if (isFinite(v)) minBalance = v; } catch (e) {}
+if (ov && ov.minBalance !== undefined && ov.minBalance !== '') { const m = Number(ov.minBalance); if (isFinite(m)) minBalance = m; }
+else { try { const v = Number($('Settings').first().json.Min_Overdue_Balance); if (isFinite(v)) minBalance = v; } catch (e) {} }
+let qualifyCutoff = '2024-12-31';
+if (ov && ov.oldestInvoice !== undefined) { qualifyCutoff = String(ov.oldestInvoice).slice(0, 10); }
+else { try { const v = $('Settings').first().json.Oldest_Open_Invoice; if (v !== undefined) qualifyCutoff = String(v == null ? '' : v).slice(0, 10); } catch (e) {} }
 
-const records = buildRecords(customers, entries, { amountSource: 'filtered', shipTos, minBalance });
+const records = buildRecords(customers, entries, { amountSource: 'filtered', shipTos, minBalance, qualifyCutoff });
 return records.map((r) => ({ json: r }));`;
 
 // ---- Code node 2: Render PDF (zero dependencies) ---------------------------
@@ -75,6 +81,11 @@ const skipped = all.length - records.length;
 // two match (or there's no ship-to), that customer appears in the billing PDF only.
 const shippingRecords = records.filter((r) => r.shipTokens && !sameAddress(r.tokens, r.shipTokens));
 
+// Double-sided padding on by default; the page can turn it off (pad:false) for a
+// compact, screen/one-sided copy with no blank filler pages.
+let pad = true;
+try { const ovj = $('SW Make Job').first().json; if (ovj && ovj.pad === false) pad = false; } catch (e) {}
+
 // Two combined PDFs (billing + shipping). Filenames and PDF /Title both carry the date.
 // Build one PDF at a time and hand it straight to prepareBinaryData (which offloads
 // the bytes to n8n's binary store) BEFORE building the next, so we never hold two
@@ -83,10 +94,10 @@ const today = new Date().toISOString().slice(0, 10);
 const billingName = 'Past-Due-Billing-' + today + '.pdf';
 const shippingName = 'Past-Due-Shipping-' + today + '.pdf';
 const billingData = await this.helpers.prepareBinaryData(
-  buildBatchPdf(records, { title: 'Past-Due Billing ' + today }, 'tokens'),
+  buildBatchPdf(records, { title: 'Past-Due Billing ' + today, pad }, 'tokens'),
   billingName, 'application/pdf');
 const shippingData = await this.helpers.prepareBinaryData(
-  buildBatchPdf(shippingRecords, { title: 'Past-Due Shipping ' + today }, 'shipTokens'),
+  buildBatchPdf(shippingRecords, { title: 'Past-Due Shipping ' + today, pad }, 'shipTokens'),
   shippingName, 'application/pdf');
 return [
   {
@@ -111,10 +122,14 @@ return [
 const qualifyNodeCode = `const inv = $('Get Open Invoices').first().json;
 const entries = inv.value || (Array.isArray(inv) ? inv : []);
 const today = new Date().toISOString().slice(0, 10);
-const CUTOFF = '2024-12-31'; // must have a remaining invoice dated on/before this
-// Minimum overdue balance, editable in the "Settings" node (default $1,000).
+// Per-run override from the HubSpot page ("SW Make Job") beats the Settings node.
+let ov = null; try { ov = $('SW Make Job').first().json; } catch (e) {}
+let CUTOFF = '2024-12-31'; // must have a remaining invoice dated on/before this (blank = any overdue)
+if (ov && ov.oldestInvoice !== undefined) { CUTOFF = String(ov.oldestInvoice).slice(0, 10); }
+else { try { const v = $('Settings').first().json.Oldest_Open_Invoice; if (v !== undefined) CUTOFF = String(v == null ? '' : v).slice(0, 10); } catch (e) {} }
 let MIN = 1000;
-try { const v = Number($('Settings').first().json.Min_Overdue_Balance); if (isFinite(v)) MIN = v; } catch (e) {}
+if (ov && ov.minBalance !== undefined && ov.minBalance !== '') { const m = Number(ov.minBalance); if (isFinite(m)) MIN = m; }
+else { try { const v = Number($('Settings').first().json.Min_Overdue_Balance); if (isFinite(v)) MIN = v; } catch (e) {} }
 
 const net = {};    // customerNo -> net past-due balance
 const hasOld = {}; // customerNo -> has a remaining invoice dated <= CUTOFF
@@ -126,7 +141,7 @@ for (const e of entries) {
   const due = String(e.Due_Date || '').slice(0, 10);
   const doc = String(e.Document_Date || '').slice(0, 10);
   if (String(e.Document_Type) === 'Invoice') {
-    if (remaining !== 0 && doc && doc <= CUTOFF) hasOld[key] = true;
+    if (remaining !== 0 && doc && (!CUTOFF || doc <= CUTOFF)) hasOld[key] = true;
     if (due && due < today) net[key] = (net[key] || 0) + remaining; // past-due invoice
   } else {
     net[key] = (net[key] || 0) + remaining; // open payment/credit (negative)
@@ -138,8 +153,15 @@ const nos = Object.keys(net).filter(
   (k) => hasOld[k] && Math.round(net[k] * 100) > 0 && Math.round(net[k] * 100) >= Math.round(MIN * 100)
 );
 
-// Nobody qualifies -> stop here so NO customers are fetched and NO letters go out.
-if (nos.length === 0) return [];
+// Nobody qualifies -> stop. On a webhook run, mark the job done-empty so the page
+// stops waiting.
+if (nos.length === 0) {
+  try {
+    let jobId = null; try { jobId = $('SW Make Job').first().json.jobId; } catch (e) {}
+    if (jobId) { const sd = $getWorkflowStaticData('global'); sd['job_' + jobId] = { status: 'done', at: Date.now(), customers: 0, empty: true }; }
+  } catch (e) {}
+  return [];
+}
 
 // Chunk the customer numbers so each Get Customers request URL stays well under
 // the length limit. ~40 numbers => a $filter of ~800 chars per request.
@@ -172,6 +194,7 @@ const nodes = [
       assignments: {
         assignments: [
           { id: "s1", name: "Min_Overdue_Balance", value: 1000, type: "number" },
+          { id: "s2", name: "Oldest_Open_Invoice", value: "2024-12-31", type: "string" },
         ],
       },
       options: {},

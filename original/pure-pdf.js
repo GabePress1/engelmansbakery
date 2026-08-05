@@ -301,12 +301,14 @@ function buildPdf(pageContents, docOpts) {
 // on pages 1, 5, 9, ... A longer statement (3+ pages) still stays even.
 // Null-safe: a missing tokens/statement can never throw (renders empty fields).
 function customerPages(tokens, statement, opts) {
+  const o = opts || {};
+  const pad = o.pad !== false; // pad:false -> compact copy (no blank filler pages)
   const t = tokens || {};
   const s = statement && statement.lines ? statement : { lines: [], total: 0 };
   const letter = letterPages(t);
-  if (letter.length % 2 === 1) letter.push(""); // pad the letter to a full sheet
-  const stmt = statementPages(t, s, opts || {});
-  if (stmt.length % 2 === 1) stmt.push(""); // pad the statement to a full sheet
+  if (pad && letter.length % 2 === 1) letter.push(""); // pad the letter to a full sheet
+  const stmt = statementPages(t, s, o);
+  if (pad && stmt.length % 2 === 1) stmt.push(""); // pad the statement to a full sheet
   return [...letter, ...stmt];
 }
 
