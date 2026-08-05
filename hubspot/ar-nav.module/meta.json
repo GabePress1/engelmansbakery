@@ -1,0 +1,8 @@
+{
+  "label": "AR Statements Nav",
+  "host_template_types": ["PAGE"],
+  "is_available_for_new_content": true,
+  "global": false,
+  "smart_type": "NOT_SMART",
+  "icon": "@hubspot/list"
+}

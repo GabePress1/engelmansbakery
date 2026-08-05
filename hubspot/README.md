@@ -1,4 +1,29 @@
-# HubSpot self-serve "Past Due Notice" generator
+# HubSpot self-serve AR tools
+
+The AR Statements page hosts **two** self-serve tools plus a left-hand section nav:
+
+| Module | Runs | Output | n8n workflow |
+|---|---|---|---|
+| `past-due-generator.module` | Statements for delivery **tomorrow** (route-based, RT 21 excluded) | one combined PDF | Printing Statements (`JGRZcOulnHodMoFE`) |
+| `letters-generator.module` | Letters + statements for **all** past-due customers (mailing) | two PDFs (billing + shipping) | Printing Letter_Invoices Original (`Fn9PTTNOT2rSFwag`) |
+| `ar-nav.module` | — | sticky left nav that scroll-links to both | — |
+
+Upload all three with `hs cms upload` (see below), then on one membership/password-
+gated page: add the **AR Statements Nav**, the **Past Due Generator** (anchor
+`ar-delivery`), and the **Letters and Statements Generator** (anchor `ar-letters`),
+set the **Shared secret** on each generator, and publish. Both tools share the same
+secret and webhook base.
+
+```bash
+git pull
+hs cms upload hubspot/past-due-generator.module past-due-generator.module
+hs cms upload hubspot/letters-generator.module letters-generator.module
+hs cms upload hubspot/ar-nav.module          ar-nav.module
+```
+
+---
+
+# HubSpot self-serve "Past Due Notice" generator (delivery tool)
 
 Two ways to put the generator on a **membership-gated** (staff-only) HubSpot page.
 Both call the same n8n webhooks on the `Printing Statements` workflow (async

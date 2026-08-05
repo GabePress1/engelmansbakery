@@ -18,9 +18,9 @@
   {
     "name": "anchor_id",
     "label": "Anchor id (for the left-nav link)",
-    "help_text": "The id the AR Statements nav scrolls to. Leave as ar-delivery.",
+    "help_text": "The id the AR Statements nav scrolls to. Leave as ar-letters.",
     "type": "text",
     "required": false,
-    "default": "ar-delivery"
+    "default": "ar-letters"
   }
 ]
