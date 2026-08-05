@@ -78,6 +78,10 @@ function buildRecords(customers, entries, options = {}) {
   // Minimum net past-due balance to include a customer (default 0). The workflow's
   // "Settings" node sets this to 1000 so only customers owing >= $1,000 get a letter.
   const minBalance = Number(options.minBalance) || 0;
+  // Exclude customers whose default route (Customer.Shipping_Agent_Code) matches this
+  // (default "RT 21"). Fail-open: a missing/blank route is never excluded.
+  const normRoute = (s) => String(s == null ? "" : s).toUpperCase().replace(/[^A-Z0-9]/g, "");
+  const excludeRoute = options.excludeRoute === null ? "" : normRoute(options.excludeRoute || "RT 21");
 
   // Index customers by their number for O(1) join.
   const custByNo = new Map();
@@ -140,6 +144,8 @@ function buildRecords(customers, entries, options = {}) {
     if (Math.round(g.total * 100) < Math.round(minBalance * 100)) continue;
 
     const c = custByNo.get(customerNo) || {};
+    // Exclude the RT 21 route (from the customer's default Shipping_Agent_Code).
+    if (excludeRoute && normRoute(c.Shipping_Agent_Code) === excludeRoute) continue;
     const balanceDue = Number(c.Balance_Due_LCY) || 0;
     const amount = amountSource === "balanceDue" ? balanceDue : g.total;
     const Converted_balance = formatUSD(amount);

@@ -276,7 +276,7 @@ const nodes = [
           // This node runs once per batch item from Qualifying Customer Nos; use THIS
           // batch's filter so each request URL stays short (avoids HTTP 414).
           { name: "$filter", value: "={{ $json.customerFilter }}" },
-          { name: "$select", value: "No,Name,Address,Address_2,City,County,Post_Code,Balance_Due_LCY" },
+          { name: "$select", value: "No,Name,Address,Address_2,City,County,Post_Code,Balance_Due_LCY,Shipping_Agent_Code" },
         ],
       },
       sendHeaders: true,

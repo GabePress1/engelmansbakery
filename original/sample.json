@@ -59,6 +59,17 @@
       "County": "GA",
       "Post_Code": "31401",
       "Balance_Due_LCY": 0.0
+    },
+    {
+      "No": "C00099",
+      "Name": "Route21 Mailer",
+      "Address": "21 Route Way",
+      "Address_2": "",
+      "City": "Atlanta",
+      "County": "GA",
+      "Post_Code": "30303",
+      "Balance_Due_LCY": 1500.0,
+      "Shipping_Agent_Code": "RT 21"
     }
   ],
   "shipTos": [
@@ -186,6 +197,18 @@
       "Remaining_Amount": 0.0,
       "Open": false,
       "_comment": "Fully paid (Open=false) -> not counted."
+    },
+    {
+      "Customer_No": "C00099",
+      "Document_Type": "Invoice",
+      "Document_No": "5099099",
+      "Order_No": "S-ORD9099",
+      "Document_Date": "2024-02-01",
+      "Due_Date": "2024-03-01",
+      "Amount": 1500.0,
+      "Remaining_Amount": 1500.0,
+      "Open": true,
+      "_comment": "Past-due 2024 invoice; qualifies EXCEPT the customer's route is RT 21 -> excluded."
     }
   ]
 }

@@ -63,6 +63,15 @@ async function main() {
   assert(anyAge.some((r) => r.customerNo === "C00070"),
     "blank cutoff -> C00070 (2025-only overdue) now qualifies");
 
+  // (6) RT 21 exclusion: C00099 (default route RT 21) is dropped even though it qualifies.
+  assert(!records.some((r) => r.customerNo === "C00099"),
+    "C00099 (Customer route RT 21) must be excluded from the mailing");
+  const withRt21 = buildRecords(sample.customers, sample.ledgerEntries, {
+    amountSource: "filtered", today: "2026-07-17", shipTos: sample.shipTos, excludeRoute: null,
+  });
+  assert(withRt21.some((r) => r.customerNo === "C00099"),
+    "excludeRoute:null -> C00099 (RT 21) is included, confirming the route filter is what drops it");
+
   console.log(`Unit -> ${records.length} customers, each 4 pages (3 compact), shipping ${shippingRecords.length}, gated(1300) ${gated.length}, blankCutoff ${anyAge.length}`);
 
   // ---- Execute the generated Code nodes with n8n-style mocks --------------
@@ -77,7 +86,10 @@ async function main() {
   const qualifyFn = new AsyncFunction("$", "items", "require", codeOf("Qualifying Customer Nos"));
   const qOut = await qualifyFn.call({}, qualifyDollar(settingsResp), [], require);
   const qNos = qOut.flatMap((o) => o.json.customerNos);
-  assert(qNos.length === 2, `qualify (min 1000) -> 2, got [${qNos.join(", ")}]`);
+  // Qualifying works off the ledger only, so C00099 is fetched here; the route filter
+  // (which needs customer data) drops it later in Transform.
+  assert(qNos.length === 3 && qNos.includes("C00099"),
+    `qualify (min 1000) -> 3 incl C00099, got [${qNos.join(", ")}]`);
   const qHigh = (await qualifyFn.call({}, qualifyDollar({ Min_Overdue_Balance: 2000 }), [], require))
     .flatMap((o) => o.json.customerNos);
   assert(qHigh.length === 1 && qHigh[0] === "20382", `qualify (min 2000) -> [20382], got [${qHigh.join(", ")}]`);
@@ -99,6 +111,8 @@ async function main() {
   const transformFn = new AsyncFunction("$", "items", "require", codeOf("Transform (group + tokens)"));
   const recs = await transformFn.call({}, $forTransform, [], require);
   assert(recs.length === 2, `transform -> 2 records, got ${recs.length}`);
+  assert(!recs.some((r) => r.json.customerNo === "C00099"),
+    "Transform must drop C00099 (route RT 21) even though Qualifying fetched it");
 
   const thisCtx = { helpers: { prepareBinaryData: async (buf, fileName) => ({ fileName, size: buf.length, pages: countPages(buf) }) } };
   const renderFn = new AsyncFunction("$", "items", "require", codeOf("Render & Merge PDFs"));
