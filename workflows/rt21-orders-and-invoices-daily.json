@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-08-07T15:23:47.876Z",
+  "updatedAt": "2026-08-07T16:04:36.020Z",
   "createdAt": "2026-07-06T20:11:30.332Z",
   "id": "TaN3j3iRvR5hkz7s",
   "name": "RT 21 - BC to Excel (Daily)",
@@ -913,7 +913,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// By State compares two months chosen from dropdowns validated against the Lists\n// sheet. Default them every run: Month 1 = current month, Month 2 = prior month.\nconst store=$getWorkflowStaticData('global').rt21;\nconst MN=['January','February','March','April','May','June','July','August',\n          'September','October','November','December'];\nconst d=new Date();\nconst cur=MN[d.getMonth()]+' '+d.getFullYear();\nconst p=new Date(d.getFullYear(), d.getMonth()-1, 1);\nconst prev=MN[p.getMonth()]+' '+p.getFullYear();\nconst base='https://graph.microsoft.com/v1.0/drives/'+$('Init').first().json.driveId\n  +'/items/'+store.fileId+\"/workbook/worksheets/By%20State/range(address='B3:E3')\";\n// D3 keeps its caption; C3 is blank in the sheet\nreturn [{json:{url:base, month1:cur, month2:prev, values:[[cur,'','Month 2:',prev]]}}];"
+        "jsCode": "// By State compares two months chosen from dropdowns validated against the Lists\n// sheet. Default them every run: Month 1 = current month, Month 2 = prior month.\nconst store=$getWorkflowStaticData('global').rt21;\nconst MN=['January','February','March','April','May','June','July','August',\n          'September','October','November','December'];\nconst d=new Date();\nconst cur=MN[d.getMonth()]+' '+d.getFullYear();\nconst p=new Date(d.getFullYear(), d.getMonth()-1, 1);\nconst prev=MN[p.getMonth()]+' '+p.getFullYear();\nconst base='https://graph.microsoft.com/v1.0/drives/'+$('Init').first().json.driveId\n  +'/items/'+store.fileId+\"/workbook/worksheets/By%20State/range(address='B3:E3')\";\n// D3 keeps its caption; C3 is blank in the sheet\n// B3/E3 carry a date number format. Writing the label without forcing text\n// makes Excel coerce 'August 2026' to a date, and the MATCH against the Lists\n// labels then fails, taking the whole By State sheet to #N/A.\nreturn [{json:{url:base, month1:cur, month2:prev,\n  values:[[cur,'','Month 2:',prev]],\n  numberFormat:[['@','@','@','@']]}}];"
       },
       "id": "set-month-cells",
       "name": "Set Month Cells",
@@ -941,7 +941,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ values: $json.values }) }}",
+        "jsonBody": "={{ JSON.stringify({ values: $json.values, numberFormat: $json.numberFormat }) }}",
         "options": {}
       },
       "id": "write-months",
@@ -62569,7 +62569,7 @@
         ],
         "sheetRanges": {},
         "fileId": "01ENPIF4HVDXKDKLMF4VHIFYOYR6OENWNG",
-        "sessionId": "cluster=GUK4&session=15.CW2PEPF0002B6C11.A235.1.E162.http%3a%2f%2ftier0%3fid%3dhttps%253A%252F%252Fnetorg7005112%252Esharepoint%252Ecom%252Fsites%252FConfidentialDrive%252F%255Fvti%255Fbin%252Fwopi%252Eashx%252Ffiles%252F35d41df5852d4ee582e1d88f9c46d9a614.5.en-US5.en-US16.10032003399cfe2b1.S24.pdU9nTXpLkWFIsVFAuY8PQ%3d%3d16.16.0.20327.4231414.5.en-US5.en-US1.M1.N0.1.S&usid=919c532a-96ce-4b16-af7a-6a57de5b3317",
+        "sessionId": "cluster=GUK4&session=15.CW2PEPF0000344C1.A235.1.E162.http%3a%2f%2ftier0%3fid%3dhttps%253A%252F%252Fnetorg7005112%252Esharepoint%252Ecom%252Fsites%252FConfidentialDrive%252F%255Fvti%255Fbin%252Fwopi%252Eashx%252Ffiles%252F35d41df5852d4ee582e1d88f9c46d9a614.5.en-US5.en-US16.10032003399cfe2b1.S24.kst44CeVAUOu9%2fSvd41MaA%3d%3d16.16.0.20327.4231414.5.en-US5.en-US1.M1.N0.1.S&usid=499bb657-f278-4ba2-a7d5-85835e2e77c3",
         "custMap": {
           "10019": {
             "city": "Tifton",
@@ -63048,8 +63048,8 @@
             "state": "NC"
           },
           "Z11655": {
-            "city": "NC",
-            "state": ""
+            "city": "Hickory",
+            "state": "NC"
           },
           "Z11980": {
             "city": "",
@@ -134469,8 +134469,8 @@
                 "Line_Amount": 28336,
                 "Sell_to_Customer_No": "Z11655",
                 "Source": "Invoiced",
-                "Ship_to_City": "NC",
-                "State": "",
+                "Ship_to_City": "Hickory",
+                "State": "NC",
                 "Sell_to_Customer_Name": "=XLOOKUP([@[Sell_to_Customer_No]],Customers!$A$2:$A$133,Customers!$B$2:$B$133)",
                 "Month": "=DATE(YEAR(C597),MONTH(C597),1)",
                 "No. Desc": "=[@No]&\" - \"&[@Description]"
@@ -143887,8 +143887,8 @@
                 "Line_Amount": 27500,
                 "Sell_to_Customer_No": "Z11655",
                 "Source": "Invoiced",
-                "Ship_to_City": "NC",
-                "State": "",
+                "Ship_to_City": "Hickory",
+                "State": "NC",
                 "Sell_to_Customer_Name": "=XLOOKUP([@[Sell_to_Customer_No]],Customers!$A$2:$A$133,Customers!$B$2:$B$133)",
                 "Month": "=DATE(YEAR(C1151),MONTH(C1151),1)",
                 "No. Desc": "=[@No]&\" - \"&[@Description]"
@@ -152659,8 +152659,8 @@
                 "Line_Amount": 1232,
                 "Sell_to_Customer_No": "Z11655",
                 "Source": "Invoiced",
-                "Ship_to_City": "NC",
-                "State": "",
+                "Ship_to_City": "Hickory",
+                "State": "NC",
                 "Sell_to_Customer_Name": "=XLOOKUP([@[Sell_to_Customer_No]],Customers!$A$2:$A$133,Customers!$B$2:$B$133)",
                 "Month": "=DATE(YEAR(C1667),MONTH(C1667),1)",
                 "No. Desc": "=[@No]&\" - \"&[@Description]"
@@ -160904,8 +160904,8 @@
                 "Line_Amount": 27500,
                 "Sell_to_Customer_No": "Z11655",
                 "Source": "Invoiced",
-                "Ship_to_City": "NC",
-                "State": "",
+                "Ship_to_City": "Hickory",
+                "State": "NC",
                 "Sell_to_Customer_Name": "=XLOOKUP([@[Sell_to_Customer_No]],Customers!$A$2:$A$133,Customers!$B$2:$B$133)",
                 "Month": "=DATE(YEAR(C2152),MONTH(C2152),1)",
                 "No. Desc": "=[@No]&\" - \"&[@Description]"
@@ -167888,9 +167888,9 @@
   "meta": null,
   "nodeGroups": [],
   "pinData": {},
-  "versionId": "79e74e8e-d435-4fb3-b69f-a20a3516eea8",
-  "activeVersionId": "79e74e8e-d435-4fb3-b69f-a20a3516eea8",
-  "versionCounter": 28,
+  "versionId": "37dae804-f780-40d3-b9a1-ce50e47adb5d",
+  "activeVersionId": "37dae804-f780-40d3-b9a1-ce50e47adb5d",
+  "versionCounter": 29,
   "triggerCount": 2,
   "sourceWorkflowId": null,
   "shared": [
@@ -167918,9 +167918,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-08-07T15:23:47.878Z",
-    "createdAt": "2026-08-07T15:23:47.878Z",
-    "versionId": "79e74e8e-d435-4fb3-b69f-a20a3516eea8",
+    "updatedAt": "2026-08-07T16:04:36.026Z",
+    "createdAt": "2026-08-07T16:04:36.026Z",
+    "versionId": "37dae804-f780-40d3-b9a1-ce50e47adb5d",
     "workflowId": "TaN3j3iRvR5hkz7s",
     "nodes": [
       {
@@ -168829,7 +168829,7 @@
       },
       {
         "parameters": {
-          "jsCode": "// By State compares two months chosen from dropdowns validated against the Lists\n// sheet. Default them every run: Month 1 = current month, Month 2 = prior month.\nconst store=$getWorkflowStaticData('global').rt21;\nconst MN=['January','February','March','April','May','June','July','August',\n          'September','October','November','December'];\nconst d=new Date();\nconst cur=MN[d.getMonth()]+' '+d.getFullYear();\nconst p=new Date(d.getFullYear(), d.getMonth()-1, 1);\nconst prev=MN[p.getMonth()]+' '+p.getFullYear();\nconst base='https://graph.microsoft.com/v1.0/drives/'+$('Init').first().json.driveId\n  +'/items/'+store.fileId+\"/workbook/worksheets/By%20State/range(address='B3:E3')\";\n// D3 keeps its caption; C3 is blank in the sheet\nreturn [{json:{url:base, month1:cur, month2:prev, values:[[cur,'','Month 2:',prev]]}}];"
+          "jsCode": "// By State compares two months chosen from dropdowns validated against the Lists\n// sheet. Default them every run: Month 1 = current month, Month 2 = prior month.\nconst store=$getWorkflowStaticData('global').rt21;\nconst MN=['January','February','March','April','May','June','July','August',\n          'September','October','November','December'];\nconst d=new Date();\nconst cur=MN[d.getMonth()]+' '+d.getFullYear();\nconst p=new Date(d.getFullYear(), d.getMonth()-1, 1);\nconst prev=MN[p.getMonth()]+' '+p.getFullYear();\nconst base='https://graph.microsoft.com/v1.0/drives/'+$('Init').first().json.driveId\n  +'/items/'+store.fileId+\"/workbook/worksheets/By%20State/range(address='B3:E3')\";\n// D3 keeps its caption; C3 is blank in the sheet\n// B3/E3 carry a date number format. Writing the label without forcing text\n// makes Excel coerce 'August 2026' to a date, and the MATCH against the Lists\n// labels then fails, taking the whole By State sheet to #N/A.\nreturn [{json:{url:base, month1:cur, month2:prev,\n  values:[[cur,'','Month 2:',prev]],\n  numberFormat:[['@','@','@','@']]}}];"
         },
         "id": "set-month-cells",
         "name": "Set Month Cells",
@@ -168857,7 +168857,7 @@
           },
           "sendBody": true,
           "specifyBody": "json",
-          "jsonBody": "={{ JSON.stringify({ values: $json.values }) }}",
+          "jsonBody": "={{ JSON.stringify({ values: $json.values, numberFormat: $json.numberFormat }) }}",
           "options": {}
         },
         "id": "write-months",
@@ -169316,18 +169316,18 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-08-07T15:23:48.341Z",
-        "id": 464,
+        "createdAt": "2026-08-07T16:04:36.506Z",
+        "id": 476,
         "workflowId": "TaN3j3iRvR5hkz7s",
-        "versionId": "79e74e8e-d435-4fb3-b69f-a20a3516eea8",
+        "versionId": "37dae804-f780-40d3-b9a1-ce50e47adb5d",
         "event": "activated",
         "userId": "e717323e-c35c-4f70-bb1d-233a634fca54"
       },
       {
-        "createdAt": "2026-08-07T15:23:48.340Z",
-        "id": 463,
+        "createdAt": "2026-08-07T16:04:36.505Z",
+        "id": 475,
         "workflowId": "TaN3j3iRvR5hkz7s",
-        "versionId": "79e74e8e-d435-4fb3-b69f-a20a3516eea8",
+        "versionId": "37dae804-f780-40d3-b9a1-ce50e47adb5d",
         "event": "deactivated",
         "userId": "e717323e-c35c-4f70-bb1d-233a634fca54"
       }
