@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-08-07T15:03:00.171Z",
+  "updatedAt": "2026-08-07T15:23:47.876Z",
   "createdAt": "2026-07-06T20:11:30.332Z",
   "id": "TaN3j3iRvR5hkz7s",
   "name": "RT 21 - BC to Excel (Daily)",
@@ -12,8 +12,8 @@
         "rule": {
           "interval": [
             {
-              "triggerAtHour": 6,
-              "triggerAtMinute": 30
+              "field": "cronExpression",
+              "expression": "0 0 5 * * *"
             }
           ]
         }
@@ -167888,9 +167888,9 @@
   "meta": null,
   "nodeGroups": [],
   "pinData": {},
-  "versionId": "ba33b778-3a19-4c97-8b4d-0a8d3dd3149a",
-  "activeVersionId": "ba33b778-3a19-4c97-8b4d-0a8d3dd3149a",
-  "versionCounter": 27,
+  "versionId": "79e74e8e-d435-4fb3-b69f-a20a3516eea8",
+  "activeVersionId": "79e74e8e-d435-4fb3-b69f-a20a3516eea8",
+  "versionCounter": 28,
   "triggerCount": 2,
   "sourceWorkflowId": null,
   "shared": [
@@ -167918,9 +167918,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-08-07T15:03:00.172Z",
-    "createdAt": "2026-08-07T15:03:00.172Z",
-    "versionId": "ba33b778-3a19-4c97-8b4d-0a8d3dd3149a",
+    "updatedAt": "2026-08-07T15:23:47.878Z",
+    "createdAt": "2026-08-07T15:23:47.878Z",
+    "versionId": "79e74e8e-d435-4fb3-b69f-a20a3516eea8",
     "workflowId": "TaN3j3iRvR5hkz7s",
     "nodes": [
       {
@@ -167928,8 +167928,8 @@
           "rule": {
             "interval": [
               {
-                "triggerAtHour": 6,
-                "triggerAtMinute": 30
+                "field": "cronExpression",
+                "expression": "0 0 5 * * *"
               }
             ]
           }
@@ -169316,18 +169316,18 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-08-07T15:03:00.648Z",
-        "id": 458,
+        "createdAt": "2026-08-07T15:23:48.341Z",
+        "id": 464,
         "workflowId": "TaN3j3iRvR5hkz7s",
-        "versionId": "ba33b778-3a19-4c97-8b4d-0a8d3dd3149a",
+        "versionId": "79e74e8e-d435-4fb3-b69f-a20a3516eea8",
         "event": "activated",
         "userId": "e717323e-c35c-4f70-bb1d-233a634fca54"
       },
       {
-        "createdAt": "2026-08-07T15:03:00.647Z",
-        "id": 457,
+        "createdAt": "2026-08-07T15:23:48.340Z",
+        "id": 463,
         "workflowId": "TaN3j3iRvR5hkz7s",
-        "versionId": "ba33b778-3a19-4c97-8b4d-0a8d3dd3149a",
+        "versionId": "79e74e8e-d435-4fb3-b69f-a20a3516eea8",
         "event": "deactivated",
         "userId": "e717323e-c35c-4f70-bb1d-233a634fca54"
       }
