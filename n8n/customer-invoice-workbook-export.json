@@ -1,0 +1,218 @@
+{
+  "name": "Customer Invoice Workbook Export (API)",
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "nodes": [
+    {
+      "id": "n1",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "c1e6b2a4-7f3d-4a20-9c55-1b0f8d2e4a91",
+      "parameters": {
+        "path": "customer-invoice-export",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "n2",
+      "name": "Auth + Keys",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const hdr = $input.first().json.headers || {};\nif (hdr['x-export-token'] !== '<<EXPORT_TOKEN>>') {\n  throw new Error('unauthorized');\n}\nreturn [{ json: {\n  Tenant_ID: 'bddeba87-9d41-4063-a0e3-be9e6afcd2ba',\n  client_ID: 'db88be9e-de13-4205-b0c1-472007c60c36',\n  Secret_ID: '<<BC_CLIENT_SECRET>>',\n  Company_ID: '9ebc308f-a2c8-ed11-9a88-000d3a8e59a1'\n} }];"
+      }
+    },
+    {
+      "id": "n3",
+      "name": "Get BC Token",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://login.microsoftonline.com/{{ $json.Tenant_ID }}/oauth2/v2.0/token",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "grant_type",
+              "value": "client_credentials"
+            },
+            {
+              "name": "client_id",
+              "value": "={{ $json.client_ID }}"
+            },
+            {
+              "name": "client_secret",
+              "value": "={{ $json.Secret_ID }}"
+            },
+            {
+              "name": "scope",
+              "value": "https://api.businesscentral.dynamics.com/.default"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "n4",
+      "name": "Fetch Invoices + Lines",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "url": "=https://api.businesscentral.dynamics.com/v2.0/{{ $('Auth + Keys').first().json.Tenant_ID }}/Production/api/v2.0/companies({{ $('Auth + Keys').first().json.Company_ID }})/salesInvoices",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "$filter",
+              "value": "={{ `customerNumber eq '${$('Webhook').first().json.query.customer}'` }}"
+            },
+            {
+              "name": "$expand",
+              "value": "salesInvoiceLines"
+            },
+            {
+              "name": "$orderby",
+              "value": "invoiceDate asc"
+            },
+            {
+              "name": "$top",
+              "value": "100"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Get BC Token').first().json.access_token }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "pagination": {
+            "pagination": {
+              "paginationMode": "responseContainsNextURL",
+              "nextURL": "={{ $response.body['@odata.nextLink'] }}",
+              "paginationCompleteWhen": "other",
+              "completeExpression": "={{ !$response.body['@odata.nextLink'] }}",
+              "limitPagesFetched": true,
+              "maxRequests": 50
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "n5",
+      "name": "Flatten",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ],
+      "parameters": {
+        "jsCode": "// Merge all paged responses into invoice headers + item-level lines\nconst invoices = [];\nfor (const item of $input.all()) {\n  for (const inv of (item.json.value || [])) invoices.push(inv);\n}\nconst headers = [];\nconst lines = [];\nfor (const inv of invoices) {\n  const kids = inv.salesInvoiceLines || [];\n  headers.push({\n    invoiceNumber: inv.number,\n    customerNumber: inv.customerNumber,\n    customerName: inv.customerName,\n    invoiceDate: inv.invoiceDate,\n    dueDate: inv.dueDate,\n    status: inv.status,\n    currencyCode: inv.currencyCode,\n    totalAmountExcludingTax: inv.totalAmountExcludingTax,\n    totalTaxAmount: inv.totalTaxAmount,\n    totalAmountIncludingTax: inv.totalAmountIncludingTax,\n    discountAmount: inv.discountAmount,\n    remainingAmount: inv.remainingAmount,\n    orderNumber: inv.orderNumber,\n    externalDocumentNumber: inv.externalDocumentNumber,\n    salesperson: inv.salesperson,\n    shipmentDate: inv.shipmentDate,\n    lineCount: kids.length,\n    invoiceId: inv.id\n  });\n  for (const l of kids) {\n    lines.push({\n      invoiceNumber: inv.number,\n      invoiceDate: inv.invoiceDate,\n      customerNumber: inv.customerNumber,\n      customerName: inv.customerName,\n      sequence: l.sequence,\n      lineType: l.lineType,\n      itemNumber: l.lineObjectNumber,\n      description: l.description,\n      quantity: l.quantity,\n      unitOfMeasureCode: l.unitOfMeasureCode,\n      unitPrice: l.unitPrice,\n      discountPercent: l.discountPercent,\n      discountAmount: l.discountAmount,\n      amountExcludingTax: l.amountExcludingTax,\n      taxPercent: l.taxPercent,\n      totalTaxAmount: l.totalTaxAmount,\n      amountIncludingTax: l.amountIncludingTax,\n      netAmount: l.netAmount,\n      shipmentDate: l.shipmentDate\n    });\n  }\n}\nreturn [{ json: { customer: $('Webhook').first().json.query.customer,\n                  invoiceCount: headers.length, lineCount: lines.length,\n                  invoices: headers, lines } }];"
+      }
+    },
+    {
+      "id": "n6",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1100,
+        0
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Auth + Keys",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Auth + Keys": {
+      "main": [
+        [
+          {
+            "node": "Get BC Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get BC Token": {
+      "main": [
+        [
+          {
+            "node": "Fetch Invoices + Lines",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Invoices + Lines": {
+      "main": [
+        [
+          {
+            "node": "Flatten",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Flatten": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
