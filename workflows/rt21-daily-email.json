@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-08-07T16:18:25.278Z",
+  "updatedAt": "2026-08-07T17:46:57.924Z",
   "createdAt": "2026-08-07T13:56:56.906Z",
   "id": "kbdiuHO2R28vanqz",
   "name": "RT 21 - Daily Email",
@@ -44,7 +44,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const d=new Date(), p=n=>String(n).padStart(2,'0');\nconst stamp=p(d.getMonth()+1)+'.'+p(d.getDate())+'.'+String(d.getFullYear()).slice(2);\nconst uniq=String(d.getFullYear())+p(d.getMonth()+1)+p(d.getDate())+'-'+p(d.getHours())+p(d.getMinutes())+p(d.getSeconds());\nconst st=$getWorkflowStaticData('global');\nst.img={}; st.snapId=null;\nreturn [{ json: {\n  driveId:'b!GBMH8cf5mk2CZl1ZfpWgDMJRDzREsg1Npw0_haVaoSy_p0-rU6CqTIb8wOlQB4p-', fileId:'01ENPIF4HVDXKDKLMF4VHIFYOYR6OENWNG', folderId:'01ENPIF4CERGMSIGMKQVHKJW5HGYOOQVRD',\n  snapshotName:'~RT21-snap-'+uniq+'.xlsx',\n  pdfName:'RT21 Orders and Invoices - Auto '+stamp+'.pdf',\n  recipients:[{\"name\": \"Gabe Press\", \"address\": \"gpress@engelmansbakery.com\"}, {\"name\": \"Rob Hathy\", \"address\": \"rhathy@engelmansbakery.com\"}, {\"name\": \"Paul Bell\", \"address\": \"pbell@engelmansbakery.com\"}, {\"name\": \"Wes Pike\", \"address\": \"wpike@engelmansbakery.com\"}, {\"name\": \"Jessica Sims\", \"address\": \"jsims@engelmansbakery.com\"}, {\"name\": \"Heath West\", \"address\": \"hwest@engelmansbakery.com\"}, {\"name\": \"Grant Mynatt\", \"address\": \"gmynatt@engelmansbakery.com\"}, {\"name\": \"Brody Craven\", \"address\": \"bcraven@engelmansbakery.com\"}],\n  keepSheets:['Quick Numbers','Overview','By State'],\n  dropSheets:['Combined','Sales Orders','Order Lines','Invoices','Invoice Lines','Customers','Lists','Data->','Customer Detail','Pivot','Report'],\n  url:'https://graph.microsoft.com/v1.0/drives/b!GBMH8cf5mk2CZl1ZfpWgDMJRDzREsg1Npw0_haVaoSy_p0-rU6CqTIb8wOlQB4p-/items/01ENPIF4HVDXKDKLMF4VHIFYOYR6OENWNG'+'?$select=name,webUrl,lastModifiedDateTime'\n} }];"
+        "jsCode": "const d=new Date(), p=n=>String(n).padStart(2,'0');\nconst stamp=p(d.getMonth()+1)+'.'+p(d.getDate())+'.'+String(d.getFullYear()).slice(2);\nconst uniq=String(d.getFullYear())+p(d.getMonth()+1)+p(d.getDate())+'-'+p(d.getHours())+p(d.getMinutes())+p(d.getSeconds());\nconst st=$getWorkflowStaticData('global');\nst.img={}; st.snapId=null;\nreturn [{ json: {\n  driveId:'b!GBMH8cf5mk2CZl1ZfpWgDMJRDzREsg1Npw0_haVaoSy_p0-rU6CqTIb8wOlQB4p-', fileId:'01ENPIF4HVDXKDKLMF4VHIFYOYR6OENWNG', folderId:'01ENPIF4CERGMSIGMKQVHKJW5HGYOOQVRD',\n  snapshotName:'~RT21-snap-'+uniq+'.xlsx',\n  pdfName:'RT21 Orders and Invoices - Auto '+stamp+'.pdf',\n  recipients:[{\"name\": \"Rob Hathy\", \"address\": \"rhathy@engelmansbakery.com\"}, {\"name\": \"Paul Bell\", \"address\": \"pbell@engelmansbakery.com\"}, {\"name\": \"Wes Pike\", \"address\": \"wpike@engelmansbakery.com\"}, {\"name\": \"Jessica Sims\", \"address\": \"jsims@engelmansbakery.com\"}, {\"name\": \"Heath West\", \"address\": \"hwest@engelmansbakery.com\"}, {\"name\": \"Grant Mynatt\", \"address\": \"gmynatt@engelmansbakery.com\"}, {\"name\": \"Brody Craven\", \"address\": \"bcraven@engelmansbakery.com\"}, {\"name\": \"Lance Long\", \"address\": \"llong@engelmansbakery.com\"}],\n  keepSheets:['Quick Numbers','Overview','By State'],\n  dropSheets:['Combined','Sales Orders','Order Lines','Invoices','Invoice Lines','Customers','Lists','Data->','Customer Detail','Pivot','Report'],\n  url:'https://graph.microsoft.com/v1.0/drives/b!GBMH8cf5mk2CZl1ZfpWgDMJRDzREsg1Npw0_haVaoSy_p0-rU6CqTIb8wOlQB4p-/items/01ENPIF4HVDXKDKLMF4VHIFYOYR6OENWNG'+'?$select=name,webUrl,lastModifiedDateTime'\n} }];"
       },
       "id": "init",
       "name": "Init",
@@ -1283,9 +1283,9 @@
   "meta": null,
   "nodeGroups": [],
   "pinData": null,
-  "versionId": "1e8c357e-8afa-474d-b25b-a96c36bada88",
-  "activeVersionId": "1e8c357e-8afa-474d-b25b-a96c36bada88",
-  "versionCounter": 12,
+  "versionId": "67d935fc-50e5-49c6-a242-d200384d412a",
+  "activeVersionId": "67d935fc-50e5-49c6-a242-d200384d412a",
+  "versionCounter": 13,
   "triggerCount": 2,
   "sourceWorkflowId": null,
   "shared": [
@@ -1313,9 +1313,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-08-07T16:18:25.279Z",
-    "createdAt": "2026-08-07T16:18:25.279Z",
-    "versionId": "1e8c357e-8afa-474d-b25b-a96c36bada88",
+    "updatedAt": "2026-08-07T17:46:57.925Z",
+    "createdAt": "2026-08-07T17:46:57.925Z",
+    "versionId": "67d935fc-50e5-49c6-a242-d200384d412a",
     "workflowId": "kbdiuHO2R28vanqz",
     "nodes": [
       {
@@ -1355,7 +1355,7 @@
       },
       {
         "parameters": {
-          "jsCode": "const d=new Date(), p=n=>String(n).padStart(2,'0');\nconst stamp=p(d.getMonth()+1)+'.'+p(d.getDate())+'.'+String(d.getFullYear()).slice(2);\nconst uniq=String(d.getFullYear())+p(d.getMonth()+1)+p(d.getDate())+'-'+p(d.getHours())+p(d.getMinutes())+p(d.getSeconds());\nconst st=$getWorkflowStaticData('global');\nst.img={}; st.snapId=null;\nreturn [{ json: {\n  driveId:'b!GBMH8cf5mk2CZl1ZfpWgDMJRDzREsg1Npw0_haVaoSy_p0-rU6CqTIb8wOlQB4p-', fileId:'01ENPIF4HVDXKDKLMF4VHIFYOYR6OENWNG', folderId:'01ENPIF4CERGMSIGMKQVHKJW5HGYOOQVRD',\n  snapshotName:'~RT21-snap-'+uniq+'.xlsx',\n  pdfName:'RT21 Orders and Invoices - Auto '+stamp+'.pdf',\n  recipients:[{\"name\": \"Gabe Press\", \"address\": \"gpress@engelmansbakery.com\"}, {\"name\": \"Rob Hathy\", \"address\": \"rhathy@engelmansbakery.com\"}, {\"name\": \"Paul Bell\", \"address\": \"pbell@engelmansbakery.com\"}, {\"name\": \"Wes Pike\", \"address\": \"wpike@engelmansbakery.com\"}, {\"name\": \"Jessica Sims\", \"address\": \"jsims@engelmansbakery.com\"}, {\"name\": \"Heath West\", \"address\": \"hwest@engelmansbakery.com\"}, {\"name\": \"Grant Mynatt\", \"address\": \"gmynatt@engelmansbakery.com\"}, {\"name\": \"Brody Craven\", \"address\": \"bcraven@engelmansbakery.com\"}],\n  keepSheets:['Quick Numbers','Overview','By State'],\n  dropSheets:['Combined','Sales Orders','Order Lines','Invoices','Invoice Lines','Customers','Lists','Data->','Customer Detail','Pivot','Report'],\n  url:'https://graph.microsoft.com/v1.0/drives/b!GBMH8cf5mk2CZl1ZfpWgDMJRDzREsg1Npw0_haVaoSy_p0-rU6CqTIb8wOlQB4p-/items/01ENPIF4HVDXKDKLMF4VHIFYOYR6OENWNG'+'?$select=name,webUrl,lastModifiedDateTime'\n} }];"
+          "jsCode": "const d=new Date(), p=n=>String(n).padStart(2,'0');\nconst stamp=p(d.getMonth()+1)+'.'+p(d.getDate())+'.'+String(d.getFullYear()).slice(2);\nconst uniq=String(d.getFullYear())+p(d.getMonth()+1)+p(d.getDate())+'-'+p(d.getHours())+p(d.getMinutes())+p(d.getSeconds());\nconst st=$getWorkflowStaticData('global');\nst.img={}; st.snapId=null;\nreturn [{ json: {\n  driveId:'b!GBMH8cf5mk2CZl1ZfpWgDMJRDzREsg1Npw0_haVaoSy_p0-rU6CqTIb8wOlQB4p-', fileId:'01ENPIF4HVDXKDKLMF4VHIFYOYR6OENWNG', folderId:'01ENPIF4CERGMSIGMKQVHKJW5HGYOOQVRD',\n  snapshotName:'~RT21-snap-'+uniq+'.xlsx',\n  pdfName:'RT21 Orders and Invoices - Auto '+stamp+'.pdf',\n  recipients:[{\"name\": \"Rob Hathy\", \"address\": \"rhathy@engelmansbakery.com\"}, {\"name\": \"Paul Bell\", \"address\": \"pbell@engelmansbakery.com\"}, {\"name\": \"Wes Pike\", \"address\": \"wpike@engelmansbakery.com\"}, {\"name\": \"Jessica Sims\", \"address\": \"jsims@engelmansbakery.com\"}, {\"name\": \"Heath West\", \"address\": \"hwest@engelmansbakery.com\"}, {\"name\": \"Grant Mynatt\", \"address\": \"gmynatt@engelmansbakery.com\"}, {\"name\": \"Brody Craven\", \"address\": \"bcraven@engelmansbakery.com\"}, {\"name\": \"Lance Long\", \"address\": \"llong@engelmansbakery.com\"}],\n  keepSheets:['Quick Numbers','Overview','By State'],\n  dropSheets:['Combined','Sales Orders','Order Lines','Invoices','Invoice Lines','Customers','Lists','Data->','Customer Detail','Pivot','Report'],\n  url:'https://graph.microsoft.com/v1.0/drives/b!GBMH8cf5mk2CZl1ZfpWgDMJRDzREsg1Npw0_haVaoSy_p0-rU6CqTIb8wOlQB4p-/items/01ENPIF4HVDXKDKLMF4VHIFYOYR6OENWNG'+'?$select=name,webUrl,lastModifiedDateTime'\n} }];"
         },
         "id": "init",
         "name": "Init",
@@ -2492,18 +2492,18 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-08-07T16:18:25.449Z",
-        "id": 480,
+        "createdAt": "2026-08-07T17:46:58.091Z",
+        "id": 482,
         "workflowId": "kbdiuHO2R28vanqz",
-        "versionId": "1e8c357e-8afa-474d-b25b-a96c36bada88",
+        "versionId": "67d935fc-50e5-49c6-a242-d200384d412a",
         "event": "activated",
         "userId": "e717323e-c35c-4f70-bb1d-233a634fca54"
       },
       {
-        "createdAt": "2026-08-07T16:18:25.448Z",
-        "id": 479,
+        "createdAt": "2026-08-07T17:46:58.090Z",
+        "id": 481,
         "workflowId": "kbdiuHO2R28vanqz",
-        "versionId": "1e8c357e-8afa-474d-b25b-a96c36bada88",
+        "versionId": "67d935fc-50e5-49c6-a242-d200384d412a",
         "event": "deactivated",
         "userId": "e717323e-c35c-4f70-bb1d-233a634fca54"
       }
