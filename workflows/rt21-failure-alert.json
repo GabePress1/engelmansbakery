@@ -1,0 +1,122 @@
+{
+  "updatedAt": "2026-08-11T16:10:19.819Z",
+  "createdAt": "2026-08-11T16:10:19.819Z",
+  "id": "3q2iXEV9k0Qw1gLM",
+  "name": "RT 21 - Failure Alert",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "errtrig",
+      "name": "On Failure",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst e=$json;\nconst wf=(e.workflow&&e.workflow.name)||'(unknown workflow)';\nconst node=(e.execution&&e.execution.lastNodeExecuted)||'(unknown node)';\nconst msg=(e.execution&&e.execution.error&&(e.execution.error.message||e.execution.error.description))||'(no message)';\nconst url=(e.execution&&e.execution.url)||'';\nconst when=new Date().toLocaleString('en-US',{timeZone:'America/New_York'});\nconst esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');\nconst html='<div style=\"font:14px Segoe UI,Arial;color:#222;max-width:760px\">'\n+'<h2 style=\"color:#B00020;margin:0 0 6px\">RT 21 automation failed</h2>'\n+'<div style=\"color:#667;font-size:13px;margin-bottom:16px\">'+esc(when)+' (Eastern)</div>'\n+'<table cellpadding=\"7\" cellspacing=\"0\" style=\"border-collapse:collapse;font:13px Segoe UI,Arial\">'\n+'<tr><td style=\"color:#556\">Workflow</td><td><b>'+esc(wf)+'</b></td></tr>'\n+'<tr><td style=\"color:#556\">Failed at node</td><td><b>'+esc(node)+'</b></td></tr>'\n+'<tr><td style=\"color:#556;vertical-align:top\">Error</td><td>'+esc(String(msg).slice(0,600))+'</td></tr>'\n+'</table>'\n+(url?'<p style=\"margin:16px 0 0\"><a href=\"'+esc(url)+'\">Open the failed execution in n8n</a></p>':'')\n+'<p style=\"margin:18px 0 0;color:#556\">The daily email will refuse to send if the workbook has not refreshed today, '\n+'so a failed export will not put stale figures in front of the group.</p></div>';\nreturn [{json:{payload:{message:{subject:'RT 21 automation failed \u2014 '+wf,\n  body:{contentType:'HTML',content:html},\n  toRecipients:[{emailAddress:{address:'gpress@engelmansbakery.com'}}]},saveToSentItems:true}}}];\n"
+      },
+      "id": "b",
+      "name": "Build Alert",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.microsoft.com/v1.0/me/sendMail",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftOutlookOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.payload) }}",
+        "options": {}
+      },
+      "id": "s",
+      "name": "Send Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        400,
+        0
+      ],
+      "credentials": {
+        "microsoftOutlookOAuth2Api": {
+          "id": "xQT64Ugiue2WLNks",
+          "name": "Microsoft Outlook account (Gabe Press)"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    }
+  ],
+  "connections": {
+    "On Failure": {
+      "main": [
+        [
+          {
+            "node": "Build Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Alert": {
+      "main": [
+        [
+          {
+            "node": "Send Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "nodeGroups": [],
+  "pinData": null,
+  "versionId": "275b5c68-16c7-4b5f-a656-12c4d50d834b",
+  "activeVersionId": null,
+  "versionCounter": 1,
+  "triggerCount": 0,
+  "sourceWorkflowId": null,
+  "shared": [
+    {
+      "updatedAt": "2026-08-11T16:10:19.822Z",
+      "createdAt": "2026-08-11T16:10:19.822Z",
+      "role": "workflow:owner",
+      "workflowId": "3q2iXEV9k0Qw1gLM",
+      "projectId": "1e9lFJJEtW8bxD6C",
+      "project": {
+        "updatedAt": "2026-05-12T18:27:58.798Z",
+        "createdAt": "2026-05-12T18:27:52.715Z",
+        "id": "1e9lFJJEtW8bxD6C",
+        "name": "Gabe Press <gpress@engelmansbakery.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "e717323e-c35c-4f70-bb1d-233a634fca54"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}
