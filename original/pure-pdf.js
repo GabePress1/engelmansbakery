@@ -111,12 +111,11 @@ function header(topY, dispW, textSize) {
   return { content: text((PAGE_W - w) / 2, topY - size, HEAD, "F4", size, "0.5"), bottom: topY - size };
 }
 
-// --- letter (2 pages) -------------------------------------------------------
+// --- letter (1 page: body + window address) ---------------------------------
 function letterPages(t) {
   const cw = PAGE_W - 2 * MARGIN;
   const size = 11, lh = 15;
 
-  // Page 1
   const h1 = header(PAGE_H - MARGIN, 170, 22);
   let c = h1.content;
   let y = h1.bottom - 30;
@@ -143,9 +142,11 @@ function letterPages(t) {
   c += text(MARGIN, y, "Engelman's Bakery", "F3", size); y -= lh;
   c += text(MARGIN, y, "770-248-1444", "F3", size);
 
-  // Page 2 — mailing address block, centered in the #10 window's safe band.
-  // The letterhead stays in the top panel, well clear of the window.
-  let c2 = header(PAGE_H - MARGIN, 170, 22).content;
+  // Mailing address block, centered in the #10 window's safe band at the foot of
+  // the SAME page as the letter. It has to be on the front of sheet 1: only one
+  // face of the folded piece shows through the window, and the front is the face
+  // the standard fold presents. The letter body ends around y=425, so the band is
+  // clear — nothing else may print inside it (spec §6).
   const addr = [
     t.Description,
     t.Address_1,
@@ -168,10 +169,10 @@ function letterPages(t) {
   const inkH = (addr.length - 1) * alh + capH + desc;
   let ay = (WINDOW_Y_MIN + WINDOW_Y_MAX) / 2 - inkH / 2 + desc + (addr.length - 1) * alh;
   for (const ln of addr) {
-    c2 += text(MARGIN, ay, ln, "F3", asize);
+    c += text(MARGIN, ay, ln, "F3", asize);
     ay -= alh;
   }
-  return [c, c2];
+  return [c];
 }
 
 // --- statement (1+ pages) ---------------------------------------------------
@@ -401,7 +402,7 @@ function buildPdf(pageContents, docOpts) {
 // takes two sheets, so every LATER customer's pages shift into the wrong
 // envelope, disclosing one customer's balance to another. It fails silently and
 // is undetectable until the mail is opened. See docs/fpi-700-fold-spec.md §4.
-const LETTER_PAGES = 2;          // letter + address page
+const LETTER_PAGES = 2;          // letter on the front, blank back (duplex sheet)
 const STATEMENT_MAX_PAGES = 2;   // one duplex sheet
 const SET_PAGES = LETTER_PAGES + STATEMENT_MAX_PAGES;
 

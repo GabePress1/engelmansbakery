@@ -80,26 +80,34 @@ document ends and the next begins.** It counts sheets. Everything in §4 follows
 One customer = **2 sheets**, printed **duplex**, letter-folded (C-fold), inserted into a **#10
 window envelope**.
 
-Current page order per customer, as measured **[MEASURED]**:
+Page order per customer:
 
 | Page | Sheet / face | Content |
 |---|---|---|
-| 1 | Sheet 1 front | Past-due letter (logo, subject, body, signoff) |
-| 2 | Sheet 1 back | Mailing address block only (plus logo at top) |
+| 1 | Sheet 1 front | Past-due letter (logo, subject, body, signoff) **+ mailing address in the window band** |
+| 2 | Sheet 1 back | Blank |
 | 3 | Sheet 2 front | Statement — "Past Due Invoices" table |
 | 4 | Sheet 2 back | Blank filler, or statement page 2 |
 
-Across the sample run of 19 customers the pattern was `L A S .` sixteen times and `L A S S`
-three times — every set exactly 4 pages / 2 sheets **[MEASURED]**.
+Every set is exactly 4 pages / 2 sheets — see §4, which is what guarantees it.
 
-> **Design issue — the address is on the back of sheet 1.**
-> Only one face of the folded piece can show through the envelope window. With the address on
-> page 2, the layout works *only* if the machine folds reverse-side-out. The robust fix is the
-> standard business-letter arrangement: print the address on the **front of sheet 1** (page 1),
-> in the panel that faces the window, and drop the dedicated address page. The letter body
-> currently occupies y≈424–656 pt **[MEASURED]**, which is entirely in the middle and top
-> panels, so the bottom panel is already free for an address block. Resolve this with the
-> calibration fold in §8 before changing coordinates.
+### Why the address is on the front
+
+Only one face of the folded piece shows through the envelope window. The original layout put
+the address alone on **page 2 — the back of sheet 1** — which delivers a visible address only if
+the machine folds reverse-side-out, an assumption nobody had confirmed.
+
+The address now prints at the foot of page 1, alongside the letter, in the window band defined
+in §6. This is the standard business-letter arrangement and it removes the dependency on feed
+orientation: the front is the face the standard fold presents. It also reclaims a sheet face —
+the back of sheet 1 was being spent on four lines of type and is now genuinely blank.
+
+The letter body ends around **y=425** **[MEASURED]**, entirely in the middle and top panels, so
+it clears the window band by roughly 340 pt. A regression test asserts that nothing but the
+address ever prints inside the band.
+
+**Still a calibration item:** this settles which *face* carries the address, not which *panel*
+faces the window. §8 resolves the panel question.
 
 ---
 
@@ -262,9 +270,10 @@ and a deliberately over-long name shrinks to 8 pt at y 38.2–81.8 — all insid
 
 Nothing but the address may be printed inside the window band — no logo, no rule lines, no
 page furniture, across the **full width** of the panel (the piece slides sideways, so
-something outside the window band at rest can slide into view). Note the logo currently prints
-on the address page at y≈686–720 pt **[MEASURED]**, which is in Panel C and therefore harmless
-today — but re-check it if the address moves panels.
+something outside the window band at rest can slide into view). This matters more now that the
+address shares page 1 with the letter: the letterhead sits at y≈686–720 pt and the body ends
+around y=425 **[MEASURED]**, both well clear, and a regression test enforces it by walking every
+text operation on page 1 and failing if a non-address glyph lands in the band.
 
 ---
 
@@ -338,7 +347,7 @@ the manual we could not obtain.
 
 | File | Role |
 |---|---|
-| `original/pure-pdf.js` | **Mailing path** — has the letter and address pages. `letterPages()` draws the letter and address block; `customerPages()` does the sheet padding. This is where fold work happens. |
+| `original/pure-pdf.js` | **Mailing path.** `letterPages()` draws the letter and the window address block on one page; `customerPages()` fits the statement and pads the set to two sheets. This is where fold work happens. |
 | `scripts/pure-pdf.js` | **Delivery path** — statement-only twin. Keep in lockstep for any shared layout change. |
 | `original/transform.js` | Address token mapping, including the `County` → State issue in §7. |
 | `n8n/build-workflow.js`, `original/build-workflow.js` | Generate the workflow JSON. |

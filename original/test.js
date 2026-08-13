@@ -50,10 +50,43 @@ async function main() {
   assert(gated.length === 1 && gated[0].customerNo === "20382",
     `minBalance 1300 -> only 20382, got ${gated.map((r) => r.customerNo).join(",")}`);
 
-  // (4) pad:false -> compact: letter (2) + statement (1, unpadded) = 3 pages/account.
+  // (4) pad:false -> compact: letter (1, address included) + statement (1) = 2 pages/account.
   for (const r of records) {
     const pages = customerPages(r.tokens, r.statement, { asOfDate: "2026-07-14", pad: false }).length;
-    assert(pages === 3, `${r.customerNo}: compact account should be 3 pages, got ${pages}`);
+    assert(pages === 2, `${r.customerNo}: compact account should be 2 pages, got ${pages}`);
+  }
+
+  // (4b) The address rides on the FRONT of sheet 1, with the letter. Only one face
+  // of the folded piece shows through the window, and the front is the face the
+  // standard fold presents — an address on the back only works if the machine
+  // folds reverse-side-out. Nothing but the address may sit in the window band.
+  const WIN_LO = 36, WIN_HI = 84;
+  for (const r of records) {
+    const set = customerPages(r.tokens, r.statement, { asOfDate: "2026-07-14" });
+    assert(set.length === 4, `${r.customerNo}: set should still be 4 pages, got ${set.length}`);
+    assert(set[0].includes("Subject:"), `${r.customerNo}: page 1 should carry the letter`);
+    assert(set[0].includes(r.tokens.Address_1), `${r.customerNo}: page 1 should carry the address`);
+    assert(set[1] === "", `${r.customerNo}: back of sheet 1 should be blank, got ${set[1].length} bytes`);
+    // Every glyph on page 1 is either clear of the band, or part of the address.
+    const addrLines = [r.tokens.Description, r.tokens.Address_1, r.tokens.Address_2, cityStateZip(r.tokens)]
+      .filter(Boolean);
+    for (const m of set[0].matchAll(/BT \/(\w+) ([\d.]+) Tf 1 0 0 1 ([\d.-]+) ([\d.-]+) Tm \((.*?)\) Tj ET/g)) {
+      const size = Number(m[2]), y = Number(m[4]), body = m[5];
+      const top = y + size * 0.73, bot = y - size * 0.22;
+      if (top < WIN_LO || bot > WIN_HI) continue; // clear of the window band
+      assert(addrLines.some((l) => body === l),
+        `${r.customerNo}: non-address text "${body}" intrudes into the window band at y=${y}`);
+    }
+    // ...and every address line is fully inside it.
+    for (const line of addrLines) {
+      const m = new RegExp(`Tf 1 0 0 1 [\\d.-]+ ([\\d.-]+) Tm \\(${line.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\) Tj`).exec(set[0]);
+      assert(m, `${r.customerNo}: address line "${line}" missing from page 1`);
+      if (m) {
+        const y = Number(m[1]);
+        assert(y - 10 * 0.22 >= WIN_LO && y + 10 * 0.73 <= WIN_HI,
+          `${r.customerNo}: address line "${line}" at y=${y} falls outside the window band`);
+      }
+    }
   }
 
   // (5) Editable cutoff: blank -> the 2025-only customer (C00070) now qualifies.
@@ -137,7 +170,7 @@ async function main() {
   assert(addrExcluded.length === 1 && addrExcluded[0].name === "Broken Co",
     `excluded sink should name Broken Co, got ${JSON.stringify(addrExcluded)}`);
 
-  console.log(`Unit -> ${records.length} customers, each 4 pages (3 compact), shipping ${shippingRecords.length}, gated(1300) ${gated.length}, blankCutoff ${anyAge.length}`);
+  console.log(`Unit -> ${records.length} customers, each 4 pages (2 compact), shipping ${shippingRecords.length}, gated(1300) ${gated.length}, blankCutoff ${anyAge.length}`);
   console.log(`Set length -> fixed at 4 pages for 0..500-line statements; ${mixedPages}p for ${mixed.length} mixed customers`);
   console.log(`Address -> state derived from ZIP, ${addrExcluded.length} undeliverable pulled and reported`);
 
