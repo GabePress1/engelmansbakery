@@ -17,16 +17,38 @@ Nothing is ever sent. The workflow contains no `send` operation — only `draft:
 Manual trigger
   └─ Printing Letter_Invoices                  (sub-workflow, runs once)
        └─ Normalize Account Fields             (accountNumber / accountName / letterHtml)
-            └─ Look Up AP Contact (Business Central)
-                 └─ Attach Contact Email
-                      └─ Has Email on File?
-                           ├─ true  ─┬─ Printing Statements   (sub-workflow, once per account)
-                           │         └─ Combine Letter + Statement   (merge by position)
-                           │              └─ Build Draft Payload
-                           │                   └─ Create Outlook Draft (Do Not Send)
-                           │                        └─ Drafts Ready for Review
-                           └─ false ─── Skipped — No Email on File
+            └─ Require Account Number          (guard — the join key must exist)
+                 └─ Look Up AP Contact (Business Central)
+                      └─ Attach Contact Email
+                           └─ Has Email on File?
+                                ├─ true  ─┬─ Printing Statements  (once per account, keyed on accountNumber)
+                                │         └─ Combine Letter + Statement   (merge by position)
+                                │              └─ Build Draft Payload
+                                │                   └─ Create Outlook Draft (Do Not Send)
+                                │                        └─ Drafts Ready for Review
+                                └─ false ─── Skipped — No Email on File
 ```
+
+### The account number is the join key
+
+Business Central is the system of record, and every piece of the email is tied together by the
+customer account number:
+
+| Piece | Keyed on account number via |
+|---|---|
+| Letter (email body) | `Printing Letter_Invoices` emits one item per account |
+| Email address | `$filter=Integration_Customer_No eq '<accountNumber>'` against BC contacts |
+| Statement (attachment) | `accountNumber` passed into `Printing Statements`, which pulls it from BC |
+
+Three things enforce that the key stays intact end to end:
+
+- **`Require Account Number`** throws if the key is missing. Without it an empty `$filter` would
+  match every contact in the company, and the statement would be rendered for the wrong account.
+- **`Printing Statements`** receives `accountNumber` as an explicit workflow input, so the
+  statement it pulls from BC is unambiguously this customer's.
+- **`Combine Letter + Statement`** resolves field clashes in favour of input 1, so a field the
+  statement workflow happens to return cannot overwrite the account identity the draft is
+  addressed from.
 
 ### Where the recipient address comes from
 
@@ -85,6 +107,9 @@ must be gpress@engelmansbakery.com.
 - `Printing Statements` returns **exactly one item** per account with the statement PDF as binary
   data. `Build Draft Payload` looks for a binary property named `statement`, `data`, `pdf`, or
   `file`, and falls back to the first binary property present.
+- `Printing Statements` has an Execute Workflow Trigger that declares an `accountNumber` input.
+  If that trigger is set to "Accept all data" instead, delete the input mapping on the
+  `Printing Statements` node — `accountNumber` already rides along on the item either way.
 - Letter and statement are paired **by position**, which holds because `Printing Statements` runs
   in "run once for each item" mode.
 - `Integration_Customer_No` on the Contact record is the link back to the Customer. This is the

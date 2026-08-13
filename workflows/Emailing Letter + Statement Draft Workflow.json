@@ -67,6 +67,18 @@
     },
     {
       "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// The account number is the join key for everything downstream: the Business Central\n// contact lookup and the statement. Fail loudly here rather than letting an empty key\n// through — an empty $filter would match every contact in the company.\nconst accountNumber = ($input.item.json.accountNumber || '').toString().trim();\n\nif (!accountNumber) {\n  throw new Error(\n    'No account number on this item. Everything downstream (the Business Central contact ' +\n      'lookup and the statement) is keyed on it. Check the accountNumber mapping in ' +\n      '\"Normalize Account Fields\" against what Printing Letter_Invoices actually emits.'\n  );\n}\n\nreturn { json: { ...$input.item.json, accountNumber } };\n"
+      },
+      "id": "a1000000-0000-4000-8000-000000000013",
+      "name": "Require Account Number",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-330, 300],
+      "notes": "Guard: an empty account number would turn the BC $filter into a match-everything query and would render the wrong account's statement."
+    },
+    {
+      "parameters": {
         "url": "=https://api.businesscentral.dynamics.com/v2.0/{{ $vars.BC_TENANT_ID }}/{{ $vars.BC_ENVIRONMENT }}/ODataV4/Company('{{ $vars.BC_COMPANY_NAME }}')/ContactList",
         "authentication": "genericCredentialType",
         "genericAuthType": "oAuth2Api",
@@ -161,6 +173,16 @@
           "mode": "id",
           "cachedResultName": "Printing Statements"
         },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "accountNumber": "={{ $json.accountNumber }}"
+          },
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
         "mode": "each",
         "options": {
           "waitForSubWorkflow": true
@@ -171,14 +193,19 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
       "position": [480, 400],
-      "notes": "Runs once per account so each statement PDF lines up with its letter. Returns exactly one item carrying the statement PDF as binary data. Lives in My project / Engelman's Bakery / Printing Letter_Invoices."
+      "notes": "Runs once per account, keyed on accountNumber, so the statement pulled from Business Central is the one for this customer and lines up with this letter. Returns exactly one item carrying the statement PDF as binary data. NOTE: the accountNumber input mapping above only applies if this workflow's Execute Workflow Trigger declares a matching input field. If that trigger is set to 'Accept all data' instead, delete the mapping — accountNumber already rides along on the item. Lives in My project / Engelman's Bakery / Printing Letter_Invoices."
     },
     {
       "parameters": {
         "mode": "combine",
         "combineBy": "combineByPosition",
         "options": {
-          "includeUnpaired": false
+          "includeUnpaired": false,
+          "clashHandling": {
+            "values": {
+              "resolveClash": "preferInput1"
+            }
+          }
         }
       },
       "id": "a1000000-0000-4000-8000-000000000006",
@@ -186,7 +213,7 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3,
       "position": [700, 300],
-      "notes": "Input 1 = letter/account data, Input 2 = statement PDF. Position pairing is safe because Printing Statements runs once per item, in order."
+      "notes": "Input 1 = letter/account/email data, Input 2 = statement PDF. Position pairing is safe because Printing Statements runs once per item, in order. Clash handling prefers input 1 so a field the statement workflow happens to return (its own accountNumber or No) cannot overwrite the account identity the draft is addressed from."
     },
     {
       "parameters": {
@@ -256,6 +283,9 @@
       "main": [[{ "node": "Normalize Account Fields", "type": "main", "index": 0 }]]
     },
     "Normalize Account Fields": {
+      "main": [[{ "node": "Require Account Number", "type": "main", "index": 0 }]]
+    },
+    "Require Account Number": {
       "main": [[{ "node": "Look Up AP Contact (Business Central)", "type": "main", "index": 0 }]]
     },
     "Look Up AP Contact (Business Central)": {
