@@ -334,10 +334,63 @@ function buildPdf(pageContents, docOpts) {
   return out;
 }
 
+// --- fitting a set onto exactly two sheets ----------------------------------
+// The FPi 700 has no OMR, so it separates customers by counting a FIXED number
+// of sheets. A set that runs long does not merely look wrong: the machine still
+// takes two sheets, so every LATER customer's pages shift into the wrong
+// envelope, disclosing one customer's balance to another. It fails silently and
+// is undetectable until the mail is opened. See docs/fpi-700-fold-spec.md §4.
+const LETTER_PAGES = 2;          // letter + address page
+const STATEMENT_MAX_PAGES = 2;   // one duplex sheet
+const SET_PAGES = LETTER_PAGES + STATEMENT_MAX_PAGES;
+
+// Collapse the oldest lines into a single "Balance Forward" row, keeping the
+// `keep` most recent in full detail. Lines arrive oldest-first (transform.js
+// sorts by document date), and statement.total is untouched, so the amount owed
+// still reconciles against the detail plus the carried-forward row.
+function condenseStatement(s, keep) {
+  const lines = s.lines || [];
+  if (keep >= lines.length) return s;
+  const old = lines.slice(0, lines.length - keep);
+  const forward = {
+    documentDate: old[0].documentDate || "",
+    docType: "Balance Forward",
+    documentNo: old.length + " earlier invoice" + (old.length === 1 ? "" : "s"),
+    orderNo: "",
+    dueDate: "",
+    remaining: old.reduce((a, l) => a + (Number(l.remaining) || 0), 0),
+  };
+  return Object.assign({}, s, { lines: [forward, ...lines.slice(lines.length - keep)] });
+}
+
+// Render the statement within `maxPages`, condensing the oldest detail lines if
+// it would otherwise overflow. Returns null only when even a fully condensed
+// statement does not fit — the caller must then divert the customer rather than
+// emit a third sheet.
+function fitStatementPages(t, s, o, maxPages) {
+  const pages = statementPages(t, s, o);
+  if (pages.length <= maxPages) return { pages, condensed: 0 };
+  // Page count is monotonic in the number of detail lines kept, so binary-search
+  // the largest `keep` that still fits rather than re-rendering once per line.
+  let lo = 0, hi = (s.lines || []).length - 1, best = null;
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1;
+    const p = statementPages(t, condenseStatement(s, mid), o);
+    if (p.length <= maxPages) {
+      best = { pages: p, condensed: s.lines.length - mid };
+      lo = mid + 1;
+    } else hi = mid - 1;
+  }
+  return best;
+}
+
 // Page-content array for one customer: the letter (sheet 1) then the statement
-// (sheet 2). For double-sided printing each block is padded to an EVEN page count,
-// so every account is 4 pages (letter=2, statement=2) and the letters always land
-// on pages 1, 5, 9, ... A longer statement (3+ pages) still stays even.
+// (sheet 2). For double-sided printing this is ALWAYS exactly SET_PAGES pages,
+// so the letters land on pages 1, 5, 9, ... and each customer occupies exactly
+// two sheets in the inserter. Returns null when the statement cannot be made to
+// fit — that customer must be diverted, never padded out to a third sheet.
+// With pad:false (the compact on-screen copy) there is no machine to satisfy, so
+// the statement runs as long as it needs to.
 // Null-safe: a missing tokens/statement can never throw (renders empty fields).
 function customerPages(tokens, statement, opts) {
   const o = opts || {};
@@ -346,8 +399,11 @@ function customerPages(tokens, statement, opts) {
   const s = statement && statement.lines ? statement : { lines: [], total: 0 };
   const letter = letterPages(t);
   if (pad && letter.length % 2 === 1) letter.push(""); // pad the letter to a full sheet
-  const stmt = statementPages(t, s, o);
-  if (pad && stmt.length % 2 === 1) stmt.push(""); // pad the statement to a full sheet
+  if (!pad) return [...letter, ...statementPages(t, s, o)];
+  const fit = fitStatementPages(t, s, o, STATEMENT_MAX_PAGES);
+  if (!fit) return null;
+  const stmt = fit.pages;
+  while (stmt.length < STATEMENT_MAX_PAGES) stmt.push(""); // fill out the sheet
   return [...letter, ...stmt];
 }
 
@@ -366,20 +422,43 @@ function sameAddress(a, b) {
 
 // One PDF (letter + statement) for a single customer.
 function buildCustomerPdf(tokens, statement, opts) {
-  return buildPdf(customerPages(tokens, statement, opts));
+  const pages = customerPages(tokens, statement, opts);
+  if (!pages) throw new Error("statement does not fit one sheet: " + ((tokens && tokens.Description) || "unknown customer"));
+  return buildPdf(pages);
 }
 
 // One combined batch PDF for a list of records. tokenKey selects the address set:
 // "tokens" (billing, default) or "shipTokens" (shipping).
+//
+// Pass opts.excluded as an array to collect customers whose statement could not
+// be condensed onto one sheet; they are left out of the machine run and must be
+// stuffed by hand. Without the sink they are still excluded, just not reported.
 function buildBatchPdf(records, opts, tokenKey) {
   const key = tokenKey || "tokens";
+  const o = opts || {};
+  const pad = o.pad !== false;
   const pages = [];
+  let included = 0;
   for (const r of records || []) {
     const tok = r && (r[key] || r.tokens);
     if (!tok) continue; // skip malformed records instead of crashing
-    pages.push(...customerPages(tok, r.statement, opts));
+    const p = customerPages(tok, r.statement, o);
+    if (!p) {
+      if (o.excluded) o.excluded.push({ name: tok.Description || "", reason: "statement exceeds one sheet" });
+      continue;
+    }
+    pages.push(...p);
+    included++;
   }
-  return buildPdf(pages, opts);
+  // Last line of defence. The machine counts sheets, so a set of the wrong length
+  // mis-stuffs every envelope after it — fail the run rather than print mail that
+  // goes to the wrong people.
+  if (pad && pages.length !== included * SET_PAGES) {
+    throw new Error(
+      `set-length invariant violated: ${pages.length} pages for ${included} customers (expected ${included * SET_PAGES})`
+    );
+  }
+  return buildPdf(pages, o);
 }
 
 module.exports = { buildCustomerPdf, buildBatchPdf, customerPages, sameAddress };

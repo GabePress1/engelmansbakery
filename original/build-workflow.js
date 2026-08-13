@@ -93,19 +93,31 @@ try { const ovj = $('SW Make Job').first().json; if (ovj && ovj.pad === false) p
 const today = new Date().toISOString().slice(0, 10);
 const billingName = 'Past-Due-Billing-' + today + '.pdf';
 const shippingName = 'Past-Due-Shipping-' + today + '.pdf';
+// 'excluded' collects any customer whose statement won't condense onto one sheet.
+// Those are left out of the machine run — a third sheet would shift every later
+// customer into the wrong envelope — and must be stuffed by hand. The names come
+// back on the item so the operator knows who to chase.
+const billingExcluded = [];
+const shippingExcluded = [];
 const billingData = await this.helpers.prepareBinaryData(
-  buildBatchPdf(records, { title: 'Past-Due Billing ' + today, pad }, 'tokens'),
+  buildBatchPdf(records, { title: 'Past-Due Billing ' + today, pad, excluded: billingExcluded }, 'tokens'),
   billingName, 'application/pdf');
 const shippingData = await this.helpers.prepareBinaryData(
-  buildBatchPdf(shippingRecords, { title: 'Past-Due Shipping ' + today, pad }, 'shipTokens'),
+  buildBatchPdf(shippingRecords, { title: 'Past-Due Shipping ' + today, pad, excluded: shippingExcluded }, 'shipTokens'),
   shippingName, 'application/pdf');
 return [
   {
-    json: { type: 'billing', customers: records.length, skipped, fileName: billingName },
+    json: {
+      type: 'billing', customers: records.length - billingExcluded.length, skipped,
+      excluded: billingExcluded, fileName: billingName,
+    },
     binary: { data: billingData },
   },
   {
-    json: { type: 'shipping', customers: shippingRecords.length, skipped, fileName: shippingName },
+    json: {
+      type: 'shipping', customers: shippingRecords.length - shippingExcluded.length, skipped,
+      excluded: shippingExcluded, fileName: shippingName,
+    },
     binary: { data: shippingData },
   },
 ];

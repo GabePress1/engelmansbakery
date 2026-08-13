@@ -112,28 +112,42 @@ per set**. If one customer emits 3 sheets, the machine still takes 2 — and fro
 *every subsequent envelope contains the wrong customer's paperwork*. This fails silently and
 is not detectable until the mail is opened.
 
-### The current code does not enforce this
+### The defect this replaced
 
-`customerPages()` in `original/pure-pdf.js` pads the letter block to 2 pages and the statement
-block to an **even** page count. Even is not the same as **fixed**:
+`customerPages()` padded the letter block to 2 pages and the statement block to an **even**
+page count. Even is not the same as **fixed**:
 
 | Statement pages | Padded to | Total set | Sheets | Result |
 |---|---|---|---|---|
 | 1 | 2 | 4 | 2 | ✅ correct |
 | 2 | 2 | 4 | 2 | ✅ correct |
-| **3** | **4** | **6** | **3** | ❌ **desynchronizes the entire remaining run** |
+| **3** | **4** | **6** | **3** | ❌ **desynchronized the entire remaining run** |
 
 The 2026-08-13 run happened to be safe because no statement exceeded 2 pages **[MEASURED]** —
-this is luck, not a guarantee. A customer with enough open invoices will trip it.
+luck, not a guarantee. A customer with enough open invoices would have tripped it.
 
-### Required behavior
+### How it is enforced now
 
-1. Statement content must be **condensed to fit 2 pages** (tighter leading, smaller type, or
-   summarizing the oldest invoices into a single "balance forward" line).
-2. If a set still cannot fit, it must be **excluded from the machine-run PDF** and diverted to
-   a separate exception output for hand-stuffing. **Never silently emit a third sheet.**
-3. The generator should **assert** the invariant — total page count must equal
-   `4 × customer count` — and fail loudly rather than produce a run that will mis-stuff.
+Three layers in `original/pure-pdf.js`, against `SET_PAGES = 4`:
+
+1. **Condense.** `fitStatementPages()` renders the statement and, if it overflows one sheet,
+   collapses the oldest detail lines into a single **"Balance Forward"** row — `documentNo`
+   reads "N earlier invoices" and carries their summed amount. Because lines arrive oldest-first
+   and `statement.total` is untouched, the printed rows still sum to the total. Page count is
+   monotonic in the number of lines kept, so it binary-searches the largest number that fits
+   rather than re-rendering once per line. In practice **66 detail lines fit before
+   condensation starts** — far beyond anything in the sample data, so this is a safety net
+   rather than a routine path.
+2. **Divert.** If even a fully condensed statement will not fit, `customerPages()` returns
+   `null` and `buildBatchPdf()` leaves that customer out of the machine run, pushing
+   `{ name, reason }` onto the optional `opts.excluded` sink. The n8n render node passes a sink
+   and returns the names on its output item, so the operator knows who to stuff by hand.
+   **A third sheet is never emitted.**
+3. **Assert.** `buildBatchPdf()` throws unless total pages equal `4 × included customers` —
+   failing the run is strictly better than printing mail that goes to the wrong people.
+
+The compact on-screen copy (`pad: false`) is exempt from all of this: it is read in a browser,
+never folded, so it runs to full length uncondensed.
 
 ---
 

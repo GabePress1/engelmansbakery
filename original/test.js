@@ -72,7 +72,45 @@ async function main() {
   assert(withRt21.some((r) => r.customerNo === "C00099"),
     "excludeRoute:null -> C00099 (RT 21) is included, confirming the route filter is what drops it");
 
+  // (7) Set length is FIXED, not merely even. The FPi 700 has no OMR, so it
+  // separates customers by counting sheets: a set that runs to a third sheet
+  // shifts every later customer into the wrong envelope. A long statement must
+  // condense onto one sheet, never spill. See docs/fpi-700-fold-spec.md §4.
+  const longStmt = (n) => {
+    const lines = Array.from({ length: n }, (_, i) => ({
+      documentDate: "2025-01-01", docType: "Invoice", documentNo: "PS-INV" + (100000 + i),
+      orderNo: "Order S-ORD" + (100000 + i), dueDate: "2026-01-05", remaining: 100 + i,
+    }));
+    return { lines, total: lines.reduce((a, l) => a + l.remaining, 0) };
+  };
+  const bigTokens = records[0].tokens;
+  for (const n of [0, 1, 66, 67, 500]) {
+    const pages = customerPages(bigTokens, longStmt(n), { asOfDate: "2026-07-14" });
+    assert(pages && pages.length === 4, `${n}-line statement should be 4 pages, got ${pages && pages.length}`);
+  }
+  const condensed = customerPages(bigTokens, longStmt(500), { asOfDate: "2026-07-14" }).join("");
+  assert(condensed.includes("Balance Forward"), "a 500-line statement should carry a Balance Forward row");
+  // The condensed statement must still reconcile: rows sum to the printed total.
+  const big = longStmt(500);
+  const amounts = [...condensed.matchAll(/\((-?)\$([\d,]+\.\d\d)\) Tj/g)]
+    .map((m) => (m[1] ? -1 : 1) * Number(m[2].replace(/,/g, "")));
+  const printedTotal = amounts[amounts.length - 1];
+  const rowSum = amounts.slice(0, -1).reduce((a, b) => a + b, 0);
+  assert(Math.abs(printedTotal - big.total) < 0.01, `condensed total ${printedTotal} != ${big.total}`);
+  assert(Math.abs(rowSum - big.total) < 0.01, `condensed rows sum to ${rowSum}, expected ${big.total}`);
+  // The compact on-screen copy has no machine to satisfy, so it stays uncondensed.
+  const compactLong = customerPages(bigTokens, longStmt(500), { asOfDate: "2026-07-14", pad: false });
+  assert(compactLong.length > 4 && !compactLong.join("").includes("Balance Forward"),
+    `compact copy should run long and uncondensed, got ${compactLong.length} pages`);
+  // And the batch as a whole is exactly 4 pages per customer.
+  const mixed = [0, 500, 3, 900].map((n) => ({ tokens: bigTokens, statement: longStmt(n) }));
+  const mixedPdf = buildBatchPdf(mixed, { asOfDate: "2026-07-14" }, "tokens");
+  const mixedPages = (mixedPdf.toString("latin1").match(/\/Type\s*\/Page\s/g) || []).length;
+  assert(mixedPages === mixed.length * 4,
+    `mixed batch should be ${mixed.length * 4} pages, got ${mixedPages}`);
+
   console.log(`Unit -> ${records.length} customers, each 4 pages (3 compact), shipping ${shippingRecords.length}, gated(1300) ${gated.length}, blankCutoff ${anyAge.length}`);
+  console.log(`Set length -> fixed at 4 pages for 0..500-line statements; ${mixedPages}p for ${mixed.length} mixed customers`);
 
   // ---- Execute the generated Code nodes with n8n-style mocks --------------
   const invoiceResp = { value: sample.ledgerEntries.filter((e) => e.Open === true) };
