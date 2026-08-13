@@ -13,6 +13,19 @@ Nothing is ever sent. The workflow contains no `send` operation — only `draft:
 
 ### Flow
 
+### Importing it into n8n
+
+This repo holds the workflow as a JSON export. It does not exist in n8n until you import it:
+
+1. In n8n, open the **Engelman's Bakery / Printing Letter_Invoices** folder.
+2. **Create workflow**.
+3. Top-right **⋮** menu → **Import from File…**
+4. Pick `workflows/emailing-letter-statement-draft.json`.
+5. Save. It appears as **Emailing Letter + Statement Draft Workflow**.
+
+On import the nodes will show credential and ID placeholders — fill those in per *Before first run*
+below before executing.
+
 ### Running it
 
 1. Open the workflow and click into **ERP Account Number (Filter)**.
