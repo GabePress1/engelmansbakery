@@ -220,25 +220,29 @@ window-facing panel**:
 
 That is a usable band **48 pt tall** and **252 pt wide**.
 
-### What this means for the current block
+### The defect this replaced, and the fix
 
-The address is currently drawn at **x = 72 pt**, with baselines at **y = 150 / 135 / 120**
-(3-line) or **150 / 135 / 120 / 105** (4-line) **[MEASURED]** — spanning 1.46"–2.08" above the
-page bottom.
+Before this spec existed the address was drawn at **x = 72 pt** with baselines at
+**y = 150 / 135 / 120** (3-line) or **150 / 135 / 120 / 105** (4-line) **[MEASURED]** —
+spanning 1.46"–2.08" above the page bottom, roughly half an inch too high. **Zero of three
+baselines** fell inside the safe band for a 3-line address; one of four for a 4-line address.
+Horizontally it was fine: x=72 pt is inside the 63–315 pt range, and the widest address line in
+the sample run measured **165.3 pt** ("Sterling Estates-WEST COBB TTHS") against a 243 pt
+budget, with zero of 61 lines over **[MEASURED]**.
 
-- **Vertically it misses.** The safe band tops out at 84 pt. **Zero of three baselines** fall
-  inside it for a 3-line address; one of four for a 4-line address. The block sits roughly
-  **half an inch too high** and needs to come down to the 36–84 pt band.
-- **Horizontally it is fine.** x=72 pt is inside the 63–315 pt range, and the widest address
-  line in the sample run measured **165.3 pt** ("Sterling Estates-WEST COBB TTHS") against a
-  243 pt budget — zero of 61 address lines were over **[MEASURED]**. Keep a **243 pt maximum
-  line width** and truncate or reduce type size beyond it.
+`letterPages()` in `original/pure-pdf.js` now positions the block against
+`WINDOW_Y_MIN` / `WINDOW_Y_MAX` / `WINDOW_X_MAX` rather than a hardcoded start:
 
-### Leading
+- **Centered in the band**, so 3- and 4-line addresses both clear the aperture with margin
+  instead of one of them hanging off an edge.
+- **10 pt type on 12 pt leading.** Four lines at the old 15 pt leading spanned 45 pt of
+  baselines plus ascender and descender — essentially the whole 48 pt band, with nothing left
+  for fold variance.
+- **Auto-shrink on width.** If any line would pass the window's right edge as the piece slides,
+  the block steps down in half-points to a floor of 7 pt.
 
-Four lines at the current 15 pt leading span 45 pt of baselines, plus ascender and descender —
-essentially the entire 48 pt band with no margin for fold variance. **Reduce to 12–13 pt
-leading, or 10 pt type**, so a 4-line address fits with room to spare.
+Verified by rendering: a 3-line address occupies ink y 43.3–76.8, a 4-line address y 37.3–82.8,
+and a deliberately over-long name shrinks to 8 pt at y 38.2–81.8 — all inside the 36–84 pt band.
 
 ### Clear-zone rule
 
