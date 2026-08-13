@@ -21,7 +21,7 @@ using System.Utilities;
 /// callable as an OData V4 unbound action:
 ///
 ///   POST /v2.0/{tenant}/{environment}/ODataV4/StatementApi_GetCustomerStatementPdf?company={company}
-///   { "customerNo": "10981", "reportId": 50001, "requestPageXml": "" }
+///   { "customerNo": "10981", "reportId": 50042, "requestPageXml": "" }
 ///
 /// The response is { "@odata.context": "...", "value": "<base64 pdf>" }.
 /// </summary>

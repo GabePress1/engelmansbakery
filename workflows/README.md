@@ -75,12 +75,11 @@ this repo ships a small codeunit for it:
 customer, and returns it base64 encoded.
 
 The report is **passed in, not hardcoded**, so the custom statement Engelman's actually prints
-stays the source of truth and can change without redeploying the extension. Set
-`BC_STATEMENT_REPORT_ID` to that report's object ID. There is deliberately no default — a missing
-ID errors out rather than quietly sending customers a statement in the wrong layout.
+stays the source of truth and can change without redeploying the extension. There is deliberately
+no default — a missing ID errors out rather than quietly sending customers a statement in the
+wrong layout.
 
-To find the ID: open **Report Selection – Sales** in BC and read the Report ID against the
-statement usage, or check which report the existing `Printing Statements` workflow runs.
+Set `BC_STATEMENT_REPORT_ID` to **`50042`**, the custom statement report Engelman's prints.
 
 Deploy it and publish it as a web service:
 
@@ -95,7 +94,7 @@ The workflow then calls it as an OData V4 unbound action:
 
 ```
 POST .../ODataV4/StatementApi_GetCustomerStatementPdf?company={BC_COMPANY_NAME}
-{ "customerNo": "10981", "reportId": 50001, "requestPageXml": "" }
+{ "customerNo": "10981", "reportId": 50042, "requestPageXml": "" }
 
 → { "value": "<base64 pdf>" }
 ```
@@ -143,7 +142,7 @@ must be gpress@engelmansbakery.com.
 | `BC_TENANT_ID` | your Entra tenant GUID |
 | `BC_ENVIRONMENT` | `Production` |
 | `BC_COMPANY_NAME` | the BC company name, as it appears in the OData URL |
-| `BC_STATEMENT_REPORT_ID` | object ID of the custom statement report you print |
+| `BC_STATEMENT_REPORT_ID` | `50042` — the custom statement report Engelman's prints |
 | `BC_STATEMENT_REQUEST_XML` | saved request page XML for open-items-only, or empty |
 
 **Two BC prerequisites:**
