@@ -1,0 +1,241 @@
+{
+  "name": "Emailing Letter + Statement Draft Workflow",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "a1000000-0000-4000-8000-000000000001",
+      "name": "When clicking 'Execute workflow'",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [-660, 300]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "REPLACE_WITH_PRINTING_LETTER_INVOICES_WORKFLOW_ID",
+          "mode": "id",
+          "cachedResultName": "Printing Letter: Invoices Workflow"
+        },
+        "mode": "once",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "a1000000-0000-4000-8000-000000000002",
+      "name": "Printing Letter: Invoices Workflow",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [-440, 300],
+      "notes": "Returns one item per account: the letter content plus the account identifiers and email. Set the workflow ID above."
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "duplicateItem": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f-account-number",
+              "name": "accountNumber",
+              "value": "={{ $json.accountNumber ?? $json.customerNo ?? $json.CustomerNo ?? $json.account ?? '' }}",
+              "type": "string"
+            },
+            {
+              "id": "f-account-name",
+              "name": "accountName",
+              "value": "={{ $json.accountName ?? $json.customerName ?? $json.CustomerName ?? '' }}",
+              "type": "string"
+            },
+            {
+              "id": "f-recipient-email",
+              "name": "recipientEmail",
+              "value": "={{ ($json.email ?? $json.emailAddress ?? $json.EmailAddress ?? $json.contactEmail ?? '').toString().trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "f-letter-html",
+              "name": "letterHtml",
+              "value": "={{ $json.letterHtml ?? $json.letter ?? $json.html ?? $json.body ?? '' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "a1000000-0000-4000-8000-000000000003",
+      "name": "Normalize Account Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [-220, 300],
+      "notes": "PLACEHOLDER FIELD NAMES. Trim these to the actual field names the letter workflow emits once its export is available."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c-has-email",
+              "leftValue": "={{ $json.recipientEmail }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "a1000000-0000-4000-8000-000000000004",
+      "name": "Has Email on File?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [0, 300]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "REPLACE_WITH_PRINTING_STATEMENT_WORKFLOW_ID",
+          "mode": "id",
+          "cachedResultName": "Printing Statement Workflow"
+        },
+        "mode": "each",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "a1000000-0000-4000-8000-000000000005",
+      "name": "Printing Statement Workflow",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [260, 400],
+      "notes": "Runs once per account so each statement PDF lines up with its letter. Must return exactly one item carrying the statement PDF as binary data."
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {
+          "includeUnpaired": false
+        }
+      },
+      "id": "a1000000-0000-4000-8000-000000000006",
+      "name": "Combine Letter + Statement",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [480, 300],
+      "notes": "Input 1 = letter/account data, Input 2 = statement PDF. Position pairing is safe because the statement workflow runs once per item, in order."
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Build the Outlook draft payload: letter as the HTML body, statement PDF as the attachment.\nconst json = $input.item.json;\nconst binary = $input.item.binary ?? {};\n\nconst accountNumber = (json.accountNumber || '').toString().trim();\nconst accountName = (json.accountName || '').toString().trim();\nconst statementDate = new Date().toISOString().slice(0, 10);\n\n// The statement workflow may name its binary property anything; take the first PDF it hands us.\nconst statementKey =\n  ['statement', 'data', 'pdf', 'file'].find((k) => binary[k]) ?? Object.keys(binary)[0];\n\nif (!statementKey) {\n  throw new Error(\n    `No statement PDF found on the item for account ${accountNumber || '(unknown)'}. ` +\n      'Check that the Printing Statement Workflow returns the PDF as binary data.'\n  );\n}\n\nconst safeAccount = (accountNumber || 'account').replace(/[^A-Za-z0-9._-]/g, '_');\nconst attachmentName = `Statement_${safeAccount}_${statementDate}.pdf`;\n\n// Wrap the letter so it renders as a standalone HTML email body.\nconst letterHtml = (json.letterHtml || '').toString().trim();\nif (!letterHtml) {\n  throw new Error(\n    `No letter content found for account ${accountNumber || '(unknown)'}. ` +\n      'Check the letterHtml mapping in \"Normalize Account Fields\".'\n  );\n}\n\nconst emailBodyHtml = letterHtml.toLowerCase().includes('<html')\n  ? letterHtml\n  : `<!doctype html><html><body style=\"font-family:Arial,Helvetica,sans-serif;font-size:11pt;color:#000;\">${letterHtml}</body></html>`;\n\nconst emailSubject = accountName\n  ? `Engelman's Bakery — Account Statement for ${accountName}`\n  : `Engelman's Bakery — Account Statement${accountNumber ? ` (${accountNumber})` : ''}`;\n\nreturn {\n  json: {\n    ...json,\n    accountNumber,\n    accountName,\n    statementDate,\n    emailSubject,\n    emailBodyHtml,\n    attachmentName,\n  },\n  binary: {\n    ...binary,\n    // Normalized name + filename so the Outlook node always finds the attachment.\n    statement: { ...binary[statementKey], fileName: attachmentName, mimeType: 'application/pdf' },\n  },\n};\n"
+      },
+      "id": "a1000000-0000-4000-8000-000000000007",
+      "name": "Build Draft Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [700, 300]
+    },
+    {
+      "parameters": {
+        "resource": "draft",
+        "operation": "create",
+        "subject": "={{ $json.emailSubject }}",
+        "bodyContent": "={{ $json.emailBodyHtml }}",
+        "additionalFields": {
+          "bodyContentType": "html",
+          "toRecipients": "={{ $json.recipientEmail }}",
+          "attachments": {
+            "attachments": [
+              {
+                "binaryPropertyName": "statement"
+              }
+            ]
+          }
+        }
+      },
+      "id": "a1000000-0000-4000-8000-000000000008",
+      "name": "Create Outlook Draft (Do Not Send)",
+      "type": "n8n-nodes-base.microsoftOutlook",
+      "typeVersion": 2,
+      "position": [920, 300],
+      "credentials": {
+        "microsoftOutlookOAuth2Api": {
+          "id": "REPLACE_WITH_OUTLOOK_CREDENTIAL_ID",
+          "name": "Microsoft Outlook account (gpress@engelmansbakery.com)"
+        }
+      },
+      "notes": "Creates an UNSENT draft only. The draft lands in the mailbox that owns the OAuth2 credential, so this credential must be gpress@engelmansbakery.com. There is deliberately no 'send' operation anywhere in this workflow."
+    },
+    {
+      "parameters": {},
+      "id": "a1000000-0000-4000-8000-000000000009",
+      "name": "Drafts Ready for Review",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1140, 300]
+    },
+    {
+      "parameters": {},
+      "id": "a1000000-0000-4000-8000-000000000010",
+      "name": "Skipped — No Email on File",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [260, 600],
+      "notes": "Accounts with no email address land here instead of silently disappearing. Review this branch after each run."
+    }
+  ],
+  "connections": {
+    "When clicking 'Execute workflow'": {
+      "main": [[{ "node": "Printing Letter: Invoices Workflow", "type": "main", "index": 0 }]]
+    },
+    "Printing Letter: Invoices Workflow": {
+      "main": [[{ "node": "Normalize Account Fields", "type": "main", "index": 0 }]]
+    },
+    "Normalize Account Fields": {
+      "main": [[{ "node": "Has Email on File?", "type": "main", "index": 0 }]]
+    },
+    "Has Email on File?": {
+      "main": [
+        [
+          { "node": "Printing Statement Workflow", "type": "main", "index": 0 },
+          { "node": "Combine Letter + Statement", "type": "main", "index": 0 }
+        ],
+        [{ "node": "Skipped — No Email on File", "type": "main", "index": 0 }]
+      ]
+    },
+    "Printing Statement Workflow": {
+      "main": [[{ "node": "Combine Letter + Statement", "type": "main", "index": 1 }]]
+    },
+    "Combine Letter + Statement": {
+      "main": [[{ "node": "Build Draft Payload", "type": "main", "index": 0 }]]
+    },
+    "Build Draft Payload": {
+      "main": [[{ "node": "Create Outlook Draft (Do Not Send)", "type": "main", "index": 0 }]]
+    },
+    "Create Outlook Draft (Do Not Send)": {
+      "main": [[{ "node": "Drafts Ready for Review", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": ""
+  },
+  "tags": []
+}
