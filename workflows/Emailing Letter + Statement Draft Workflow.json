@@ -7,7 +7,7 @@
       "name": "When clicking 'Execute workflow'",
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
-      "position": [-660, 300]
+      "position": [-880, 300]
     },
     {
       "parameters": {
@@ -26,8 +26,8 @@
       "name": "Printing Letter_Invoices",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
-      "position": [-440, 300],
-      "notes": "Returns one item per account: the letter content plus the account identifiers and email. Set the workflow ID above."
+      "position": [-660, 300],
+      "notes": "Returns one item per account, carrying the letter content and the customer number. Does NOT carry the email address — that is looked up from Business Central further down."
     },
     {
       "parameters": {
@@ -48,12 +48,6 @@
               "type": "string"
             },
             {
-              "id": "f-recipient-email",
-              "name": "recipientEmail",
-              "value": "={{ ($json.recipientEmail ?? $json.E_Mail ?? $json.email ?? $json.Email ?? $json.contactEmail ?? '').toString().trim() }}",
-              "type": "string"
-            },
-            {
               "id": "f-letter-html",
               "name": "letterHtml",
               "value": "={{ $json.letterHtml ?? $json.letter ?? $json.html ?? $json.body ?? '' }}",
@@ -68,8 +62,55 @@
       "name": "Normalize Account Fields",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
+      "position": [-440, 300],
+      "notes": "Fallback chains cover both Business Central shapes: OData page fields (No, Name, Company_Name, Integration_Customer_No) and API v2.0 fields (number, displayName, companyName). Trim to the single real field name once the Printing Letter_Invoices export is available. accountNumber must end up as the customer number (e.g. 10981) — it is the key for the contact lookup."
+    },
+    {
+      "parameters": {
+        "url": "=https://api.businesscentral.dynamics.com/v2.0/{{ $vars.BC_TENANT_ID }}/{{ $vars.BC_ENVIRONMENT }}/ODataV4/Company('{{ $vars.BC_COMPANY_NAME }}')/ContactList",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "$filter",
+              "value": "=Integration_Customer_No eq '{{ $json.accountNumber }}' and Business_Relation eq 'Customer'"
+            },
+            {
+              "name": "$select",
+              "value": "No,Name,Company_Name,E_Mail,Integration_Customer_No"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a1000000-0000-4000-8000-000000000011",
+      "name": "Look Up AP Contact (Business Central)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [-220, 300],
-      "notes": "Fallback chains cover both Business Central shapes: OData page fields (No, Name, E_Mail, Company_Name, Integration_Customer_No) and API v2.0 fields (number, displayName, email, companyName). Trim to the single real field name once the Printing Letter_Invoices export is available. The email is expected to be the AP contact (Contact table 5050) linked to the customer via Integration Customer No."
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "oAuth2Api": {
+          "id": "REPLACE_WITH_BUSINESS_CENTRAL_OAUTH2_CREDENTIAL_ID",
+          "name": "Business Central OAuth2"
+        }
+      },
+      "notes": "Queries the Contact List page (5052 / table 5050) published as the OData web service 'ContactList', filtered to the contact whose Integration Customer No. matches this customer — the CT020141 -> 10981 link. Reads BC_TENANT_ID, BC_ENVIRONMENT and BC_COMPANY_NAME from project Variables. If the published web service has a different name, change the last URL segment."
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Fold the Business Central contact lookup back onto the account item.\nconst account = $('Normalize Account Fields').item.json;\nconst rows = $input.item.json.value ?? [];\n\n// Prefer a contact that actually has an email; otherwise take the first match.\nconst contact = rows.find((r) => (r.E_Mail || '').toString().trim()) ?? rows[0] ?? {};\n\nconst recipientEmail = (contact.E_Mail || account.recipientEmail || '').toString().trim();\n\nreturn {\n  json: {\n    ...account,\n    recipientEmail,\n    contactNumber: contact.No ?? '',\n    contactName: contact.Name ?? '',\n    // Prefer the contact's company name when the letter workflow did not supply one.\n    accountName: (account.accountName || contact.Company_Name || '').toString().trim(),\n    contactMatchCount: rows.length,\n  },\n};\n"
+      },
+      "id": "a1000000-0000-4000-8000-000000000012",
+      "name": "Attach Contact Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [0, 300]
     },
     {
       "parameters": {
@@ -90,6 +131,15 @@
                 "operation": "notEmpty",
                 "singleValue": true
               }
+            },
+            {
+              "id": "c-email-shape",
+              "leftValue": "={{ $json.recipientEmail }}",
+              "rightValue": "@",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
             }
           ],
           "combinator": "and"
@@ -101,7 +151,7 @@
       "name": "Has Email on File?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
-      "position": [0, 300]
+      "position": [220, 300]
     },
     {
       "parameters": {
@@ -120,8 +170,8 @@
       "name": "Printing Statements",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
-      "position": [260, 400],
-      "notes": "Runs once per account so each statement PDF lines up with its letter. Must return exactly one item carrying the statement PDF as binary data. Lives in My project / Engelman's Bakery / Printing Letter_Invoices."
+      "position": [480, 400],
+      "notes": "Runs once per account so each statement PDF lines up with its letter. Returns exactly one item carrying the statement PDF as binary data. Lives in My project / Engelman's Bakery / Printing Letter_Invoices."
     },
     {
       "parameters": {
@@ -135,8 +185,8 @@
       "name": "Combine Letter + Statement",
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3,
-      "position": [480, 300],
-      "notes": "Input 1 = letter/account data, Input 2 = statement PDF. Position pairing is safe because the statement workflow runs once per item, in order."
+      "position": [700, 300],
+      "notes": "Input 1 = letter/account data, Input 2 = statement PDF. Position pairing is safe because Printing Statements runs once per item, in order."
     },
     {
       "parameters": {
@@ -147,7 +197,7 @@
       "name": "Build Draft Payload",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [700, 300]
+      "position": [920, 300]
     },
     {
       "parameters": {
@@ -171,7 +221,7 @@
       "name": "Create Outlook Draft (Do Not Send)",
       "type": "n8n-nodes-base.microsoftOutlook",
       "typeVersion": 2,
-      "position": [920, 300],
+      "position": [1140, 300],
       "credentials": {
         "microsoftOutlookOAuth2Api": {
           "id": "REPLACE_WITH_OUTLOOK_CREDENTIAL_ID",
@@ -186,7 +236,7 @@
       "name": "Drafts Ready for Review",
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
-      "position": [1140, 300]
+      "position": [1360, 300]
     },
     {
       "parameters": {},
@@ -194,8 +244,8 @@
       "name": "Skipped — No Email on File",
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
-      "position": [260, 600],
-      "notes": "Accounts with no email address land here instead of silently disappearing. Review this branch after each run."
+      "position": [480, 600],
+      "notes": "Accounts whose Business Central contact has no usable E-Mail land here instead of silently disappearing. Review this branch after each run — contactMatchCount of 0 means no contact matched the customer number at all."
     }
   ],
   "connections": {
@@ -206,6 +256,12 @@
       "main": [[{ "node": "Normalize Account Fields", "type": "main", "index": 0 }]]
     },
     "Normalize Account Fields": {
+      "main": [[{ "node": "Look Up AP Contact (Business Central)", "type": "main", "index": 0 }]]
+    },
+    "Look Up AP Contact (Business Central)": {
+      "main": [[{ "node": "Attach Contact Email", "type": "main", "index": 0 }]]
+    },
+    "Attach Contact Email": {
       "main": [[{ "node": "Has Email on File?", "type": "main", "index": 0 }]]
     },
     "Has Email on File?": {
