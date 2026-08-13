@@ -13,7 +13,7 @@ const fs = require("fs");
 const path = require("path");
 
 const { buildRecords } = require("./transform");
-const { buildBatchPdf, customerPages, sameAddress } = require("./pure-pdf");
+const { buildBatchPdf, customerPages, sameAddress, addressProblem, cityStateZip, stateFromZip } = require("./pure-pdf");
 
 const sample = JSON.parse(fs.readFileSync(path.join(__dirname, "sample.json"), "utf8"));
 const wf = JSON.parse(fs.readFileSync(path.join(__dirname, "Printing_Letter_Invoices_Original.workflow.json"), "utf8"));
@@ -109,8 +109,37 @@ async function main() {
   assert(mixedPages === mixed.length * 4,
     `mixed batch should be ${mixed.length * 4} pages, got ${mixedPages}`);
 
+  // (8) Address hygiene. Business Central leaves County empty on every customer
+  // and ship-tos carry no state field at all, so the state is derived from the
+  // ZIP. Placeholder junk ("-") is not an address: the 2026-08-13 run mailed two
+  // envelopes whose entire city/state/ZIP line was a single dash. See spec §7.
+  const addrOf = (o) => Object.assign(
+    { Description: "Acme Co", Address_1: "1 Main St", Address_2: "", City: "Atlanta", State: "", Zipcode: "30318" }, o);
+  assert(cityStateZip(addrOf({})) === "Atlanta, GA 30318",
+    `state should come from the ZIP, got ${cityStateZip(addrOf({}))}`);
+  assert(cityStateZip(addrOf({ State: "GA" })) === "Atlanta, GA 30318", "an explicit state is kept");
+  assert(cityStateZip(addrOf({ City: "-", Zipcode: "" })) === "", "placeholder city must not print");
+  for (const [zip, want] of [["30318", "GA"], ["31401", "GA"], ["10001", "NY"], ["90210", "CA"], ["99501", "AK"], ["", ""]]) {
+    assert(stateFromZip(zip) === want, `stateFromZip(${zip}) should be ${want || "empty"}, got ${stateFromZip(zip)}`);
+  }
+  assert(addressProblem(addrOf({})) === null, "a complete address is mailable");
+  assert(addressProblem(addrOf({ State: "", City: "" })) === null, "ZIP alone is enough to route");
+  assert(addressProblem(addrOf({ City: "-", Zipcode: "" })) !== null, "placeholder city + no ZIP is undeliverable");
+  assert(addressProblem(addrOf({ Address_1: "", Address_2: "" })) !== null, "no street line is undeliverable");
+  assert(addressProblem(addrOf({ Description: "" })) !== null, "no addressee is undeliverable");
+  // Undeliverable records are pulled from the run and reported, not mailed blind.
+  const addrExcluded = [];
+  const addrRecs = [addrOf({}), addrOf({ Description: "Broken Co", City: "-", Zipcode: "" }), addrOf({})]
+    .map((t) => ({ tokens: t, statement: longStmt(3) }));
+  const addrPdf = buildBatchPdf(addrRecs, { asOfDate: "2026-07-14", excluded: addrExcluded }, "tokens");
+  const addrPages = (addrPdf.toString("latin1").match(/\/Type\s*\/Page\s/g) || []).length;
+  assert(addrPages === 8, `2 mailable of 3 -> 8 pages, got ${addrPages}`);
+  assert(addrExcluded.length === 1 && addrExcluded[0].name === "Broken Co",
+    `excluded sink should name Broken Co, got ${JSON.stringify(addrExcluded)}`);
+
   console.log(`Unit -> ${records.length} customers, each 4 pages (3 compact), shipping ${shippingRecords.length}, gated(1300) ${gated.length}, blankCutoff ${anyAge.length}`);
   console.log(`Set length -> fixed at 4 pages for 0..500-line statements; ${mixedPages}p for ${mixed.length} mixed customers`);
+  console.log(`Address -> state derived from ZIP, ${addrExcluded.length} undeliverable pulled and reported`);
 
   // ---- Execute the generated Code nodes with n8n-style mocks --------------
   const invoiceResp = { value: sample.ledgerEntries.filter((e) => e.Open === true) };

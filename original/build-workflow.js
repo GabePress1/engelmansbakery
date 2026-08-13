@@ -93,10 +93,11 @@ try { const ovj = $('SW Make Job').first().json; if (ovj && ovj.pad === false) p
 const today = new Date().toISOString().slice(0, 10);
 const billingName = 'Past-Due-Billing-' + today + '.pdf';
 const shippingName = 'Past-Due-Shipping-' + today + '.pdf';
-// 'excluded' collects any customer whose statement won't condense onto one sheet.
-// Those are left out of the machine run — a third sheet would shift every later
-// customer into the wrong envelope — and must be stuffed by hand. The names come
-// back on the item so the operator knows who to chase.
+// 'excluded' collects customers pulled from the machine run: an undeliverable
+// address (no street, or no ZIP and no city/state), or a statement that won't
+// condense onto one sheet — a third sheet would shift every later customer into
+// the wrong envelope. The names and reasons come back on the item so the
+// operator knows who to chase or hand-stuff.
 const billingExcluded = [];
 const shippingExcluded = [];
 const billingData = await this.helpers.prepareBinaryData(

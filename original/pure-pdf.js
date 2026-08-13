@@ -151,7 +151,7 @@ function letterPages(t) {
     t.Address_1,
     t.Address_2,
     cityStateZip(t),
-  ].filter((l) => l && String(l).trim() && String(l).trim() !== ",");
+  ].map(clean).filter(Boolean);
 
   // 10/12 rather than the letter's 11/15: a four-line address at 15 pt leading
   // fills the 48 pt band exactly, leaving nothing for fold variance.
@@ -184,10 +184,71 @@ function money(n) {
   const num = Number(n) || 0;
   return (num < 0 ? "-$" : "$") + formatUSD(Math.abs(num));
 }
-// "City, State Zip" — omits the state/zip cleanly when missing (ship-to has no state).
+// --- address hygiene --------------------------------------------------------
+// Business Central returns placeholder junk where an address was never filled
+// in — the 2026-08-13 run mailed two envelopes whose entire city/state/ZIP line
+// was a single "-". Treat those markers as empty rather than printing them.
+const PLACEHOLDER = /^(?:[-–—.,_/\\*?]+|n\/?a|none|null|nil|unknown|unk|tbd|test)$/i;
+function clean(v) {
+  const s = String(v == null ? "" : v).trim().replace(/\s+/g, " ");
+  return PLACEHOLDER.test(s) ? "" : s;
+}
+
+// USPS state for a ZIP code. Business Central's County field is empty across the
+// whole customer list, and ship-to records carry no state field at all, so the
+// ZIP is the only place a state can come from. These are the USPS 3-digit prefix
+// allocations; first match wins, and an unallocated prefix returns "" so the
+// address gets flagged rather than mislabelled.
+const ZIP_STATE = [
+  [5, 5, "NY"], [6, 9, "PR"], [10, 27, "MA"], [28, 29, "RI"], [30, 38, "NH"],
+  [39, 49, "ME"], [50, 59, "VT"], [60, 69, "CT"], [70, 89, "NJ"], [90, 98, "AE"],
+  [100, 149, "NY"], [150, 196, "PA"], [197, 199, "DE"], [200, 200, "DC"],
+  [201, 201, "VA"], [202, 205, "DC"], [206, 219, "MD"], [220, 246, "VA"],
+  [247, 268, "WV"], [270, 289, "NC"], [290, 299, "SC"], [300, 319, "GA"],
+  [320, 339, "FL"], [340, 340, "AA"], [341, 349, "FL"], [350, 369, "AL"],
+  [370, 385, "TN"], [386, 397, "MS"], [398, 399, "GA"], [400, 427, "KY"],
+  [430, 459, "OH"], [460, 479, "IN"], [480, 499, "MI"], [500, 528, "IA"],
+  [530, 549, "WI"], [550, 567, "MN"], [570, 577, "SD"], [580, 588, "ND"],
+  [590, 599, "MT"], [600, 629, "IL"], [630, 658, "MO"], [660, 679, "KS"],
+  [680, 693, "NE"], [700, 714, "LA"], [716, 729, "AR"], [730, 749, "OK"],
+  [750, 799, "TX"], [800, 816, "CO"], [820, 831, "WY"], [832, 838, "ID"],
+  [840, 847, "UT"], [850, 865, "AZ"], [870, 884, "NM"], [885, 885, "TX"],
+  [889, 898, "NV"], [900, 961, "CA"], [962, 966, "AP"], [967, 968, "HI"],
+  [969, 969, "GU"], [970, 979, "OR"], [980, 994, "WA"], [995, 999, "AK"],
+];
+function zip5(v) {
+  const m = /(\d{5})/.exec(String(v == null ? "" : v));
+  return m ? m[1] : "";
+}
+function stateFromZip(v) {
+  const z = zip5(v);
+  if (!z) return "";
+  const p = Number(z.slice(0, 3));
+  for (const r of ZIP_STATE) if (p >= r[0] && p <= r[1]) return r[2];
+  return "";
+}
+
+// "City, State Zip" — junk-tolerant, and fills the state in from the ZIP when
+// the source data has none (which is every record).
 function cityStateZip(t) {
-  const cs = [t.City, t.State].filter((x) => x && String(x).trim()).join(", ");
-  return [cs, t.Zipcode].filter((x) => x && String(x).trim()).join(" ");
+  const x = t || {};
+  const cs = [clean(x.City), clean(x.State) || stateFromZip(x.Zipcode)].filter(Boolean).join(", ");
+  return [cs, clean(x.Zipcode)].filter(Boolean).join(" ");
+}
+
+// Why a mail piece can't be delivered, or null when it can.
+// USPS routes on the ZIP, so a missing state is a formatting defect (fixed
+// above) rather than a delivery blocker — but no ZIP AND no city/state leaves
+// the envelope with nowhere to go, and no street line leaves it with no
+// delivery point. Those get pulled from the run instead of being mailed blind.
+function addressProblem(t) {
+  const x = t || {};
+  if (!clean(x.Description)) return "missing customer name";
+  if (!clean(x.Address_1) && !clean(x.Address_2)) return "missing street address";
+  const city = clean(x.City);
+  const state = clean(x.State) || stateFromZip(x.Zipcode);
+  if (!zip5(x.Zipcode) && !(city && state)) return "missing ZIP and city/state";
+  return null;
 }
 function statementPages(t, statement, opts) {
   const asOf = (opts && opts.asOfDate) || new Date().toISOString().slice(0, 10);
@@ -219,11 +280,11 @@ function statementPages(t, statement, opts) {
       // Bill-to block: Company Name, Account Number, then address.
       const bill = [
         t.Description,
-        t.AccountNumber ? "Account Number: " + t.AccountNumber : null,
+        clean(t.AccountNumber) ? "Account Number: " + clean(t.AccountNumber) : null,
         t.Address_1,
         t.Address_2,
         cityStateZip(t),
-      ].filter((l) => l && String(l).trim() && String(l).trim() !== ",");
+      ].map(clean).filter(Boolean);
       for (const l of bill) { c += text(MARGIN, y, l, "F1", 10); y -= 13; }
       y -= 18;
     }
@@ -408,10 +469,13 @@ function customerPages(tokens, statement, opts) {
 }
 
 // Normalize an address token set to a comparable key (case/space-insensitive).
+// Uses the same cleaning and ZIP-derived state as the rendered address, so a
+// ship-to isn't treated as "different" purely because one side is missing a
+// state or carries a placeholder where the other is blank.
 function normAddr(t) {
   const x = t || {};
-  return [x.Address_1, x.Address_2, x.City, x.State, x.Zipcode]
-    .map((v) => String(v == null ? "" : v).trim().toLowerCase())
+  return [x.Address_1, x.Address_2, x.City, clean(x.State) || stateFromZip(x.Zipcode), x.Zipcode]
+    .map((v) => clean(v).toLowerCase())
     .join("|");
 }
 // True when two token sets carry the same mailing address (ignores Description).
@@ -442,9 +506,16 @@ function buildBatchPdf(records, opts, tokenKey) {
   for (const r of records || []) {
     const tok = r && (r[key] || r.tokens);
     if (!tok) continue; // skip malformed records instead of crashing
+    // An undeliverable address is undeliverable however well the sheet folds:
+    // pull it from the run rather than spend an envelope on it.
+    const bad = addressProblem(tok);
+    if (bad) {
+      if (o.excluded) o.excluded.push({ name: clean(tok.Description), reason: bad });
+      continue;
+    }
     const p = customerPages(tok, r.statement, o);
     if (!p) {
-      if (o.excluded) o.excluded.push({ name: tok.Description || "", reason: "statement exceeds one sheet" });
+      if (o.excluded) o.excluded.push({ name: clean(tok.Description), reason: "statement exceeds one sheet" });
       continue;
     }
     pages.push(...p);
@@ -461,4 +532,4 @@ function buildBatchPdf(records, opts, tokenKey) {
   return buildPdf(pages, o);
 }
 
-module.exports = { buildCustomerPdf, buildBatchPdf, customerPages, sameAddress };
+module.exports = { buildCustomerPdf, buildBatchPdf, customerPages, sameAddress, addressProblem, cityStateZip, stateFromZip, clean };

@@ -268,20 +268,44 @@ today — but re-check it if the address moves panels.
 
 ---
 
-## 7. Address data quality (prerequisite)
+## 7. Address data quality
 
-Folding is irrelevant if the address is undeliverable. The sample run has real defects
+Folding is irrelevant if the address is undeliverable. The 2026-08-13 run had two real defects
 **[MEASURED]**:
 
-- **No state on any record.** Lines read `Atlanta 30318`, not `ATLANTA GA 30318`. USPS requires
-  city, state, and ZIP. `transform.js` maps Business Central's `County` field to State, and
-  `County` is evidently empty in the source data.
-- **Two of nineteen records have a literal `-`** as their entire city/state/ZIP line (Five Star
-  Culinary, Friends Table Restaurant PTC TTHS) — these went into envelopes with no destination.
+- **No state on any record.** Lines read `Atlanta 30318`, not `Atlanta, GA 30318`.
+  `transform.js` maps Business Central's `County` field to State, and `County` is empty across
+  the entire customer list. Ship-to records are worse: they carry **no state field at all**.
+- **Two of nineteen records had a literal `-`** as their entire city/state/ZIP line (Five Star
+  Culinary, Friends Table Restaurant PTC TTHS). Those envelopes had no destination.
 
-**Required:** validate before rendering. A record missing street, city, state, or ZIP must be
-**suppressed from the machine-run PDF** and reported on an exception list. Fix the `County` →
-State mapping at the source; if Business Central holds state elsewhere, map from there.
+### How it is handled now
+
+Because `County` is empty and ship-tos have no state field, there is nowhere to map a state
+*from* — so `pure-pdf.js` derives it from the ZIP:
+
+- **`clean()`** treats placeholder junk as empty — `-`, `--`, `.`, `N/A`, `none`, `null`,
+  `unknown`, `TBD` and similar. A dash is not an address and must never reach an envelope.
+- **`stateFromZip()`** maps the ZIP to its USPS state using the 3-digit prefix allocations
+  (including territories and the AA/AE/AP military codes). `cityStateZip()` uses an explicit
+  state when present and falls back to the derived one, so all 17 deliverable records in the
+  sample run now print `Atlanta, GA 30318`. This fixes shipping addresses too, which never had
+  a state field to begin with.
+- **`addressProblem()`** returns why a piece cannot be delivered, or `null`. It requires an
+  addressee and a street line, plus **either a ZIP or a city+state**. USPS routes on the ZIP,
+  so a missing state is a formatting defect rather than a delivery blocker — deliberately, since
+  requiring a state before the derivation above would have suppressed the entire mailing.
+- **`buildBatchPdf()` pulls failing records from the run** and reports them on the same
+  `opts.excluded` sink as the set-length overflow (§4), so the operator gets names and reasons
+  rather than silently mailed-blind envelopes. On the sample data: 17 of 19 mail, 2 are pulled
+  as `missing ZIP and city/state`.
+
+`normAddr()` uses the same cleaning and derivation, so a ship-to is no longer treated as a
+different address purely because one side lacks a state or holds a placeholder.
+
+**Still worth fixing at the source:** the derivation is a repair, not a substitute for real
+data. Populating `County` (or whichever field Business Central actually holds state in) and
+filling in the two blank customer addresses removes the guesswork.
 
 ---
 
