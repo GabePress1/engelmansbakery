@@ -1,0 +1,45 @@
+{# Letters and Statements — runs the n8n "Printing Letter_Invoices Original" workflow. #}
+<div class="ldg" id="{{ module.anchor_id }}" data-base="{{ module.webhook_base }}" data-secret="{{ module.secret }}">
+  <h2 class="ldg-title">Letters &amp; Statements (for Mailing)</h2>
+
+  <div class="ldg-cols">
+    <div class="ldg-about">
+      <p>This tool builds a past&#8209;due <strong>letter + statement</strong> for <strong>every</strong>
+        customer with an open, past&#8209;due balance &mdash; for <strong>mailing</strong> (not tied to
+        tomorrow's orders).</p>
+      <p>It produces <strong>two PDFs</strong>, which both download automatically:</p>
+      <ul>
+        <li><strong>Billing</strong> &mdash; every qualifying customer.</li>
+        <li><strong>Shipping</strong> &mdash; only customers whose shipping address differs from their
+          billing address (same&#8209;address customers are in the Billing PDF only).</li>
+      </ul>
+      <p>Each account is a <strong>letter (sheet 1) + statement (sheet 2)</strong>, grouped by route.</p>
+      <p class="ldg-note">Set the filters, click <em>Generate</em>. Large runs can take a few minutes
+        &mdash; keep this page open.</p>
+    </div>
+
+    <div class="ldg-form">
+      <label class="ldg-field">
+        <span>Minimum overdue balance ($)</span>
+        <small>Only include customers who owe at least this amount.</small>
+        <input class="ldg-min" type="number" min="0" step="1" value="1000" inputmode="numeric" />
+      </label>
+
+      <label class="ldg-field">
+        <span>Oldest open invoice date</span>
+        <small>The customer must have an open invoice dated on or before this. Leave blank to include any overdue invoice.</small>
+        <input class="ldg-oldest" type="date" />
+      </label>
+
+      <label class="ldg-check">
+        <input class="ldg-pad" type="checkbox" checked />
+        <span>Format for double&#8209;sided printing
+          <small>Keeps each account on its own sheet (blank filler pages). Uncheck for a compact on&#8209;screen copy.</small>
+        </span>
+      </label>
+
+      <button class="ldg-run" type="button">Generate PDFs</button>
+      <p class="ldg-status" role="status" aria-live="polite"></p>
+    </div>
+  </div>
+</div>

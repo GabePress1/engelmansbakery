@@ -1,0 +1,88 @@
+.pdg {
+  max-width: 920px;
+  margin: 110px auto 56px; /* extra top margin clears the site's fixed header */
+  scroll-margin-top: 120px; /* so the nav anchor doesn't land under the fixed header */
+  padding: 32px 36px 36px;
+  border: 1px solid #eadfdf;
+  border-radius: 12px;
+  background: #fff;
+  font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: #2a1a1a;
+}
+.pdg-title {
+  margin: 0 0 20px;
+  font-size: 1.6rem;
+  letter-spacing: .02em;
+}
+
+/* Two columns: explanation on the left, the form on the right. */
+.pdg-cols {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 36px;
+  align-items: flex-start;
+}
+.pdg-about {
+  flex: 1 1 300px;
+  min-width: 260px;
+  font-size: .92rem;
+  line-height: 1.5;
+  color: #5c4a4a;
+}
+.pdg-about ul { margin: 8px 0 8px 1.1em; padding: 0; }
+.pdg-about li { margin: 3px 0; }
+.pdg-about strong { color: #2a1a1a; }
+.pdg-note { color: #7a6a6a; }
+
+.pdg-form {
+  flex: 0 0 360px;
+  max-width: 100%;
+}
+.pdg-field { display: block; margin-bottom: 18px; }
+.pdg-field > span { display: block; font-weight: 700; font-size: .92rem; margin-bottom: 2px; }
+.pdg-field > small { display: block; color: #8a7a7a; font-size: .8rem; margin-bottom: 8px; }
+.pdg-field input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 11px 13px;
+  border: 1px solid #d8cccc;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+.pdg-field input:focus { outline: 2px solid #E8722B; outline-offset: 1px; border-color: #E8722B; }
+
+.pdg-check {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 4px 0 22px;
+  cursor: pointer;
+}
+.pdg-check input { margin-top: 3px; width: 16px; height: 16px; flex: 0 0 auto; }
+.pdg-check > span { font-weight: 700; font-size: .9rem; }
+.pdg-check > span > small { display: block; font-weight: 400; color: #8a7a7a; font-size: .78rem; margin-top: 2px; }
+
+.pdg-run {
+  width: 100%;
+  padding: 13px 18px;
+  border: 0;
+  border-radius: 8px;
+  background: #E8722B;
+  color: #fff;
+  font-size: 1.02rem;
+  font-weight: 800;
+  letter-spacing: .03em;
+  cursor: pointer;
+}
+.pdg-run:hover:not(:disabled) { background: #d9631d; }
+.pdg-run:disabled { opacity: .6; cursor: default; }
+
+.pdg-status { margin: 16px 0 0; min-height: 1.2em; font-size: .95rem; }
+.pdg-status.err { color: #b3261e; }
+.pdg-status.ok  { color: #1e7d3c; }
+
+/* Stack to one column on narrow screens. */
+@media (max-width: 720px) {
+  .pdg { padding: 24px 20px 28px; margin: 90px auto 32px; }
+  .pdg-form { flex-basis: 100%; }
+}
