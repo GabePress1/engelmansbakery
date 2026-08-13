@@ -22,10 +22,11 @@ Manual trigger
                       └─ Attach Contact Email
                            └─ Has Email on File?
                                 ├─ true  ─── Render Statement PDF (Business Central)
-                                │              └─ Build Draft Payload
-                                │                   └─ Statement Base64 → PDF File
-                                │                        └─ Create Outlook Draft (Do Not Send)
-                                │                             └─ Drafts Ready for Review
+                                │              ├─ ok    ─ Build Draft Payload
+                                │              │           └─ Statement Base64 → PDF File
+                                │              │                └─ Create Outlook Draft (Do Not Send)
+                                │              │                     └─ Drafts Ready for Review
+                                │              └─ error ─ Statement Not Rendered — Review
                                 └─ false ─── Skipped — No Email on File
 ```
 
@@ -102,11 +103,25 @@ POST .../ODataV4/StatementApi_GetCustomerStatementPdf?company={BC_COMPANY_NAME}
 `Statement Base64 → PDF File` converts that string into a real binary PDF under the binary
 property `statement`, which is what the Outlook node attaches.
 
-**Open items only** is controlled by the report's saved request page parameters, passed as
-`requestPageXml` and held in the `BC_STATEMENT_REQUEST_XML` project Variable. An empty string
-accepts the report's own defaults. To capture the right XML: open your statement report in
-BC, set the request page to open entries only, save it as a report setting, and read the saved
-parameter XML from the **Report Settings** page.
+**Scoping.** The statement report is built over `Cust. Ledger Entry`, so that is the table the
+codeunit filters and hands to `Report.SaveAs` as a `RecordRef`. Filtering `Customer` instead would
+not scope the report at all — every account would come back in one PDF.
+
+**Open items only** is enforced by that same filter:
+
+```al
+CustLedgerEntry.SetRange("Customer No.", customerNo);
+CustLedgerEntry.SetRange(Open, true);      // open items only
+```
+
+Because the filter does it, `BC_STATEMENT_REQUEST_XML` is only needed for *other* request page
+options (a date range, a layout choice). An empty string is fine and is the expected default. To
+capture XML if you do need it: open the report in BC, set the request page, save it as a report
+setting, and read the parameter XML from the **Report Settings** page.
+
+**Customers with nothing outstanding.** The codeunit errors rather than producing an empty
+statement. That error is routed to `Statement Not Rendered — Review` instead of aborting the run,
+so one such account does not stop the rest of the batch from drafting.
 
 ### Before first run
 
@@ -140,17 +155,18 @@ must be gpress@engelmansbakery.com.
 
 - `Printing Letter_Invoices` returns **one item per account**, carrying the letter content and the
   customer number. `accountNumber` must resolve to the customer number (e.g. `10981`).
-- The custom statement report's top-level dataitem is `Customer`. That is what makes the customer
-  filter scope the PDF to a single account. If the report is built over Customer Ledger Entry
-  instead, the `SetView` in the codeunit needs to filter that table rather than Customer.
+- The custom statement report is built over `Cust. Ledger Entry` and its top-level dataitem is that
+  table, so the `RecordRef` the codeunit passes matches what the report expects.
 - `Integration_Customer_No` on the Contact record is the link back to the Customer. This is the
   field shown on the Contact Card; if it turns out to be extension-provided rather than base
   application, the `$filter` needs adjusting.
 
 ### Notes
 
-- Accounts with no usable email are routed to `Skipped — No Email on File` rather than dropped
-  silently. Check that branch after each run.
+- Two review branches, both of which mean a customer did *not* get chased. Check them after every
+  run: `Skipped — No Email on File` (no usable address on the BC contact) and
+  `Statement Not Rendered — Review` (no open entries, or a genuine BC/auth failure — the item's
+  error message tells them apart).
 - `Has Email on File?` requires the address to be non-empty *and* contain `@`, so a malformed BC
   record doesn't produce a draft that fails at send time.
 - `Build Draft Payload` throws with the account number if the letter body or the statement PDF is

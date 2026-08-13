@@ -193,6 +193,7 @@
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 2000,
+      "onError": "continueErrorOutput",
       "credentials": {
         "oAuth2Api": {
           "id": "REPLACE_WITH_BUSINESS_CENTRAL_OAUTH2_CREDENTIAL_ID",
@@ -276,6 +277,15 @@
       "typeVersion": 1,
       "position": [660, 560],
       "notes": "Accounts whose Business Central contact has no usable E-Mail land here instead of silently disappearing. Review this branch after each run — contactMatchCount of 0 means no contact matched the customer number at all."
+    },
+    {
+      "parameters": {},
+      "id": "a1000000-0000-4000-8000-000000000016",
+      "name": "Statement Not Rendered — Review",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [880, 560],
+      "notes": "Accounts whose statement could not be rendered land here so one bad account does not abort the whole batch. Two different things arrive here and the item's error message tells them apart: 'no open ledger entries' means the customer owes nothing and arguably should not have been in the letter run at all, while anything else is a genuine Business Central or auth failure that needs investigating. Do not ignore this branch — a failure here means a customer who should have been chased was not."
     }
   ],
   "connections": {
@@ -304,7 +314,10 @@
       ]
     },
     "Render Statement PDF (Business Central)": {
-      "main": [[{ "node": "Build Draft Payload", "type": "main", "index": 0 }]]
+      "main": [
+        [{ "node": "Build Draft Payload", "type": "main", "index": 0 }],
+        [{ "node": "Statement Not Rendered — Review", "type": "main", "index": 0 }]
+      ]
     },
     "Build Draft Payload": {
       "main": [[{ "node": "Statement Base64 → PDF File", "type": "main", "index": 0 }]]

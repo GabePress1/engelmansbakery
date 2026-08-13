@@ -1,6 +1,7 @@
 namespace EngelmansBakery.Statements;
 
 using Microsoft.Sales.Customer;
+using Microsoft.Sales.Receivables;
 using System.Text;
 using System.Utilities;
 
@@ -30,7 +31,7 @@ codeunit 50100 "Statement Api"
     Access = Public;
 
     /// <summary>
-    /// Returns the statement for one customer as a base64 encoded PDF.
+    /// Returns the open-items statement for one customer as a base64 encoded PDF.
     /// </summary>
     /// <param name="customerNo">The customer number, e.g. 10981. Required.</param>
     /// <param name="reportId">
@@ -39,16 +40,18 @@ codeunit 50100 "Statement Api"
     /// sending customers a statement in the wrong layout.
     /// </param>
     /// <param name="requestPageXml">
-    /// The report's saved request page parameters, which is what controls open-items-only.
-    /// Pass an empty string to accept the report's own defaults.
+    /// The report's saved request page parameters. Open-items-only is enforced by the
+    /// ledger entry filter below rather than here, so this is only needed for other
+    /// request page options such as a date range. Pass an empty string for defaults.
     /// </param>
     [ServiceEnabled]
     procedure GetCustomerStatementPdf(customerNo: Code[20]; reportId: Integer; requestPageXml: Text): Text
     var
         Customer: Record Customer;
+        CustLedgerEntry: Record "Cust. Ledger Entry";
         TempBlob: Codeunit "Temp Blob";
         Base64Convert: Codeunit "Base64 Convert";
-        CustomerRecRef: RecordRef;
+        LedgerEntryRecRef: RecordRef;
         StatementOutStream: OutStream;
         StatementInStream: InStream;
     begin
@@ -58,17 +61,25 @@ codeunit 50100 "Statement Api"
         if reportId = 0 then
             Error(MissingReportIdErr);
 
-        Customer.SetRange("No.", customerNo);
-        if Customer.IsEmpty() then
+        if not Customer.Get(customerNo) then
             Error(CustomerNotFoundErr, customerNo);
 
-        // Scope the report to this one customer. The statement report's top level dataitem is
-        // Customer, so the view on the RecordRef is what limits the PDF to a single account.
-        CustomerRecRef.GetTable(Customer);
-        CustomerRecRef.SetView(Customer.GetView());
+        // The statement report is built over Cust. Ledger Entry, so that is the table the
+        // filter has to go on - filtering Customer would not scope the PDF and every account
+        // would end up in one document.
+        CustLedgerEntry.SetRange("Customer No.", customerNo);
+
+        // Open items only: unapplied entries still carrying a balance.
+        CustLedgerEntry.SetRange(Open, true);
+
+        if CustLedgerEntry.IsEmpty() then
+            Error(NoOpenEntriesErr, customerNo, Customer.Name);
+
+        LedgerEntryRecRef.GetTable(CustLedgerEntry);
+        LedgerEntryRecRef.SetView(CustLedgerEntry.GetView());
 
         TempBlob.CreateOutStream(StatementOutStream);
-        Report.SaveAs(reportId, requestPageXml, ReportFormat::Pdf, StatementOutStream, CustomerRecRef);
+        Report.SaveAs(reportId, requestPageXml, ReportFormat::Pdf, StatementOutStream, LedgerEntryRecRef);
 
         TempBlob.CreateInStream(StatementInStream);
         exit(Base64Convert.ToBase64(StatementInStream));
@@ -78,4 +89,5 @@ codeunit 50100 "Statement Api"
         MissingCustomerNoErr: Label 'A customer number is required to render a statement.';
         MissingReportIdErr: Label 'A statement report ID is required. Set BC_STATEMENT_REPORT_ID in the n8n project variables to the object ID of the statement report Engelman''s prints.';
         CustomerNotFoundErr: Label 'No customer found with No. %1.', Comment = '%1 = the customer number that was requested';
+        NoOpenEntriesErr: Label 'Customer %1 (%2) has no open ledger entries, so there is nothing to put on a statement.', Comment = '%1 = customer number, %2 = customer name';
 }
