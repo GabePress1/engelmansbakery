@@ -27,7 +27,7 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
       "position": [-660, 300],
-      "notes": "Returns one item per account, carrying the letter content and the customer number. Does NOT carry the email address — that is looked up from Business Central further down."
+      "notes": "Returns one item per account, carrying the letter content and the customer number. The email address and the statement are both sourced from Business Central further down."
     },
     {
       "parameters": {
@@ -63,18 +63,18 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [-440, 300],
-      "notes": "Fallback chains cover both Business Central shapes: OData page fields (No, Name, Company_Name, Integration_Customer_No) and API v2.0 fields (number, displayName, companyName). Trim to the single real field name once the Printing Letter_Invoices export is available. accountNumber must end up as the customer number (e.g. 10981) — it is the key for the contact lookup."
+      "notes": "Fallback chains cover both Business Central shapes: OData page fields (No, Name, Company_Name, Integration_Customer_No) and API v2.0 fields (number, displayName, companyName). Trim to the single real field name once the Printing Letter_Invoices export is available. accountNumber must end up as the customer number (e.g. 10981) — it is the key for both the contact lookup and the statement."
     },
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "// The account number is the join key for everything downstream: the Business Central\n// contact lookup and the statement. Fail loudly here rather than letting an empty key\n// through — an empty $filter would match every contact in the company.\nconst accountNumber = ($input.item.json.accountNumber || '').toString().trim();\n\nif (!accountNumber) {\n  throw new Error(\n    'No account number on this item. Everything downstream (the Business Central contact ' +\n      'lookup and the statement) is keyed on it. Check the accountNumber mapping in ' +\n      '\"Normalize Account Fields\" against what Printing Letter_Invoices actually emits.'\n  );\n}\n\nreturn { json: { ...$input.item.json, accountNumber } };\n"
+        "jsCode": "// The account number is the join key for everything downstream: the Business Central\n// contact lookup and the statement render. Fail loudly here rather than letting an empty\n// key through — an empty $filter would match every contact in the company.\nconst accountNumber = ($input.item.json.accountNumber || '').toString().trim();\n\nif (!accountNumber) {\n  throw new Error(\n    'No account number on this item. Everything downstream (the Business Central contact ' +\n      'lookup and the statement) is keyed on it. Check the accountNumber mapping in ' +\n      '\"Normalize Account Fields\" against what Printing Letter_Invoices actually emits.'\n  );\n}\n\nreturn { json: { ...$input.item.json, accountNumber } };\n"
       },
       "id": "a1000000-0000-4000-8000-000000000013",
       "name": "Require Account Number",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [-330, 300],
+      "position": [-220, 300],
       "notes": "Guard: an empty account number would turn the BC $filter into a match-everything query and would render the wrong account's statement."
     },
     {
@@ -101,7 +101,7 @@
       "name": "Look Up AP Contact (Business Central)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [-220, 300],
+      "position": [0, 300],
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 2000,
@@ -116,13 +116,13 @@
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "// Fold the Business Central contact lookup back onto the account item.\nconst account = $('Normalize Account Fields').item.json;\nconst rows = $input.item.json.value ?? [];\n\n// Prefer a contact that actually has an email; otherwise take the first match.\nconst contact = rows.find((r) => (r.E_Mail || '').toString().trim()) ?? rows[0] ?? {};\n\nconst recipientEmail = (contact.E_Mail || account.recipientEmail || '').toString().trim();\n\nreturn {\n  json: {\n    ...account,\n    recipientEmail,\n    contactNumber: contact.No ?? '',\n    contactName: contact.Name ?? '',\n    // Prefer the contact's company name when the letter workflow did not supply one.\n    accountName: (account.accountName || contact.Company_Name || '').toString().trim(),\n    contactMatchCount: rows.length,\n  },\n};\n"
+        "jsCode": "// Fold the Business Central contact lookup back onto the account item.\nconst account = $('Require Account Number').item.json;\nconst rows = $input.item.json.value ?? [];\n\n// Prefer a contact that actually has an email; otherwise take the first match.\nconst contact = rows.find((r) => (r.E_Mail || '').toString().trim()) ?? rows[0] ?? {};\n\nconst recipientEmail = (contact.E_Mail || account.recipientEmail || '').toString().trim();\n\nreturn {\n  json: {\n    ...account,\n    recipientEmail,\n    contactNumber: contact.No ?? '',\n    contactName: contact.Name ?? '',\n    // Prefer the contact's company name when the letter workflow did not supply one.\n    accountName: (account.accountName || contact.Company_Name || '').toString().trim(),\n    contactMatchCount: rows.length,\n  },\n};\n"
       },
       "id": "a1000000-0000-4000-8000-000000000012",
       "name": "Attach Contact Email",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [0, 300]
+      "position": [220, 300]
     },
     {
       "parameters": {
@@ -163,68 +163,71 @@
       "name": "Has Email on File?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
-      "position": [220, 300]
+      "position": [440, 300]
     },
     {
       "parameters": {
-        "workflowId": {
-          "__rl": true,
-          "value": "REPLACE_WITH_PRINTING_STATEMENTS_WORKFLOW_ID",
-          "mode": "id",
-          "cachedResultName": "Printing Statements"
-        },
-        "workflowInputs": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "accountNumber": "={{ $json.accountNumber }}"
-          },
-          "matchingColumns": [],
-          "schema": [],
-          "attemptToConvertTypes": false,
-          "convertFieldsToString": true
-        },
-        "mode": "each",
-        "options": {
-          "waitForSubWorkflow": true
-        }
-      },
-      "id": "a1000000-0000-4000-8000-000000000005",
-      "name": "Printing Statements",
-      "type": "n8n-nodes-base.executeWorkflow",
-      "typeVersion": 1.2,
-      "position": [480, 400],
-      "notes": "Runs once per account, keyed on accountNumber, so the statement pulled from Business Central is the one for this customer and lines up with this letter. Returns exactly one item carrying the statement PDF as binary data. NOTE: the accountNumber input mapping above only applies if this workflow's Execute Workflow Trigger declares a matching input field. If that trigger is set to 'Accept all data' instead, delete the mapping — accountNumber already rides along on the item. Lives in My project / Engelman's Bakery / Printing Letter_Invoices."
-    },
-    {
-      "parameters": {
-        "mode": "combine",
-        "combineBy": "combineByPosition",
-        "options": {
-          "includeUnpaired": false,
-          "clashHandling": {
-            "values": {
-              "resolveClash": "preferInput1"
+        "method": "POST",
+        "url": "=https://api.businesscentral.dynamics.com/v2.0/{{ $vars.BC_TENANT_ID }}/{{ $vars.BC_ENVIRONMENT }}/ODataV4/StatementApi_GetCustomerStatementPdf",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "company",
+              "value": "={{ $vars.BC_COMPANY_NAME }}"
             }
-          }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ customerNo: $json.accountNumber, requestPageXml: $vars.BC_STATEMENT_REQUEST_XML ?? '' }) }}",
+        "options": {}
+      },
+      "id": "a1000000-0000-4000-8000-000000000014",
+      "name": "Render Statement PDF (Business Central)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [660, 300],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "oAuth2Api": {
+          "id": "REPLACE_WITH_BUSINESS_CENTRAL_OAUTH2_CREDENTIAL_ID",
+          "name": "Business Central OAuth2"
         }
       },
-      "id": "a1000000-0000-4000-8000-000000000006",
-      "name": "Combine Letter + Statement",
-      "type": "n8n-nodes-base.merge",
-      "typeVersion": 3,
-      "position": [700, 300],
-      "notes": "Input 1 = letter/account/email data, Input 2 = statement PDF. Position pairing is safe because Printing Statements runs once per item, in order. Clash handling prefers input 1 so a field the statement workflow happens to return (its own accountNumber or No) cannot overwrite the account identity the draft is addressed from."
+      "notes": "Calls the Statement Api codeunit (businesscentral/StatementApi.Codeunit.al) as an OData V4 unbound action. BC cannot return a report as PDF over a plain OData query — $format=PDF is not supported on report web services — so the codeunit renders report 1316 'Standard Statement' scoped to this customer and returns it base64 encoded in the 'value' property. BC_STATEMENT_REQUEST_XML holds the saved request page parameters that make the statement open-items-only; an empty string accepts the report's defaults."
     },
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "// Build the Outlook draft payload: letter as the HTML body, statement PDF as the attachment.\nconst json = $input.item.json;\nconst binary = $input.item.binary ?? {};\n\nconst accountNumber = (json.accountNumber || '').toString().trim();\nconst accountName = (json.accountName || '').toString().trim();\nconst statementDate = new Date().toISOString().slice(0, 10);\n\n// The statement workflow may name its binary property anything; take the first PDF it hands us.\nconst statementKey =\n  ['statement', 'data', 'pdf', 'file'].find((k) => binary[k]) ?? Object.keys(binary)[0];\n\nif (!statementKey) {\n  throw new Error(\n    `No statement PDF found on the item for account ${accountNumber || '(unknown)'}. ` +\n      'Check that the Printing Statements workflow returns the PDF as binary data.'\n  );\n}\n\nconst safeAccount = (accountNumber || 'account').replace(/[^A-Za-z0-9._-]/g, '_');\nconst attachmentName = `Statement_${safeAccount}_${statementDate}.pdf`;\n\n// Wrap the letter so it renders as a standalone HTML email body.\nconst letterHtml = (json.letterHtml || '').toString().trim();\nif (!letterHtml) {\n  throw new Error(\n    `No letter content found for account ${accountNumber || '(unknown)'}. ` +\n      'Check the letterHtml mapping in \"Normalize Account Fields\".'\n  );\n}\n\nconst emailBodyHtml = letterHtml.toLowerCase().includes('<html')\n  ? letterHtml\n  : `<!doctype html><html><body style=\"font-family:Arial,Helvetica,sans-serif;font-size:11pt;color:#000;\">${letterHtml}</body></html>`;\n\nconst emailSubject = accountName\n  ? `Engelman's Bakery — Account Statement for ${accountName}`\n  : `Engelman's Bakery — Account Statement${accountNumber ? ` (${accountNumber})` : ''}`;\n\nreturn {\n  json: {\n    ...json,\n    accountNumber,\n    accountName,\n    statementDate,\n    emailSubject,\n    emailBodyHtml,\n    attachmentName,\n  },\n  binary: {\n    ...binary,\n    // Normalized name + filename so the Outlook node always finds the attachment.\n    statement: { ...binary[statementKey], fileName: attachmentName, mimeType: 'application/pdf' },\n  },\n};\n"
+        "jsCode": "// Combine the account context with the statement Business Central just rendered.\nconst account = $('Has Email on File?').item.json;\nconst statementBase64 = ($input.item.json.value || '').toString();\n\nconst accountNumber = (account.accountNumber || '').toString().trim();\nconst accountName = (account.accountName || '').toString().trim();\nconst statementDate = new Date().toISOString().slice(0, 10);\n\nif (!statementBase64) {\n  throw new Error(\n    `Business Central returned no statement PDF for account ${accountNumber}. ` +\n      'Check that the StatementApi codeunit is published as a web service and that the ' +\n      'customer has entries to report on.'\n  );\n}\n\n// Wrap the letter so it renders as a standalone HTML email body.\nconst letterHtml = (account.letterHtml || '').toString().trim();\nif (!letterHtml) {\n  throw new Error(\n    `No letter content found for account ${accountNumber}. ` +\n      'Check the letterHtml mapping in \"Normalize Account Fields\".'\n  );\n}\n\nconst emailBodyHtml = letterHtml.toLowerCase().includes('<html')\n  ? letterHtml\n  : `<!doctype html><html><body style=\"font-family:Arial,Helvetica,sans-serif;font-size:11pt;color:#000;\">${letterHtml}</body></html>`;\n\nconst safeAccount = (accountNumber || 'account').replace(/[^A-Za-z0-9._-]/g, '_');\n\nreturn {\n  json: {\n    ...account,\n    statementDate,\n    statementBase64,\n    attachmentName: `Statement_${safeAccount}_${statementDate}.pdf`,\n    emailBodyHtml,\n    emailSubject: accountName\n      ? `Engelman's Bakery — Account Statement for ${accountName}`\n      : `Engelman's Bakery — Account Statement (${accountNumber})`,\n  },\n};\n"
       },
       "id": "a1000000-0000-4000-8000-000000000007",
       "name": "Build Draft Payload",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [920, 300]
+      "position": [880, 300]
+    },
+    {
+      "parameters": {
+        "operation": "toBinary",
+        "sourceProperty": "statementBase64",
+        "options": {
+          "fileName": "={{ $json.attachmentName }}",
+          "mimeType": "application/pdf",
+          "dataPropertyName": "statement"
+        }
+      },
+      "id": "a1000000-0000-4000-8000-000000000015",
+      "name": "Statement Base64 → PDF File",
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [1100, 300],
+      "notes": "Turns the base64 string Business Central returned into a real binary PDF on the item, under the binary property 'statement', which is what the Outlook node attaches."
     },
     {
       "parameters": {
@@ -248,14 +251,14 @@
       "name": "Create Outlook Draft (Do Not Send)",
       "type": "n8n-nodes-base.microsoftOutlook",
       "typeVersion": 2,
-      "position": [1140, 300],
+      "position": [1320, 300],
       "credentials": {
         "microsoftOutlookOAuth2Api": {
           "id": "REPLACE_WITH_OUTLOOK_CREDENTIAL_ID",
           "name": "Microsoft Outlook account (gpress@engelmansbakery.com)"
         }
       },
-      "notes": "Creates an UNSENT draft only. The draft lands in the mailbox that owns the OAuth2 credential, so this credential must be gpress@engelmansbakery.com. There is deliberately no 'send' operation anywhere in this workflow."
+      "notes": "Creates an UNSENT draft only. The draft lands in the mailbox that owns the OAuth2 credential, so this credential must be gpress@engelmansbakery.com. There is deliberately no 'send' operation anywhere in this workflow. Compare the attachment setup here against the RT 21 Daily email workflow and match whichever pattern that one uses."
     },
     {
       "parameters": {},
@@ -263,7 +266,7 @@
       "name": "Drafts Ready for Review",
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
-      "position": [1360, 300]
+      "position": [1540, 300]
     },
     {
       "parameters": {},
@@ -271,7 +274,7 @@
       "name": "Skipped — No Email on File",
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
-      "position": [480, 600],
+      "position": [660, 560],
       "notes": "Accounts whose Business Central contact has no usable E-Mail land here instead of silently disappearing. Review this branch after each run — contactMatchCount of 0 means no contact matched the customer number at all."
     }
   ],
@@ -296,20 +299,17 @@
     },
     "Has Email on File?": {
       "main": [
-        [
-          { "node": "Printing Statements", "type": "main", "index": 0 },
-          { "node": "Combine Letter + Statement", "type": "main", "index": 0 }
-        ],
+        [{ "node": "Render Statement PDF (Business Central)", "type": "main", "index": 0 }],
         [{ "node": "Skipped — No Email on File", "type": "main", "index": 0 }]
       ]
     },
-    "Printing Statements": {
-      "main": [[{ "node": "Combine Letter + Statement", "type": "main", "index": 1 }]]
-    },
-    "Combine Letter + Statement": {
+    "Render Statement PDF (Business Central)": {
       "main": [[{ "node": "Build Draft Payload", "type": "main", "index": 0 }]]
     },
     "Build Draft Payload": {
+      "main": [[{ "node": "Statement Base64 → PDF File", "type": "main", "index": 0 }]]
+    },
+    "Statement Base64 → PDF File": {
       "main": [[{ "node": "Create Outlook Draft (Do Not Send)", "type": "main", "index": 0 }]]
     },
     "Create Outlook Draft (Do Not Send)": {

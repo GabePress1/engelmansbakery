@@ -6,8 +6,8 @@ n8n workflow exports. These live in n8n under
 ## Emailing Letter + Statement Draft Workflow
 
 Takes the letter produced by **Printing Letter_Invoices**, puts it in the body of an email,
-attaches the PDF from **Printing Statements**, and creates an **unsent Outlook draft** addressed to
-the AP contact on the same account.
+attaches the customer's statement rendered from **Business Central**, and creates an **unsent
+Outlook draft** addressed to the AP contact on the same account.
 
 Nothing is ever sent. The workflow contains no `send` operation — only `draft: create`.
 
@@ -15,17 +15,17 @@ Nothing is ever sent. The workflow contains no `send` operation — only `draft:
 
 ```
 Manual trigger
-  └─ Printing Letter_Invoices                  (sub-workflow, runs once)
-       └─ Normalize Account Fields             (accountNumber / accountName / letterHtml)
-            └─ Require Account Number          (guard — the join key must exist)
+  └─ Printing Letter_Invoices              (sub-workflow, runs once)
+       └─ Normalize Account Fields         (accountNumber / accountName / letterHtml)
+            └─ Require Account Number      (guard — the join key must exist)
                  └─ Look Up AP Contact (Business Central)
                       └─ Attach Contact Email
                            └─ Has Email on File?
-                                ├─ true  ─┬─ Printing Statements  (once per account, keyed on accountNumber)
-                                │         └─ Combine Letter + Statement   (merge by position)
+                                ├─ true  ─── Render Statement PDF (Business Central)
                                 │              └─ Build Draft Payload
-                                │                   └─ Create Outlook Draft (Do Not Send)
-                                │                        └─ Drafts Ready for Review
+                                │                   └─ Statement Base64 → PDF File
+                                │                        └─ Create Outlook Draft (Do Not Send)
+                                │                             └─ Drafts Ready for Review
                                 └─ false ─── Skipped — No Email on File
 ```
 
@@ -38,22 +38,12 @@ customer account number:
 |---|---|
 | Letter (email body) | `Printing Letter_Invoices` emits one item per account |
 | Email address | `$filter=Integration_Customer_No eq '<accountNumber>'` against BC contacts |
-| Statement (attachment) | `accountNumber` passed into `Printing Statements`, which pulls it from BC |
+| Statement (attachment) | `customerNo` posted to the BC `StatementApi` codeunit |
 
-Three things enforce that the key stays intact end to end:
-
-- **`Require Account Number`** throws if the key is missing. Without it an empty `$filter` would
-  match every contact in the company, and the statement would be rendered for the wrong account.
-- **`Printing Statements`** receives `accountNumber` as an explicit workflow input, so the
-  statement it pulls from BC is unambiguously this customer's.
-- **`Combine Letter + Statement`** resolves field clashes in favour of input 1, so a field the
-  statement workflow happens to return cannot overwrite the account identity the draft is
-  addressed from.
+`Require Account Number` throws if the key is missing. Without it an empty `$filter` would match
+every contact in the company, and the statement would be rendered for the wrong account.
 
 ### Where the recipient address comes from
-
-`Printing Letter_Invoices` supplies the letter and the customer number, but **not** the email
-address. This workflow looks it up in Business Central:
 
 ```
 Customer Card  10981 · Berkeley Hills Country Club
@@ -65,53 +55,84 @@ Customer Card  10981 · Berkeley Hills Country Club
 OData V4 web service named `ContactList`:
 
 ```
-GET https://api.businesscentral.dynamics.com/v2.0/{BC_TENANT_ID}/{BC_ENVIRONMENT}/ODataV4/Company('{BC_COMPANY_NAME}')/ContactList
+GET .../ODataV4/Company('{BC_COMPANY_NAME}')/ContactList
     ?$filter=Integration_Customer_No eq '10981' and Business_Relation eq 'Customer'
     &$select=No,Name,Company_Name,E_Mail,Integration_Customer_No
 ```
 
-If more than one contact matches, `Attach Contact Email` prefers the first one that actually has an
-email address. The match count is kept on the item as `contactMatchCount` so a zero-match account
-is diagnosable from the skip branch.
+If more than one contact matches, `Attach Contact Email` prefers the first with an actual email.
+The match count rides along as `contactMatchCount`, so a zero-match account is diagnosable from
+the skip branch.
+
+### Where the statement comes from
+
+Business Central **cannot** return a report as a PDF over a plain OData query — `$format=PDF` is
+not supported on report web services. The PDF has to be rendered in AL and handed back as text, so
+this repo ships a small codeunit for it:
+
+**`businesscentral/StatementApi.Codeunit.al`** — renders report 1316 `Standard Statement`, scoped
+to one customer, and returns it base64 encoded.
+
+Deploy it and publish it as a web service:
+
+| Web Services page field | Value |
+|---|---|
+| Object Type | `Codeunit` |
+| Object ID | `50100` |
+| Service Name | `StatementApi` |
+| Published | yes |
+
+The workflow then calls it as an OData V4 unbound action:
+
+```
+POST .../ODataV4/StatementApi_GetCustomerStatementPdf?company={BC_COMPANY_NAME}
+{ "customerNo": "10981", "requestPageXml": "" }
+
+→ { "value": "<base64 pdf>" }
+```
+
+`Statement Base64 → PDF File` converts that string into a real binary PDF under the binary
+property `statement`, which is what the Outlook node attaches.
+
+**Open items only** is controlled by the report's saved request page parameters, passed as
+`requestPageXml` and held in the `BC_STATEMENT_REQUEST_XML` project Variable. An empty string
+accepts the report's own defaults. To capture the right XML: open the Standard Statement report in
+BC, set the request page to open entries only, save it as a report setting, and read the saved
+parameter XML from the **Report Settings** page.
 
 ### Before first run
 
-**Three credential/ID placeholders:**
+**Four credential/ID placeholders:**
 
 | Node | Placeholder | Replace with |
 |---|---|---|
 | `Printing Letter_Invoices` | `REPLACE_WITH_PRINTING_LETTER_INVOICES_WORKFLOW_ID` | that workflow's n8n ID |
-| `Printing Statements` | `REPLACE_WITH_PRINTING_STATEMENTS_WORKFLOW_ID` | that workflow's n8n ID |
-| `Look Up AP Contact (Business Central)` | `REPLACE_WITH_BUSINESS_CENTRAL_OAUTH2_CREDENTIAL_ID` | a generic OAuth2 credential for the BC API |
+| `Look Up AP Contact` / `Render Statement PDF` | `REPLACE_WITH_BUSINESS_CENTRAL_OAUTH2_CREDENTIAL_ID` | a generic OAuth2 credential for the BC API (both nodes) |
 | `Create Outlook Draft (Do Not Send)` | `REPLACE_WITH_OUTLOOK_CREDENTIAL_ID` | the Outlook OAuth2 credential for **gpress@engelmansbakery.com** |
 
 The draft is created in whichever mailbox owns the Outlook OAuth2 credential, so that credential
 must be gpress@engelmansbakery.com.
 
-**Three project Variables** (Project settings → Variables):
+**Four project Variables** (Project settings → Variables):
 
 | Variable | Example |
 |---|---|
 | `BC_TENANT_ID` | your Entra tenant GUID |
 | `BC_ENVIRONMENT` | `Production` |
 | `BC_COMPANY_NAME` | the BC company name, as it appears in the OData URL |
+| `BC_STATEMENT_REQUEST_XML` | saved request page XML for open-items-only, or empty |
 
-**One BC prerequisite:** the Contact List page (5052) must be published as a web service named
-`ContactList`. If it's published under a different name, change the last segment of the URL.
+**Two BC prerequisites:**
+
+- Contact List page (5052) published as a web service named `ContactList`.
+- `Statement Api` codeunit (50100) deployed and published as `StatementApi`.
 
 ### Assumptions
 
 - `Printing Letter_Invoices` returns **one item per account**, carrying the letter content and the
-  customer number. `accountNumber` must resolve to the customer number (e.g. `10981`) — it is the
-  key for the contact lookup.
-- `Printing Statements` returns **exactly one item** per account with the statement PDF as binary
-  data. `Build Draft Payload` looks for a binary property named `statement`, `data`, `pdf`, or
-  `file`, and falls back to the first binary property present.
-- `Printing Statements` has an Execute Workflow Trigger that declares an `accountNumber` input.
-  If that trigger is set to "Accept all data" instead, delete the input mapping on the
-  `Printing Statements` node — `accountNumber` already rides along on the item either way.
-- Letter and statement are paired **by position**, which holds because `Printing Statements` runs
-  in "run once for each item" mode.
+  customer number. `accountNumber` must resolve to the customer number (e.g. `10981`).
+- Report 1316 `Standard Statement` is the statement layout you want. If Engelman's uses a custom
+  statement report, change the `Report::` reference in the codeunit.
 - `Integration_Customer_No` on the Contact record is the link back to the Customer. This is the
   field shown on the Contact Card; if it turns out to be extension-provided rather than base
   application, the `$filter` needs adjusting.
@@ -124,6 +145,6 @@ must be gpress@engelmansbakery.com.
   record doesn't produce a draft that fails at send time.
 - `Build Draft Payload` throws with the account number if the letter body or the statement PDF is
   missing, so a bad account fails loudly instead of producing an empty draft.
-- The BC lookup retries 3 times with a 2s backoff on transient failures.
+- Both BC calls retry 3 times with a 2s backoff on transient failures.
 - Attachment filename: `Statement_<account>_<YYYY-MM-DD>.pdf`.
 - Subject: `Engelman's Bakery — Account Statement for <account name>`.
