@@ -67,8 +67,9 @@ document ends and the next begins.** It counts sheets. Everything in §4 follows
   others so the panels nest instead of the leading edge catching the envelope throat. The FPi
   700's factory default offsets are not documented in any source reachable from here.
   **[CALIBRATE]**
-- **Feed orientation (face-up vs face-down).** This determines *which panel of the sheet ends
-  up facing outward*, and therefore which panel the address must be printed on. **[CALIBRATE]**
+- ~~**Feed orientation (face-up vs face-down).**~~ **Resolved by folding real output** — the
+  outward face is **page 2** and the outward panel is **Panel C, the top third** (§5). The
+  underlying feed orientation is still undocumented, but the layout no longer depends on it.
 - **OMR / barcode reading.** Not confirmed as available on this model, and the operator reports
   the machine does not have it. This spec assumes **no OMR**. If a reading option is ever
   added, §4 can be relaxed. **[CALIBRATE]**
@@ -84,30 +85,22 @@ Page order per customer:
 
 | Page | Sheet / face | Content |
 |---|---|---|
-| 1 | Sheet 1 front | Past-due letter (logo, subject, body, signoff) **+ mailing address in the window band** |
-| 2 | Sheet 1 back | Blank |
+| 1 | Sheet 1 front | Past-due letter (logo, subject, body, signoff) |
+| 2 | Sheet 1 back | Letterhead + **mailing address in the window band** |
 | 3 | Sheet 2 front | Statement — "Past Due Invoices" table |
 | 4 | Sheet 2 back | Blank filler, or statement page 2 |
 
 Every set is exactly 4 pages / 2 sheets — see §4, which is what guarantees it.
 
-### Why the address is on the front
+### Which face carries the address
 
-Only one face of the folded piece shows through the envelope window. The original layout put
-the address alone on **page 2 — the back of sheet 1** — which delivers a visible address only if
-the machine folds reverse-side-out, an assumption nobody had confirmed.
+Only one face of the folded piece shows through the envelope window, and on this machine it is
+**page 2 — the back of sheet 1**. That is confirmed by folding real output (§5).
 
-The address now prints at the foot of page 1, alongside the letter, in the window band defined
-in §6. This is the standard business-letter arrangement and it removes the dependency on feed
-orientation: the front is the face the standard fold presents. It also reclaims a sheet face —
-the back of sheet 1 was being spent on four lines of type and is now genuinely blank.
-
-The letter body ends around **y=425** **[MEASURED]**, entirely in the middle and top panels, so
-it clears the window band by roughly 340 pt. A regression test asserts that nothing but the
-address ever prints inside the band.
-
-**Still a calibration item:** this settles which *face* carries the address, not which *panel*
-faces the window. §8 resolves the panel question.
+Page 1's letter body *does* cross the window band vertically (it runs y 424–656 **[MEASURED]**,
+and the band is y 564–612). That is harmless: page 1 is the inward face and is never visible
+through the window. The clear-zone rule in §6 therefore applies to **page 2 only**, whose sole
+other ink is the letterhead at y 685.7–720 — about 74 pt clear of the band.
 
 ---
 
@@ -194,12 +187,33 @@ of the nesting offset **[CALIBRATE]**. Design for that:
 - **Feed-edge keep-out — 18 pt (¼") at the top and bottom edges of the sheet.** The feed and
   fold rollers grip here. Heavy ink coverage in this band can smear or slip.
 
-### Which panel faces the window
+### Which panel faces the window — **Panel C, the top third** **[MEASURED]**
 
-**Unknown until calibrated.** **[CALIBRATE]** The existing address block sits at y=105–150 pt,
-which is inside Panel A, so the original author evidently intended the **bottom panel** to be
-the outward-facing one. Confirm this in §8 before moving anything — if the machine actually
-presents Panel C, the whole block moves up 528 pt rather than down.
+This was the spec's longest-open unknown and it is now settled by folding real output.
+
+The statement's bill-to block on page 3 sits at **y 568.77–625.77** and lands in the envelope
+window when the piece is folded and inserted. That is only possible if the **top** panel faces
+out. Applying the §6 aperture offsets (36–84 pt above the facing panel's bottom edge) to Panel
+C's bottom edge at y=528 gives a window band of **y 564–612** — squarely on that block:
+
+```
+  y=625.77  Statement Date: 2026-08-13
+  y=607.77  Anduril Industries Eurest - #70696
+  y=594.77  Account Number: 10500-84       <- inside y 564-612
+  y=581.77  1435 Hills Pl NW               <- inside
+  y=568.77  Atlanta 30318                  <- inside
+```
+
+An earlier revision assumed Panel A (the bottom third), because that is where the original
+hardcoded address block happened to sit. **The aperture offsets were right; the panel was not.**
+Nothing about the band's height, the x range, the centering or the shrink-to-fit changed when
+this was corrected — only the base the offsets are measured from.
+
+In the code this is one constant: `WINDOW_PANEL_BASE = 2 * PANEL_H` in `original/pure-pdf.js`.
+Panel A is `0`, B is `PANEL_H`, C is `2 * PANEL_H`. Re-target a panel by changing that alone.
+
+A side effect worth knowing: because sheet 2's bill-to block occupies the same band, the
+statement has effectively been presenting a valid address in the window position all along.
 
 ---
 
@@ -237,10 +251,13 @@ window-facing panel**:
 
 | Axis | Safe range | Derivation |
 |---|---|---|
-| **Vertical** | **y 36 – 84 pt** (0.5" – 1.167") | lower bound = window bottom; upper bound = window top − vertical slack (1.625" − 0.458") |
+| **Vertical** | **36 – 84 pt above the panel's bottom edge** (0.5" – 1.167") | lower bound = window bottom; upper bound = window top − vertical slack (1.625" − 0.458") |
 | **Horizontal** | **x 63 – 315 pt** (0.875" – 4.375") | left = window left; right = window right − horizontal slack (5.375" − 1.0") |
 
 That is a usable band **48 pt tall** and **252 pt wide**.
+
+The facing panel is **Panel C**, whose bottom edge is y=528 (§5), so in page coordinates the
+band is **y 564 – 612**.
 
 ### The defect this replaced, and the fix
 
@@ -263,17 +280,20 @@ budget, with zero of 61 lines over **[MEASURED]**.
 - **Auto-shrink on width.** If any line would pass the window's right edge as the piece slides,
   the block steps down in half-points to a floor of 7 pt.
 
-Verified by rendering: a 3-line address occupies ink y 43.3–76.8, a 4-line address y 37.3–82.8,
-and a deliberately over-long name shrinks to 8 pt at y 38.2–81.8 — all inside the 36–84 pt band.
+Verified by rendering into the Panel C band (y 564–612): a 3-line address occupies ink
+y 571.2–604.8, a 4-line address y 565.2–610.8, and a deliberately over-long name shrinks to
+7.5 pt at y 566.4–609.6 — all inside.
 
 ### Clear-zone rule
 
 Nothing but the address may be printed inside the window band — no logo, no rule lines, no
 page furniture, across the **full width** of the panel (the piece slides sideways, so
-something outside the window band at rest can slide into view). This matters more now that the
-address shares page 1 with the letter: the letterhead sits at y≈686–720 pt and the body ends
-around y=425 **[MEASURED]**, both well clear, and a regression test enforces it by walking every
-text operation on page 1 and failing if a non-address glyph lands in the band.
+something outside the window band at rest can slide into view).
+
+This applies to **page 2 only**, the face that shows. Its sole other ink is the letterhead at
+y 685.7–720 **[MEASURED]**, about 74 pt clear of the band. A regression test enforces it by
+walking every text operation on page 2 and failing if a non-address glyph lands in the band.
+Page 1's letter body crosses the band and is deliberately exempt: it is the inward face.
 
 ---
 
