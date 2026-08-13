@@ -182,7 +182,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ customerNo: $json.accountNumber, requestPageXml: $vars.BC_STATEMENT_REQUEST_XML ?? '' }) }}",
+        "jsonBody": "={{ JSON.stringify({ customerNo: $json.accountNumber, reportId: Number($vars.BC_STATEMENT_REPORT_ID), requestPageXml: $vars.BC_STATEMENT_REQUEST_XML ?? '' }) }}",
         "options": {}
       },
       "id": "a1000000-0000-4000-8000-000000000014",
@@ -199,7 +199,7 @@
           "name": "Business Central OAuth2"
         }
       },
-      "notes": "Calls the Statement Api codeunit (businesscentral/StatementApi.Codeunit.al) as an OData V4 unbound action. BC cannot return a report as PDF over a plain OData query — $format=PDF is not supported on report web services — so the codeunit renders report 1316 'Standard Statement' scoped to this customer and returns it base64 encoded in the 'value' property. BC_STATEMENT_REQUEST_XML holds the saved request page parameters that make the statement open-items-only; an empty string accepts the report's defaults."
+      "notes": "Calls the Statement Api codeunit (businesscentral/StatementApi.Codeunit.al) as an OData V4 unbound action. BC cannot return a report as PDF over a plain OData query — $format=PDF is not supported on report web services — so the codeunit renders the report scoped to this customer and returns it base64 encoded in the 'value' property. BC_STATEMENT_REPORT_ID must be the object ID of the custom statement report Engelman's prints — find it on Report Selection - Sales under the statement usage, or in the Printing Statements workflow. BC_STATEMENT_REQUEST_XML holds the saved request page parameters that make the statement open-items-only; an empty string accepts the report's defaults."
     },
     {
       "parameters": {

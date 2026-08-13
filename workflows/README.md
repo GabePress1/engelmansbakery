@@ -70,8 +70,16 @@ Business Central **cannot** return a report as a PDF over a plain OData query �
 not supported on report web services. The PDF has to be rendered in AL and handed back as text, so
 this repo ships a small codeunit for it:
 
-**`businesscentral/StatementApi.Codeunit.al`** — renders report 1316 `Standard Statement`, scoped
-to one customer, and returns it base64 encoded.
+**`businesscentral/StatementApi.Codeunit.al`** — renders a statement report, scoped to one
+customer, and returns it base64 encoded.
+
+The report is **passed in, not hardcoded**, so the custom statement Engelman's actually prints
+stays the source of truth and can change without redeploying the extension. Set
+`BC_STATEMENT_REPORT_ID` to that report's object ID. There is deliberately no default — a missing
+ID errors out rather than quietly sending customers a statement in the wrong layout.
+
+To find the ID: open **Report Selection – Sales** in BC and read the Report ID against the
+statement usage, or check which report the existing `Printing Statements` workflow runs.
 
 Deploy it and publish it as a web service:
 
@@ -86,7 +94,7 @@ The workflow then calls it as an OData V4 unbound action:
 
 ```
 POST .../ODataV4/StatementApi_GetCustomerStatementPdf?company={BC_COMPANY_NAME}
-{ "customerNo": "10981", "requestPageXml": "" }
+{ "customerNo": "10981", "reportId": 50001, "requestPageXml": "" }
 
 → { "value": "<base64 pdf>" }
 ```
@@ -96,7 +104,7 @@ property `statement`, which is what the Outlook node attaches.
 
 **Open items only** is controlled by the report's saved request page parameters, passed as
 `requestPageXml` and held in the `BC_STATEMENT_REQUEST_XML` project Variable. An empty string
-accepts the report's own defaults. To capture the right XML: open the Standard Statement report in
+accepts the report's own defaults. To capture the right XML: open your statement report in
 BC, set the request page to open entries only, save it as a report setting, and read the saved
 parameter XML from the **Report Settings** page.
 
@@ -113,13 +121,14 @@ parameter XML from the **Report Settings** page.
 The draft is created in whichever mailbox owns the Outlook OAuth2 credential, so that credential
 must be gpress@engelmansbakery.com.
 
-**Four project Variables** (Project settings → Variables):
+**Five project Variables** (Project settings → Variables):
 
 | Variable | Example |
 |---|---|
 | `BC_TENANT_ID` | your Entra tenant GUID |
 | `BC_ENVIRONMENT` | `Production` |
 | `BC_COMPANY_NAME` | the BC company name, as it appears in the OData URL |
+| `BC_STATEMENT_REPORT_ID` | object ID of the custom statement report you print |
 | `BC_STATEMENT_REQUEST_XML` | saved request page XML for open-items-only, or empty |
 
 **Two BC prerequisites:**
@@ -131,8 +140,9 @@ must be gpress@engelmansbakery.com.
 
 - `Printing Letter_Invoices` returns **one item per account**, carrying the letter content and the
   customer number. `accountNumber` must resolve to the customer number (e.g. `10981`).
-- Report 1316 `Standard Statement` is the statement layout you want. If Engelman's uses a custom
-  statement report, change the `Report::` reference in the codeunit.
+- The custom statement report's top-level dataitem is `Customer`. That is what makes the customer
+  filter scope the PDF to a single account. If the report is built over Customer Ledger Entry
+  instead, the `SetView` in the codeunit needs to filter that table rather than Customer.
 - `Integration_Customer_No` on the Contact record is the link back to the Customer. This is the
   field shown on the Contact Card; if it turns out to be extension-provided rather than base
   application, the `$filter` needs adjusting.
