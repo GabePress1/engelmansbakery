@@ -15,7 +15,7 @@
           "__rl": true,
           "value": "REPLACE_WITH_PRINTING_LETTER_INVOICES_WORKFLOW_ID",
           "mode": "id",
-          "cachedResultName": "Printing Letter: Invoices Workflow"
+          "cachedResultName": "Printing Letter_Invoices"
         },
         "mode": "once",
         "options": {
@@ -23,7 +23,7 @@
         }
       },
       "id": "a1000000-0000-4000-8000-000000000002",
-      "name": "Printing Letter: Invoices Workflow",
+      "name": "Printing Letter_Invoices",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
       "position": [-440, 300],
@@ -38,19 +38,19 @@
             {
               "id": "f-account-number",
               "name": "accountNumber",
-              "value": "={{ $json.accountNumber ?? $json.customerNo ?? $json.CustomerNo ?? $json.account ?? '' }}",
+              "value": "={{ $json.accountNumber ?? $json.Integration_Customer_No ?? $json.integrationCustomerNo ?? $json.No ?? $json.number ?? $json.customerNumber ?? '' }}",
               "type": "string"
             },
             {
               "id": "f-account-name",
               "name": "accountName",
-              "value": "={{ $json.accountName ?? $json.customerName ?? $json.CustomerName ?? '' }}",
+              "value": "={{ $json.accountName ?? $json.Company_Name ?? $json.companyName ?? $json.Name ?? $json.displayName ?? '' }}",
               "type": "string"
             },
             {
               "id": "f-recipient-email",
               "name": "recipientEmail",
-              "value": "={{ ($json.email ?? $json.emailAddress ?? $json.EmailAddress ?? $json.contactEmail ?? '').toString().trim() }}",
+              "value": "={{ ($json.recipientEmail ?? $json.E_Mail ?? $json.email ?? $json.Email ?? $json.contactEmail ?? '').toString().trim() }}",
               "type": "string"
             },
             {
@@ -69,7 +69,7 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [-220, 300],
-      "notes": "PLACEHOLDER FIELD NAMES. Trim these to the actual field names the letter workflow emits once its export is available."
+      "notes": "Fallback chains cover both Business Central shapes: OData page fields (No, Name, E_Mail, Company_Name, Integration_Customer_No) and API v2.0 fields (number, displayName, email, companyName). Trim to the single real field name once the Printing Letter_Invoices export is available. The email is expected to be the AP contact (Contact table 5050) linked to the customer via Integration Customer No."
     },
     {
       "parameters": {
@@ -107,9 +107,9 @@
       "parameters": {
         "workflowId": {
           "__rl": true,
-          "value": "REPLACE_WITH_PRINTING_STATEMENT_WORKFLOW_ID",
+          "value": "REPLACE_WITH_PRINTING_STATEMENTS_WORKFLOW_ID",
           "mode": "id",
-          "cachedResultName": "Printing Statement Workflow"
+          "cachedResultName": "Printing Statements"
         },
         "mode": "each",
         "options": {
@@ -117,11 +117,11 @@
         }
       },
       "id": "a1000000-0000-4000-8000-000000000005",
-      "name": "Printing Statement Workflow",
+      "name": "Printing Statements",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
       "position": [260, 400],
-      "notes": "Runs once per account so each statement PDF lines up with its letter. Must return exactly one item carrying the statement PDF as binary data."
+      "notes": "Runs once per account so each statement PDF lines up with its letter. Must return exactly one item carrying the statement PDF as binary data. Lives in My project / Engelman's Bakery / Printing Letter_Invoices."
     },
     {
       "parameters": {
@@ -141,7 +141,7 @@
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "// Build the Outlook draft payload: letter as the HTML body, statement PDF as the attachment.\nconst json = $input.item.json;\nconst binary = $input.item.binary ?? {};\n\nconst accountNumber = (json.accountNumber || '').toString().trim();\nconst accountName = (json.accountName || '').toString().trim();\nconst statementDate = new Date().toISOString().slice(0, 10);\n\n// The statement workflow may name its binary property anything; take the first PDF it hands us.\nconst statementKey =\n  ['statement', 'data', 'pdf', 'file'].find((k) => binary[k]) ?? Object.keys(binary)[0];\n\nif (!statementKey) {\n  throw new Error(\n    `No statement PDF found on the item for account ${accountNumber || '(unknown)'}. ` +\n      'Check that the Printing Statement Workflow returns the PDF as binary data.'\n  );\n}\n\nconst safeAccount = (accountNumber || 'account').replace(/[^A-Za-z0-9._-]/g, '_');\nconst attachmentName = `Statement_${safeAccount}_${statementDate}.pdf`;\n\n// Wrap the letter so it renders as a standalone HTML email body.\nconst letterHtml = (json.letterHtml || '').toString().trim();\nif (!letterHtml) {\n  throw new Error(\n    `No letter content found for account ${accountNumber || '(unknown)'}. ` +\n      'Check the letterHtml mapping in \"Normalize Account Fields\".'\n  );\n}\n\nconst emailBodyHtml = letterHtml.toLowerCase().includes('<html')\n  ? letterHtml\n  : `<!doctype html><html><body style=\"font-family:Arial,Helvetica,sans-serif;font-size:11pt;color:#000;\">${letterHtml}</body></html>`;\n\nconst emailSubject = accountName\n  ? `Engelman's Bakery — Account Statement for ${accountName}`\n  : `Engelman's Bakery — Account Statement${accountNumber ? ` (${accountNumber})` : ''}`;\n\nreturn {\n  json: {\n    ...json,\n    accountNumber,\n    accountName,\n    statementDate,\n    emailSubject,\n    emailBodyHtml,\n    attachmentName,\n  },\n  binary: {\n    ...binary,\n    // Normalized name + filename so the Outlook node always finds the attachment.\n    statement: { ...binary[statementKey], fileName: attachmentName, mimeType: 'application/pdf' },\n  },\n};\n"
+        "jsCode": "// Build the Outlook draft payload: letter as the HTML body, statement PDF as the attachment.\nconst json = $input.item.json;\nconst binary = $input.item.binary ?? {};\n\nconst accountNumber = (json.accountNumber || '').toString().trim();\nconst accountName = (json.accountName || '').toString().trim();\nconst statementDate = new Date().toISOString().slice(0, 10);\n\n// The statement workflow may name its binary property anything; take the first PDF it hands us.\nconst statementKey =\n  ['statement', 'data', 'pdf', 'file'].find((k) => binary[k]) ?? Object.keys(binary)[0];\n\nif (!statementKey) {\n  throw new Error(\n    `No statement PDF found on the item for account ${accountNumber || '(unknown)'}. ` +\n      'Check that the Printing Statements workflow returns the PDF as binary data.'\n  );\n}\n\nconst safeAccount = (accountNumber || 'account').replace(/[^A-Za-z0-9._-]/g, '_');\nconst attachmentName = `Statement_${safeAccount}_${statementDate}.pdf`;\n\n// Wrap the letter so it renders as a standalone HTML email body.\nconst letterHtml = (json.letterHtml || '').toString().trim();\nif (!letterHtml) {\n  throw new Error(\n    `No letter content found for account ${accountNumber || '(unknown)'}. ` +\n      'Check the letterHtml mapping in \"Normalize Account Fields\".'\n  );\n}\n\nconst emailBodyHtml = letterHtml.toLowerCase().includes('<html')\n  ? letterHtml\n  : `<!doctype html><html><body style=\"font-family:Arial,Helvetica,sans-serif;font-size:11pt;color:#000;\">${letterHtml}</body></html>`;\n\nconst emailSubject = accountName\n  ? `Engelman's Bakery — Account Statement for ${accountName}`\n  : `Engelman's Bakery — Account Statement${accountNumber ? ` (${accountNumber})` : ''}`;\n\nreturn {\n  json: {\n    ...json,\n    accountNumber,\n    accountName,\n    statementDate,\n    emailSubject,\n    emailBodyHtml,\n    attachmentName,\n  },\n  binary: {\n    ...binary,\n    // Normalized name + filename so the Outlook node always finds the attachment.\n    statement: { ...binary[statementKey], fileName: attachmentName, mimeType: 'application/pdf' },\n  },\n};\n"
       },
       "id": "a1000000-0000-4000-8000-000000000007",
       "name": "Build Draft Payload",
@@ -200,9 +200,9 @@
   ],
   "connections": {
     "When clicking 'Execute workflow'": {
-      "main": [[{ "node": "Printing Letter: Invoices Workflow", "type": "main", "index": 0 }]]
+      "main": [[{ "node": "Printing Letter_Invoices", "type": "main", "index": 0 }]]
     },
-    "Printing Letter: Invoices Workflow": {
+    "Printing Letter_Invoices": {
       "main": [[{ "node": "Normalize Account Fields", "type": "main", "index": 0 }]]
     },
     "Normalize Account Fields": {
@@ -211,13 +211,13 @@
     "Has Email on File?": {
       "main": [
         [
-          { "node": "Printing Statement Workflow", "type": "main", "index": 0 },
+          { "node": "Printing Statements", "type": "main", "index": 0 },
           { "node": "Combine Letter + Statement", "type": "main", "index": 0 }
         ],
         [{ "node": "Skipped — No Email on File", "type": "main", "index": 0 }]
       ]
     },
-    "Printing Statement Workflow": {
+    "Printing Statements": {
       "main": [[{ "node": "Combine Letter + Statement", "type": "main", "index": 1 }]]
     },
     "Combine Letter + Statement": {
