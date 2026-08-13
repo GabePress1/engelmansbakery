@@ -7,7 +7,31 @@
       "name": "When clicking 'Execute workflow'",
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
-      "position": [-880, 300]
+      "position": [-1320, 300]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "duplicateItem": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f-erp-filter",
+              "name": "erpAccountNumber",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": false,
+        "options": {}
+      },
+      "id": "a1000000-0000-4000-8000-000000000017",
+      "name": "ERP Account Number (Filter)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [-1100, 300],
+      "notes": "TYPE THE ERP ACCOUNT NUMBER HERE before running, e.g. 10981, to draft for that one customer. Leave it blank to draft for every account Printing Letter_Invoices returns. This is the only field you need to touch for a normal single-account run."
     },
     {
       "parameters": {
@@ -26,7 +50,7 @@
       "name": "Printing Letter_Invoices",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
-      "position": [-660, 300],
+      "position": [-880, 300],
       "notes": "Returns one item per account, carrying the letter content and the customer number. The email address and the statement are both sourced from Business Central further down."
     },
     {
@@ -62,8 +86,50 @@
       "name": "Normalize Account Fields",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [-440, 300],
+      "position": [-660, 300],
       "notes": "Fallback chains cover both Business Central shapes: OData page fields (No, Name, Company_Name, Integration_Customer_No) and API v2.0 fields (number, displayName, companyName). Trim to the single real field name once the Printing Letter_Invoices export is available. accountNumber must end up as the customer number (e.g. 10981) — it is the key for both the contact lookup and the statement."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c-erp-filter",
+              "leftValue": "={{ (() => { const f = ($('ERP Account Number (Filter)').first().json.erpAccountNumber ?? '').toString().trim(); return !f || f === ($json.accountNumber ?? '').toString().trim(); })() }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "a1000000-0000-4000-8000-000000000018",
+      "name": "Matches ERP Filter?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [-440, 300],
+      "notes": "Blank filter lets every account through; a filter value keeps only the account whose number matches exactly. If you typed a number and everything lands in the 'Filtered Out' branch, the number does not match what Printing Letter_Invoices emits — check for leading zeros or padding."
+    },
+    {
+      "parameters": {},
+      "id": "a1000000-0000-4000-8000-000000000019",
+      "name": "Filtered Out — Different Account",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [-440, 560],
+      "notes": "Accounts excluded by the ERP filter. On a single-account run every other account lands here, which is expected. If ALL accounts land here, the ERP number you typed matched nothing."
     },
     {
       "parameters": {
@@ -290,13 +356,22 @@
   ],
   "connections": {
     "When clicking 'Execute workflow'": {
+      "main": [[{ "node": "ERP Account Number (Filter)", "type": "main", "index": 0 }]]
+    },
+    "ERP Account Number (Filter)": {
       "main": [[{ "node": "Printing Letter_Invoices", "type": "main", "index": 0 }]]
     },
     "Printing Letter_Invoices": {
       "main": [[{ "node": "Normalize Account Fields", "type": "main", "index": 0 }]]
     },
     "Normalize Account Fields": {
-      "main": [[{ "node": "Require Account Number", "type": "main", "index": 0 }]]
+      "main": [[{ "node": "Matches ERP Filter?", "type": "main", "index": 0 }]]
+    },
+    "Matches ERP Filter?": {
+      "main": [
+        [{ "node": "Require Account Number", "type": "main", "index": 0 }],
+        [{ "node": "Filtered Out — Different Account", "type": "main", "index": 0 }]
+      ]
     },
     "Require Account Number": {
       "main": [[{ "node": "Look Up AP Contact (Business Central)", "type": "main", "index": 0 }]]

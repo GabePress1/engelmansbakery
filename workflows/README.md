@@ -13,21 +13,38 @@ Nothing is ever sent. The workflow contains no `send` operation — only `draft:
 
 ### Flow
 
+### Running it
+
+1. Open the workflow and click into **ERP Account Number (Filter)**.
+2. Type the ERP account number — e.g. `10981` — into `erpAccountNumber`.
+3. Click **Execute workflow**.
+4. The draft appears in **gpress@engelmansbakery.com**'s Drafts folder, letter in the body and
+   statement PDF attached, addressed to that account's AP contact.
+
+Nothing is sent. Open the draft, check it, and send it yourself.
+
+Leave `erpAccountNumber` **blank** to draft for every account `Printing Letter_Invoices` returns.
+
+### Flow
+
 ```
 Manual trigger
-  └─ Printing Letter_Invoices              (sub-workflow, runs once)
-       └─ Normalize Account Fields         (accountNumber / accountName / letterHtml)
-            └─ Require Account Number      (guard — the join key must exist)
-                 └─ Look Up AP Contact (Business Central)
-                      └─ Attach Contact Email
-                           └─ Has Email on File?
-                                ├─ true  ─── Render Statement PDF (Business Central)
-                                │              ├─ ok    ─ Build Draft Payload
-                                │              │           └─ Statement Base64 → PDF File
-                                │              │                └─ Create Outlook Draft (Do Not Send)
-                                │              │                     └─ Drafts Ready for Review
-                                │              └─ error ─ Statement Not Rendered — Review
-                                └─ false ─── Skipped — No Email on File
+  └─ ERP Account Number (Filter)           ← type the account number here
+       └─ Printing Letter_Invoices         (sub-workflow, runs once)
+            └─ Normalize Account Fields    (accountNumber / accountName / letterHtml)
+                 └─ Matches ERP Filter?
+                      ├─ false ─── Filtered Out — Different Account
+                      └─ true ──── Require Account Number   (guard — the join key must exist)
+                           └─ Look Up AP Contact (Business Central)
+                                └─ Attach Contact Email
+                                     └─ Has Email on File?
+                                          ├─ false ─ Skipped — No Email on File
+                                          └─ true ── Render Statement PDF (Business Central)
+                                               ├─ error ─ Statement Not Rendered — Review
+                                               └─ ok ──── Build Draft Payload
+                                                    └─ Statement Base64 → PDF File
+                                                         └─ Create Outlook Draft (Do Not Send)
+                                                              └─ Drafts Ready for Review
 ```
 
 ### The account number is the join key
@@ -166,6 +183,13 @@ must be gpress@engelmansbakery.com.
   run: `Skipped — No Email on File` (no usable address on the BC contact) and
   `Statement Not Rendered — Review` (no open entries, or a genuine BC/auth failure — the item's
   error message tells them apart).
+- `Filtered Out — Different Account` is the third branch, but it is normal traffic — on a
+  single-account run every other account lands there. Only worry if *everything* lands there,
+  which means the ERP number you typed matched nothing (check for leading zeros or padding).
+- The ERP filter is applied *after* `Printing Letter_Invoices` runs, so that workflow still
+  produces all its letters and this one keeps the matching account. That is deliberate: it avoids
+  assuming anything about that workflow's input contract. If letter generation is slow enough to
+  be annoying for single-account runs, pass the number into it instead.
 - `Has Email on File?` requires the address to be non-empty *and* contain `@`, so a malformed BC
   record doesn't produce a draft that fails at send time.
 - `Build Draft Payload` throws with the account number if the letter body or the statement PDF is
