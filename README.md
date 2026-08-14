@@ -152,15 +152,29 @@ The HubSpot **Letters & Statements (for Mailing)** page drives the deployed
 `original/pure-pdf.js`, so a renderer change reaches production only when you push it:
 
 ```
-npm run build:workflow          # if scripts/ changed
-node original/build-workflow.js # regenerate the base mailing workflow
-npm run deploy:letters          # -> out/render-node.js + the webhook-enabled workflow JSON
+node original/build-workflow.js                  # regenerate the mailing workflow
+N8N_API_KEY=... npm run push:letters             # deploy it to the live workflow
 ```
 
-**Preferred: paste `out/render-node.js` over the `Render & Merge PDFs` node** in the live
-workflow, then Save. It is surgical — the Business Central credentials, the registered
-`sw-letters-*` webhook paths and the active state all survive, and it is the only node that
-changes when the renderer does (`transform.js` drives a different node).
+`push-to-n8n.js` replaces **exactly one field** — `Render & Merge PDFs.parameters.jsCode` — in
+the live workflow, leaving every other node, the `SW *` webhook layer, the Business Central
+credentials and the active state untouched. It refuses to write unless the target workflow
+matches an expected node signature, backs up the live workflow to `out/` first, skips the write
+entirely when the code already matches, and verifies afterwards that the **published** version
+(not just the draft) carries the new code. Add `--dry-run` to preview, and
+`npm run push:statements` for the delivery tool.
+
+Get an API key from **Settings → n8n API**; pass it via the environment, never as an argument.
+
+> **Never push a generated workflow JSON wholesale.** The live mailing workflow has ~21 nodes —
+> the generated pipeline *plus* the webhook layer and real credentials, none of which the
+> generated file contains. Importing it over the live one would delete the webhooks and take the
+> HubSpot page down.
+
+**Manual fallback**, if you'd rather not use an API key: run `npm run deploy:letters` and paste
+`out/render-node.js` over the `Render & Merge PDFs` node, then **Save and Publish**. Verify the
+node afterwards — search it for `WINDOW_PANEL_BASE`. A large paste can fail to save silently,
+which is exactly why the script exists.
 
 `out/Printing_Letter_Invoices_Original.webhook.workflow.json` is the whole workflow, for a
 first-time deploy or an import **into** the existing workflow so it keeps its id. Importing it as

@@ -9,6 +9,8 @@
     "build:workflow": "node n8n/build-workflow.js",
     "build:foldtest": "node original/fold-test.js",
     "deploy:letters": "node original/deploy-workflow.js",
+    "push:letters": "node original/push-to-n8n.js letters",
+    "push:statements": "node original/push-to-n8n.js statements",
     "test:local": "node test/run-local.js",
     "test:workflow": "node test/validate-workflow.js",
     "test": "node test/run-local.js && node test/validate-workflow.js"
