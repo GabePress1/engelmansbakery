@@ -378,6 +378,13 @@ the manual we could not obtain.
 will be overwritten on the next build. Edit the script, then regenerate both workflows and run
 `npm test`.
 
+**Regenerating the JSON is not deploying.** The HubSpot mailing page calls a *webhook-enabled*
+copy of the workflow living in n8n Cloud, which carries its own inlined snapshot of
+`pure-pdf.js`. A renderer change reaches production only via `npm run deploy:letters`, which
+emits `out/render-node.js` to paste over the live `Render & Merge PDFs` node. Skipping that step
+is exactly how the address fix appeared correct in samples while the live tool kept emitting the
+old layout — see *Updating the live workflow* in the README.
+
 The PDF writer emits raw PDF 1.4 with base-14 fonts and no dependencies, so it can run inside
 an n8n **Cloud** Code node. Keep it that way — do not introduce PDFKit, pdf-lib, or puppeteer.
 

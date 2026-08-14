@@ -8,6 +8,7 @@
     "build:template": "node templates/build-template.js",
     "build:workflow": "node n8n/build-workflow.js",
     "build:foldtest": "node original/fold-test.js",
+    "deploy:letters": "node original/deploy-workflow.js",
     "test:local": "node test/run-local.js",
     "test:workflow": "node test/validate-workflow.js",
     "test": "node test/run-local.js && node test/validate-workflow.js"

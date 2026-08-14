@@ -121,6 +121,14 @@ Output folder (self-hosted local-write path):
 
 ## Import & run in n8n
 
+> **The generated workflow JSONs are the manual-run builds — they have no webhooks.** The HubSpot
+> pages call `/webhook/sw-letters-*` (mailing) and `/webhook/sw-statements-*` (delivery), which
+> exist only after the webhook layer from `add-webhooks.js` is applied. For the mailing tool run
+> **`npm run deploy:letters`**, which writes both a deployable workflow and the standalone
+> `Render & Merge PDFs` source, to `out/`. See *Updating the live workflow* below.
+>
+> Regenerating a workflow JSON does **not** change what n8n is running.
+
 1. **n8n → Workflows → Import from File →** `n8n/Printing_Letter_Invoices.workflow.json`.
    (Or merge its nodes into your existing `Printing Letter_Invoices` workflow.)
 2. Put your real values in the **`Keys`** node (or reuse your existing `Keys` node and delete the
@@ -136,6 +144,30 @@ Output folder (self-hosted local-write path):
    writing to `{{ $json.fullPath }}` on a self-hosted n8n.
 
 Flow: `Keys → Get Token → Get Open Invoices → Qualifying Customer Nos → Get Customers → Transform → Render & Merge PDFs` (PDFs downloadable here).
+
+### Updating the live workflow
+
+The HubSpot **Letters & Statements (for Mailing)** page drives the deployed
+`Printing Letter_Invoices  Original` workflow. That workflow carries its own inlined copy of
+`original/pure-pdf.js`, so a renderer change reaches production only when you push it:
+
+```
+npm run build:workflow          # if scripts/ changed
+node original/build-workflow.js # regenerate the base mailing workflow
+npm run deploy:letters          # -> out/render-node.js + the webhook-enabled workflow JSON
+```
+
+**Preferred: paste `out/render-node.js` over the `Render & Merge PDFs` node** in the live
+workflow, then Save. It is surgical — the Business Central credentials, the registered
+`sw-letters-*` webhook paths and the active state all survive, and it is the only node that
+changes when the renderer does (`transform.js` drives a different node).
+
+`out/Printing_Letter_Invoices_Original.webhook.workflow.json` is the whole workflow, for a
+first-time deploy or an import **into** the existing workflow so it keeps its id. Importing it as
+a *new* workflow will contend with the live one for the same webhook paths and drop the
+credential links. Set `N8N_WEBHOOK_SECRET` to bake the shared secret in; otherwise the
+`__SECRET__` placeholder is left for you to fill in n8n. `out/` is gitignored — that JSON can
+hold the real secret and must never be committed.
 
 > If your qualifying set is very large, the `Get Customers` `$filter` (`No eq '…' or …`) can get
 > long; split it into batches to stay under URL-length limits. For a typical past-due run the set
