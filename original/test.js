@@ -60,10 +60,11 @@ async function main() {
   // through the window — inside the TOP panel's window band. Bounds are spelled
   // out here rather than imported from pure-pdf.js, so the test checks the spec's
   // geometry independently instead of restating the implementation's constants:
-  // Panel C bottom (2 x 264) + the 36-84 pt aperture offsets = y 564-612 (§6).
-  // Page 1's letter body DOES cross that band, which is fine: it is the inward
-  // face and never visible through the window.
-  const WIN_LO = 564, WIN_HI = 612;
+  // Panel C bottom (2 x 264) + the 36-84 pt aperture offsets + the 24 pt fold
+  // correction measured on the machine = y 588-636 (§6). Page 1's letter body
+  // DOES cross that band, which is fine: it is the inward face and never
+  // visible through the window.
+  const WIN_LO = 588, WIN_HI = 636;
   for (const r of records) {
     const set = customerPages(r.tokens, r.statement, { asOfDate: "2026-07-14" });
     assert(set.length === 4, `${r.customerNo}: set should still be 4 pages, got ${set.length}`);

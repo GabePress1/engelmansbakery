@@ -84,7 +84,8 @@ const HEAD = "ENGELMAN'S BAKERY";
 //
 // The PANEL is the TOP third, confirmed by folding real output: the statement's
 // bill-to block sits at y 568.77-625.77 and lands in the window, which is only
-// possible if Panel C faces out. Base + 36..84 gives y 564-612, right on it.
+// possible if Panel C faces out. With the measured fold correction below the
+// window band is y 588-636.
 // (An earlier revision assumed the bottom panel. The offsets were right; the
 // panel was not.) To re-target a panel, change WINDOW_PANEL_BASE alone.
 //
@@ -93,8 +94,18 @@ const HEAD = "ENGELMAN'S BAKERY";
 // slide into view even if it starts clear of it.
 const PANEL_H = 264;                        // one C-fold third of an 11" sheet
 const WINDOW_PANEL_BASE = 2 * PANEL_H;      // Panel A = 0, B = PANEL_H, C = 2 * PANEL_H
-const WINDOW_Y_MIN = WINDOW_PANEL_BASE + 36;
-const WINDOW_Y_MAX = WINDOW_PANEL_BASE + 84;
+
+// Measured on the machine with production envelopes: the block landed two lines
+// (24 pt) low in the real window, so the actual crease sits ~24 pt off the
+// nominal third — the fold plates are touchscreen-adjustable and evidently set
+// that way. The aperture offsets above are geometry; this is the empirical
+// correction, kept separate so the two stay legible. It is corroborated by the
+// statement's bill-to block, which reads correctly in the window at a top
+// baseline of 625.77 — 22.3 pt above where the address block was sitting.
+// If the fold plates are ever re-set, nudge THIS number and nothing else.
+const FOLD_CALIBRATION = 24;
+const WINDOW_Y_MIN = WINDOW_PANEL_BASE + 36 + FOLD_CALIBRATION;   // 588
+const WINDOW_Y_MAX = WINDOW_PANEL_BASE + 84 + FOLD_CALIBRATION;   // 636
 const WINDOW_X_MAX = 315;
 
 // Embedded brand logo (baseline JPEG). Populated by scripts/embed-logo.js.

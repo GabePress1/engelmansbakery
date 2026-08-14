@@ -63,10 +63,11 @@ document ends and the next begins.** It counts sheets. Everything in §4 follows
 
 ### Not verified — treat as calibration inputs
 
-- **Fold-plate offsets.** Real inserters set the first-folded panel **1–3 mm shorter** than the
-  others so the panels nest instead of the leading edge catching the envelope throat. The FPi
-  700's factory default offsets are not documented in any source reachable from here.
-  **[CALIBRATE]**
+- ~~**Fold-plate offsets.**~~ **Measured on the machine.** The published defaults were never
+  findable, but a production run with real envelopes showed the address landing **24 pt low**,
+  so the actual crease sits about a third of an inch off the nominal third — far more than the
+  1–3 mm nesting offset, which fits a machine whose fold plates are touchscreen-adjustable and
+  simply set that way. Carried in code as `FOLD_CALIBRATION` **[MEASURED]**.
 - ~~**Feed orientation (face-up vs face-down).**~~ **Resolved by folding real output** — the
   outward face is **page 2** and the outward panel is **Panel C, the top third** (§5). The
   underlying feed orientation is still undocumented, but the layout no longer depends on it.
@@ -98,7 +99,7 @@ Only one face of the folded piece shows through the envelope window, and on this
 **page 2 — the back of sheet 1**. That is confirmed by folding real output (§5).
 
 Page 1's letter body *does* cross the window band vertically (it runs y 424–656 **[MEASURED]**,
-and the band is y 564–612). That is harmless: page 1 is the inward face and is never visible
+and the band is y 588–636). That is harmless: page 1 is the inward face and is never visible
 through the window. The clear-zone rule in §6 therefore applies to **page 2 only**, whose sole
 other ink is the letterhead at y 685.7–720 — about 74 pt clear of the band.
 
@@ -194,12 +195,13 @@ This was the spec's longest-open unknown and it is now settled by folding real o
 The statement's bill-to block on page 3 sits at **y 568.77–625.77** and lands in the envelope
 window when the piece is folded and inserted. That is only possible if the **top** panel faces
 out. Applying the §6 aperture offsets (36–84 pt above the facing panel's bottom edge) to Panel
-C's bottom edge at y=528 gives a window band of **y 564–612** — squarely on that block:
+C's bottom edge at y=528 gives **y 564–612**, and the measured fold correction (below) lifts it
+to the final band of **y 588–636**. Both land on that block:
 
 ```
   y=625.77  Statement Date: 2026-08-13
   y=607.77  Anduril Industries Eurest - #70696
-  y=594.77  Account Number: 10500-84       <- inside y 564-612
+  y=594.77  Account Number: 10500-84       <- inside the band
   y=581.77  1435 Hills Pl NW               <- inside
   y=568.77  Atlanta 30318                  <- inside
 ```
@@ -257,7 +259,15 @@ window-facing panel**:
 That is a usable band **48 pt tall** and **252 pt wide**.
 
 The facing panel is **Panel C**, whose bottom edge is y=528 (§5), so in page coordinates the
-band is **y 564 – 612**.
+band is y 564 – 612 before calibration.
+
+**The fold correction.** A production run through the machine with real envelopes put the block
+**24 pt low** in the window, so the final band is **y 588 – 636** **[MEASURED]**. This is held as
+a separate `FOLD_CALIBRATION` constant rather than folded into the offsets above, so the
+aperture geometry and the empirical correction stay legible independently. It is corroborated by
+the statement's bill-to block, which reads correctly in the window at a top baseline of 625.77:
+the corrected 4-line address tops out at 627.45, 1.7 pt away. **Re-calibrating the fold is a
+one-number edit.**
 
 ### The defect this replaced, and the fix
 
@@ -280,9 +290,9 @@ budget, with zero of 61 lines over **[MEASURED]**.
 - **Auto-shrink on width.** If any line would pass the window's right edge as the piece slides,
   the block steps down in half-points to a floor of 7 pt.
 
-Verified by rendering into the Panel C band (y 564–612): a 3-line address occupies ink
-y 571.2–604.8, a 4-line address y 565.2–610.8, and a deliberately over-long name shrinks to
-7.5 pt at y 566.4–609.6 — all inside.
+Verified by rendering into the corrected band (y 588–636): a 3-line address tops out at
+baseline 621.45, a 4-line at 627.45, and a deliberately over-long name shrinks to 7.5 pt and
+tops out at 628.09 — all inside, with the letterhead 49.7 pt clear above.
 
 ### Clear-zone rule
 
@@ -342,6 +352,11 @@ filling in the two blank customer addresses removes the guesswork.
 
 This is the authority for every **[CALIBRATE]** item. It takes about ten minutes and replaces
 the manual we could not obtain.
+
+> **This has now been run**, on the machine with production envelopes. It settled two things the
+> published sources never could: the outward panel is **Panel C** (§5), and the fold sits **24 pt**
+> off the nominal third, carried as `FOLD_CALIBRATION` (§6). Re-run it if the fold plates are
+> ever re-set — after which the fix is a one-number edit plus `npm run push:letters`.
 
 1. Print one duplex set on the production stock.
 2. On the FPi 700, select the letter-fold job and run it in **fold-only** mode.
