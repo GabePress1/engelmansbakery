@@ -1,0 +1,207 @@
+<svg xmlns="http://www.w3.org/2000/svg">
+
+<text id="stitle" x="-910" y="5500" font-family="open_sans" font-size="40" font-weight="bold" fill="#1a1a1a" text-anchor="start">Breadline &amp; MCS Schedule Templates — Logic Spec</text>
+<text id="ssub" x="-910" y="5540" font-family="open_sans" font-size="16" fill="#6b7280" text-anchor="start">The printable shop-floor run sheet. Near-identical twins — one spec, with a differences table.</text>
+
+<rect id="spanel" x="760" y="5560" width="540" height="1450" rx="12" fill="#ffffff" stroke="#dde1e7" stroke-width="2" />
+
+<foreignObject id="sflow" x="-910" y="5560" width="1600" height="900" data-type="diagram" data-title="Schedule Templates — Bags to Printed Run Sheet">
+flowchart TD
+    classDef source fill:#ccf4ff,stroke:#108ab3
+    classDef control fill:#dedaff,stroke:#6631d7
+    classDef calc fill:#fff6b6,stroke:#af7e02
+    classDef manual fill:#f8d3af,stroke:#9b4a07
+    classDef output fill:#adf0c7,stroke:#087429
+    classDef decision fill:#c6dcff,stroke:#305bab
+    classDef logic fill:#ffd8f4,stroke:#af3fb9
+
+    subgraph CHAIN["UPSTREAM CHAIN (already computed)"]
+        SH["Sales History to Daily Supply and Demand&lt;br/&gt;4-wk avg × 1.2 buffer − freezer − floor&lt;br/&gt;= UNIT SHORTFALL"]:::source
+        DW["DoughWeights(WhereUsed-TopLvl)&lt;br/&gt;shortfall × dough lb/unit&lt;br/&gt;= POUNDS OF DOUGH"]:::source
+        MSO["Mix-Slice-Oven Sheet&lt;br/&gt;lbs ÷ batch size = BAGS&lt;br/&gt;col C = run name (KEY)&lt;br/&gt;col F = Bags Per Mix&lt;br/&gt;col O = Total Bags&lt;br/&gt;O1 = BL total · O2 = MCS total"]:::source
+        SH --&gt; DW --&gt; MSO
+    end
+
+    subgraph CLIS["Critical Lookup Information (static master data)"]
+        K1["col D = Dough (KEY)"]:::control
+        K2["col E Pan Constraints"]:::control
+        K3["col F Placement On Schedule"]:::control
+        K4["cols G·H·I·J·K&lt;br/&gt;RUN TIME by mix size&lt;br/&gt;4 · 3 · 2 · 1 · 1.5 bags"]:::control
+        K5["col L Dough Color"]:::control
+        K6["col M Steamed?"]:::control
+        K7["cols N·O Schedule Notes"]:::control
+    end
+
+    subgraph SHEET["RUN SHEET (Breadline #2 / MCS #1) — identical design"]
+        A["col A · RUN LIST rows 5-69&lt;br/&gt;MANUAL, ordered&lt;br/&gt;text description = THE JOIN KEY&lt;br/&gt;row 4 = 'Parent Formula' pattern row&lt;br/&gt;row 70 = 'Don't delete this data' sentinel"]:::manual
+        B["col B · Total # of Bags to Produce&lt;br/&gt;XLOOKUP(A to MSO C:C, MSO O:O)"]:::calc
+        C["col C · Bags Per Mix&lt;br/&gt;XLOOKUP(A to MSO C:C, MSO F:F)&lt;br/&gt;values 1 · 1.5 · 2 · 3 · 4"]:::calc
+        D["col D · RUN TIME&lt;br/&gt;ONLY REAL LOGIC ON THE SHEET"]:::logic
+        ATTR["ATTRIBUTE COLUMNS (flat XLOOKUPs)&lt;br/&gt;Pan Constraints · Dough Color · Steamed?&lt;br/&gt;Schedule Notes ×2&lt;br/&gt;plus Placement on Schedule (MCS ONLY)"]:::calc
+        MAN["MANUAL ENTRY — blank by design&lt;br/&gt;Bag Count · Time Start · Time Finish&lt;br/&gt;Temp · Operator · Notes/Exceptions&lt;br/&gt;Rework · Grind&lt;br/&gt;(planned vs actual feedback capture)"]:::manual
+        HDR["A2 = TODAY()&lt;br/&gt;H2 = MSO!O1 (BL) / MSO!O2 (MCS)&lt;br/&gt;E4 planned start: 7:50 AM BL / 6:45 AM MCS"]:::control
+    end
+
+    IFSN{"IFS on col C&lt;br/&gt;how many bags per mix?"}:::decision
+    T4["C=4 to CLI col G"]:::calc
+    T3["C=3 to CLI col H"]:::calc
+    T2["C=2 to CLI col I"]:::calc
+    T15["C=1.5 to CLI col K"]:::calc
+    T1["C=1 to CLI col J"]:::calc
+    T0["C=0 to text '0'"]:::calc
+
+    PRINT["PRINTED RUN SHEET&lt;br/&gt;handed to mixer operator&lt;br/&gt;sequence · bags · minutes · pan limits&lt;br/&gt;dough color · steam · notes"]:::output
+
+    MSO --&gt; B
+    MSO --&gt; C
+    MSO --&gt; HDR
+    A --&gt; B
+    A --&gt; C
+    A --&gt; D
+    A --&gt; ATTR
+    C --&gt; IFSN
+    IFSN --&gt; T4 &amp; T3 &amp; T2 &amp; T15 &amp; T1 &amp; T0
+    K4 --&gt; T4 &amp; T3 &amp; T2 &amp; T15 &amp; T1
+    T4 &amp; T3 &amp; T2 &amp; T15 &amp; T1 &amp; T0 --&gt; D
+    K1 --&gt; D
+    K1 --&gt; ATTR
+    K2 &amp; K3 &amp; K5 &amp; K6 &amp; K7 --&gt; ATTR
+    B --&gt; PRINT
+    D --&gt; PRINT
+    ATTR --&gt; PRINT
+    HDR --&gt; PRINT
+    PRINT --&gt; MAN
+</foreignObject>
+
+<textArea id="sh1" x="790" y="5590" width="480" font-family="open_sans" font-size="26" fill="#1a1a1a"><b>Findings</b></textArea>
+<textArea id="sb1" x="790" y="5638" width="480" font-family="open_sans" font-size="15" fill="#1a1a1a"><b>1. E70 on both sheets is =#REF!</b> — a hard broken reference sitting in the sentinel row, right next to the note "Don't delete this data. It will break the other formuals." Whatever E70 pointed at is gone. Nothing reads column E, so it is cosmetic today, but it shows an error on screen permanently and makes the "don't delete" warning misleading — the data it protects is already partly broken.<br/><br/><b>2. Attribute formulas run far past the product list.</b> Breadline N:R covers rows 4-71 (2 rows of overshoot); MCS N:S covers rows 4-176 (106 rows). Every overshoot row calls XLOOKUP on a blank key — roughly 640 pointless XLOOKUPs on MCS alone, all returning #N/A or 0. They would also silently populate if anyone typed into A71:A176.<br/><br/><b>3. The join key is free text, not an item number.</b> One typo, trailing space, or renamed product on any of the three sheets (A here, MSO!C, CLI!D) silently breaks the row. Casing drift is already visible — "White" vs "white", "Brown" vs "brown", "GOURMET PDS SESAME BUNS" in caps. XLOOKUP is case-insensitive so the colors still match, but it shows the master lists are not kept tight.<br/><br/><b>4. E4 is an unlabeled orphan on MCS.</b> Breadline has E3 = "Planned Start Time" with E4 = 7:50 AM. MCS has E4 = 6:45 AM with no header and nothing reading it — likely a leftover from copying the Breadline sheet.<br/><br/><b>5. Two columns share the header "Schedule Notes"</b> (CLI!N and CLI!O, surfaced side by side). Only the second appears populated. Worth merging or renaming.<br/><br/><b>6. "Placement On Scedule" is misspelled</b> in Critical Lookup Information!F1. Cosmetic, but it trips up anyone writing new formulas against it.<br/><br/><b>7. The "0" return in the D IFS is text, not a number</b> — the same type inconsistency flagged on DoughWeights. If anyone sums the Run Time column to total the day's minutes, text zeros are skipped rather than counted.<br/><br/><b>8. No IFERROR anywhere.</b> Row 4 (the intentional pattern row) shows #N/A across every column on both sheets. Harmless but ugly on a printed sheet, and it trains operators to ignore #N/A — so a genuinely broken row will not get noticed.</textArea>
+
+<foreignObject id="sdiffs" x="-910" y="6540" width="1200" height="520" data-type="table" data-title="Breadline vs MCS — the differences"><table><thead><tr><th>Aspect</th><th>Breadline Schedule Template</th><th>MCS Schedule Template</th></tr></thead><tbody><tr><td>Line</td><td>Breadline - loaves, hearth, pullman, batards</td><td>MCS - rolls, buns, sliders, kaisers</td></tr><tr><td>Mixer (I2 label)</td><td>#2 Mixer Sheets</td><td>#1 Mixer Sheets</td></tr><tr><td>Planned bag total</td><td>H2 = Mix-Slice-Oven!O1 = 131.5</td><td>H2 = Mix-Slice-Oven!O2 = 229</td></tr><tr><td>Product list</td><td>rows 5-69 (65 runs)</td><td>rows 5-69 (65 runs)</td></tr><tr><td>Used range</td><td>A1:R71</td><td>A1:S176</td></tr><tr><td>Placement on Schedule?</td><td>No</td><td>Yes - column Q</td></tr><tr><td>D3 label</td><td>Run Time</td><td>TIME</td></tr><tr><td>J3 label</td><td>Notes</td><td>Exceptions</td></tr><tr><td>Planned Start Time</td><td>Yes - E3 header, E4 = 7:50 AM</td><td>No - E4 = 6:45 AM, unlabeled orphan</td></tr><tr><td>Changeover rows</td><td>No</td><td>Yes - A18, A32 etc. as real line items, 10 min, C=1</td></tr></tbody></table></foreignObject>
+
+<foreignObject id="smixmap" x="-910" y="7200" width="900" height="420" data-type="table" data-title="Run Time - mix size selects the CLI column"><table><thead><tr><th>C value (bags per mix)</th><th>Reads CLI column</th><th>CLI header</th></tr></thead><tbody><tr><td>4</td><td>G</td><td>4 Bag Mix</td></tr><tr><td>3</td><td>H</td><td>3 Bag Mix</td></tr><tr><td>2</td><td>I</td><td>2 Bag Mix</td></tr><tr><td>1.5</td><td>K</td><td>1.5 Bag Mix - tested last, bolted on later</td></tr><tr><td>1</td><td>J</td><td>1 Bag Mix</td></tr><tr><td>0</td><td>none</td><td>returns text "0"</td></tr></tbody></table></foreignObject>
+
+<foreignObject id="sdoc" x="1400" y="5560" width="784" height="1105" data-type="doc">
+# Breadline &amp; MCS Schedule Templates — Logic Spec
+
+**Purpose:** The printable shop-floor run sheet for each of the two production lines. This is the last tab in the chain — it takes the bag counts the model calculated and dresses them up with everything the mixer operator needs: how many bags per mix, how long the run takes, pan limits, dough color, steam or no steam, and where it falls in the day's sequence.
+
+**One-line summary:** Bags to produce (from Mix-Slice-Oven) + bags-per-mix → run time; every other column is a static attribute looked up from Critical Lookup Information.
+
+**Key structural point:** These sheets compute almost nothing. Only one column (D, Run Time) contains real logic. Every other formula is a flat XLOOKUP against one of two sheets. All the math happened upstream.
+
+## 1. Sheet anatomy — four bands of columns
+
+### Band 1 · Row-driver (col A) — MANUAL
+
+| Cell | Content |
+|---|---|
+| `A2` | `=TODAY()` — print date |
+| `A3` | "Dough" header |
+| `A4` | "Parent Formula, Update Daily ---&gt;" — the master pattern row. Holds the live formula for every column; all #N/A because A4 is text, not a product. Copy-source for new rows. |
+| `A5:A69` | The run list — hand-maintained ordered list of dough runs. Breadline: 2# Sour Dough Batard, Sour Dough Hearth, White Bread- Lg Pullman … 1.75# PAL Batard. MCS: 6" Italian Rolls, 7" Challah Hotdog Roll … GOURMET PDS SESAME BUNS. |
+| `A70` | Sentinel — note in C70: "Don't delete this data. It will break the other formuals" |
+
+**A is the join key for the entire sheet.** Every lookup on the row keys off the text description in column A, not an item number. Both `Mix-Slice-Oven Sheet!C:C` and `Critical Lookup Information!D:D` must contain that exact string or the row goes #N/A.
+
+MCS's list interleaves **Changeover** rows (A18, A32, …) as real line items — they consume time (10 min) and carry C=1, so they occupy a slot in the sequence.
+
+### Band 2 · Calculated (cols B, C, D) — the only logic on the sheet
+
+**B — Total # of Bags to Produce**
+
+```
+=XLOOKUP($A5,'Mix-Slice-Oven Sheet'!C:C,'Mix-Slice-Oven Sheet'!O:O)
+```
+
+Pulls the day's bag requirement. This is where the whole upstream chain lands: sales history → demand → shortfall → dough lbs → ÷ batch size → bags → here.
+
+**C — Bags Per Mix** (C1 note: "Optimal # of Bags Per Mix")
+
+```
+=XLOOKUP($A5,'Mix-Slice-Oven Sheet'!C:C,'Mix-Slice-Oven Sheet'!F:F)
+```
+
+The optimal mix size for that product. Values seen: 1, 1.5, 2, 3, 4.
+
+**D — Run Time / TIME — the one real decision on the sheet**
+
+```
+=IFS( C5=1,   XLOOKUP($A5,CLI!$D:$D, CLI!$J:$J),
+      C5=2,   XLOOKUP($A5,CLI!$D:$D, CLI!$I:$I),
+      C5=3,   XLOOKUP($A5,CLI!$D:$D, CLI!$H:$H),
+      C5=4,   XLOOKUP($A5,CLI!$D:$D, CLI!$G:$G),
+      C5=1.5, XLOOKUP($A5,CLI!$D:$D, CLI!$K:$K),
+      C5=0,   "0" )
+```
+
+In plain English: *look at how many bags go in one mix, then fetch the run time for that specific mix size for this specific product.* It is a 2-D lookup flattened into an IFS — product on the row, mix size selecting the column.
+
+Note the column order is **not sequential** (G/H/I/J/K = 4/3/2/1/1.5) — the 1.5 case was bolted on after the fact, which is why it is tested last.
+
+### Band 3 · Attribute lookups — all flat, all keyed on A
+
+Every one is a single XLOOKUP into Critical Lookup Information. Column letters differ between the two sheets because MCS inserts "Placement on Schedule".
+
+| Breadline | MCS | Header | CLI source col | Example value |
+|---|---|---|---|---|
+| — | Q | Placement on Schedule | F | 1, 2, 3…, or "Changeover" |
+| N | N | Pan Constraints | E | "12 bags max in a single run", "No Pan Constraints" |
+| O | O | Dough Color | L | White / yellow / brown |
+| P | P | Steamed? | M | Steamed / Not Steamed |
+| Q | R | Schedule Notes | N | (mostly blank) |
+| R | S | Schedule Notes (second, same header) | O | "Keep 2-3 Hour Buffer in between Artisan Mixes" |
+
+MCS uses `=+XLOOKUP(...)` on the Dough Color column — the leading `+` is a harmless Lotus-era artifact.
+
+### Band 4 · Manual operator entry — headers only, body blank by design
+
+| Col | Header | Filled in by |
+|---|---|---|
+| E | Planned Start Time (Breadline only) | scheduler |
+| F | Bag Count / Time Start | operator on the floor |
+| G | Time Finish | operator |
+| H | Temp | operator |
+| I | Operator | operator |
+| J | Notes (BL) / Exceptions (MCS) | operator |
+| K | Rework | operator |
+| L | Grind | operator |
+
+This is the **feedback capture zone** — planned vs. actual. Nothing reads it; it is a paper record.
+
+## 2. The two source sheets
+
+**Mix-Slice-Oven Sheet** — supplies the quantities (what changes daily)
+
+- `C:C` = run/dough name (join key)
+- `F:F` → Bags Per Mix
+- `O:O` → Total Bags to Produce
+- `O1` = Breadline planned bag total · `O2` = MCS planned bag total
+
+**Critical Lookup Information** — supplies the attributes (static master data)
+
+| Col | Header | Consumed as |
+|---|---|---|
+| A | Customer Name | (Distribution tab, not here) |
+| B | Pallet Type | (not here) |
+| D | Dough | join key |
+| E | Pan Constraints | → N |
+| F | Placement On Scedule (sic) | → MCS Q |
+| G | 4 Bag Mix | → D when C=4 |
+| H | 3 Bag Mix | → D when C=3 |
+| I | 2 Bag Mix | → D when C=2 |
+| J | 1 Bag Mix | → D when C=1 |
+| K | 1.5 Bag Mix | → D when C=1.5 |
+| L | Dough Color | → O |
+| M | Steamed? | → P |
+| N | Schedule Notes | → Q/R |
+| O | Schedule Notes | → R/S |
+| Q/R/S | Item# / Description / Packs Per Case | (Daily S&amp;D case-to-pack bridge, not here) |
+
+Run times live on CLI rows 3+; row 2 holds the bag-count key (G2=4, H2=3, I2=2, J2=1, K2=1.5).
+
+## Verification scope
+
+Read A1:S40 in full detail plus a complete formula-pattern scan of A1:S176 on MCS, and a complete formula-pattern scan of A1:R71 plus headers and the full column-A list on Breadline. Also read `Critical Lookup Information`!A1:S6 to confirm column meanings. Individual Mix-Slice-Oven Sheet row matches were not traced. No changes were made to the workbook.
+</foreignObject>
+
+</svg>
