@@ -14,31 +14,12 @@ not plain SVG images and cannot be pasted into Miro directly.
 | 1. Daily Inventory Reconciliation | on board (pre-existing) | x −910, y −1911 |
 | 2. Daily Supply & Demand | on board | x −910, y −520 |
 | 3. DoughWeights(WhereUsed-TopLvl) | on board | x −910, y 2840 |
-| 4. Breadline & MCS Schedule Templates | on board | x −910, y 5560 |
+| 4. Breadline & MCS Schedule Templates | on board | x −1710…−110, y 5110…6010 |
 
 Sections stack vertically; all flowcharts share the x = −910 left edge so they
 read top to bottom in one column.
 
-## Section 4 placement (sent, verified collision-free)
+## Layout
 
-Planned against all 12 then-existing board items using oversized estimates for
-the auto-expanding widgets. Rendered sizes came in under budget, so no
-repositioning pass was needed.
-
-| Widget | x | y |
-|---|---|---|
-| Flowchart | −910 → 690 | 5560 → 6460 |
-| Findings panel | 760 → 1300 | 5560 → 7010 |
-| Spec doc | 1400 → 2190 | 5560 → 8160 |
-| Differences table | −910 → −119 | 6540 → 7112 |
-| Mix-size table | −910 → −119 | 7200 → 7596 |
-
-Rendered: spec doc 790 × 2114, differences table 791 × 572, mix-size table
-791 × 396. Lowest previously occupied y was 5236.
-
-## Caveat
-
-All four specs are transcriptions of formula readings, not machine-verified
-pulls from the workbook. The n8n workflow intended to read the sheet directly
-(`Operating Schedule – Read (v2)`, id `hu1wnKZ8KfPAIuTm`) has not yet completed
-a successful run.
+See `board-layout.md` for the current positions of every item and for the
+Miro API behaviours that make this board awkward to edit programmatically.
