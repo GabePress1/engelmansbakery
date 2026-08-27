@@ -22,12 +22,17 @@ Section origins are 5000 apart. Relative to a section origin `SX`:
 | Table 2 | SX+3220 | 1000 |
 | Divider bar (10 × 3800) | SX+4700 | −500 |
 
-| Section | SX |
-|---|---|
-| 1. Daily Inventory Reconciliation | 20000 |
-| 2. Daily Supply & Demand | 25000 |
-| 3. DoughWeights(WhereUsed-TopLvl) | 30000 |
-| 4. Breadline & MCS Schedule Templates | 35000 |
+| Section | SX | Status |
+|---|---|---|
+| 1. Daily Inventory Reconciliation | 20000 | on board |
+| 2. Daily Supply & Demand | 25000 | on board |
+| 3. DoughWeights(WhereUsed-TopLvl) | 30000 | on board |
+| 4. Breadline & MCS Schedule Templates | 35000 | on board |
+| 5. Mix-Slice-Oven Sheet | 40000 | **staged, NOT SENT** — `section5-mix-slice-oven.svg` |
+
+Section 5 differs slightly from the template: its findings panel is 2600 tall (nine
+findings) and it carries three tables at y = 0 / 1400 / 2800 rather than two. Its
+closing barrier goes at x = 45700. Barrier 4 (x = 39600) is its opening barrier.
 
 Verified: **0 overlaps** across all 32 positioned items in the layout.
 
