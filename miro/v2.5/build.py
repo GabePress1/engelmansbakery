@@ -413,7 +413,7 @@ FRAMES.append({
 FRAMES.append({
     'title': '3. Inventory, Sunday to Friday',
     'subtitle': 'Nobody types inventory in this workbook: every count is an XLOOKUP into the external _BC.xlsm file on SharePoint.',
-    'mermaid': r"""flowchart LR
+    'mermaid': r"""flowchart TD
 {classdef}
     EXT["_BC.xlsm on SharePoint&lt;br/&gt;tabs Sunday - Inventory ... Friday-Inventory&lt;br/&gt;floor count typed here"]:::input
     PROD["Products&lt;br/&gt;A3 row list: FG + FG-DIST&lt;br/&gt;395 SKUs"]:::input
