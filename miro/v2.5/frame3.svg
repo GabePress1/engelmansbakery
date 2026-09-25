@@ -49,30 +49,28 @@ flowchart TD
 
     EXT["_BC.xlsm on SharePoint&lt;br/&gt;tabs Sunday - Inventory ... Friday-Inventory&lt;br/&gt;floor count typed here"]:::input
     PROD["Products&lt;br/&gt;A3 row list: FG + FG-DIST&lt;br/&gt;395 SKUs"]:::input
-    SUN["Sunday&lt;br/&gt;Initial = external column C"]:::lookup
-    MON["Monday"]:::lookup
-    TUE["Tuesday"]:::lookup
-    WED["Wednesday"]:::lookup
-    THU["Thursday"]:::lookup
-    FRI["Friday"]:::lookup
+    subgraph DAYS["Day tables: each day's Final Inventory becomes the next day's Initial Inventory"]
+        direction LR
+        SUN["Sunday&lt;br/&gt;Initial = external column C"]:::lookup
+        MON["Monday"]:::lookup
+        TUE["Tuesday"]:::lookup
+        WED["Wednesday"]:::lookup
+        THU["Thursday"]:::lookup
+        FRI["Friday"]:::lookup
+        SUN --&gt; MON
+        MON --&gt; TUE
+        TUE --&gt; WED
+        WED --&gt; THU
+        THU --&gt; FRI
+    end
     TOT["Total = Freezer + Floor&lt;br/&gt;- Late/Day Orders - Inv. Discounts"]:::calc
     FIN["Final Inventory =&lt;br/&gt;Total + Wrapped - Order"]:::calc
     DIF["Diferencias =&lt;br/&gt;Initial - (Freezer + Floor)"]:::calc
     DSD["DSD_DSnD _Floor"]:::calc
     DIST["Dist_DSnD 0_Inventory"]:::calc
-    PROD --&gt; SUN
-    EXT --&gt;|"Freezer, Floor, Late/Day,&lt;br/&gt;Wrapped, Order, Discounts"| SUN
-    EXT --&gt; MON
-    EXT --&gt; TUE
-    EXT --&gt; WED
-    EXT --&gt; THU
-    EXT --&gt; FRI
-    SUN --&gt;|"Final to Initial"| MON
-    MON --&gt;|"Final to Initial"| TUE
-    TUE --&gt;|"Final to Initial"| WED
-    WED --&gt;|"Final to Initial"| THU
-    THU --&gt;|"Final to Initial"| FRI
-    FRI -. each day .-&gt; TOT
+    EXT --&gt;|"Freezer, Floor, Late/Day, Wrapped,&lt;br/&gt;Order, Discounts for every day"| DAYS
+    PROD --&gt;|"row list"| DAYS
+    DAYS --&gt;|"each day"| TOT
     TOT --&gt; FIN
     TOT --&gt; DIF
     TOT --&gt;|"that day"| DSD
