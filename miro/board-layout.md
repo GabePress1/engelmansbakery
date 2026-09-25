@@ -64,9 +64,10 @@ deleted by hand in the Miro UI. **Diagrams cannot be deleted through the API**
    dropped its diagram onto section 1's). **Always build into empty space, then
    move things in.**
 
-3. **On create, a diagram's x/y is its CENTRE**, not its top-left, despite the
-   composer spec. `x=20800, y=450` yields a diagram spanning 20000…21600,
-   0…900. Other widget types use top-left.
+3. **On create, a diagram's x/y was read as its CENTRE on this board**, not its
+   top-left. `x=20800, y=450` yielded a diagram spanning 20000…21600, 0…900.
+   This did **not** hold on the v2.5 board (Sept 2026): there the x/y was the
+   top-left, as the composer spec says. Check one diagram before placing more.
 
 4. **`<text>` vs `<textArea>` matters on update.** Section titles are
    `textArea`. Sending them as `<text>` is *silently skipped* — absent from

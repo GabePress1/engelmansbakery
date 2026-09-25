@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg">
-<g id="f8" transform="translate(31008,0)" data-frame="8. Recon">
+<g id="f8" transform="translate(31808,450)" data-frame="8. Recon">
   <rect data-type="frame" x="0" y="0" width="2464" height="1520" fill="#ffffff" data-title="8. Recon"/>
   <text id="t8" x="64" y="120" font-size="67" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">8. Recon</text>
   <text id="s8" x="64" y="184" font-size="22" font-family="noto_sans" fill="#595959">One check per table: does the spilled row list have exactly as many rows as the table built beside it?</text>
@@ -21,8 +21,7 @@
   <rect id="c8_1_8" data-type="custom-widget" data-widget-type="card" data-title="Mix_Slice_Oven: Table longer" data-description="FORMULA (this sheet). Mix-Slice-Oven!A6# has 390 rows, table Mix_Slice_Oven has 391; difference -1. Table longer: extra table rows below the spill show #N/A; harmless." data-color="#2d9bf0" x="2080" y="1152" width="320" height="88" fill="none" stroke="none"/>
   <rect id="c8_1_9" data-type="custom-widget" data-widget-type="card" data-title="Oven_Info: Table longer" data-description="FORMULA (this sheet). Mix-Slice-Oven!A410# has 68 rows, table Oven_Info has 86; difference -18. Table longer: extra table rows below the spill show #N/A; harmless." data-color="#2d9bf0" x="2080" y="1260" width="320" height="88" fill="none" stroke="none"/>
   <rect id="c8_1_10" data-type="custom-widget" data-widget-type="card" data-title="DoughWeight: Array longer" data-description="ISSUE. DoughWeights!A4# has 453 rows, table DoughWeight has 452; difference 1. Array longer: SKUs at the end of the spill have no table row and are silently dropped." data-color="#da0063" x="2080" y="1368" width="320" height="88" fill="none" stroke="none"/>
-</g>
-<foreignObject id="d8" x="31872" y="690" width="1600" height="900" data-type="diagram" data-title="8. Recon">
+  <foreignObject id="d8" x="64" y="240" width="1600" height="900" data-type="diagram" data-title="8. Recon">
 flowchart LR
     classDef input fill:#B3E65F,stroke:#6E9A24,color:#2F440B
     classDef export fill:#B8ACFB,stroke:#8A7BE0,color:#231266
@@ -49,4 +48,5 @@ flowchart LR
     G --&gt;|"E bigger"| TL
     G --&gt;|"C bigger"| AL
 </foreignObject>
+</g>
 </svg>

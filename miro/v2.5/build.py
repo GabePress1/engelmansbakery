@@ -6,11 +6,15 @@ are authored below, one FRAME per board section. Writes frame0.svg ... frame9.sv
 
 Layout (per frame, frame-relative):
   title (y 120 baseline) / one-line subtitle (y 184)
-  flowchart 1600x900 at (64, 240), placed OUTSIDE the frame <g> at absolute coordinates
-      because Miro reads a new diagram's x/y as its centre (see miro/board-layout.md)
+  flowchart 1600x900 at (64, 240), nested in the frame <g> so it moves with the frame
+      (its x/y is the diagram's top-left, as the composer spec says). A diagram can never be
+      moved through the API on its own. Send each frame with canvas_update_from_svg, which
+      places exactly; canvas_create_from_svg may relocate a batch it thinks collides.
   card stacks from x 1728 (or 64 with no flowchart), 352 apart; heading baseline y 262,
       cards 320x88 from y 288 on a 108 pitch, at most MAXC cards per column
-Frames sit side by side at y 0 with a 400px gutter.
+Frames sit side by side from (FRAME_X0, FRAME_Y0) with a 400px gutter. The board's frames
+were moved to (800, 450) after the first build, when the diagrams turned out to be placed by
+their top-left corner; these origins reproduce the board as it now stands.
 """
 import json
 import os
@@ -23,6 +27,7 @@ D = json.load(open(os.path.join(HERE, 'formulas.json')))
 MAXC = 16
 CARD_W, CARD_H, PITCH, COLW = 320, 88, 108, 352
 PAD, TOP, GUTTER = 64, 240, 400
+FRAME_X0, FRAME_Y0 = 800, 450
 DIA_W, DIA_H = 1600, 900
 
 COLOR = {'input': '#00b86b', 'export': '#8b5cf6', 'calc': '#2d9bf0', 'lookup': '#ff8c00',
@@ -938,7 +943,7 @@ def split_stacks(stacks):
 
 
 def build():
-    fx = 0
+    fx, fy = FRAME_X0, FRAME_Y0
     manifest = []
     for n, fr in enumerate(FRAMES):
         cols = split_stacks(fr['stacks'])
@@ -948,7 +953,7 @@ def build():
         H = max(TOP + DIA_H if fr['mermaid'] else 0, 288 + maxc * PITCH - (PITCH - CARD_H)) + PAD
         assert len(fr['subtitle']) * 13 < W - 2 * PAD, (n, 'subtitle too long for frame')
         assert all(len(h) <= 23 for h, _ in cols), (n, 'stack heading wider than a column')
-        parts = [f'<g id="f{n}" transform="translate({fx},0)" data-frame="{esc(fr["title"])}">',
+        parts = [f'<g id="f{n}" transform="translate({fx},{fy})" data-frame="{esc(fr["title"])}">',
                  f'  <rect data-type="frame" x="0" y="0" width="{W}" height="{H}" fill="#ffffff" data-title="{esc(fr["title"])}"/>',
                  f'  <text id="t{n}" x="{PAD}" y="120" font-size="67" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">{esc_body(fr["title"])}</text>',
                  f'  <text id="s{n}" x="{PAD}" y="184" font-size="22" font-family="noto_sans" fill="#595959">{esc_body(fr["subtitle"])}</text>']
@@ -963,20 +968,19 @@ def build():
                     f'data-title="{esc(c["title"])}" data-description="{esc(desc)}" data-color="{COLOR[c["kind"]]}" '
                     f'x="{cx}" y="{288 + j * PITCH}" width="{CARD_W}" height="{CARD_H}" fill="none" stroke="none"/>')
                 ncards += 1
-        parts.append('</g>')
         if fr['mermaid']:
             body = fr['mermaid'].replace('{classdef}', CLASSDEF)
             assert '<' not in body and '&' not in body.replace('&lt;', '').replace('&gt;', '')
             body = body.replace('>', '&gt;')  # arrows: the body must carry no raw '>'
-            # Miro reads a new diagram's x/y as its centre (miro/board-layout.md, behaviour 3)
-            cxd, cyd = fx + PAD + DIA_W // 2, TOP + DIA_H // 2
-            parts.append(f'<foreignObject id="d{n}" x="{cxd}" y="{cyd}" width="{DIA_W}" height="{DIA_H}" '
+            # nested in the frame so it moves with it; x/y is the diagram's top-left
+            parts.append(f'  <foreignObject id="d{n}" x="{PAD}" y="{TOP}" width="{DIA_W}" height="{DIA_H}" '
                          f'data-type="diagram" data-title="{esc(fr["title"])}">\n{body}</foreignObject>')
+        parts.append('</g>')
         svg = '<svg xmlns="http://www.w3.org/2000/svg">\n' + '\n'.join(parts) + '\n</svg>\n'
         ET.fromstring(svg)  # must parse
         path = os.path.join(HERE, f'frame{n}.svg')
         open(path, 'w').write(svg)
-        manifest.append({'frame': n, 'title': fr['title'], 'x': fx, 'y': 0, 'w': W, 'h': H,
+        manifest.append({'frame': n, 'title': fr['title'], 'x': fx, 'y': fy, 'w': W, 'h': H,
                          'cards': ncards, 'columns': len(cols), 'diagram': bool(fr['mermaid']),
                          'bytes': len(svg.encode())})
         fx += W + GUTTER

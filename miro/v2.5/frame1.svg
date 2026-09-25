@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg">
-<g id="f1" transform="translate(3568,0)" data-frame="1. Master data">
+<g id="f1" transform="translate(4368,450)" data-frame="1. Master data">
   <rect data-type="frame" x="0" y="0" width="3872" height="1952" fill="#ffffff" data-title="1. Master data"/>
   <text id="t1" x="64" y="120" font-size="67" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">1. Master data</text>
   <text id="s1" x="64" y="184" font-size="22" font-family="noto_sans" fill="#595959">Products, Dough, Unique Dough, Pans and Critical Lookup Information: the typed lists every other sheet looks up.</text>
@@ -55,8 +55,7 @@
   <rect id="c1_5_5" data-type="custom-widget" data-widget-type="card" data-title="5 unknown Unique Dough names" data-description="ISSUE. Products uses run names missing from Unique Dough: Gourmet Hawaiian Bun, 8&quot; Philly Roll, 6&quot; Philly Roll, Bread Stick, 0. Their lookups return blank." data-color="#da0063" x="3488" y="828" width="320" height="88" fill="none" stroke="none"/>
   <rect id="c1_5_6" data-type="custom-widget" data-widget-type="card" data-title="7 runs have no Optimal Time" data-description="ISSUE. 2# Sour Dough Batard, 3 LB. Braided, 1.5# Artisan Ciabatta, 1.5# Ciabatta Garlic &amp; Rose, Multigrain Batard, 2# PAL Batard, 1.75# PAL Batard: 0 minutes on the schedule." data-color="#da0063" x="3488" y="936" width="320" height="88" fill="none" stroke="none"/>
   <rect id="c1_5_7" data-type="custom-widget" data-widget-type="card" data-title="Stray spaces in 4 run names" data-description="ISSUE. 'Cntry Wheat Lg Pullman ', 'Country Wheat Hearth ', ' Multigrain Lg Pullman', '22&quot;19oz Steak Crouton '. Exact-match lookups against Products can miss." data-color="#da0063" x="3488" y="1044" width="320" height="88" fill="none" stroke="none"/>
-</g>
-<foreignObject id="d1" x="4432" y="690" width="1600" height="900" data-type="diagram" data-title="1. Master data">
+  <foreignObject id="d1" x="64" y="240" width="1600" height="900" data-type="diagram" data-title="1. Master data">
 erDiagram
     classDef input fill:#B3E65F,stroke:#6E9A24,color:#2F440B
     classDef export fill:#B8ACFB,stroke:#8A7BE0,color:#231266
@@ -143,4 +142,5 @@ erDiagram
     class Oven_Info calc
     class Schedules calc
 </foreignObject>
+</g>
 </svg>

@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg">
-<g id="f0" transform="translate(0,0)" data-frame="0. Overview and legend">
+<g id="f0" transform="translate(800,450)" data-frame="0. Overview and legend">
   <rect data-type="frame" x="0" y="0" width="3168" height="1628" fill="#ffffff" data-title="0. Overview and legend"/>
   <text id="t0" x="64" y="120" font-size="67" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">0. Overview and legend</text>
   <text id="s0" x="64" y="184" font-size="22" font-family="noto_sans" fill="#595959">How data moves through Master Scheduling v2.5, left to right. Colour tells you where every value comes from.</text>
@@ -47,8 +47,7 @@
   <rect id="c0_3_5" data-type="custom-widget" data-widget-type="card" data-title="Freeze columns (_Freeze)" data-description="INPUT (typed). Typed per day on DSD_DSnD and Dist_DSnD. All blank today. Floor already includes Freezer, so typing here would double count." data-color="#00b86b" x="2784" y="828" width="320" height="88" fill="none" stroke="none"/>
   <rect id="c0_3_6" data-type="custom-widget" data-widget-type="card" data-title="Planned Total override" data-description="INPUT (typed). Mix_Slice_Oven[Planned Total] = Optimal Total until a person types a number over it. None are overridden today." data-color="#00b86b" x="2784" y="936" width="320" height="88" fill="none" stroke="none"/>
   <rect id="c0_3_7" data-type="custom-widget" data-widget-type="card" data-title="Extra Bread (Runout)" data-description="ISSUE. Mix_Slice_Oven column X is meant for typed runouts, but no formula reads it. Typing a runout changes nothing." data-color="#da0063" x="2784" y="1044" width="320" height="88" fill="none" stroke="none"/>
-</g>
-<foreignObject id="d0" x="864" y="690" width="1600" height="900" data-type="diagram" data-title="0. Overview and legend">
+  <foreignObject id="d0" x="64" y="240" width="1600" height="900" data-type="diagram" data-title="0. Overview and legend">
 flowchart LR
     classDef input fill:#B3E65F,stroke:#6E9A24,color:#2F440B
     classDef export fill:#B8ACFB,stroke:#8A7BE0,color:#231266
@@ -104,4 +103,5 @@ flowchart LR
     REC -.-&gt; DAYS
     REC -.-&gt; MSO
 </foreignObject>
+</g>
 </svg>

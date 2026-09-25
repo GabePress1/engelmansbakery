@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg">
-<g id="f6" transform="translate(23168,0)" data-frame="6. Mix-Slice-Oven">
+<g id="f6" transform="translate(23968,450)" data-frame="6. Mix-Slice-Oven">
   <rect data-type="frame" x="0" y="0" width="3872" height="1952" fill="#ffffff" data-title="6. Mix-Slice-Oven"/>
   <text id="t6" x="64" y="120" font-size="67" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">6. Mix-Slice-Oven</text>
   <text id="s6" x="64" y="184" font-size="22" font-family="noto_sans" fill="#595959">Pounds become bags, bags round up to whole mixes, mixes become minutes. K4 picks the day for the printed plan.</text>
@@ -67,8 +67,7 @@
   <rect id="c6_5_7" data-type="custom-widget" data-widget-type="card" data-title="Numbers stored as text" data-description="ISSUE. K, _Needed and Demand return the text &quot;0&quot; when nothing is short, which SUM ignores and lookups treat as text." data-color="#da0063" x="3488" y="1044" width="320" height="88" fill="none" stroke="none"/>
   <rect id="c6_5_8" data-type="custom-widget" data-widget-type="card" data-title="Print area cuts off Oven_Info" data-description="ISSUE. Rows 453 to 477 fall outside the print area." data-color="#da0063" x="3488" y="1152" width="320" height="88" fill="none" stroke="none"/>
   <rect id="c6_5_9" data-type="custom-widget" data-widget-type="card" data-title="Tables longer than the row list" data-description="ISSUE. Mix_Slice_Oven +1 row, Oven_Info +18 rows (see Recon)." data-color="#da0063" x="3488" y="1260" width="320" height="88" fill="none" stroke="none"/>
-</g>
-<foreignObject id="d6" x="24032" y="690" width="1600" height="900" data-type="diagram" data-title="6. Mix-Slice-Oven">
+  <foreignObject id="d6" x="64" y="240" width="1600" height="900" data-type="diagram" data-title="6. Mix-Slice-Oven">
 flowchart LR
     classDef input fill:#B3E65F,stroke:#6E9A24,color:#2F440B
     classDef export fill:#B8ACFB,stroke:#8A7BE0,color:#231266
@@ -119,4 +118,5 @@ flowchart LR
     PANS --&gt; OP
     OP --&gt; F29
 </foreignObject>
+</g>
 </svg>

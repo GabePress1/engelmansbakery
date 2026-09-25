@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg">
-<g id="f2" transform="translate(7840,0)" data-frame="2. Business Central exports">
+<g id="f2" transform="translate(8640,450)" data-frame="2. Business Central exports">
   <rect data-type="frame" x="0" y="0" width="3872" height="1204" fill="#ffffff" data-title="2. Business Central exports"/>
   <text id="t2" x="64" y="120" font-size="67" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">2. Business Central exports</text>
   <text id="s2" x="64" y="184" font-size="22" font-family="noto_sans" fill="#595959">Pasted, never calculated. Only a few columns of each export are used; the rest are shown grey.</text>
@@ -40,8 +40,7 @@
   <rect id="c2_5_1" data-type="custom-widget" data-widget-type="card" data-title="BOMQty headers shifted" data-description="ISSUE. The last labels sit one column off the data: BomCompLevelQty holds a dot, BomCompLevelUOMCode holds the quantity and Column1 holds the unit (LB). The BOMQty column itself is correct." data-color="#da0063" x="3488" y="396" width="320" height="88" fill="none" stroke="none"/>
   <rect id="c2_5_2" data-type="custom-widget" data-widget-type="card" data-title="Labor Day inside the sample" data-description="ISSUE. Sun/Mon samples 9/14, 9/7, 8/31, 8/24. 9/7 was Labor Day with near-zero sales, pulling the Monday average down by up to a quarter." data-color="#da0063" x="3488" y="504" width="320" height="88" fill="none" stroke="none"/>
   <rect id="c2_5_3" data-type="custom-widget" data-widget-type="card" data-title="Sales History is 91% of the file" data-description="ISSUE. 145 MB of rows, 80% of them outside the window. Trim to the last 5 weeks before pasting." data-color="#da0063" x="3488" y="612" width="320" height="88" fill="none" stroke="none"/>
-</g>
-<foreignObject id="d2" x="8704" y="690" width="1600" height="900" data-type="diagram" data-title="2. Business Central exports">
+  <foreignObject id="d2" x="64" y="240" width="1600" height="900" data-type="diagram" data-title="2. Business Central exports">
 flowchart LR
     classDef input fill:#B3E65F,stroke:#6E9A24,color:#2F440B
     classDef export fill:#B8ACFB,stroke:#8A7BE0,color:#231266
@@ -67,4 +66,5 @@ flowchart LR
     DW --&gt; MSO
     IL -.-&gt; NONE
 </foreignObject>
+</g>
 </svg>

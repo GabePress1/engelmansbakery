@@ -24,7 +24,7 @@ shifted by its offset from the master (Recon!F7 is `C7-E7`, not the master's `C5
 
 ## Layout
 
-Ten frames, left to right at y = 0, 400 px apart. Inside each frame (frame-relative):
+Ten frames, left to right at y = 450, 400 px apart. Inside each frame (frame-relative):
 
 | Element | Position |
 |---|---|
@@ -37,18 +37,18 @@ Ten frames, left to right at y = 0, 400 px apart. Inside each frame (frame-relat
 
 | # | Frame | x | Width | Cards | Frame id | Diagram id |
 |---|---|---|---|---|---|---|
-| 0 | Overview and legend | 0 | 3168 | 39 | 3458764685004170153 | 3458764685004170216 |
-| 1 | Master data | 3568 | 3872 | 46 | 3458764685004524539 | 3458764685004524612 |
-| 2 | Business Central exports | 7840 | 3872 | 31 | 3458764685004855392 | 3458764685004855435 |
-| 3 | Inventory, Sunday to Friday | 12112 | 3168 | 31 | 3458764685005044059 | 3458764685005044108 |
-| 4 | Daily Supply and Demand | 15680 | 3872 | 48 | 3458764685005179569 | 3458764685005179635 |
-| 5 | DoughWeights | 19952 | 2816 | 18 | 3458764685005312292 | 3458764685005312324 |
-| 6 | Mix-Slice-Oven | 23168 | 3872 | 58 | 3458764685005590032 | 3458764685005590121 |
-| 7 | MCS and Breadline schedules | 27440 | 3168 | 24 | 3458764685005711509 | 3458764685005711545 |
-| 8 | Recon | 31008 | 2464 | 16 | 3458764685005827237 | 3458764685005827259 |
-| 9 | Known issues, ranked | 33872 | 1152 | 15 | 3458764685005827484 | — |
+| 0 | Overview and legend | 800 | 3168 | 40 | 3458764685007732985 | 3458764685008008966 (in frame) |
+| 1 | Master data | 4368 | 3872 | 46 | 3458764685008428612 | 3458764685008428677 (in frame) |
+| 2 | Business Central exports | 8640 | 3872 | 31 | 3458764685004855392 | 3458764685004855435 |
+| 3 | Inventory, Sunday to Friday | 12912 | 3168 | 31 | 3458764685005044059 | 3458764685005044108 |
+| 4 | Daily Supply and Demand | 16480 | 3872 | 48 | 3458764685005179569 | 3458764685005179635 |
+| 5 | DoughWeights | 20752 | 2816 | 18 | 3458764685005312292 | 3458764685005312324 |
+| 6 | Mix-Slice-Oven | 23968 | 3872 | 58 | 3458764685005590032 | 3458764685005590121 |
+| 7 | MCS and Breadline schedules | 28240 | 3168 | 24 | 3458764685005711509 | 3458764685005711545 |
+| 8 | Recon | 31808 | 2464 | 16 | 3458764685005827237 | 3458764685005827259 |
+| 9 | Known issues, ranked | 34672 | 1152 | 15 | 3458764685005827484 | — |
 
-327 cards, 410 widgets in total. Deep link to a frame: `https://miro.com/app/board/uXjVHiOiwa0=/?moveToWidget=<frame id>`.
+All frames sit at y = 450. 327 cards, 410 widgets in total. Deep link to a frame: `https://miro.com/app/board/uXjVHiOiwa0=/?moveToWidget=<frame id>`.
 
 ## Colour key
 
@@ -62,11 +62,16 @@ Ten frames, left to right at y = 0, 400 px apart. Inside each frame (frame-relat
 | Red `#da0063` | `#FFC6C6` | known issue |
 | Dark `#2d3142` | — | note, worked example or saved state |
 
-## Placement caveat
+## Diagram placement
 
-Flowcharts are placed outside their frame at absolute coordinates, because Miro reads a new
-diagram's x/y as its **centre** (see `../board-layout.md`, behaviour 3). `build.py` therefore
-authors each diagram at (frame x + 864, 690). The API echoes those numbers back unchanged,
-so they cannot confirm the rendered position. If a flowchart sits over the cards instead of
-to their left, the diagram was placed by its corner: drag it 800 px left and 450 px up in
-the Miro UI. Diagrams cannot be moved or deleted through the API.
+- A new diagram's x/y is its **top-left**, as the composer spec says. The first build assumed
+  centre (from the older board) and every flowchart landed 800 px right and 450 px down, over
+  the cards. Frames 2–9 were then moved by (+800, +450) so their flowcharts sit at (64, 240).
+- A diagram can never be moved or deleted through the API. One that is attached to a frame
+  moves only with its frame, keeping its offset from the frame's top-left corner.
+- `canvas_create_from_svg` may relocate a whole batch it thinks collides (section 0 was pushed
+  4902 px down once, with nothing in the way). `canvas_update_from_svg` places new widgets
+  exactly, so sections 0 and 1 were rebuilt through it with the diagram nested in the frame.
+- Leftovers to delete by hand: two frames titled "OLD COPY - delete this frame" at y 9000
+  (deleting a frame removes its diagram too) and a stray copy of the section-0 flowchart at
+  (864, 5592), id 3458764685007733034.

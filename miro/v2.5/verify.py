@@ -2,8 +2,7 @@
 
 1. Overlap: rebuilds every widget's absolute box from frame*.svg. Cards are a fixed
    320x88. Text boxes use the widths Miro measured on this board (per-character rates
-   below are the measured maxima, rounded up). Diagrams use the centre rule
-   (miro/board-layout.md, behaviour 3): the authored x/y is the diagram's centre.
+   below are the measured maxima, rounded up). A diagram's authored x/y is its top-left.
    Every pair of non-frame widgets must be disjoint, every widget must sit inside
    its frame, and frames must not touch.
 2. Formulas: reads 10 cells straight from the .xlsm sheet XML (not via formulas.json)
@@ -43,9 +42,9 @@ def boxes():
                     else:
                         b = (fx + x, fy + y, float(ch.get('width')), float(ch.get('height')))
                     out.append(('item', ch.get('id'), b, fbox))
-            elif el.get('data-type') == 'diagram':
+            elif el.get('data-type') == 'diagram':   # loose diagram: absolute top-left
                 w, h = float(el.get('width')), float(el.get('height'))
-                b = (float(el.get('x')) - w / 2, float(el.get('y')) - h / 2, w, h)
+                b = (float(el.get('x')), float(el.get('y')), w, h)
                 out.append(('item', el.get('id'), b, None))
     return out
 

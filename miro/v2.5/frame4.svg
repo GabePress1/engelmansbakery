@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg">
-<g id="f4" transform="translate(15680,0)" data-frame="4. Daily Supply and Demand">
+<g id="f4" transform="translate(16480,450)" data-frame="4. Daily Supply and Demand">
   <rect data-type="frame" x="0" y="0" width="3872" height="1412" fill="#ffffff" data-title="4. Daily Supply and Demand"/>
   <text id="t4" x="64" y="120" font-size="67" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">4. Daily Supply and Demand</text>
   <text id="s4" x="64" y="184" font-size="22" font-family="noto_sans" fill="#595959">DSD_DSnD (packs) and Dist_DSnD (cases): average demand, minus stock on hand, gives what to bake each day.</text>
@@ -57,8 +57,7 @@
   <rect id="c4_5_7" data-type="custom-widget" data-widget-type="card" data-title="Dist has no buffer and no stock" data-description="ISSUE. Dist demand skips C5, and Dist _Freeze and _Floor are never filled, so every case in demand is baked again even when cases are on hand." data-color="#da0063" x="3488" y="1044" width="320" height="88" fill="none" stroke="none"/>
   <rect id="c4_5_8" data-type="custom-widget" data-widget-type="card" data-title="Mislabelled columns" data-description="ISSUE. 'Avg of Previous 4 Same Weekdays' and 'TOTAL Cases' hold descriptions; Week 2 holds constants; Column1 to Column4 are unnamed; S_Balanace is misspelled." data-color="#da0063" x="3488" y="1152" width="320" height="88" fill="none" stroke="none"/>
   <rect id="c4_5_9" data-type="custom-widget" data-widget-type="card" data-title="Dist Shipping Schedule stale" data-description="ISSUE. Pivot last refreshed 2026-09-18 and row 3 is #REF! (C3 points at a deleted range)." data-color="#da0063" x="3488" y="1260" width="320" height="88" fill="none" stroke="none"/>
-</g>
-<foreignObject id="d4" x="16544" y="690" width="1600" height="900" data-type="diagram" data-title="4. Daily Supply and Demand">
+  <foreignObject id="d4" x="64" y="240" width="1600" height="900" data-type="diagram" data-title="4. Daily Supply and Demand">
 flowchart LR
     classDef input fill:#B3E65F,stroke:#6E9A24,color:#2F440B
     classDef export fill:#B8ACFB,stroke:#8A7BE0,color:#231266
@@ -105,4 +104,5 @@ flowchart LR
     CLI --&gt; BR
     MSO -.-&gt;|"W1:W4 per day"| PRD
 </foreignObject>
+</g>
 </svg>

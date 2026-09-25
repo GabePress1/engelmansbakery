@@ -2,121 +2,121 @@
  {
   "frame": 0,
   "title": "0. Overview and legend",
-  "x": 0,
-  "y": 0,
+  "x": 800,
+  "y": 450,
   "w": 3168,
   "h": 1628,
   "cards": 40,
   "columns": 4,
   "diagram": true,
-  "bytes": 16409
+  "bytes": 16414
  },
  {
   "frame": 1,
   "title": "1. Master data",
-  "x": 3568,
-  "y": 0,
+  "x": 4368,
+  "y": 450,
   "w": 3872,
   "h": 1952,
   "cards": 46,
   "columns": 6,
   "diagram": true,
-  "bytes": 21291
+  "bytes": 21293
  },
  {
   "frame": 2,
   "title": "2. Business Central exports",
-  "x": 7840,
-  "y": 0,
+  "x": 8640,
+  "y": 450,
   "w": 3872,
   "h": 1204,
   "cards": 31,
   "columns": 6,
   "diagram": true,
-  "bytes": 13148
+  "bytes": 13150
  },
  {
   "frame": 3,
   "title": "3. Inventory, Sunday to Friday",
-  "x": 12112,
-  "y": 0,
+  "x": 12912,
+  "y": 450,
   "w": 3168,
   "h": 2060,
   "cards": 31,
   "columns": 4,
   "diagram": true,
-  "bytes": 13496
+  "bytes": 13497
  },
  {
   "frame": 4,
   "title": "4. Daily Supply and Demand",
-  "x": 15680,
-  "y": 0,
+  "x": 16480,
+  "y": 450,
   "w": 3872,
   "h": 1412,
   "cards": 48,
   "columns": 6,
   "diagram": true,
-  "bytes": 22331
+  "bytes": 22332
  },
  {
   "frame": 5,
   "title": "5. DoughWeights",
-  "x": 19952,
-  "y": 0,
+  "x": 20752,
+  "y": 450,
   "w": 2816,
   "h": 1204,
   "cards": 18,
   "columns": 3,
   "diagram": true,
-  "bytes": 8827
+  "bytes": 8828
  },
  {
   "frame": 6,
   "title": "6. Mix-Slice-Oven",
-  "x": 23168,
-  "y": 0,
+  "x": 23968,
+  "y": 450,
   "w": 3872,
   "h": 1952,
   "cards": 58,
   "columns": 6,
   "diagram": true,
-  "bytes": 26605
+  "bytes": 26606
  },
  {
   "frame": 7,
   "title": "7. MCS and Breadline schedules",
-  "x": 27440,
-  "y": 0,
+  "x": 28240,
+  "y": 450,
   "w": 3168,
   "h": 1412,
   "cards": 24,
   "columns": 4,
   "diagram": true,
-  "bytes": 15826
+  "bytes": 15827
  },
  {
   "frame": 8,
   "title": "8. Recon",
-  "x": 31008,
-  "y": 0,
+  "x": 31808,
+  "y": 450,
   "w": 2464,
   "h": 1520,
   "cards": 16,
   "columns": 2,
   "diagram": true,
-  "bytes": 7588
+  "bytes": 7589
  },
  {
   "frame": 9,
   "title": "9. Known issues, ranked",
-  "x": 33872,
-  "y": 0,
+  "x": 34672,
+  "y": 450,
   "w": 1152,
   "h": 872,
   "cards": 15,
   "columns": 3,
   "diagram": false,
-  "bytes": 6102
+  "bytes": 6104
  }
 ]

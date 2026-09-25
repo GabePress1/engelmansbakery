@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg">
-<g id="f7" transform="translate(27440,0)" data-frame="7. MCS and Breadline schedules">
+<g id="f7" transform="translate(28240,450)" data-frame="7. MCS and Breadline schedules">
   <rect data-type="frame" x="0" y="0" width="3168" height="1412" fill="#ffffff" data-title="7. MCS and Breadline schedules"/>
   <text id="t7" x="64" y="120" font-size="67" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">7. MCS and Breadline schedules</text>
   <text id="s7" x="64" y="184" font-size="22" font-family="noto_sans" fill="#595959">Each run sheet is one dynamic-array formula in A5 that turns Planned Total into one printed row per mix.</text>
@@ -31,8 +31,7 @@
   <rect id="c7_3_3" data-type="custom-widget" data-widget-type="card" data-title="Print areas are #REF!" data-description="ISSUE. Both sheets' Print_Area names point at deleted ranges." data-color="#da0063" x="2784" y="612" width="320" height="88" fill="none" stroke="none"/>
   <rect id="c7_3_4" data-type="custom-widget" data-widget-type="card" data-title="Placement ties" data-description="ISSUE. Runs share placements 48, 50 and 53, so their order on the sheet is arbitrary." data-color="#da0063" x="2784" y="720" width="320" height="88" fill="none" stroke="none"/>
   <rect id="c7_3_5" data-type="custom-widget" data-widget-type="card" data-title="Attributes come from the second copy" data-description="ISSUE. N:S and D4 read Critical Lookup Information, so Unique Dough edits never print." data-color="#da0063" x="2784" y="828" width="320" height="88" fill="none" stroke="none"/>
-</g>
-<foreignObject id="d7" x="28304" y="690" width="1600" height="900" data-type="diagram" data-title="7. MCS and Breadline schedules">
+  <foreignObject id="d7" x="64" y="240" width="1600" height="900" data-type="diagram" data-title="7. MCS and Breadline schedules">
 flowchart TD
     classDef input fill:#B3E65F,stroke:#6E9A24,color:#2F440B
     classDef export fill:#B8ACFB,stroke:#8A7BE0,color:#231266
@@ -78,4 +77,5 @@ flowchart TD
     OV --&gt; F29
     E4 -.-&gt;|"printed only"| MCS
 </foreignObject>
+</g>
 </svg>
