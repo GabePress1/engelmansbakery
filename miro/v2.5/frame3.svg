@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg">
+<g id="f3" transform="translate(12112,0)" data-frame="3. Inventory, Sunday to Friday">
+  <rect data-type="frame" x="0" y="0" width="3168" height="2060" fill="#ffffff" data-title="3. Inventory, Sunday to Friday"/>
+  <text id="t3" x="64" y="120" font-size="67" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">3. Inventory, Sunday to Friday</text>
+  <text id="s3" x="64" y="184" font-size="22" font-family="noto_sans" fill="#595959">Nobody types inventory in this workbook: every count is an XLOOKUP into the external _BC.xlsm file on SharePoint.</text>
+  <text id="h3_0" x="1728" y="262" font-size="22" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">Sunday table (395 rows)</text>
+  <rect id="c3_0_0" data-type="custom-widget" data-widget-type="card" data-title="Row list (A3 spill)" data-description="LOOKUP (other sheet or table). Formula: =LET(no,Products[No.],grp,Products[Gen. Prod. Posting Group],ast,IFERROR(Products[Asset],&quot;&quot;),keep,((grp=&quot;FG&quot;)+(grp=&quot;FG-DIST&quot;))*(ast&lt;&gt;&quot;Charges / Fees&quot;),SORTBY(FILTER(no,keep),FILTER(grp,keep),1)). 275 FG packs then 120 FG-DIST cases. Same formula on every day sheet." data-color="#ff8c00" x="1728" y="288" width="320" height="88" fill="none" stroke="none"/>
+  <rect id="c3_0_1" data-type="custom-widget" data-widget-type="card" data-title="Code (B)" data-description="FORMULA (this sheet). Formula: =A3. Feeds: every lookup on the row, DSD_DSnD and Dist_DSnD SUMIFS/XLOOKUP key." data-color="#2d9bf0" x="1728" y="396" width="320" height="88" fill="none" stroke="none"/>
+  <rect id="c3_0_2" data-type="custom-widget" data-widget-type="card" data-title="Description (C)" data-description="LOOKUP (other sheet or table). Formula: =XLOOKUP([@Code],Products[No.],Products[Description])." data-color="#ff8c00" x="1728" y="504" width="320" height="88" fill="none" stroke="none"/>
+  <rect id="c3_0_3" data-type="custom-widget" data-widget-type="card" data-title="Initial Inventory (D)" data-description="LOOKUP (other sheet or table). Opening stock. Sunday only reads the external file: =XLOOKUP([@Code],'[1]Sunday - Inventory'!$A$4:$A$450,'[1]Sunday - Inventory'!$C$4:$C$450). Monday to Friday use the previous day's Final Inventory." data-color="#ff8c00" x="1728" y="612" width="320" height="88" fill="none" stroke="none"/>
+  <rect id="c3_0_4" data-type="custom-widget" data-widget-type="card" data-title="Freezer (Day Before) (E)" data-description="INPUT (typed). Blank on Sunday. Monday to Friday calculate it (see right). Nothing reads it." data-color="#00b86b" x="1728" y="720" width="320" height="88" fill="none" stroke="none"/>
+  <rect id="c3_0_5" data-type="custom-widget" data-widget-type="card" data-title="Diferencias (F)" data-description="FORMULA (this sheet). Count check: what the chain says we had against what was counted. Formula: =[@Initial Inventory]-([@Freezer]+[@Floor]). Display only." data-color="#2d9bf0" x="1728" y="828" width="320" height="88" fill="none" stroke="none"/>
+  <rect id="c3_0_6" data-type="custom-widget" data-widget-type="card" data-title="Freezer (G)" data-description="LOOKUP (other sheet or table). Formula: =XLOOKUP([@Code],'[1]Sunday - Inventory'!$A$4:$A$450,'[1]Sunday - Inventory'!$F$4:$F$450). Column F of the external tab." data-color="#ff8c00" x="1728" y="936" width="320" height="88" fill="none" stroke="none"/>
+  <rect id="c3_0_7" data-type="custom-widget" data-widget-type="card" data-title="Floor (H)" data-description="LOOKUP (other sheet or table). External column G, same XLOOKUP pattern." data-color="#ff8c00" x="1728" y="1044" width="320" height="88" fill="none" stroke="none"/>
+  <rect id="c3_0_8" data-type="custom-widget" data-widget-type="card" data-title="Late/Day Orders (I)" data-description="LOOKUP (other sheet or table). External column H. Already promised, so subtracted from Total." data-color="#ff8c00" x="1728" y="1152" width="320" height="88" fill="none" stroke="none"/>
+  <rect id="c3_0_9" data-type="custom-widget" data-widget-type="card" data-title="Total (J)" data-description="FORMULA (this sheet). Stock on hand. Formula: =[@Freezer]+[@Floor]-[@Late/Day Orders]-[@Inv. Discounts]. Feeds: DSD_DSnD S_Floor (SUMIFS), Dist_DSnD 0_/1_/2_Inventory when today is Sunday." data-color="#2d9bf0" x="1728" y="1260" width="320" height="88" fill="none" stroke="none"/>
+  <rect id="c3_0_10" data-type="custom-widget" data-widget-type="card" data-title="Wrapped (K)" data-description="LOOKUP (other sheet or table). External column J: baked and wrapped today." data-color="#ff8c00" x="1728" y="1368" width="320" height="88" fill="none" stroke="none"/>
+  <rect id="c3_0_11" data-type="custom-widget" data-widget-type="card" data-title="Order (L)" data-description="LOOKUP (other sheet or table). External column K: shipped today." data-color="#ff8c00" x="1728" y="1476" width="320" height="88" fill="none" stroke="none"/>
+  <rect id="c3_0_12" data-type="custom-widget" data-widget-type="card" data-title="Final Inventory (M)" data-description="FORMULA (this sheet). Closing stock. Formula: =[@Total]+[@Wrapped]-[@Order]. Feeds: Monday Initial Inventory." data-color="#2d9bf0" x="1728" y="1584" width="320" height="88" fill="none" stroke="none"/>
+  <rect id="c3_0_13" data-type="custom-widget" data-widget-type="card" data-title="Inv. Discounts (N)" data-description="LOOKUP (other sheet or table). External column M. Subtracted from Total." data-color="#ff8c00" x="1728" y="1692" width="320" height="88" fill="none" stroke="none"/>
+  <rect id="c3_0_14" data-type="custom-widget" data-widget-type="card" data-title="QC columns (O:T)" data-description="INPUT (typed). Notes, Temp, Weight, Color Lok, Bag Lot, New Bag Lot. Typed on the sheet, all blank, nothing reads them." data-color="#00b86b" x="1728" y="1800" width="320" height="88" fill="none" stroke="none"/>
+  <rect id="c3_0_15" data-type="custom-widget" data-widget-type="card" data-title="Julian Date (U)" data-description="FORMULA (this sheet). Formula: =B$1-DATE(YEAR(B$1),1,1)+1. Uses the typed Sunday!B1 date." data-color="#2d9bf0" x="1728" y="1908" width="320" height="88" fill="none" stroke="none"/>
+  <text id="h3_1" x="2080" y="262" font-size="22" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">Monday to Friday</text>
+  <rect id="c3_1_0" data-type="custom-widget" data-widget-type="card" data-title="Week date (B1)" data-description="FORMULA (this sheet). Monday!B1 =Sunday!B1+1; each later day adds one." data-color="#2d9bf0" x="2080" y="288" width="320" height="88" fill="none" stroke="none"/>
+  <rect id="c3_1_1" data-type="custom-widget" data-widget-type="card" data-title="Initial Inventory (D)" data-description="LOOKUP (other sheet or table). Formula: =XLOOKUP([@Code],Sunday[Code],Sunday[Final Inventory]). Tuesday reads Monday, and so on." data-color="#ff8c00" x="2080" y="396" width="320" height="88" fill="none" stroke="none"/>
+  <rect id="c3_1_2" data-type="custom-widget" data-widget-type="card" data-title="Freezer (Day Before) (E)" data-description="LOOKUP (other sheet or table). Formula: =XLOOKUP([@Code],Sunday[Code],Sunday[Freezer])-XLOOKUP([@Code],Sunday[Code],Sunday[Order]). Informational; nothing reads it." data-color="#ff8c00" x="2080" y="504" width="320" height="88" fill="none" stroke="none"/>
+  <rect id="c3_1_3" data-type="custom-widget" data-widget-type="card" data-title="Counts (G, H, I, K, L, N)" data-description="LOOKUP (other sheet or table). Same XLOOKUP as Sunday against that day's external tab: 'Monday - Inventory', 'Tuesday -Inventory', 'Wednesday - Inventory', 'Thursday - Inventory', 'Friday-Inventory'." data-color="#ff8c00" x="2080" y="612" width="320" height="88" fill="none" stroke="none"/>
+  <rect id="c3_1_4" data-type="custom-widget" data-widget-type="card" data-title="Total, Final, Diferencias" data-description="FORMULA (this sheet). Same formulas as Sunday." data-color="#2d9bf0" x="2080" y="720" width="320" height="88" fill="none" stroke="none"/>
+  <text id="h3_2" x="2432" y="262" font-size="22" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">Purpose and state</text>
+  <rect id="c3_2_0" data-type="custom-widget" data-widget-type="card" data-title="Why the day tables exist" data-description="NOTE. They turn the floor count into stock on hand (Total). Supply and Demand nets that against expected demand, Final Inventory rolls to the next morning, and Diferencias shows where the count and the chain disagree." data-color="#2d3142" x="2432" y="288" width="320" height="88" fill="none" stroke="none"/>
+  <rect id="c3_2_1" data-type="custom-widget" data-widget-type="card" data-title="Chain balances as saved" data-description="NOTE. Sunday Final 90,429 = Monday Initial 90,429, and so on through the week." data-color="#2d3142" x="2432" y="396" width="320" height="88" fill="none" stroke="none"/>
+  <rect id="c3_2_2" data-type="custom-widget" data-widget-type="card" data-title="Where the week stands" data-description="NOTE. Thursday is partly entered. Friday is not counted yet (Freezer, Floor, Total = 0), which is why Friday production is negative for most items." data-color="#2d3142" x="2432" y="504" width="320" height="88" fill="none" stroke="none"/>
+  <rect id="c3_2_3" data-type="custom-widget" data-widget-type="card" data-title="Worked example: F1000 Rye 1/2&quot;" data-description="NOTE. Sunday: Freezer 79, Order 27, Final 52. Monday: Initial 52, Freezer (Day Before) 79 - 27 = 52, Wrapped 96, Order 9, Final 139." data-color="#2d3142" x="2432" y="612" width="320" height="88" fill="none" stroke="none"/>
+  <text id="h3_3" x="2784" y="262" font-size="22" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">Issues</text>
+  <rect id="c3_3_0" data-type="custom-widget" data-widget-type="card" data-title="Sunday!B1 is three weeks behind" data-description="ISSUE. B1 = 2026-08-30 but the planning anchor is 2026-09-20. Julian dates print 242 to 247 instead of 263 to 268." data-color="#da0063" x="2784" y="288" width="320" height="88" fill="none" stroke="none"/>
+  <rect id="c3_3_1" data-type="custom-widget" data-widget-type="card" data-title="Tables longer than their row list" data-description="ISSUE. Tuesday +3 rows, Wednesday to Friday +52 rows of #N/A below the spill. Harmless for totals, but untidy (see Recon)." data-color="#da0063" x="2784" y="396" width="320" height="88" fill="none" stroke="none"/>
+  <rect id="c3_3_2" data-type="custom-widget" data-widget-type="card" data-title="SKUs missing from the external tabs" data-description="ISSUE. F6214, F52550, F53220 (and F52540) are not on the _BC.xlsm tabs, so their counts return #N/A." data-color="#da0063" x="2784" y="504" width="320" height="88" fill="none" stroke="none"/>
+  <rect id="c3_3_3" data-type="custom-widget" data-widget-type="card" data-title="Inconsistent external tab names" data-description="ISSUE. 'Tuesday -Inventory' and 'Friday-Inventory' break the 'Day - Inventory' pattern. Renaming a tab breaks the link." data-color="#da0063" x="2784" y="612" width="320" height="88" fill="none" stroke="none"/>
+  <rect id="c3_3_4" data-type="custom-widget" data-widget-type="card" data-title="Everything depends on one linked file" data-description="ISSUE. If _BC.xlsm moves or the link breaks, every day table and all distribution demand freeze at their last values." data-color="#da0063" x="2784" y="720" width="320" height="88" fill="none" stroke="none"/>
+  <rect id="c3_3_5" data-type="custom-widget" data-widget-type="card" data-title="Sheet protection is off" data-description="ISSUE. Protection is defined but not switched on, so formula columns can be typed over." data-color="#da0063" x="2784" y="828" width="320" height="88" fill="none" stroke="none"/>
+</g>
+<foreignObject id="d3" x="12976" y="690" width="1600" height="900" data-type="diagram" data-title="3. Inventory, Sunday to Friday">
+flowchart LR
+    classDef input fill:#B3E65F,stroke:#6E9A24,color:#2F440B
+    classDef export fill:#B8ACFB,stroke:#8A7BE0,color:#231266
+    classDef calc fill:#9CE6FF,stroke:#2C97BB,color:#1C4657
+    classDef lookup fill:#FFB575,stroke:#CC7830,color:#542700
+    classDef output fill:#DDDDD8,stroke:#8A8A7E,color:#434339
+    classDef issue fill:#FFC6C6,stroke:#BD0A0A,color:#5C0A0A
+
+    EXT["_BC.xlsm on SharePoint&lt;br/&gt;tabs Sunday - Inventory ... Friday-Inventory&lt;br/&gt;floor count typed here"]:::input
+    PROD["Products&lt;br/&gt;A3 row list: FG + FG-DIST&lt;br/&gt;395 SKUs"]:::input
+    SUN["Sunday&lt;br/&gt;Initial = external column C"]:::lookup
+    MON["Monday"]:::lookup
+    TUE["Tuesday"]:::lookup
+    WED["Wednesday"]:::lookup
+    THU["Thursday"]:::lookup
+    FRI["Friday"]:::lookup
+    TOT["Total = Freezer + Floor&lt;br/&gt;- Late/Day Orders - Inv. Discounts"]:::calc
+    FIN["Final Inventory =&lt;br/&gt;Total + Wrapped - Order"]:::calc
+    DIF["Diferencias =&lt;br/&gt;Initial - (Freezer + Floor)"]:::calc
+    DSD["DSD_DSnD _Floor"]:::calc
+    DIST["Dist_DSnD 0_Inventory"]:::calc
+    PROD --&gt; SUN
+    EXT --&gt;|"Freezer, Floor, Late/Day,&lt;br/&gt;Wrapped, Order, Discounts"| SUN
+    EXT --&gt; MON
+    EXT --&gt; TUE
+    EXT --&gt; WED
+    EXT --&gt; THU
+    EXT --&gt; FRI
+    SUN --&gt;|"Final to Initial"| MON
+    MON --&gt;|"Final to Initial"| TUE
+    TUE --&gt;|"Final to Initial"| WED
+    WED --&gt;|"Final to Initial"| THU
+    THU --&gt;|"Final to Initial"| FRI
+    FRI -. each day .-&gt; TOT
+    TOT --&gt; FIN
+    TOT --&gt; DIF
+    TOT --&gt;|"that day"| DSD
+    TOT --&gt;|"today"| DIST
+</foreignObject>
+</svg>

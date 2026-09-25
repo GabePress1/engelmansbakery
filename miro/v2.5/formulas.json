@@ -1,0 +1,5301 @@
+{
+ "tables": {
+  "Sunday": {
+   "sheet": "Sunday",
+   "ref": "B2:U397",
+   "rows": 395,
+   "cols": [
+    {
+     "name": "Code",
+     "col": "B",
+     "stored": "A3",
+     "cell": [
+      "A3",
+      "F1000"
+     ]
+    },
+    {
+     "name": "Description",
+     "col": "C",
+     "stored": "XLOOKUP([@Code],Products[No.],Products[Description])",
+     "cell": [
+      "XLOOKUP([@Code],Products[No.],Products[Description])",
+      "Rye 1/2\""
+     ]
+    },
+    {
+     "name": "Initial Inventory",
+     "col": "D",
+     "stored": "XLOOKUP([@Code],'[1]Sunday - Inventory'!$A$4:$A$450,'[1]Sunday - Inventory'!$C$4:$C$450)",
+     "cell": [
+      "XLOOKUP([@Code],'[1]Sunday - Inventory'!$A$4:$A$450,'[1]Sunday - Inventory'!$C$4:$C$450)",
+      "79"
+     ]
+    },
+    {
+     "name": "Freezer (Day Before)",
+     "col": "E",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "Diferencias",
+     "col": "F",
+     "stored": "[@Initial Inventory]-([@Freezer]+[@Floor])",
+     "cell": [
+      "[@Initial Inventory]-([@Freezer]+[@Floor])",
+      "0"
+     ]
+    },
+    {
+     "name": "Freezer",
+     "col": "G",
+     "stored": "XLOOKUP([@Code],'[1]Sunday - Inventory'!$A$4:$A$450,'[1]Sunday - Inventory'!$F$4:$F$450)",
+     "cell": [
+      "XLOOKUP([@Code],'[1]Sunday - Inventory'!$A$4:$A$450,'[1]Sunday - Inventory'!$F$4:$F$450)",
+      "79"
+     ]
+    },
+    {
+     "name": "Floor",
+     "col": "H",
+     "stored": "XLOOKUP([@Code],'[1]Sunday - Inventory'!$A$4:$A$450,'[1]Sunday - Inventory'!$G$4:$G$450)",
+     "cell": [
+      "XLOOKUP([@Code],'[1]Sunday - Inventory'!$A$4:$A$450,'[1]Sunday - Inventory'!$G$4:$G$450)",
+      "0"
+     ]
+    },
+    {
+     "name": "Late/Day Orders",
+     "col": "I",
+     "stored": "XLOOKUP([@Code],'[1]Sunday - Inventory'!$A$4:$A$450,'[1]Sunday - Inventory'!$H$4:$H$450)",
+     "cell": [
+      "XLOOKUP([@Code],'[1]Sunday - Inventory'!$A$4:$A$450,'[1]Sunday - Inventory'!$H$4:$H$450)",
+      "0"
+     ]
+    },
+    {
+     "name": "Total",
+     "col": "J",
+     "stored": "[@Freezer]+[@Floor]-[@Late/Day Orders]-[@Inv. Discounts]",
+     "cell": [
+      "[@Freezer]+[@Floor]-[@Late/Day Orders]-[@Inv. Discounts]",
+      "79"
+     ]
+    },
+    {
+     "name": "Wrapped",
+     "col": "K",
+     "stored": "XLOOKUP([@Code],'[1]Sunday - Inventory'!$A$4:$A$450,'[1]Sunday - Inventory'!$J$4:$J$450)",
+     "cell": [
+      "XLOOKUP([@Code],'[1]Sunday - Inventory'!$A$4:$A$450,'[1]Sunday - Inventory'!$J$4:$J$450)",
+      "0"
+     ]
+    },
+    {
+     "name": "Order",
+     "col": "L",
+     "stored": "XLOOKUP([@Code],'[1]Sunday - Inventory'!$A$4:$A$450,'[1]Sunday - Inventory'!$K$4:$K$450)",
+     "cell": [
+      "XLOOKUP([@Code],'[1]Sunday - Inventory'!$A$4:$A$450,'[1]Sunday - Inventory'!$K$4:$K$450)",
+      "27"
+     ]
+    },
+    {
+     "name": "Final Inventory",
+     "col": "M",
+     "stored": "[@Total]+[@Wrapped]-[@Order]",
+     "cell": [
+      "[@Total]+[@Wrapped]-[@Order]",
+      "52"
+     ]
+    },
+    {
+     "name": "Inv. Discounts",
+     "col": "N",
+     "stored": "XLOOKUP([@Code],'[1]Sunday - Inventory'!$A$4:$A$450,'[1]Sunday - Inventory'!$M$4:$M$450)",
+     "cell": [
+      "XLOOKUP([@Code],'[1]Sunday - Inventory'!$A$4:$A$450,'[1]Sunday - Inventory'!$M$4:$M$450)",
+      "0"
+     ]
+    },
+    {
+     "name": "Notes",
+     "col": "O",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "Temp",
+     "col": "P",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "Weight",
+     "col": "Q",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "Color Lok",
+     "col": "R",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "Bag Lot",
+     "col": "S",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "New Bag Lot",
+     "col": "T",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "Julian Date",
+     "col": "U",
+     "stored": "B$1-DATE(YEAR(B$1),1,1)+1",
+     "cell": [
+      "B$1-DATE(YEAR(B$1),1,1)+1",
+      "242"
+     ]
+    }
+   ]
+  },
+  "Monday": {
+   "sheet": "Monday",
+   "ref": "B2:U397",
+   "rows": 395,
+   "cols": [
+    {
+     "name": "Code",
+     "col": "B",
+     "stored": "A3",
+     "cell": [
+      "A3",
+      "F1000"
+     ]
+    },
+    {
+     "name": "Description",
+     "col": "C",
+     "stored": "XLOOKUP([@Code],Products[No.],Products[Description])",
+     "cell": [
+      "XLOOKUP([@Code],Products[No.],Products[Description])",
+      "Rye 1/2\""
+     ]
+    },
+    {
+     "name": "Initial Inventory",
+     "col": "D",
+     "stored": "XLOOKUP([@Code],Sunday[Code],Sunday[Final Inventory])",
+     "cell": [
+      "XLOOKUP([@Code],Sunday[Code],Sunday[Final Inventory])",
+      "52"
+     ]
+    },
+    {
+     "name": "Freezer (Day Before)",
+     "col": "E",
+     "stored": "XLOOKUP([@Code],Sunday[Code],Sunday[Freezer])-XLOOKUP([@Code],Sunday[Code],Sunday[Order])",
+     "cell": [
+      "XLOOKUP([@Code],Sunday[Code],Sunday[Freezer])-XLOOKUP([@Code],Sunday[Code],Sunday[Order])",
+      "52"
+     ]
+    },
+    {
+     "name": "Diferencias",
+     "col": "F",
+     "stored": "[@Initial Inventory]-([@Freezer]+[@Floor])",
+     "cell": [
+      "[@Initial Inventory]-([@Freezer]+[@Floor])",
+      "0"
+     ]
+    },
+    {
+     "name": "Freezer",
+     "col": "G",
+     "stored": "XLOOKUP([@Code],'[1]Monday - Inventory'!$A$4:$A$450,'[1]Monday - Inventory'!$F$4:$F$450)",
+     "cell": [
+      "XLOOKUP([@Code],'[1]Monday - Inventory'!$A$4:$A$450,'[1]Monday - Inventory'!$F$4:$F$450)",
+      "52"
+     ]
+    },
+    {
+     "name": "Floor",
+     "col": "H",
+     "stored": "XLOOKUP([@Code],'[1]Monday - Inventory'!$A$4:$A$450,'[1]Monday - Inventory'!$G$4:$G$450)",
+     "cell": [
+      "XLOOKUP([@Code],'[1]Monday - Inventory'!$A$4:$A$450,'[1]Monday - Inventory'!$G$4:$G$450)",
+      "0"
+     ]
+    },
+    {
+     "name": "Late/Day Orders",
+     "col": "I",
+     "stored": "XLOOKUP([@Code],'[1]Monday - Inventory'!$A$4:$A$450,'[1]Monday - Inventory'!$H$4:$H$450)",
+     "cell": [
+      "XLOOKUP([@Code],'[1]Monday - Inventory'!$A$4:$A$450,'[1]Monday - Inventory'!$H$4:$H$450)",
+      "0"
+     ]
+    },
+    {
+     "name": "Total",
+     "col": "J",
+     "stored": "[@Freezer]+[@Floor]-[@Late/Day Orders]-[@Inv. Discounts]",
+     "cell": [
+      "[@Freezer]+[@Floor]-[@Late/Day Orders]-[@Inv. Discounts]",
+      "52"
+     ]
+    },
+    {
+     "name": "Wrapped",
+     "col": "K",
+     "stored": "XLOOKUP([@Code],'[1]Monday - Inventory'!$A$4:$A$450,'[1]Monday - Inventory'!$J$4:$J$450)",
+     "cell": [
+      "XLOOKUP([@Code],'[1]Monday - Inventory'!$A$4:$A$450,'[1]Monday - Inventory'!$J$4:$J$450)",
+      "96"
+     ]
+    },
+    {
+     "name": "Order",
+     "col": "L",
+     "stored": "XLOOKUP([@Code],'[1]Monday - Inventory'!$A$4:$A$450,'[1]Monday - Inventory'!$K$4:$K$450)",
+     "cell": [
+      "XLOOKUP([@Code],'[1]Monday - Inventory'!$A$4:$A$450,'[1]Monday - Inventory'!$K$4:$K$450)",
+      "9"
+     ]
+    },
+    {
+     "name": "Final Inventory",
+     "col": "M",
+     "stored": "[@Total]+[@Wrapped]-[@Order]",
+     "cell": [
+      "[@Total]+[@Wrapped]-[@Order]",
+      "139"
+     ]
+    },
+    {
+     "name": "Inv. Discounts",
+     "col": "N",
+     "stored": "XLOOKUP([@Code],'[1]Monday - Inventory'!$A$4:$A$450,'[1]Monday - Inventory'!$M$4:$M$450)",
+     "cell": [
+      "XLOOKUP([@Code],'[1]Monday - Inventory'!$A$4:$A$450,'[1]Monday - Inventory'!$M$4:$M$450)",
+      "0"
+     ]
+    },
+    {
+     "name": "Notes",
+     "col": "O",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "Temp",
+     "col": "P",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "Weight",
+     "col": "Q",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "Color Lok",
+     "col": "R",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "Bag Lot",
+     "col": "S",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "New Bag Lot",
+     "col": "T",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "Julian Date",
+     "col": "U",
+     "stored": "B$1-DATE(YEAR(B$1),1,1)+1",
+     "cell": [
+      "B$1-DATE(YEAR(B$1),1,1)+1",
+      "243"
+     ]
+    }
+   ]
+  },
+  "Tuesday": {
+   "sheet": "Tuesday",
+   "ref": "B2:U400",
+   "rows": 398,
+   "cols": [
+    {
+     "name": "Code",
+     "col": "B",
+     "stored": "A3",
+     "cell": [
+      "A3",
+      "F1000"
+     ]
+    },
+    {
+     "name": "Description",
+     "col": "C",
+     "stored": "XLOOKUP([@Code],Products[No.],Products[Description])",
+     "cell": [
+      "XLOOKUP([@Code],Products[No.],Products[Description])",
+      "Rye 1/2\""
+     ]
+    },
+    {
+     "name": "Initial Inventory",
+     "col": "D",
+     "stored": "XLOOKUP([@Code],Monday[Code],Monday[Final Inventory])",
+     "cell": [
+      "XLOOKUP([@Code],Monday[Code],Monday[Final Inventory])",
+      "139"
+     ]
+    },
+    {
+     "name": "Freezer (Day Before)",
+     "col": "E",
+     "stored": "XLOOKUP([@Code],Monday[Code],Monday[Freezer])-XLOOKUP([@Code],Monday[Code],Monday[Order])",
+     "cell": [
+      "XLOOKUP([@Code],Monday[Code],Monday[Freezer])-XLOOKUP([@Code],Monday[Code],Monday[Order])",
+      "43"
+     ]
+    },
+    {
+     "name": "Diferencias",
+     "col": "F",
+     "stored": "[@Initial Inventory]-([@Freezer]+[@Floor])",
+     "cell": [
+      "[@Initial Inventory]-([@Freezer]+[@Floor])",
+      "0"
+     ]
+    },
+    {
+     "name": "Freezer",
+     "col": "G",
+     "stored": "XLOOKUP([@Code],'[1]Tuesday -Inventory'!$A$4:$A$450,'[1]Tuesday -Inventory'!$F$4:$F$450)",
+     "cell": [
+      "XLOOKUP([@Code],'[1]Tuesday -Inventory'!$A$4:$A$450,'[1]Tuesday -Inventory'!$F$4:$F$450)",
+      "43"
+     ]
+    },
+    {
+     "name": "Floor",
+     "col": "H",
+     "stored": "XLOOKUP([@Code],'[1]Tuesday -Inventory'!$A$4:$A$450,'[1]Tuesday -Inventory'!$G$4:$G$450)",
+     "cell": [
+      "XLOOKUP([@Code],'[1]Tuesday -Inventory'!$A$4:$A$450,'[1]Tuesday -Inventory'!$G$4:$G$450)",
+      "96"
+     ]
+    },
+    {
+     "name": "Late/Day Orders",
+     "col": "I",
+     "stored": "XLOOKUP([@Code],'[1]Tuesday -Inventory'!$A$4:$A$450,'[1]Tuesday -Inventory'!$H$4:$H$450)",
+     "cell": [
+      "XLOOKUP([@Code],'[1]Tuesday -Inventory'!$A$4:$A$450,'[1]Tuesday -Inventory'!$H$4:$H$450)",
+      "0"
+     ]
+    },
+    {
+     "name": "Total",
+     "col": "J",
+     "stored": "[@Freezer]+[@Floor]-[@Late/Day Orders]-[@Inv. Discounts]",
+     "cell": [
+      "[@Freezer]+[@Floor]-[@Late/Day Orders]-[@Inv. Discounts]",
+      "139"
+     ]
+    },
+    {
+     "name": "Wrapped",
+     "col": "K",
+     "stored": "XLOOKUP([@Code],'[1]Tuesday -Inventory'!$A$4:$A$450,'[1]Tuesday -Inventory'!$J$4:$J$450)",
+     "cell": [
+      "XLOOKUP([@Code],'[1]Tuesday -Inventory'!$A$4:$A$450,'[1]Tuesday -Inventory'!$J$4:$J$450)",
+      "0"
+     ]
+    },
+    {
+     "name": "Order",
+     "col": "L",
+     "stored": "XLOOKUP([@Code],'[1]Tuesday -Inventory'!$A$4:$A$450,'[1]Tuesday -Inventory'!$K$4:$K$450)",
+     "cell": [
+      "XLOOKUP([@Code],'[1]Tuesday -Inventory'!$A$4:$A$450,'[1]Tuesday -Inventory'!$K$4:$K$450)",
+      "16"
+     ]
+    },
+    {
+     "name": "Final Inventory",
+     "col": "M",
+     "stored": "[@Total]+[@Wrapped]-[@Order]",
+     "cell": [
+      "[@Total]+[@Wrapped]-[@Order]",
+      "123"
+     ]
+    },
+    {
+     "name": "Inv. Discounts",
+     "col": "N",
+     "stored": "XLOOKUP([@Code],'[1]Tuesday -Inventory'!$A$4:$A$450,'[1]Tuesday -Inventory'!$M$4:$M$450)",
+     "cell": [
+      "XLOOKUP([@Code],'[1]Tuesday -Inventory'!$A$4:$A$450,'[1]Tuesday -Inventory'!$M$4:$M$450)",
+      "0"
+     ]
+    },
+    {
+     "name": "Notes",
+     "col": "O",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "Temp",
+     "col": "P",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "Weight",
+     "col": "Q",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "Color Lok",
+     "col": "R",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "Bag Lot",
+     "col": "S",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "New Bag Lot",
+     "col": "T",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "Julian Date",
+     "col": "U",
+     "stored": "B$1-DATE(YEAR(B$1),1,1)+1",
+     "cell": [
+      "B$1-DATE(YEAR(B$1),1,1)+1",
+      "244"
+     ]
+    }
+   ]
+  },
+  "Wednesday": {
+   "sheet": "Wednesday",
+   "ref": "B2:U449",
+   "rows": 447,
+   "cols": [
+    {
+     "name": "Code",
+     "col": "B",
+     "stored": "A3",
+     "cell": [
+      "A3",
+      "F1000"
+     ]
+    },
+    {
+     "name": "Description",
+     "col": "C",
+     "stored": "XLOOKUP([@Code],Products[No.],Products[Description])",
+     "cell": [
+      "XLOOKUP([@Code],Products[No.],Products[Description])",
+      "Rye 1/2\""
+     ]
+    },
+    {
+     "name": "Initial Inventory",
+     "col": "D",
+     "stored": "XLOOKUP([@Code],Tuesday[Code],Tuesday[Final Inventory])",
+     "cell": [
+      "XLOOKUP([@Code],Tuesday[Code],Tuesday[Final Inventory])",
+      "123"
+     ]
+    },
+    {
+     "name": "Freezer (Day Before)",
+     "col": "E",
+     "stored": "XLOOKUP([@Code],Tuesday[Code],Tuesday[Freezer])-XLOOKUP([@Code],Tuesday[Code],Tuesday[Order])",
+     "cell": [
+      "XLOOKUP([@Code],Tuesday[Code],Tuesday[Freezer])-XLOOKUP([@Code],Tuesday[Code],Tuesday[Order])",
+      "27"
+     ]
+    },
+    {
+     "name": "Diferencias",
+     "col": "F",
+     "stored": "[@Initial Inventory]-([@Freezer]+[@Floor])",
+     "cell": [
+      "[@Initial Inventory]-([@Freezer]+[@Floor])",
+      "2"
+     ]
+    },
+    {
+     "name": "Freezer",
+     "col": "G",
+     "stored": "XLOOKUP([@Code],'[1]Wednesday - Inventory'!$A$4:$A$450,'[1]Wednesday - Inventory'!$F$4:$F$450)",
+     "cell": [
+      "XLOOKUP([@Code],'[1]Wednesday - Inventory'!$A$4:$A$450,'[1]Wednesday - Inventory'!$F$4:$F$450)",
+      "27"
+     ]
+    },
+    {
+     "name": "Floor",
+     "col": "H",
+     "stored": "XLOOKUP([@Code],'[1]Wednesday - Inventory'!$A$4:$A$450,'[1]Wednesday - Inventory'!$G$4:$G$450)",
+     "cell": [
+      "XLOOKUP([@Code],'[1]Wednesday - Inventory'!$A$4:$A$450,'[1]Wednesday - Inventory'!$G$4:$G$450)",
+      "94"
+     ]
+    },
+    {
+     "name": "Late/Day Orders",
+     "col": "I",
+     "stored": "XLOOKUP([@Code],'[1]Wednesday - Inventory'!$A$4:$A$450,'[1]Wednesday - Inventory'!$H$4:$H$450)",
+     "cell": [
+      "XLOOKUP([@Code],'[1]Wednesday - Inventory'!$A$4:$A$450,'[1]Wednesday - Inventory'!$H$4:$H$450)",
+      "0"
+     ]
+    },
+    {
+     "name": "Total",
+     "col": "J",
+     "stored": "[@Freezer]+[@Floor]-[@Late/Day Orders]-[@Inv. Discounts]",
+     "cell": [
+      "[@Freezer]+[@Floor]-[@Late/Day Orders]-[@Inv. Discounts]",
+      "121"
+     ]
+    },
+    {
+     "name": "Wrapped",
+     "col": "K",
+     "stored": "XLOOKUP([@Code],'[1]Wednesday - Inventory'!$A$4:$A$450,'[1]Wednesday - Inventory'!$J$4:$J$450)",
+     "cell": [
+      "XLOOKUP([@Code],'[1]Wednesday - Inventory'!$A$4:$A$450,'[1]Wednesday - Inventory'!$J$4:$J$450)",
+      "0"
+     ]
+    },
+    {
+     "name": "Order",
+     "col": "L",
+     "stored": "XLOOKUP([@Code],'[1]Wednesday - Inventory'!$A$4:$A$450,'[1]Wednesday - Inventory'!$K$4:$K$450)",
+     "cell": [
+      "XLOOKUP([@Code],'[1]Wednesday - Inventory'!$A$4:$A$450,'[1]Wednesday - Inventory'!$K$4:$K$450)",
+      "8"
+     ]
+    },
+    {
+     "name": "Final Inventory",
+     "col": "M",
+     "stored": "[@Total]+[@Wrapped]-[@Order]",
+     "cell": [
+      "[@Total]+[@Wrapped]-[@Order]",
+      "113"
+     ]
+    },
+    {
+     "name": "Inv. Discounts",
+     "col": "N",
+     "stored": "XLOOKUP([@Code],'[1]Wednesday - Inventory'!$A$4:$A$450,'[1]Wednesday - Inventory'!$M$4:$M$450)",
+     "cell": [
+      "XLOOKUP([@Code],'[1]Wednesday - Inventory'!$A$4:$A$450,'[1]Wednesday - Inventory'!$M$4:$M$450)",
+      "0"
+     ]
+    },
+    {
+     "name": "Notes",
+     "col": "O",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "Temp",
+     "col": "P",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "Weight",
+     "col": "Q",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "Color Lok",
+     "col": "R",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "Bag Lot",
+     "col": "S",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "New Bag Lot",
+     "col": "T",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "Julian Date",
+     "col": "U",
+     "stored": "B$1-DATE(YEAR(B$1),1,1)+1",
+     "cell": [
+      "B$1-DATE(YEAR(B$1),1,1)+1",
+      "245"
+     ]
+    }
+   ]
+  },
+  "Thursday": {
+   "sheet": "Thursday",
+   "ref": "B2:U449",
+   "rows": 447,
+   "cols": [
+    {
+     "name": "Code",
+     "col": "B",
+     "stored": "A3",
+     "cell": [
+      "A3",
+      "F1000"
+     ]
+    },
+    {
+     "name": "Description",
+     "col": "C",
+     "stored": "XLOOKUP([@Code],Products[No.],Products[Description])",
+     "cell": [
+      "XLOOKUP([@Code],Products[No.],Products[Description])",
+      "Rye 1/2\""
+     ]
+    },
+    {
+     "name": "Initial Inventory",
+     "col": "D",
+     "stored": "XLOOKUP([@Code],Wednesday[Code],Wednesday[Final Inventory])",
+     "cell": [
+      "XLOOKUP([@Code],Wednesday[Code],Wednesday[Final Inventory])",
+      "113"
+     ]
+    },
+    {
+     "name": "Freezer (Day Before)",
+     "col": "E",
+     "stored": "XLOOKUP([@Code],Wednesday[Code],Wednesday[Freezer])-XLOOKUP([@Code],Wednesday[Code],Wednesday[Order])",
+     "cell": [
+      "XLOOKUP([@Code],Wednesday[Code],Wednesday[Freezer])-XLOOKUP([@Code],Wednesday[Code],Wednesday[Order])",
+      "19"
+     ]
+    },
+    {
+     "name": "Diferencias",
+     "col": "F",
+     "stored": "[@Initial Inventory]-([@Freezer]+[@Floor])",
+     "cell": [
+      "[@Initial Inventory]-([@Freezer]+[@Floor])",
+      "0"
+     ]
+    },
+    {
+     "name": "Freezer",
+     "col": "G",
+     "stored": "XLOOKUP([@Code],'[1]Thursday - Inventory'!$A$4:$A$450,'[1]Thursday - Inventory'!$F$4:$F$450)",
+     "cell": [
+      "XLOOKUP([@Code],'[1]Thursday - Inventory'!$A$4:$A$450,'[1]Thursday - Inventory'!$F$4:$F$450)",
+      "19"
+     ]
+    },
+    {
+     "name": "Floor",
+     "col": "H",
+     "stored": "XLOOKUP([@Code],'[1]Thursday - Inventory'!$A$4:$A$450,'[1]Thursday - Inventory'!$G$4:$G$450)",
+     "cell": [
+      "XLOOKUP([@Code],'[1]Thursday - Inventory'!$A$4:$A$450,'[1]Thursday - Inventory'!$G$4:$G$450)",
+      "94"
+     ]
+    },
+    {
+     "name": "Late/Day Orders",
+     "col": "I",
+     "stored": "XLOOKUP([@Code],'[1]Thursday - Inventory'!$A$4:$A$450,'[1]Thursday - Inventory'!$H$4:$H$450)",
+     "cell": [
+      "XLOOKUP([@Code],'[1]Thursday - Inventory'!$A$4:$A$450,'[1]Thursday - Inventory'!$H$4:$H$450)",
+      "0"
+     ]
+    },
+    {
+     "name": "Total",
+     "col": "J",
+     "stored": "[@Freezer]+[@Floor]-[@Late/Day Orders]-[@Inv. Discounts]",
+     "cell": [
+      "[@Freezer]+[@Floor]-[@Late/Day Orders]-[@Inv. Discounts]",
+      "113"
+     ]
+    },
+    {
+     "name": "Wrapped",
+     "col": "K",
+     "stored": "XLOOKUP([@Code],'[1]Thursday - Inventory'!$A$4:$A$450,'[1]Thursday - Inventory'!$J$4:$J$450)",
+     "cell": [
+      "XLOOKUP([@Code],'[1]Thursday - Inventory'!$A$4:$A$450,'[1]Thursday - Inventory'!$J$4:$J$450)",
+      "0"
+     ]
+    },
+    {
+     "name": "Order",
+     "col": "L",
+     "stored": "XLOOKUP([@Code],'[1]Thursday - Inventory'!$A$4:$A$450,'[1]Thursday - Inventory'!$K$4:$K$450)",
+     "cell": [
+      "XLOOKUP([@Code],'[1]Thursday - Inventory'!$A$4:$A$450,'[1]Thursday - Inventory'!$K$4:$K$450)",
+      "0"
+     ]
+    },
+    {
+     "name": "Final Inventory",
+     "col": "M",
+     "stored": "[@Total]+[@Wrapped]-[@Order]",
+     "cell": [
+      "[@Total]+[@Wrapped]-[@Order]",
+      "113"
+     ]
+    },
+    {
+     "name": "Inv. Discounts",
+     "col": "N",
+     "stored": "XLOOKUP([@Code],'[1]Thursday - Inventory'!$A$4:$A$450,'[1]Thursday - Inventory'!$M$4:$M$450)",
+     "cell": [
+      "XLOOKUP([@Code],'[1]Thursday - Inventory'!$A$4:$A$450,'[1]Thursday - Inventory'!$M$4:$M$450)",
+      "0"
+     ]
+    },
+    {
+     "name": "Notes",
+     "col": "O",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "Temp",
+     "col": "P",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "Weight",
+     "col": "Q",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "Color Lok",
+     "col": "R",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "Bag Lot",
+     "col": "S",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "New Bag Lot",
+     "col": "T",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "Julian Date",
+     "col": "U",
+     "stored": "B$1-DATE(YEAR(B$1),1,1)+1",
+     "cell": [
+      "B$1-DATE(YEAR(B$1),1,1)+1",
+      "246"
+     ]
+    }
+   ]
+  },
+  "Friday": {
+   "sheet": "Friday",
+   "ref": "B2:U449",
+   "rows": 447,
+   "cols": [
+    {
+     "name": "Code",
+     "col": "B",
+     "stored": "A3",
+     "cell": [
+      "A3",
+      "F1000"
+     ]
+    },
+    {
+     "name": "Description",
+     "col": "C",
+     "stored": "XLOOKUP([@Code],Products[No.],Products[Description])",
+     "cell": [
+      "XLOOKUP([@Code],Products[No.],Products[Description])",
+      "Rye 1/2\""
+     ]
+    },
+    {
+     "name": "Initial Inventory",
+     "col": "D",
+     "stored": "XLOOKUP([@Code],Thursday[Code],Thursday[Final Inventory])",
+     "cell": [
+      "XLOOKUP([@Code],Thursday[Code],Thursday[Final Inventory])",
+      "113"
+     ]
+    },
+    {
+     "name": "Freezer (Day Before)",
+     "col": "E",
+     "stored": "XLOOKUP([@Code],Thursday[Code],Thursday[Freezer])-XLOOKUP([@Code],Thursday[Code],Thursday[Order])",
+     "cell": [
+      "XLOOKUP([@Code],Thursday[Code],Thursday[Freezer])-XLOOKUP([@Code],Thursday[Code],Thursday[Order])",
+      "19"
+     ]
+    },
+    {
+     "name": "Diferencias",
+     "col": "F",
+     "stored": "[@Initial Inventory]-([@Freezer]+[@Floor])",
+     "cell": [
+      "[@Initial Inventory]-([@Freezer]+[@Floor])",
+      "113"
+     ]
+    },
+    {
+     "name": "Freezer",
+     "col": "G",
+     "stored": "XLOOKUP([@Code],'[1]Friday-Inventory'!$A$4:$A$450,'[1]Friday-Inventory'!$F$4:$F$450)",
+     "cell": [
+      "XLOOKUP([@Code],'[1]Friday-Inventory'!$A$4:$A$450,'[1]Friday-Inventory'!$F$4:$F$450)",
+      "0"
+     ]
+    },
+    {
+     "name": "Floor",
+     "col": "H",
+     "stored": "XLOOKUP([@Code],'[1]Friday-Inventory'!$A$4:$A$450,'[1]Friday-Inventory'!$G$4:$G$450)",
+     "cell": [
+      "XLOOKUP([@Code],'[1]Friday-Inventory'!$A$4:$A$450,'[1]Friday-Inventory'!$G$4:$G$450)",
+      "0"
+     ]
+    },
+    {
+     "name": "Late/Day Orders",
+     "col": "I",
+     "stored": "XLOOKUP([@Code],'[1]Friday-Inventory'!$A$4:$A$450,'[1]Friday-Inventory'!$H$4:$H$450)",
+     "cell": [
+      "XLOOKUP([@Code],'[1]Friday-Inventory'!$A$4:$A$450,'[1]Friday-Inventory'!$H$4:$H$450)",
+      "0"
+     ]
+    },
+    {
+     "name": "Total",
+     "col": "J",
+     "stored": "[@Freezer]+[@Floor]-[@Late/Day Orders]-[@Inv. Discounts]",
+     "cell": [
+      "[@Freezer]+[@Floor]-[@Late/Day Orders]-[@Inv. Discounts]",
+      "0"
+     ]
+    },
+    {
+     "name": "Wrapped",
+     "col": "K",
+     "stored": "XLOOKUP([@Code],'[1]Friday-Inventory'!$A$4:$A$450,'[1]Friday-Inventory'!$J$4:$J$450)",
+     "cell": [
+      "XLOOKUP([@Code],'[1]Friday-Inventory'!$A$4:$A$450,'[1]Friday-Inventory'!$J$4:$J$450)",
+      "0"
+     ]
+    },
+    {
+     "name": "Order",
+     "col": "L",
+     "stored": "XLOOKUP([@Code],'[1]Friday-Inventory'!$A$4:$A$450,'[1]Friday-Inventory'!$K$4:$K$450)",
+     "cell": [
+      "XLOOKUP([@Code],'[1]Friday-Inventory'!$A$4:$A$450,'[1]Friday-Inventory'!$K$4:$K$450)",
+      "0"
+     ]
+    },
+    {
+     "name": "Final Inventory",
+     "col": "M",
+     "stored": "[@Total]+[@Wrapped]-[@Order]",
+     "cell": [
+      "[@Total]+[@Wrapped]-[@Order]",
+      "0"
+     ]
+    },
+    {
+     "name": "Inv. Discounts",
+     "col": "N",
+     "stored": "XLOOKUP([@Code],'[1]Friday-Inventory'!$A$4:$A$450,'[1]Friday-Inventory'!$M$4:$M$450)",
+     "cell": [
+      "XLOOKUP([@Code],'[1]Friday-Inventory'!$A$4:$A$450,'[1]Friday-Inventory'!$M$4:$M$450)",
+      "0"
+     ]
+    },
+    {
+     "name": "Notes",
+     "col": "O",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "Temp",
+     "col": "P",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "Weight",
+     "col": "Q",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "Color Lok",
+     "col": "R",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "Bag Lot",
+     "col": "S",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "New Bag Lot",
+     "col": "T",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "Julian Date",
+     "col": "U",
+     "stored": "B$1-DATE(YEAR(B$1),1,1)+1",
+     "cell": [
+      "B$1-DATE(YEAR(B$1),1,1)+1",
+      "247"
+     ]
+    }
+   ]
+  },
+  "SalesHistory": {
+   "sheet": "Sales History",
+   "ref": "A1:Q203446",
+   "rows": 203445,
+   "cols": [
+    {
+     "name": "Document No.",
+     "col": "A",
+     "stored": null
+    },
+    {
+     "name": "Sell-to Customer No.",
+     "col": "B",
+     "stored": null
+    },
+    {
+     "name": "Sell-to Customer Name",
+     "col": "C",
+     "stored": null
+    },
+    {
+     "name": "Type",
+     "col": "D",
+     "stored": null
+    },
+    {
+     "name": "No.",
+     "col": "E",
+     "stored": null
+    },
+    {
+     "name": "Description",
+     "col": "F",
+     "stored": null
+    },
+    {
+     "name": "Posting Date",
+     "col": "G",
+     "stored": null
+    },
+    {
+     "name": "Gen. Bus. Posting Group",
+     "col": "H",
+     "stored": null
+    },
+    {
+     "name": "Gen. Prod. Posting Group",
+     "col": "I",
+     "stored": null
+    },
+    {
+     "name": "Pc Code",
+     "col": "J",
+     "stored": null
+    },
+    {
+     "name": "Dept Code",
+     "col": "K",
+     "stored": null
+    },
+    {
+     "name": "Quantity",
+     "col": "L",
+     "stored": null
+    },
+    {
+     "name": "Unit of Measure Code",
+     "col": "M",
+     "stored": null
+    },
+    {
+     "name": "Unit Price Excl. Tax",
+     "col": "N",
+     "stored": null
+    },
+    {
+     "name": "Amount",
+     "col": "O",
+     "stored": null
+    },
+    {
+     "name": "Amount Including Tax",
+     "col": "P",
+     "stored": null
+    },
+    {
+     "name": "Line Discount %",
+     "col": "Q",
+     "stored": null
+    }
+   ]
+  },
+  "SalesOrders": {
+   "sheet": "Open Sales Lines",
+   "ref": "A1:P1439",
+   "rows": 1438,
+   "cols": [
+    {
+     "name": "Document Type",
+     "col": "A",
+     "stored": null,
+     "cell": [
+      null,
+      "Order"
+     ]
+    },
+    {
+     "name": "Document No.",
+     "col": "B",
+     "stored": null,
+     "cell": [
+      null,
+      "S-ORD239085"
+     ]
+    },
+    {
+     "name": "Sell-to Customer No.",
+     "col": "C",
+     "stored": null,
+     "cell": [
+      null,
+      "10312-1"
+     ]
+    },
+    {
+     "name": "Sell-to Customer Name",
+     "col": "D",
+     "stored": null,
+     "cell": [
+      null,
+      "Davis Academy - Shabbat"
+     ]
+    },
+    {
+     "name": "Type",
+     "col": "E",
+     "stored": null,
+     "cell": [
+      null,
+      "Item"
+     ]
+    },
+    {
+     "name": "No.",
+     "col": "F",
+     "stored": null,
+     "cell": [
+      null,
+      "F9999"
+     ]
+    },
+    {
+     "name": "Description",
+     "col": "G",
+     "stored": null,
+     "cell": [
+      null,
+      "Fuel Surcharge"
+     ]
+    },
+    {
+     "name": "Location Code",
+     "col": "H",
+     "stored": null,
+     "cell": [
+      null,
+      "NR-BRHL-FG"
+     ]
+    },
+    {
+     "name": "Reserve",
+     "col": "I",
+     "stored": null,
+     "cell": [
+      null,
+      "Never"
+     ]
+    },
+    {
+     "name": "Quantity",
+     "col": "J",
+     "stored": null,
+     "cell": [
+      null,
+      "1"
+     ]
+    },
+    {
+     "name": "Reserved Qty. (Base)",
+     "col": "K",
+     "stored": null,
+     "cell": [
+      null,
+      "0"
+     ]
+    },
+    {
+     "name": "Unit of Measure Code",
+     "col": "L",
+     "stored": null,
+     "cell": [
+      null,
+      "EA"
+     ]
+    },
+    {
+     "name": "Line Amount Excl. Tax",
+     "col": "M",
+     "stored": null,
+     "cell": [
+      null,
+      "1.75"
+     ]
+    },
+    {
+     "name": "Shipment Date",
+     "col": "N",
+     "stored": null,
+     "cell": [
+      null,
+      "46289"
+     ]
+    },
+    {
+     "name": "Outstanding Quantity",
+     "col": "O",
+     "stored": null,
+     "cell": [
+      null,
+      "1"
+     ]
+    },
+    {
+     "name": "DSD or DIST",
+     "col": "P",
+     "stored": "IF([@No.]=\"\",\"\",IF(LEFT([@No.],2)=\"F5\",\"DIST\",\"DSD\"))",
+     "cell": [
+      "IF([@No.]=\"\",\"\",IF(LEFT([@No.],2)=\"F5\",\"DIST\",\"DSD\"))",
+      "DSD"
+     ]
+    }
+   ]
+  },
+  "DSD_DSnD": {
+   "sheet": "Daily Supply & Demand",
+   "ref": "B7:BF282",
+   "rows": 275,
+   "cols": [
+    {
+     "name": "Asset",
+     "col": "B",
+     "stored": "XLOOKUP($F8,'Mix-Slice-Oven'!H:H,'Mix-Slice-Oven'!D:D)",
+     "cell": [
+      "XLOOKUP([@Sku],Products[No.],Products[Asset])",
+      "Breadline"
+     ]
+    },
+    {
+     "name": "Gen. Prod.",
+     "col": "C",
+     "stored": "VLOOKUP($F8,'Business Central Items List'!A:M,13,FALSE)",
+     "cell": [
+      "XLOOKUP([@Sku],Products[No.],Products[Gen. Prod. Posting Group])",
+      "FG"
+     ]
+    },
+    {
+     "name": "Mixing Sheet",
+     "col": "D",
+     "stored": "VLOOKUP([@Sku],Mix_Slice_Oven[Sku],1,FALSE)",
+     "cell": [
+      "VLOOKUP([@Sku],Mix_Slice_Oven[Sku],1,FALSE)",
+      "F1000"
+     ]
+    },
+    {
+     "name": "Dough Weights",
+     "col": "E",
+     "stored": "VLOOKUP($F8,DoughWeights!C:D,1,FALSE)",
+     "cell": [
+      "XLOOKUP([@Sku],Products[No.],Products[Weight])",
+      "2.25"
+     ]
+    },
+    {
+     "name": "Sku",
+     "col": "F",
+     "stored": "A8",
+     "cell": [
+      "A8",
+      "F1000"
+     ]
+    },
+    {
+     "name": "Avg of Previous 4 Same Weekdays",
+     "col": "G",
+     "stored": null,
+     "cell": [
+      "XLOOKUP([@Sku],Products[No.],Products[Description])",
+      "Rye 1/2\""
+     ]
+    },
+    {
+     "name": "Sun/Mon",
+     "col": "H",
+     "stored": "LET(q,SalesHistory[Quantity],s,SalesHistory[No.],d,SalesHistory[Posting Date],k,[@Sku],AVERAGE(MAP({0,7,14,21},LAMBDA(o,SUMIFS(q,s,k,d,H$3-o)))))",
+     "cell": [
+      "LET(q,SalesHistory[Quantity],s,SalesHistory[No.],d,SalesHistory[Posting Date],k,[@Sku],a,[@Asset],IF(OR(a=\"3rd Party\",a=\"3rd Party - Bake\"),SUMIFS(q,s,k,d,H$3),AVERAGE(MAP({0,7,14,21},LAMBDA(o,SUMIFS(q,s,k,d,H$3-o))))))",
+      "17.5"
+     ]
+    },
+    {
+     "name": "Mon/Tue",
+     "col": "I",
+     "stored": "LET(q,SalesHistory[Quantity],s,SalesHistory[No.],d,SalesHistory[Posting Date],k,[@Sku],AVERAGE(MAP({0,7,14,21},LAMBDA(o,SUMIFS(q,s,k,d,I$3-o)))))",
+     "cell": [
+      "LET(q,SalesHistory[Quantity],s,SalesHistory[No.],d,SalesHistory[Posting Date],k,[@Sku],a,[@Asset],IF(OR(a=\"3rd Party\",a=\"3rd Party - Bake\"),SUMIFS(q,s,k,d,I$3),AVERAGE(MAP({0,7,14,21},LAMBDA(o,SUMIFS(q,s,k,d,I$3-o))))))",
+      "11.5"
+     ]
+    },
+    {
+     "name": "Tue/Wed",
+     "col": "J",
+     "stored": "LET(q,SalesHistory[Quantity],s,SalesHistory[No.],d,SalesHistory[Posting Date],k,[@Sku],AVERAGE(MAP({0,7,14,21},LAMBDA(o,SUMIFS(q,s,k,d,J$3-o)))))",
+     "cell": [
+      "LET(q,SalesHistory[Quantity],s,SalesHistory[No.],d,SalesHistory[Posting Date],k,[@Sku],a,[@Asset],IF(OR(a=\"3rd Party\",a=\"3rd Party - Bake\"),SUMIFS(q,s,k,d,J$3),AVERAGE(MAP({0,7,14,21},LAMBDA(o,SUMIFS(q,s,k,d,J$3-o))))))",
+      "22"
+     ]
+    },
+    {
+     "name": "Wed/Thur",
+     "col": "K",
+     "stored": "LET(q,SalesHistory[Quantity],s,SalesHistory[No.],d,SalesHistory[Posting Date],k,[@Sku],AVERAGE(MAP({0,7,14,21},LAMBDA(o,SUMIFS(q,s,k,d,K$3-o)))))",
+     "cell": [
+      "LET(q,SalesHistory[Quantity],s,SalesHistory[No.],d,SalesHistory[Posting Date],k,[@Sku],a,[@Asset],IF(OR(a=\"3rd Party\",a=\"3rd Party - Bake\"),SUMIFS(q,s,k,d,K$3),AVERAGE(MAP({0,7,14,21},LAMBDA(o,SUMIFS(q,s,k,d,K$3-o))))))",
+      "29.5"
+     ]
+    },
+    {
+     "name": "Thur/Fri",
+     "col": "L",
+     "stored": "LET(q,SalesHistory[Quantity],s,SalesHistory[No.],d,SalesHistory[Posting Date],k,[@Sku],AVERAGE(MAP({0,7,14,21},LAMBDA(o,SUMIFS(q,s,k,d,L$3-o)))))",
+     "cell": [
+      "LET(q,SalesHistory[Quantity],s,SalesHistory[No.],d,SalesHistory[Posting Date],k,[@Sku],a,[@Asset],IF(OR(a=\"3rd Party\",a=\"3rd Party - Bake\"),SUMIFS(q,s,k,d,L$3),AVERAGE(MAP({0,7,14,21},LAMBDA(o,SUMIFS(q,s,k,d,L$3-o))))))",
+      "27.75"
+     ]
+    },
+    {
+     "name": "Fri/Sat",
+     "col": "M",
+     "stored": "LET(q,SalesHistory[Quantity],s,SalesHistory[No.],d,SalesHistory[Posting Date],k,[@Sku],AVERAGE(MAP({0,7,14,21},LAMBDA(o,SUMIFS(q,s,k,d,M$3-o)))))",
+     "cell": [
+      "LET(q,SalesHistory[Quantity],s,SalesHistory[No.],d,SalesHistory[Posting Date],k,[@Sku],a,[@Asset],IF(OR(a=\"3rd Party\",a=\"3rd Party - Bake\"),SUMIFS(q,s,k,d,M$3),AVERAGE(MAP({0,7,14,21},LAMBDA(o,SUMIFS(q,s,k,d,M$3-o))))))",
+      "9.5"
+     ]
+    },
+    {
+     "name": "Week 0",
+     "col": "N",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "Week 1",
+     "col": "O",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "Week 2",
+     "col": "P",
+     "stored": null,
+     "cell": [
+      null,
+      "280"
+     ]
+    },
+    {
+     "name": "S_Sku",
+     "col": "Q",
+     "stored": null,
+     "cell": [
+      "[@Sku]",
+      "F1000"
+     ]
+    },
+    {
+     "name": "S_Desc",
+     "col": "R",
+     "stored": null,
+     "cell": [
+      "XLOOKUP([@Sku],Products[No.],Products[Description])",
+      "Rye 1/2\""
+     ]
+    },
+    {
+     "name": "S_Freeze",
+     "col": "S",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "S_Floor",
+     "col": "T",
+     "stored": "SUMIFS(Sunday[Total],Sunday[Code],[@Sku])",
+     "cell": [
+      "SUMIFS(Sunday[Total],Sunday[Code],[@Sku])",
+      "79"
+     ]
+    },
+    {
+     "name": "S_Demand",
+     "col": "U",
+     "stored": "ROUNDUP(([@Sun/Mon]*$C$5),0)",
+     "cell": [
+      "ROUNDUP(([@Sun/Mon]*$C$5),0)",
+      "21"
+     ]
+    },
+    {
+     "name": "S_Balanace",
+     "col": "V",
+     "stored": "([@S_Freeze]+[@S_Floor])-[@S_Demand]",
+     "cell": [
+      "([@S_Freeze]+[@S_Floor])-[@S_Demand]",
+      "58"
+     ]
+    },
+    {
+     "name": "S_Production",
+     "col": "W",
+     "stored": "[@S_Balanace]",
+     "cell": [
+      "[@S_Balanace]",
+      "58"
+     ]
+    },
+    {
+     "name": "M_Sku",
+     "col": "X",
+     "stored": "[@Sku]",
+     "cell": [
+      "[@Sku]",
+      "F1000"
+     ]
+    },
+    {
+     "name": "M_Desc",
+     "col": "Y",
+     "stored": "XLOOKUP([@Sku],Products[No.],Products[Description])",
+     "cell": [
+      "XLOOKUP([@Sku],Products[No.],Products[Description])",
+      "Rye 1/2\""
+     ]
+    },
+    {
+     "name": "M_Freeze",
+     "col": "Z",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "M_Floor",
+     "col": "AA",
+     "stored": "SUMIFS(Monday[Total],Monday[Code],[@Sku])",
+     "cell": [
+      "SUMIFS(Monday[Total],Monday[Code],[@Sku])",
+      "52"
+     ]
+    },
+    {
+     "name": "M_Demand",
+     "col": "AB",
+     "stored": "ROUNDUP(([@Mon/Tue]*$C$5),0)",
+     "cell": [
+      "ROUNDUP(([@Mon/Tue]*$C$5),0)",
+      "14"
+     ]
+    },
+    {
+     "name": "M_Balance",
+     "col": "AC",
+     "stored": "([@M_Freeze]+[@M_Floor])-[@M_Demand]",
+     "cell": [
+      "([@M_Freeze]+[@M_Floor])-[@M_Demand]",
+      "38"
+     ]
+    },
+    {
+     "name": "M_Production",
+     "col": "AD",
+     "stored": "[@M_Balance]",
+     "cell": [
+      "[@M_Balance]",
+      "38"
+     ]
+    },
+    {
+     "name": "T_Sku",
+     "col": "AE",
+     "stored": null,
+     "cell": [
+      "[@Sku]",
+      "F1000"
+     ]
+    },
+    {
+     "name": "T_Desc",
+     "col": "AF",
+     "stored": null,
+     "cell": [
+      "XLOOKUP([@Sku],Products[No.],Products[Description])",
+      "Rye 1/2\""
+     ]
+    },
+    {
+     "name": "T_Freeze",
+     "col": "AG",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "T_Floor",
+     "col": "AH",
+     "stored": "SUMIFS(Tuesday[Total],Tuesday[Code],[@Sku])",
+     "cell": [
+      "SUMIFS(Tuesday[Total],Tuesday[Code],[@Sku])",
+      "139"
+     ]
+    },
+    {
+     "name": "T_Demand",
+     "col": "AI",
+     "stored": "ROUNDUP(([@Tue/Wed]*$C$5),0)",
+     "cell": [
+      "ROUNDUP(([@Tue/Wed]*$C$5),0)",
+      "27"
+     ]
+    },
+    {
+     "name": "T_Balance",
+     "col": "AJ",
+     "stored": "([@T_Freeze]+[@T_Floor])-[@T_Demand]",
+     "cell": [
+      "([@T_Freeze]+[@T_Floor])-[@T_Demand]",
+      "112"
+     ]
+    },
+    {
+     "name": "T_Production",
+     "col": "AK",
+     "stored": "[@T_Balance]",
+     "cell": [
+      "[@T_Balance]",
+      "112"
+     ]
+    },
+    {
+     "name": "W_Sku",
+     "col": "AL",
+     "stored": "[@Sku]",
+     "cell": [
+      "[@Sku]",
+      "F1000"
+     ]
+    },
+    {
+     "name": "W_Desc",
+     "col": "AM",
+     "stored": "XLOOKUP([@Sku],Products[No.],Products[Description])",
+     "cell": [
+      "XLOOKUP([@Sku],Products[No.],Products[Description])",
+      "Rye 1/2\""
+     ]
+    },
+    {
+     "name": "W_Freeze",
+     "col": "AN",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "W_Floor",
+     "col": "AO",
+     "stored": "SUMIFS(Wednesday[Total],Wednesday[Code],[@Sku])",
+     "cell": [
+      "SUMIFS(Wednesday[Total],Wednesday[Code],[@Sku])",
+      "121"
+     ]
+    },
+    {
+     "name": "W_Demand",
+     "col": "AP",
+     "stored": "ROUNDUP(([@Wed/Thur]*$C$5),0)",
+     "cell": [
+      "ROUNDUP(([@Wed/Thur]*$C$5),0)",
+      "36"
+     ]
+    },
+    {
+     "name": "W_Balance",
+     "col": "AQ",
+     "stored": "([@W_Freeze]+[@W_Floor])-[@W_Demand]",
+     "cell": [
+      "([@W_Freeze]+[@W_Floor])-[@W_Demand]",
+      "85"
+     ]
+    },
+    {
+     "name": "W_Production",
+     "col": "AR",
+     "stored": "[@W_Balance]",
+     "cell": [
+      "[@W_Balance]",
+      "85"
+     ]
+    },
+    {
+     "name": "TH_Sku",
+     "col": "AS",
+     "stored": "[@Sku]",
+     "cell": [
+      "[@Sku]",
+      "F1000"
+     ]
+    },
+    {
+     "name": "TH_Desc",
+     "col": "AT",
+     "stored": "XLOOKUP([@Sku],Products[No.],Products[Description])",
+     "cell": [
+      "XLOOKUP([@Sku],Products[No.],Products[Description])",
+      "Rye 1/2\""
+     ]
+    },
+    {
+     "name": "TH_Freeze",
+     "col": "AU",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "TH_Floor",
+     "col": "AV",
+     "stored": "SUMIFS(Thursday[Total],Thursday[Code],[@Sku])",
+     "cell": [
+      "SUMIFS(Thursday[Total],Thursday[Code],[@Sku])",
+      "113"
+     ]
+    },
+    {
+     "name": "TH_Demand",
+     "col": "AW",
+     "stored": "IF([@Asset]<>\"MCS LINE\",ROUNDUP(([@Thur/Fri]*$C$5)+([@Fri/Sat]*$C$5),0),ROUNDUP(([@Thur/Fri]*$C$5),0))",
+     "cell": [
+      "IF([@Asset]<>\"MCS LINE\",ROUNDUP(([@Thur/Fri]*$C$5)+([@Fri/Sat]*$C$5),0),ROUNDUP(([@Thur/Fri]*$C$5),0))",
+      "45"
+     ]
+    },
+    {
+     "name": "TH_Balance",
+     "col": "AX",
+     "stored": "([@TH_Freeze]+[@TH_Floor])-[@TH_Demand]",
+     "cell": [
+      "([@TH_Freeze]+[@TH_Floor])-[@TH_Demand]",
+      "68"
+     ]
+    },
+    {
+     "name": "TH_Production",
+     "col": "AY",
+     "stored": "[@TH_Balance]",
+     "cell": [
+      "[@TH_Balance]",
+      "68"
+     ]
+    },
+    {
+     "name": "F_Sku",
+     "col": "AZ",
+     "stored": "[@Sku]",
+     "cell": [
+      "[@Sku]",
+      "F1000"
+     ]
+    },
+    {
+     "name": "F_Desc",
+     "col": "BA",
+     "stored": "XLOOKUP([@Sku],Products[No.],Products[Description])",
+     "cell": [
+      "XLOOKUP([@Sku],Products[No.],Products[Description])",
+      "Rye 1/2\""
+     ]
+    },
+    {
+     "name": "F_Freeze",
+     "col": "BB",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "F_Floor",
+     "col": "BC",
+     "stored": "SUMIFS(Friday[Total],Friday[Code],[@Sku])",
+     "cell": [
+      "SUMIFS(Friday[Total],Friday[Code],[@Sku])",
+      "0"
+     ]
+    },
+    {
+     "name": "F_Demand",
+     "col": "BD",
+     "stored": "ROUNDUP(([@Fri/Sat]*$C$5),0)",
+     "cell": [
+      "ROUNDUP(([@Fri/Sat]*$C$5),0)",
+      "12"
+     ]
+    },
+    {
+     "name": "F_Balance",
+     "col": "BE",
+     "stored": "([@F_Freeze]+[@F_Floor])-[@F_Demand]",
+     "cell": [
+      "([@F_Freeze]+[@F_Floor])-[@F_Demand]",
+      "-12"
+     ]
+    },
+    {
+     "name": "F_Production",
+     "col": "BF",
+     "stored": "[@F_Balance]",
+     "cell": [
+      "[@F_Balance]",
+      "-12"
+     ]
+    }
+   ]
+  },
+  "Dist_DSnD": {
+   "sheet": "Daily Supply & Demand",
+   "ref": "B286:DE406",
+   "rows": 120,
+   "cols": [
+    {
+     "name": "Asset",
+     "col": "B",
+     "stored": "XLOOKUP([@Sku],Mix_Slice_Oven[Sku],Mix_Slice_Oven[Asset])",
+     "cell": [
+      "XLOOKUP([@Sku],Mix_Slice_Oven[Sku],Mix_Slice_Oven[Asset])",
+      "Breadline"
+     ]
+    },
+    {
+     "name": "Column1",
+     "col": "C",
+     "stored": "IF($DA287=\"No match found (primary or 3rd party)\",\"(Case Only)\",$CZ287)",
+     "cell": [
+      "IF($DA287=\"No match found (primary or 3rd party)\",\"(Case Only)\",$CZ287)",
+      "F1000"
+     ]
+    },
+    {
+     "name": "Column2",
+     "col": "D",
+     "stored": "IF($C287=\"(Case Only)\",\"(Case Only)\",IF(OR($DC287=\"\",$DD287=\"\",$DE287=\"\"),\"No DSD bread available\",IF($DC287>($DD287+$DE287),$DC287-($DD287+$DE287),\"No DSD bread available\")))",
+     "cell": [
+      "IF($C287=\"(Case Only)\",\"(Case Only)\",IF(OR($DC287=\"\",$DD287=\"\",$DE287=\"\"),\"No DSD bread available\",IF($DC287>($DD287+$DE287),$DC287-($DD287+$DE287),\"No DSD bread available\")))",
+      "No DSD bread available"
+     ]
+    },
+    {
+     "name": "Column3",
+     "col": "E",
+     "stored": null,
+     "cell": [
+      "IF($D287=\"No DSD bread available\",\"No DSD bread available\",IF($D287=\"(Case Only)\",\"(Case Only)\",ROUNDDOWN($D287/XLOOKUP($F287,'Critical Lookup Information'!$Q:$Q,'Critical Lookup Information'!$S:$S),0)))",
+      "No DSD bread available"
+     ]
+    },
+    {
+     "name": "Sku",
+     "col": "F",
+     "stored": "A287",
+     "cell": [
+      "A287",
+      "F51000"
+     ]
+    },
+    {
+     "name": "TOTAL Cases",
+     "col": "G",
+     "stored": "XLOOKUP([@Sku],Products[No.],Products[Description])",
+     "cell": [
+      "XLOOKUP([@Sku],Products[No.],Products[Description])",
+      "Cs. Rye Bread 8lvs"
+     ]
+    },
+    {
+     "name": "Sun/Mon",
+     "col": "H",
+     "stored": "VLOOKUP([@Sku],'[1]Daily Supply & Demand'!$E$249:$L$374,3,FALSE)",
+     "cell": [
+      "VLOOKUP([@Sku],'[1]Daily Supply & Demand'!$E$249:$L$374,3,FALSE)",
+      "0"
+     ]
+    },
+    {
+     "name": "Mon/Tue",
+     "col": "I",
+     "stored": "VLOOKUP([@Sku],'[1]Daily Supply & Demand'!$E$249:$L$374,4,FALSE)",
+     "cell": [
+      "VLOOKUP([@Sku],'[1]Daily Supply & Demand'!$E$249:$L$374,4,FALSE)",
+      "0"
+     ]
+    },
+    {
+     "name": "Tue/Wed",
+     "col": "J",
+     "stored": "VLOOKUP([@Sku],'[1]Daily Supply & Demand'!$E$249:$L$374,5,FALSE)",
+     "cell": [
+      "VLOOKUP([@Sku],'[1]Daily Supply & Demand'!$E$249:$L$374,5,FALSE)",
+      "0"
+     ]
+    },
+    {
+     "name": "Wed/Thur",
+     "col": "K",
+     "stored": "VLOOKUP([@Sku],'[1]Daily Supply & Demand'!$E$249:$L$374,6,FALSE)",
+     "cell": [
+      "VLOOKUP([@Sku],'[1]Daily Supply & Demand'!$E$249:$L$374,6,FALSE)",
+      "0"
+     ]
+    },
+    {
+     "name": "Thur/Fri",
+     "col": "L",
+     "stored": "VLOOKUP([@Sku],'[1]Daily Supply & Demand'!$E$249:$L$374,7,FALSE)",
+     "cell": [
+      "VLOOKUP([@Sku],'[1]Daily Supply & Demand'!$E$249:$L$374,7,FALSE)",
+      "0"
+     ]
+    },
+    {
+     "name": "Fri/Sat",
+     "col": "M",
+     "stored": "VLOOKUP([@Sku],'[1]Daily Supply & Demand'!$E$249:$L$374,8,FALSE)",
+     "cell": [
+      "VLOOKUP([@Sku],'[1]Daily Supply & Demand'!$E$249:$L$374,8,FALSE)",
+      "0"
+     ]
+    },
+    {
+     "name": "Week 0",
+     "col": "N",
+     "stored": "[@0_StillNeeded]",
+     "cell": [
+      "[@0_StillNeeded]",
+      "0"
+     ]
+    },
+    {
+     "name": "Week 1",
+     "col": "O",
+     "stored": "[@1_StillNeeded]",
+     "cell": [
+      "[@1_StillNeeded]",
+      "0"
+     ]
+    },
+    {
+     "name": "Week 2",
+     "col": "P",
+     "stored": "[@2_StillNeeded]",
+     "cell": [
+      "[@2_StillNeeded]",
+      "0"
+     ]
+    },
+    {
+     "name": "S_Sku",
+     "col": "Q",
+     "stored": "[@Sku]",
+     "cell": [
+      "[@Sku]",
+      "F51000"
+     ]
+    },
+    {
+     "name": "S_Desc",
+     "col": "R",
+     "stored": "XLOOKUP([@Sku],Products[No.],Products[Description])",
+     "cell": [
+      "XLOOKUP([@Sku],Products[No.],Products[Description])",
+      "Cs. Rye Bread 8lvs"
+     ]
+    },
+    {
+     "name": "S_Freeze",
+     "col": "S",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "S_Floor",
+     "col": "T",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "S_Demand",
+     "col": "U",
+     "stored": "[@Sun/Mon]",
+     "cell": [
+      "[@Sun/Mon]",
+      "0"
+     ]
+    },
+    {
+     "name": "S_Balance",
+     "col": "V",
+     "stored": "([@S_Freeze]+[@S_Floor])-[@S_Demand]",
+     "cell": [
+      "([@S_Freeze]+[@S_Floor])-[@S_Demand]",
+      "0"
+     ]
+    },
+    {
+     "name": "S_Production",
+     "col": "W",
+     "stored": "[@S_Balance]",
+     "cell": [
+      "[@S_Balance]",
+      "0"
+     ]
+    },
+    {
+     "name": "M_Sku",
+     "col": "X",
+     "stored": "[@Sku]",
+     "cell": [
+      "[@Sku]",
+      "F51000"
+     ]
+    },
+    {
+     "name": "M_Desc",
+     "col": "Y",
+     "stored": "XLOOKUP([@Sku],Products[No.],Products[Description])",
+     "cell": [
+      "XLOOKUP([@Sku],Products[No.],Products[Description])",
+      "Cs. Rye Bread 8lvs"
+     ]
+    },
+    {
+     "name": "M_Freeze",
+     "col": "Z",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "M_Floor",
+     "col": "AA",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "M_Demand",
+     "col": "AB",
+     "stored": "[@Mon/Tue]",
+     "cell": [
+      "[@Mon/Tue]",
+      "0"
+     ]
+    },
+    {
+     "name": "M_Balance",
+     "col": "AC",
+     "stored": "([@M_Freeze]+[@M_Floor])-[@M_Demand]",
+     "cell": [
+      "([@M_Freeze]+[@M_Floor])-[@M_Demand]",
+      "0"
+     ]
+    },
+    {
+     "name": "M_Production",
+     "col": "AD",
+     "stored": "[@M_Balance]",
+     "cell": [
+      "[@M_Balance]",
+      "0"
+     ]
+    },
+    {
+     "name": "T_Sku",
+     "col": "AE",
+     "stored": "[@Sku]",
+     "cell": [
+      "[@Sku]",
+      "F51000"
+     ]
+    },
+    {
+     "name": "T_Desc",
+     "col": "AF",
+     "stored": "XLOOKUP([@Sku],Products[No.],Products[Description])",
+     "cell": [
+      "XLOOKUP([@Sku],Products[No.],Products[Description])",
+      "Cs. Rye Bread 8lvs"
+     ]
+    },
+    {
+     "name": "T_Freeze",
+     "col": "AG",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "T_Floor",
+     "col": "AH",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "T_Demand",
+     "col": "AI",
+     "stored": "[@Tue/Wed]",
+     "cell": [
+      "[@Tue/Wed]",
+      "0"
+     ]
+    },
+    {
+     "name": "T_Balance",
+     "col": "AJ",
+     "stored": "([@T_Freeze]+[@T_Floor])-[@T_Demand]",
+     "cell": [
+      "([@T_Freeze]+[@T_Floor])-[@T_Demand]",
+      "0"
+     ]
+    },
+    {
+     "name": "T_Production",
+     "col": "AK",
+     "stored": "[@T_Balance]",
+     "cell": [
+      "[@T_Balance]",
+      "0"
+     ]
+    },
+    {
+     "name": "W_Sku",
+     "col": "AL",
+     "stored": "[@Sku]",
+     "cell": [
+      "[@Sku]",
+      "F51000"
+     ]
+    },
+    {
+     "name": "W_Desc",
+     "col": "AM",
+     "stored": "XLOOKUP([@Sku],Products[No.],Products[Description])",
+     "cell": [
+      "XLOOKUP([@Sku],Products[No.],Products[Description])",
+      "Cs. Rye Bread 8lvs"
+     ]
+    },
+    {
+     "name": "W_Freeze",
+     "col": "AN",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "W_Floor",
+     "col": "AO",
+     "stored": null,
+     "cell": null
+    },
+    {
+     "name": "W_Demand",
+     "col": "AP",
+     "stored": "[@Wed/Thur]",
+     "cell": [
+      "[@Wed/Thur]",
+      "0"
+     ]
+    },
+    {
+     "name": "W_Balance",
+     "col": "AQ",
+     "stored": "([@W_Freeze]+[@W_Floor])-[@W_Demand]",
+     "cell": [
+      "([@W_Freeze]+[@W_Floor])-[@W_Demand]",
+      "0"
+     ]
+    },
+    {
+     "name": "W_Production",
+     "col": "AR",
+     "stored": "[@W_Balance]",
+     "cell": [
+      "[@W_Balance]",
+      "0"
+     ]
+    },
+    {
+     "name": "TH_Sku",
+     "col": "AS",
+     "stored": "[@Sku]",
+     "cell": [
+      "[@Sku]",
+      "F51000"
+     ]
+    },
+    {
+     "name": "TH_Desc",
+     "col": "AT",
+     "stored": "XLOOKUP([@Sku],Products[No.],Products[Description])",
+     "cell": [
+      "XLOOKUP([@Sku],Products[No.],Products[Description])",
+      "Cs. Rye Bread 8lvs"
+     ]
+    },
+    {
+     "name": "TH_Freeze",
+     "col": "AU",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "TH_Floor",
+     "col": "AV",
+     "stored": null,
+     "cell": null
+    },
+    {
+     "name": "TH_Demand",
+     "col": "AW",
+     "stored": "[@Thur/Fri]",
+     "cell": [
+      "[@Thur/Fri]",
+      "0"
+     ]
+    },
+    {
+     "name": "TH_Balance",
+     "col": "AX",
+     "stored": "([@TH_Freeze]+[@TH_Floor])-[@TH_Demand]",
+     "cell": [
+      "([@TH_Freeze]+[@TH_Floor])-[@TH_Demand]",
+      "0"
+     ]
+    },
+    {
+     "name": "TH_Production",
+     "col": "AY",
+     "stored": "[@TH_Balance]",
+     "cell": [
+      "[@TH_Balance]",
+      "0"
+     ]
+    },
+    {
+     "name": "F_Sku",
+     "col": "AZ",
+     "stored": "[@Sku]",
+     "cell": [
+      "[@Sku]",
+      "F51000"
+     ]
+    },
+    {
+     "name": "F_Desc",
+     "col": "BA",
+     "stored": "XLOOKUP([@Sku],Products[No.],Products[Description])",
+     "cell": [
+      "XLOOKUP([@Sku],Products[No.],Products[Description])",
+      "Cs. Rye Bread 8lvs"
+     ]
+    },
+    {
+     "name": "F_Freeze",
+     "col": "BB",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "F_Floor",
+     "col": "BC",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "F_Demand",
+     "col": "BD",
+     "stored": "[@Fri/Sat]",
+     "cell": [
+      "[@Fri/Sat]",
+      "0"
+     ]
+    },
+    {
+     "name": "F_Balance",
+     "col": "BE",
+     "stored": "([@F_Freeze]+[@F_Floor])-[@F_Demand]",
+     "cell": [
+      "([@F_Freeze]+[@F_Floor])-[@F_Demand]",
+      "0"
+     ]
+    },
+    {
+     "name": "F_Production",
+     "col": "BF",
+     "stored": "[@F_Balance]",
+     "cell": [
+      "[@F_Balance]",
+      "0"
+     ]
+    },
+    {
+     "name": "0_Sku",
+     "col": "BG",
+     "stored": "[@Sku]",
+     "cell": [
+      "[@Sku]",
+      "F51000"
+     ]
+    },
+    {
+     "name": "0_Desc",
+     "col": "BH",
+     "stored": "XLOOKUP([@Sku],Products[No.],Products[Description])",
+     "cell": [
+      "XLOOKUP([@Sku],Products[No.],Products[Description])",
+      "Cs. Rye Bread 8lvs"
+     ]
+    },
+    {
+     "name": "0_Sun",
+     "col": "BI",
+     "stored": "SUMIFS(SalesOrders[Quantity],SalesOrders[No.],[@0_Sku],SalesOrders[Shipment Date],BI$284)",
+     "cell": [
+      "SUMIFS(SalesOrders[Quantity],SalesOrders[No.],[@0_Sku],SalesOrders[Shipment Date],BI$284)",
+      "0"
+     ]
+    },
+    {
+     "name": "0_Mon",
+     "col": "BJ",
+     "stored": "SUMIFS(SalesOrders[Quantity],SalesOrders[No.],[@0_Sku],SalesOrders[Shipment Date],BJ$284)",
+     "cell": [
+      "SUMIFS(SalesOrders[Quantity],SalesOrders[No.],[@0_Sku],SalesOrders[Shipment Date],BJ$284)",
+      "0"
+     ]
+    },
+    {
+     "name": "0_Tue",
+     "col": "BK",
+     "stored": "SUMIFS(SalesOrders[Quantity],SalesOrders[No.],[@0_Sku],SalesOrders[Shipment Date],BK$284)",
+     "cell": [
+      "SUMIFS(SalesOrders[Quantity],SalesOrders[No.],[@0_Sku],SalesOrders[Shipment Date],BK$284)",
+      "0"
+     ]
+    },
+    {
+     "name": "0_Wed",
+     "col": "BL",
+     "stored": "SUMIFS(SalesOrders[Quantity],SalesOrders[No.],[@0_Sku],SalesOrders[Shipment Date],BL$284)",
+     "cell": [
+      "SUMIFS(SalesOrders[Quantity],SalesOrders[No.],[@0_Sku],SalesOrders[Shipment Date],BL$284)",
+      "0"
+     ]
+    },
+    {
+     "name": "0_Thur",
+     "col": "BM",
+     "stored": "SUMIFS(SalesOrders[Quantity],SalesOrders[No.],[@0_Sku],SalesOrders[Shipment Date],BM$284)",
+     "cell": [
+      "SUMIFS(SalesOrders[Quantity],SalesOrders[No.],[@0_Sku],SalesOrders[Shipment Date],BM$284)",
+      "0"
+     ]
+    },
+    {
+     "name": "0_Fri",
+     "col": "BN",
+     "stored": "SUMIFS(SalesOrders[Quantity],SalesOrders[No.],[@0_Sku],SalesOrders[Shipment Date],BN$284)",
+     "cell": [
+      "SUMIFS(SalesOrders[Quantity],SalesOrders[No.],[@0_Sku],SalesOrders[Shipment Date],BN$284)",
+      "0"
+     ]
+    },
+    {
+     "name": "0_Sat",
+     "col": "BO",
+     "stored": "SUMIFS(SalesOrders[Quantity],SalesOrders[No.],[@0_Sku],SalesOrders[Shipment Date],BO$284)",
+     "cell": [
+      "SUMIFS(SalesOrders[Quantity],SalesOrders[No.],[@0_Sku],SalesOrders[Shipment Date],BO$284)",
+      "0"
+     ]
+    },
+    {
+     "name": "0_TotalOrders",
+     "col": "BP",
+     "stored": "SUM(Dist_DSnD[[#This Row],[0_Sun]:[0_Sat]])",
+     "cell": [
+      "SUM(Dist_DSnD[[#This Row],[0_Sun]:[0_Sat]])",
+      "0"
+     ]
+    },
+    {
+     "name": "0_Inventory",
+     "col": "BQ",
+     "stored": "IFERROR(LET(k,[@0_Sku],d,IF(WEEKDAY(TODAY())=7,1,WEEKDAY(TODAY())),CHOOSE(d,XLOOKUP(k,Sunday[Code],Sunday[Total]),XLOOKUP(k,Monday[Code],Monday[Total]),XLOOKUP(k,Tuesday[Code],Tuesday[Total]),XLOOKUP(k,Wednesday[Code],Wednesday[Total]),XLOOKUP(k,Thursday[Code],Thursday[Total]),XLOOKUP(k,Friday[Code],Friday[Total]))),\"0\")",
+     "cell": [
+      "IFERROR(LET(k,[@0_Sku],d,IF(WEEKDAY(TODAY())=7,1,WEEKDAY(TODAY())),CHOOSE(d,XLOOKUP(k,Sunday[Code],Sunday[Total]),XLOOKUP(k,Monday[Code],Monday[Total]),XLOOKUP(k,Tuesday[Code],Tuesday[Total]),XLOOKUP(k,Wednesday[Code],Wednesday[Total]),XLOOKUP(k,Thursday[Code],Thursday[Total]),XLOOKUP(k,Friday[Code],Friday[Total]))),\"0\")",
+      "0"
+     ]
+    },
+    {
+     "name": "0_StillNeeded",
+     "col": "BR",
+     "stored": "[@0_TotalOrders]-[@0_Inventory]",
+     "cell": [
+      "[@0_TotalOrders]-[@0_Inventory]",
+      "0"
+     ]
+    },
+    {
+     "name": "0_Today",
+     "col": "BS",
+     "stored": "CHOOSE(WEEKDAY(TODAY()),[@Sun/Mon],[@Mon/Tue],[@Tue/Wed],[@Wed/Thur],[@Thur/Fri],[@Fri/Sat],[@Sun/Mon])",
+     "cell": [
+      "CHOOSE(WEEKDAY(TODAY()),[@Sun/Mon],[@Mon/Tue],[@Tue/Wed],[@Wed/Thur],[@Thur/Fri],[@Fri/Sat],[@Sun/Mon])",
+      "0"
+     ]
+    },
+    {
+     "name": "0_1stShift",
+     "col": "BT",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "0_2ndShift",
+     "col": "BU",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "1_Sku",
+     "col": "BV",
+     "stored": "[@Sku]",
+     "cell": [
+      "[@Sku]",
+      "F51000"
+     ]
+    },
+    {
+     "name": "1_Desc",
+     "col": "BW",
+     "stored": "XLOOKUP([@Sku],Products[No.],Products[Description])",
+     "cell": [
+      "XLOOKUP([@Sku],Products[No.],Products[Description])",
+      "Cs. Rye Bread 8lvs"
+     ]
+    },
+    {
+     "name": "1_Sun",
+     "col": "BX",
+     "stored": "SUMIFS(SalesOrders[Quantity],SalesOrders[No.],[@0_Sku],SalesOrders[Shipment Date],BX$284)",
+     "cell": [
+      "SUMIFS(SalesOrders[Quantity],SalesOrders[No.],[@0_Sku],SalesOrders[Shipment Date],BX$284)",
+      "0"
+     ]
+    },
+    {
+     "name": "1_Mon",
+     "col": "BY",
+     "stored": "SUMIFS(SalesOrders[Quantity],SalesOrders[No.],[@0_Sku],SalesOrders[Shipment Date],BY$284)",
+     "cell": [
+      "SUMIFS(SalesOrders[Quantity],SalesOrders[No.],[@0_Sku],SalesOrders[Shipment Date],BY$284)",
+      "0"
+     ]
+    },
+    {
+     "name": "1_Tue",
+     "col": "BZ",
+     "stored": "SUMIFS(SalesOrders[Quantity],SalesOrders[No.],[@0_Sku],SalesOrders[Shipment Date],BZ$284)",
+     "cell": [
+      "SUMIFS(SalesOrders[Quantity],SalesOrders[No.],[@0_Sku],SalesOrders[Shipment Date],BZ$284)",
+      "0"
+     ]
+    },
+    {
+     "name": "1_Wed",
+     "col": "CA",
+     "stored": "SUMIFS(SalesOrders[Quantity],SalesOrders[No.],[@0_Sku],SalesOrders[Shipment Date],CA$284)",
+     "cell": [
+      "SUMIFS(SalesOrders[Quantity],SalesOrders[No.],[@0_Sku],SalesOrders[Shipment Date],CA$284)",
+      "0"
+     ]
+    },
+    {
+     "name": "1_Thur",
+     "col": "CB",
+     "stored": "SUMIFS(SalesOrders[Quantity],SalesOrders[No.],[@0_Sku],SalesOrders[Shipment Date],CB$284)",
+     "cell": [
+      "SUMIFS(SalesOrders[Quantity],SalesOrders[No.],[@0_Sku],SalesOrders[Shipment Date],CB$284)",
+      "0"
+     ]
+    },
+    {
+     "name": "1_Fri",
+     "col": "CC",
+     "stored": "SUMIFS(SalesOrders[Quantity],SalesOrders[No.],[@0_Sku],SalesOrders[Shipment Date],CC$284)",
+     "cell": [
+      "SUMIFS(SalesOrders[Quantity],SalesOrders[No.],[@0_Sku],SalesOrders[Shipment Date],CC$284)",
+      "0"
+     ]
+    },
+    {
+     "name": "1_Sat",
+     "col": "CD",
+     "stored": "SUMIFS(SalesOrders[Quantity],SalesOrders[No.],[@0_Sku],SalesOrders[Shipment Date],CD$284)",
+     "cell": [
+      "SUMIFS(SalesOrders[Quantity],SalesOrders[No.],[@0_Sku],SalesOrders[Shipment Date],CD$284)",
+      "0"
+     ]
+    },
+    {
+     "name": "1_TotalOrders",
+     "col": "CE",
+     "stored": "SUM(Dist_DSnD[[#This Row],[0_Sun]:[0_Sat]])",
+     "cell": [
+      "SUM(Dist_DSnD[[#This Row],[0_Sun]:[0_Sat]])",
+      "0"
+     ]
+    },
+    {
+     "name": "1_Inventory",
+     "col": "CF",
+     "stored": "IFERROR(LET(k,[@0_Sku],d,IF(WEEKDAY(TODAY())=7,1,WEEKDAY(TODAY())),CHOOSE(d,XLOOKUP(k,Sunday[Code],Sunday[Total]),XLOOKUP(k,Monday[Code],Monday[Total]),XLOOKUP(k,Tuesday[Code],Tuesday[Total]),XLOOKUP(k,Wednesday[Code],Wednesday[Total]),XLOOKUP(k,Thursday[Code],Thursday[Total]),XLOOKUP(k,Friday[Code],Friday[Total]))),\"0\")",
+     "cell": [
+      "IFERROR(LET(k,[@0_Sku],d,IF(WEEKDAY(TODAY())=7,1,WEEKDAY(TODAY())),CHOOSE(d,XLOOKUP(k,Sunday[Code],Sunday[Total]),XLOOKUP(k,Monday[Code],Monday[Total]),XLOOKUP(k,Tuesday[Code],Tuesday[Total]),XLOOKUP(k,Wednesday[Code],Wednesday[Total]),XLOOKUP(k,Thursday[Code],Thursday[Total]),XLOOKUP(k,Friday[Code],Friday[Total]))),\"0\")",
+      "0"
+     ]
+    },
+    {
+     "name": "1_StillNeeded",
+     "col": "CG",
+     "stored": "[@0_TotalOrders]-[@0_Inventory]",
+     "cell": [
+      "[@0_TotalOrders]-[@0_Inventory]",
+      "0"
+     ]
+    },
+    {
+     "name": "1_Today",
+     "col": "CH",
+     "stored": "CHOOSE(WEEKDAY(TODAY()),[@Sun/Mon],[@Mon/Tue],[@Tue/Wed],[@Wed/Thur],[@Thur/Fri],[@Fri/Sat],[@Sun/Mon])",
+     "cell": [
+      "CHOOSE(WEEKDAY(TODAY()),[@Sun/Mon],[@Mon/Tue],[@Tue/Wed],[@Wed/Thur],[@Thur/Fri],[@Fri/Sat],[@Sun/Mon])",
+      "0"
+     ]
+    },
+    {
+     "name": "1_1stShift",
+     "col": "CI",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "1_2ndShift",
+     "col": "CJ",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "2_Sku",
+     "col": "CK",
+     "stored": "[@Sku]",
+     "cell": [
+      "[@Sku]",
+      "F51000"
+     ]
+    },
+    {
+     "name": "2_Desc",
+     "col": "CL",
+     "stored": "XLOOKUP([@Sku],Products[No.],Products[Description])",
+     "cell": [
+      "XLOOKUP([@Sku],Products[No.],Products[Description])",
+      "Cs. Rye Bread 8lvs"
+     ]
+    },
+    {
+     "name": "2_Sun",
+     "col": "CM",
+     "stored": "SUMIFS(SalesOrders[Quantity],SalesOrders[No.],[@0_Sku],SalesOrders[Shipment Date],CM$284)",
+     "cell": [
+      "SUMIFS(SalesOrders[Quantity],SalesOrders[No.],[@0_Sku],SalesOrders[Shipment Date],CM$284)",
+      "0"
+     ]
+    },
+    {
+     "name": "2_Mon",
+     "col": "CN",
+     "stored": "SUMIFS(SalesOrders[Quantity],SalesOrders[No.],[@0_Sku],SalesOrders[Shipment Date],CN$284)",
+     "cell": [
+      "SUMIFS(SalesOrders[Quantity],SalesOrders[No.],[@0_Sku],SalesOrders[Shipment Date],CN$284)",
+      "0"
+     ]
+    },
+    {
+     "name": "2_Tue",
+     "col": "CO",
+     "stored": "SUMIFS(SalesOrders[Quantity],SalesOrders[No.],[@0_Sku],SalesOrders[Shipment Date],CO$284)",
+     "cell": [
+      "SUMIFS(SalesOrders[Quantity],SalesOrders[No.],[@0_Sku],SalesOrders[Shipment Date],CO$284)",
+      "0"
+     ]
+    },
+    {
+     "name": "2_Wed",
+     "col": "CP",
+     "stored": "SUMIFS(SalesOrders[Quantity],SalesOrders[No.],[@0_Sku],SalesOrders[Shipment Date],CP$284)",
+     "cell": [
+      "SUMIFS(SalesOrders[Quantity],SalesOrders[No.],[@0_Sku],SalesOrders[Shipment Date],CP$284)",
+      "0"
+     ]
+    },
+    {
+     "name": "2_Thur",
+     "col": "CQ",
+     "stored": "SUMIFS(SalesOrders[Quantity],SalesOrders[No.],[@0_Sku],SalesOrders[Shipment Date],CQ$284)",
+     "cell": [
+      "SUMIFS(SalesOrders[Quantity],SalesOrders[No.],[@0_Sku],SalesOrders[Shipment Date],CQ$284)",
+      "0"
+     ]
+    },
+    {
+     "name": "2_Fri",
+     "col": "CR",
+     "stored": "SUMIFS(SalesOrders[Quantity],SalesOrders[No.],[@0_Sku],SalesOrders[Shipment Date],CR$284)",
+     "cell": [
+      "SUMIFS(SalesOrders[Quantity],SalesOrders[No.],[@0_Sku],SalesOrders[Shipment Date],CR$284)",
+      "0"
+     ]
+    },
+    {
+     "name": "2_Sat",
+     "col": "CS",
+     "stored": "SUMIFS(SalesOrders[Quantity],SalesOrders[No.],[@0_Sku],SalesOrders[Shipment Date],CS$284)",
+     "cell": [
+      "SUMIFS(SalesOrders[Quantity],SalesOrders[No.],[@0_Sku],SalesOrders[Shipment Date],CS$284)",
+      "0"
+     ]
+    },
+    {
+     "name": "2_TotalOrders",
+     "col": "CT",
+     "stored": "SUM(Dist_DSnD[[#This Row],[0_Sun]:[0_Sat]])",
+     "cell": [
+      "SUM(Dist_DSnD[[#This Row],[0_Sun]:[0_Sat]])",
+      "0"
+     ]
+    },
+    {
+     "name": "2_Inventory",
+     "col": "CU",
+     "stored": "IFERROR(LET(k,[@0_Sku],d,IF(WEEKDAY(TODAY())=7,1,WEEKDAY(TODAY())),CHOOSE(d,XLOOKUP(k,Sunday[Code],Sunday[Total]),XLOOKUP(k,Monday[Code],Monday[Total]),XLOOKUP(k,Tuesday[Code],Tuesday[Total]),XLOOKUP(k,Wednesday[Code],Wednesday[Total]),XLOOKUP(k,Thursday[Code],Thursday[Total]),XLOOKUP(k,Friday[Code],Friday[Total]))),\"0\")",
+     "cell": [
+      "IFERROR(LET(k,[@0_Sku],d,IF(WEEKDAY(TODAY())=7,1,WEEKDAY(TODAY())),CHOOSE(d,XLOOKUP(k,Sunday[Code],Sunday[Total]),XLOOKUP(k,Monday[Code],Monday[Total]),XLOOKUP(k,Tuesday[Code],Tuesday[Total]),XLOOKUP(k,Wednesday[Code],Wednesday[Total]),XLOOKUP(k,Thursday[Code],Thursday[Total]),XLOOKUP(k,Friday[Code],Friday[Total]))),\"0\")",
+      "0"
+     ]
+    },
+    {
+     "name": "2_StillNeeded",
+     "col": "CV",
+     "stored": "[@0_TotalOrders]-[@0_Inventory]",
+     "cell": [
+      "[@0_TotalOrders]-[@0_Inventory]",
+      "0"
+     ]
+    },
+    {
+     "name": "2_Today",
+     "col": "CW",
+     "stored": "CHOOSE(WEEKDAY(TODAY()),[@Sun/Mon],[@Mon/Tue],[@Tue/Wed],[@Wed/Thur],[@Thur/Fri],[@Fri/Sat],[@Sun/Mon])",
+     "cell": [
+      "CHOOSE(WEEKDAY(TODAY()),[@Sun/Mon],[@Mon/Tue],[@Tue/Wed],[@Wed/Thur],[@Thur/Fri],[@Fri/Sat],[@Sun/Mon])",
+      "0"
+     ]
+    },
+    {
+     "name": "2_1stShift",
+     "col": "CX",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "2_2ndShift",
+     "col": "CY",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "Correlating DSD Pack Code",
+     "col": "CZ",
+     "stored": "IF(LEFT([@Sku],2)=\"F5\",\"F\"&MID([@Sku],3,10),\"N/A - not a case code\")",
+     "cell": [
+      "IF(LEFT([@Sku],2)=\"F5\",\"F\"&MID([@Sku],3,10),\"N/A - not a case code\")",
+      "F1000"
+     ]
+    },
+    {
+     "name": "Correlating DSD Pack Description",
+     "col": "DA",
+     "stored": "IF(LEFT($F287,2)<>\"F5\",\"\",IFNA(XLOOKUP([@Correlating DSD Pack Code],DSD_DSnD[Sku],DSD_DSnD[Avg of Previous 4 Same Weekdays]),IFNA(XLOOKUP([@Correlating DSD Pack Code],Dist_DSnD[Sku],Dist_DSnD[TOTAL Cases]),\"No match found (primary or 3rd party)\")))",
+     "cell": [
+      "IF(LEFT($F287,2)<>\"F5\",\"\",IFNA(XLOOKUP([@Correlating DSD Pack Code],DSD_DSnD[Sku],DSD_DSnD[Avg of Previous 4 Same Weekdays]),IFNA(XLOOKUP([@Correlating DSD Pack Code],Dist_DSnD[Sku],Dist_DSnD[TOTAL Cases]),\"No match found (primary or 3rd party)\")))",
+      "Rye 1/2\""
+     ]
+    },
+    {
+     "name": "Column4",
+     "col": "DB",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "Today's Balance (correlating DSD item)",
+     "col": "DC",
+     "stored": "IFERROR(XLOOKUP($C287,DSD_DSnD[Sku],CHOOSE($DT$2,DSD_DSnD[S_Balanace],DSD_DSnD[M_Balance],DSD_DSnD[T_Balance],DSD_DSnD[W_Balance],DSD_DSnD[TH_Balance],DSD_DSnD[F_Balance])),\"\")",
+     "cell": [
+      "IFERROR(XLOOKUP($C287,DSD_DSnD[Sku],CHOOSE($DT$2,DSD_DSnD[S_Balanace],DSD_DSnD[M_Balance],DSD_DSnD[T_Balance],DSD_DSnD[W_Balance],DSD_DSnD[TH_Balance],DSD_DSnD[F_Balance])),\"\")",
+      "-12"
+     ]
+    },
+    {
+     "name": "Tomorrow's Demand",
+     "col": "DD",
+     "stored": "IFERROR(XLOOKUP($C287,DSD_DSnD[Sku],CHOOSE(MOD($DT$2,6)+1,DSD_DSnD[S_Demand],DSD_DSnD[M_Demand],DSD_DSnD[T_Demand],DSD_DSnD[W_Demand],DSD_DSnD[TH_Demand],DSD_DSnD[F_Demand])),\"\")",
+     "cell": [
+      "IFERROR(XLOOKUP($C287,DSD_DSnD[Sku],CHOOSE(MOD($DT$2,6)+1,DSD_DSnD[S_Demand],DSD_DSnD[M_Demand],DSD_DSnD[T_Demand],DSD_DSnD[W_Demand],DSD_DSnD[TH_Demand],DSD_DSnD[F_Demand])),\"\")",
+      "21"
+     ]
+    },
+    {
+     "name": "Day After Tomorrow's Demand",
+     "col": "DE",
+     "stored": "IFERROR(XLOOKUP($C287,DSD_DSnD[Sku],CHOOSE(MOD($DT$2+1,6)+1,DSD_DSnD[S_Demand],DSD_DSnD[M_Demand],DSD_DSnD[T_Demand],DSD_DSnD[W_Demand],DSD_DSnD[TH_Demand],DSD_DSnD[F_Demand])),\"\")",
+     "cell": [
+      "IFERROR(XLOOKUP($C287,DSD_DSnD[Sku],CHOOSE(MOD($DT$2+1,6)+1,DSD_DSnD[S_Demand],DSD_DSnD[M_Demand],DSD_DSnD[T_Demand],DSD_DSnD[W_Demand],DSD_DSnD[TH_Demand],DSD_DSnD[F_Demand])),\"\")",
+      "14"
+     ]
+    }
+   ]
+  },
+  "DoughWeight": {
+   "sheet": "DoughWeights",
+   "ref": "B3:K455",
+   "rows": 452,
+   "cols": [
+    {
+     "name": "Sku",
+     "col": "B",
+     "stored": "A4",
+     "cell": [
+      "A5",
+      "F1127"
+     ],
+     "header_row_cell": [
+      "A4",
+      "D10001"
+     ]
+    },
+    {
+     "name": "Desciption",
+     "col": "C",
+     "stored": "IFERROR(XLOOKUP([@Sku],Dough[No.],Dough[Description]),XLOOKUP([@Sku],Products[No.],Products[Description]))",
+     "cell": [
+      "IFERROR(XLOOKUP([@Sku],Dough[No.],Dough[Description]),XLOOKUP([@Sku],Products[No.],Products[Description]))",
+      "Challah 3-Braid 21oz"
+     ],
+     "header_row_cell": [
+      "IFERROR(XLOOKUP([@Sku],Dough[No.],Dough[Description]),XLOOKUP([@Sku],Products[No.],Products[Description]))",
+      "Challah Dough"
+     ]
+    },
+    {
+     "name": "Dough Desc",
+     "col": "D",
+     "stored": "IFERROR(XLOOKUP([@Sku],Products[No.],Products[Dough Description]),\"\")",
+     "cell": [
+      "IFERROR(XLOOKUP([@Sku],Products[No.],Products[Dough Description]),\"\")",
+      "Challah Dough"
+     ],
+     "header_row_cell": [
+      "IFERROR(XLOOKUP([@Sku],Products[No.],Products[Dough Description]),\"\")",
+      null
+     ]
+    },
+    {
+     "name": "Weight",
+     "col": "E",
+     "stored": "IFERROR(XLOOKUP([@Sku],Products[No.],Products[Weight]),\"\")",
+     "cell": [
+      "IFERROR(XLOOKUP([@Sku],Products[No.],Products[Weight]),\"\")",
+      "1.3125"
+     ],
+     "header_row_cell": [
+      "IFERROR(XLOOKUP([@Sku],Products[No.],Products[Weight]),\"\")",
+      null
+     ]
+    },
+    {
+     "name": "Sun",
+     "col": "F",
+     "stored": "LET(prod,IF(LEFT([@Sku],2)=\"F5\",XLOOKUP([@Sku],Dist_DSnD[Sku],Dist_DSnD[S_Production],0),XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[S_Production],0)),IF(LEFT([@Sku],1)=\"D\",SUMIFS(DoughWeight[Sun],DoughWeight[Dough Desc],[@Desciption]),IF(prod<0,ABS(prod)*[@Weight],0)))",
+     "cell": [
+      "LET(prod,IF(LEFT([@Sku],2)=\"F5\",XLOOKUP([@Sku],Dist_DSnD[Sku],Dist_DSnD[S_Production],0),XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[S_Production],0)),IF(LEFT([@Sku],1)=\"D\",SUMIFS(DoughWeight[Sun],DoughWeight[Dough Desc],[@Desciption]),IF(prod<0,ABS(prod)*[@Weight],0)))",
+      "0"
+     ],
+     "header_row_cell": [
+      "LET(prod,IF(LEFT([@Sku],2)=\"F5\",XLOOKUP([@Sku],Dist_DSnD[Sku],Dist_DSnD[S_Production],0),XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[S_Production],0)),IF(LEFT([@Sku],1)=\"D\",SUMIFS(DoughWeight[Sun],DoughWeight[Dough Desc],[@Desciption]),IF(prod<0,ABS(prod)*[@Weight],0)))",
+      "454"
+     ]
+    },
+    {
+     "name": "Mon",
+     "col": "G",
+     "stored": "LET(prod,IF(LEFT([@Sku],2)=\"F5\",XLOOKUP([@Sku],Dist_DSnD[Sku],Dist_DSnD[M_Production],0),XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[M_Production],0)),IF(LEFT([@Sku],1)=\"D\",SUMIFS(DoughWeight[Mon],DoughWeight[Dough Desc],[@Desciption]),IF(prod<0,ABS(prod)*[@Weight],0)))",
+     "cell": [
+      "LET(prod,IF(LEFT([@Sku],2)=\"F5\",XLOOKUP([@Sku],Dist_DSnD[Sku],Dist_DSnD[M_Production],0),XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[M_Production],0)),IF(LEFT([@Sku],1)=\"D\",SUMIFS(DoughWeight[Mon],DoughWeight[Dough Desc],[@Desciption]),IF(prod<0,ABS(prod)*[@Weight],0)))",
+      "0"
+     ],
+     "header_row_cell": [
+      "LET(prod,IF(LEFT([@Sku],2)=\"F5\",XLOOKUP([@Sku],Dist_DSnD[Sku],Dist_DSnD[M_Production],0),XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[M_Production],0)),IF(LEFT([@Sku],1)=\"D\",SUMIFS(DoughWeight[Mon],DoughWeight[Dough Desc],[@Desciption]),IF(prod<0,ABS(prod)*[@Weight],0)))",
+      "965"
+     ]
+    },
+    {
+     "name": "Tue",
+     "col": "H",
+     "stored": "LET(prod,IF(LEFT([@Sku],2)=\"F5\",XLOOKUP([@Sku],Dist_DSnD[Sku],Dist_DSnD[T_Production],0),XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[T_Production],0)),IF(LEFT([@Sku],1)=\"D\",SUMIFS(DoughWeight[Tue],DoughWeight[Dough Desc],[@Desciption]),IF(prod<0,ABS(prod)*[@Weight],0)))",
+     "cell": [
+      "LET(prod,IF(LEFT([@Sku],2)=\"F5\",XLOOKUP([@Sku],Dist_DSnD[Sku],Dist_DSnD[T_Production],0),XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[T_Production],0)),IF(LEFT([@Sku],1)=\"D\",SUMIFS(DoughWeight[Tue],DoughWeight[Dough Desc],[@Desciption]),IF(prod<0,ABS(prod)*[@Weight],0)))",
+      "0"
+     ],
+     "header_row_cell": [
+      "LET(prod,IF(LEFT([@Sku],2)=\"F5\",XLOOKUP([@Sku],Dist_DSnD[Sku],Dist_DSnD[T_Production],0),XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[T_Production],0)),IF(LEFT([@Sku],1)=\"D\",SUMIFS(DoughWeight[Tue],DoughWeight[Dough Desc],[@Desciption]),IF(prod<0,ABS(prod)*[@Weight],0)))",
+      "1176"
+     ]
+    },
+    {
+     "name": "Wed",
+     "col": "I",
+     "stored": "LET(prod,IF(LEFT([@Sku],2)=\"F5\",XLOOKUP([@Sku],Dist_DSnD[Sku],Dist_DSnD[W_Production],0),XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[W_Production],0)),IF(LEFT([@Sku],1)=\"D\",SUMIFS(DoughWeight[Wed],DoughWeight[Dough Desc],[@Desciption]),IF(prod<0,ABS(prod)*[@Weight],0)))",
+     "cell": [
+      "LET(prod,IF(LEFT([@Sku],2)=\"F5\",XLOOKUP([@Sku],Dist_DSnD[Sku],Dist_DSnD[W_Production],0),XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[W_Production],0)),IF(LEFT([@Sku],1)=\"D\",SUMIFS(DoughWeight[Wed],DoughWeight[Dough Desc],[@Desciption]),IF(prod<0,ABS(prod)*[@Weight],0)))",
+      "0"
+     ],
+     "header_row_cell": [
+      "LET(prod,IF(LEFT([@Sku],2)=\"F5\",XLOOKUP([@Sku],Dist_DSnD[Sku],Dist_DSnD[W_Production],0),XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[W_Production],0)),IF(LEFT([@Sku],1)=\"D\",SUMIFS(DoughWeight[Wed],DoughWeight[Dough Desc],[@Desciption]),IF(prod<0,ABS(prod)*[@Weight],0)))",
+      "402.5"
+     ]
+    },
+    {
+     "name": "Thur",
+     "col": "J",
+     "stored": "LET(prod,IF(LEFT([@Sku],2)=\"F5\",XLOOKUP([@Sku],Dist_DSnD[Sku],Dist_DSnD[TH_Production],0),XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[TH_Production],0)),IF(LEFT([@Sku],1)=\"D\",SUMIFS(DoughWeight[Thur],DoughWeight[Dough Desc],[@Desciption]),IF(prod<0,ABS(prod)*[@Weight],0)))",
+     "cell": [
+      "LET(prod,IF(LEFT([@Sku],2)=\"F5\",XLOOKUP([@Sku],Dist_DSnD[Sku],Dist_DSnD[TH_Production],0),XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[TH_Production],0)),IF(LEFT([@Sku],1)=\"D\",SUMIFS(DoughWeight[Thur],DoughWeight[Dough Desc],[@Desciption]),IF(prod<0,ABS(prod)*[@Weight],0)))",
+      "0"
+     ],
+     "header_row_cell": [
+      "LET(prod,IF(LEFT([@Sku],2)=\"F5\",XLOOKUP([@Sku],Dist_DSnD[Sku],Dist_DSnD[TH_Production],0),XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[TH_Production],0)),IF(LEFT([@Sku],1)=\"D\",SUMIFS(DoughWeight[Thur],DoughWeight[Dough Desc],[@Desciption]),IF(prod<0,ABS(prod)*[@Weight],0)))",
+      "1074"
+     ]
+    },
+    {
+     "name": "Fri",
+     "col": "K",
+     "stored": "LET(prod,IF(LEFT([@Sku],2)=\"F5\",XLOOKUP([@Sku],Dist_DSnD[Sku],Dist_DSnD[F_Production],0),XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[F_Production],0)),IF(LEFT([@Sku],1)=\"D\",SUMIFS(DoughWeight[Fri],DoughWeight[Dough Desc],[@Desciption]),IF(prod<0,ABS(prod)*[@Weight],0)))",
+     "cell": [
+      "LET(prod,IF(LEFT([@Sku],2)=\"F5\",XLOOKUP([@Sku],Dist_DSnD[Sku],Dist_DSnD[F_Production],0),XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[F_Production],0)),IF(LEFT([@Sku],1)=\"D\",SUMIFS(DoughWeight[Fri],DoughWeight[Dough Desc],[@Desciption]),IF(prod<0,ABS(prod)*[@Weight],0)))",
+      "47.25"
+     ],
+     "header_row_cell": [
+      "LET(prod,IF(LEFT([@Sku],2)=\"F5\",XLOOKUP([@Sku],Dist_DSnD[Sku],Dist_DSnD[F_Production],0),XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[F_Production],0)),IF(LEFT([@Sku],1)=\"D\",SUMIFS(DoughWeight[Fri],DoughWeight[Dough Desc],[@Desciption]),IF(prod<0,ABS(prod)*[@Weight],0)))",
+      "1220.25"
+     ]
+    }
+   ]
+  },
+  "Mix_Slice_Oven": {
+   "sheet": "Mix-Slice-Oven",
+   "ref": "B5:BI396",
+   "rows": 391,
+   "cols": [
+    {
+     "name": "Dough",
+     "col": "B",
+     "stored": "IFERROR(XLOOKUP([@Sku],Products[No.],Products[Dough]),\"\")",
+     "cell": [
+      "IFERROR(XLOOKUP([@Sku],Products[No.],Products[Dough]),\"\")",
+      "D10001"
+     ],
+     "header_row_cell": [
+      "IFERROR(XLOOKUP([@Sku],Products[No.],Products[Dough]),\"\")",
+      null
+     ]
+    },
+    {
+     "name": "Unique Dough",
+     "col": "C",
+     "stored": null,
+     "cell": [
+      "IFERROR(XLOOKUP([@Sku],Products[No.],Products[Unique Dough]),\"\")",
+      "Challah 3 Braided"
+     ],
+     "header_row_cell": [
+      "IFERROR(XLOOKUP([@Sku],Products[No.],Products[Unique Dough]),\"\")",
+      null
+     ]
+    },
+    {
+     "name": "Asset",
+     "col": "D",
+     "stored": null,
+     "cell": [
+      "IFERROR(XLOOKUP([@Sku],Products[No.],Products[Asset]),\"\")",
+      "Breadline"
+     ],
+     "header_row_cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "Weight",
+     "col": "E",
+     "stored": "IFERROR(XLOOKUP([@Sku],Dough[No.],Dough[Weight]),\"\")",
+     "cell": [
+      "IFERROR(XLOOKUP([@Sku],Dough[No.],Dough[Weight]),\"\")",
+      null
+     ],
+     "header_row_cell": [
+      "IFERROR(XLOOKUP([@Sku],Dough[No.],Dough[Weight]),\"\")",
+      "177.27"
+     ]
+    },
+    {
+     "name": "optimal bags per mix",
+     "col": "F",
+     "stored": "IFERROR(XLOOKUP([@Unique Dough],UniqueDough[Dough],UniqueDough[Optimal Bag]),\"\")",
+     "cell": [
+      "IFERROR(XLOOKUP([@Unique Dough],UniqueDough[Dough],UniqueDough[Optimal Bag]),\"\")",
+      "1"
+     ],
+     "header_row_cell": [
+      "IFERROR(XLOOKUP([@Unique Dough],UniqueDough[Dough],UniqueDough[Optimal Bag]),\"\")",
+      null
+     ]
+    },
+    {
+     "name": "Scrap Factor",
+     "col": "G",
+     "stored": null,
+     "cell": [
+      "IFERROR(XLOOKUP([@Sku],Products[No.],Products[Scrap Factor]),\"\")",
+      "1.1000000000000001"
+     ],
+     "header_row_cell": [
+      "IFERROR(XLOOKUP([@Sku],Products[No.],Products[Scrap Factor]),\"\")",
+      null
+     ]
+    },
+    {
+     "name": "Sku",
+     "col": "H",
+     "stored": null,
+     "cell": [
+      "A7",
+      "F1127"
+     ],
+     "header_row_cell": [
+      "A6",
+      "D10001"
+     ]
+    },
+    {
+     "name": "Description",
+     "col": "I",
+     "stored": null,
+     "cell": [
+      "IFERROR(XLOOKUP([@Sku],Dough[No.],Dough[Description]),XLOOKUP([@Sku],Products[No.],Products[Description]))",
+      "Challah 3-Braid 21oz"
+     ],
+     "header_row_cell": [
+      "IFERROR(XLOOKUP([@Sku],Dough[No.],Dough[Description]),XLOOKUP([@Sku],Products[No.],Products[Description]))",
+      "Challah Dough"
+     ]
+    },
+    {
+     "name": "Units per case/Tray",
+     "col": "J",
+     "stored": "IFERROR(XLOOKUP([@Sku],Products[No.],Products[Packs Per Tray/Case]),\"\")",
+     "cell": [
+      "IFERROR(XLOOKUP([@Sku],Products[No.],Products[Packs Per Tray/Case]),\"\")",
+      "6"
+     ],
+     "header_row_cell": [
+      "IFERROR(XLOOKUP([@Sku],Products[No.],Products[Packs Per Tray/Case]),\"\")",
+      null
+     ]
+    },
+    {
+     "name": "Number of  Individual Packaged Units Needed",
+     "col": "K",
+     "stored": "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(d,MATCH($K$4,{\"Sunday\",\"Monday\",\"Tuesday\",\"Wednesday\",\"Thursday\",\"Friday\"},0),p,IF(LEFT([@Sku],2)=\"F5\",XLOOKUP([@Sku],Dist_DSnD[Sku],CHOOSE(d,Dist_DSnD[S_Production],Dist_DSnD[M_Production],Dist_DSnD[T_Production],Dist_DSnD[W_Production],Dist_DSnD[TH_Production],Dist_DSnD[F_Production]),0),XLOOKUP([@Sku],DSD_DSnD[Sku],CHOOSE(d,DSD_DSnD[S_Production],DSD_DSnD[M_Production],DSD_DSnD[T_Production],DSD_DSnD[W_Production],DSD_DSnD[TH_Production],DSD_DSnD[F_Production]),0)),IF(p<0,ABS(p),\"0\")),\"0\"))",
+     "cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(d,MATCH($K$4,{\"Sunday\",\"Monday\",\"Tuesday\",\"Wednesday\",\"Thursday\",\"Friday\"},0),p,IF(LEFT([@Sku],2)=\"F5\",XLOOKUP([@Sku],Dist_DSnD[Sku],CHOOSE(d,Dist_DSnD[S_Production],Dist_DSnD[M_Production],Dist_DSnD[T_Production],Dist_DSnD[W_Production],Dist_DSnD[TH_Production],Dist_DSnD[F_Production]),0),XLOOKUP([@Sku],DSD_DSnD[Sku],CHOOSE(d,DSD_DSnD[S_Production],DSD_DSnD[M_Production],DSD_DSnD[T_Production],DSD_DSnD[W_Production],DSD_DSnD[TH_Production],DSD_DSnD[F_Production]),0)),IF(p<0,ABS(p),\"0\")),\"0\"))",
+      "0"
+     ],
+     "header_row_cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(d,MATCH($K$4,{\"Sunday\",\"Monday\",\"Tuesday\",\"Wednesday\",\"Thursday\",\"Friday\"},0),p,IF(LEFT([@Sku],2)=\"F5\",XLOOKUP([@Sku],Dist_DSnD[Sku],CHOOSE(d,Dist_DSnD[S_Production],Dist_DSnD[M_Production],Dist_DSnD[T_Production],Dist_DSnD[W_Production],Dist_DSnD[TH_Production],Dist_DSnD[F_Production]),0),XLOOKUP([@Sku],DSD_DSnD[Sku],CHOOSE(d,DSD_DSnD[S_Production],DSD_DSnD[M_Production],DSD_DSnD[T_Production],DSD_DSnD[W_Production],DSD_DSnD[TH_Production],DSD_DSnD[F_Production]),0)),IF(p<0,ABS(p),\"0\")),\"0\"))",
+      null
+     ]
+    },
+    {
+     "name": "Dough Weight",
+     "col": "L",
+     "stored": "IFERROR(ROUND(LET(d,MATCH($K$4,{\"Sunday\",\"Monday\",\"Tuesday\",\"Wednesday\",\"Thursday\",\"Friday\"},0),XLOOKUP([@Sku],DoughWeight[Sku],CHOOSE(d,DoughWeight[Sun],DoughWeight[Mon],DoughWeight[Tue],DoughWeight[Wed],DoughWeight[Thur],DoughWeight[Fri]))/XLOOKUP([@Dough],Dough[No.],Dough[Weight])),2)*[@Scrap Factor],\"\")",
+     "cell": [
+      "IFERROR(ROUND(LET(d,MATCH($K$4,{\"Sunday\",\"Monday\",\"Tuesday\",\"Wednesday\",\"Thursday\",\"Friday\"},0),XLOOKUP([@Sku],DoughWeight[Sku],CHOOSE(d,DoughWeight[Sun],DoughWeight[Mon],DoughWeight[Tue],DoughWeight[Wed],DoughWeight[Thur],DoughWeight[Fri]))/XLOOKUP([@Dough],Dough[No.],Dough[Weight])),2)*[@Scrap Factor],\"\")",
+      "0"
+     ],
+     "header_row_cell": [
+      "IFERROR(ROUND(LET(d,MATCH($K$4,{\"Sunday\",\"Monday\",\"Tuesday\",\"Wednesday\",\"Thursday\",\"Friday\"},0),XLOOKUP([@Sku],DoughWeight[Sku],CHOOSE(d,DoughWeight[Sun],DoughWeight[Mon],DoughWeight[Tue],DoughWeight[Wed],DoughWeight[Thur],DoughWeight[Fri]))/XLOOKUP([@Dough],Dough[No.],Dough[Weight])),2)*[@Scrap Factor],\"\")",
+      null
+     ]
+    },
+    {
+     "name": "Bags By Unique Dough",
+     "col": "M",
+     "stored": "IF(LEFT([@Sku],1)=\"D\",\"\",LET(u,[@Unique Dough],IF(C5=u,\"\",SUMIFS(Mix_Slice_Oven[Dough Weight],Mix_Slice_Oven[Unique Dough],u))))",
+     "cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",LET(u,[@Unique Dough],IF(C6=u,\"\",SUMIFS(Mix_Slice_Oven[Dough Weight],Mix_Slice_Oven[Unique Dough],u))))",
+      "1.298"
+     ],
+     "header_row_cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",LET(u,[@Unique Dough],IF(C5=u,\"\",SUMIFS(Mix_Slice_Oven[Dough Weight],Mix_Slice_Oven[Unique Dough],u))))",
+      null
+     ]
+    },
+    {
+     "name": "Optimal Total",
+     "col": "N",
+     "stored": "IFERROR(IF(LEFT([@Sku],1)=\"D\",SUMIFS(Mix_Slice_Oven[Optimal Total],Mix_Slice_Oven[Dough],[@Sku],Mix_Slice_Oven[Asset],D7),IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),CEILING([@Bags By Unique Dough],[@optimal bags per mix])*2.5,CEILING([@Bags By Unique Dough],[@optimal bags per mix]))),\"\")",
+     "cell": [
+      "IFERROR(IF(LEFT([@Sku],1)=\"D\",SUMIFS(Mix_Slice_Oven[Optimal Total],Mix_Slice_Oven[Dough],[@Sku],Mix_Slice_Oven[Asset],D8),IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),CEILING([@Bags By Unique Dough],[@optimal bags per mix])*2.5,CEILING([@Bags By Unique Dough],[@optimal bags per mix]))),\"\")",
+      "2"
+     ],
+     "header_row_cell": [
+      "IFERROR(IF(LEFT([@Sku],1)=\"D\",SUMIFS(Mix_Slice_Oven[Optimal Total],Mix_Slice_Oven[Dough],[@Sku],Mix_Slice_Oven[Asset],D7),IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),CEILING([@Bags By Unique Dough],[@optimal bags per mix])*2.5,CEILING([@Bags By Unique Dough],[@optimal bags per mix]))),\"\")",
+      "10"
+     ]
+    },
+    {
+     "name": "Planned Total",
+     "col": "O",
+     "stored": null,
+     "cell": [
+      "[@Optimal Total]",
+      "2"
+     ],
+     "header_row_cell": [
+      "[@Optimal Total]",
+      "10"
+     ]
+    },
+    {
+     "name": "Dough Desc",
+     "col": "P",
+     "stored": "[@Unique Dough]",
+     "cell": [
+      "[@Unique Dough]",
+      "Challah 3 Braided"
+     ],
+     "header_row_cell": [
+      "[@Unique Dough]",
+      null
+     ]
+    },
+    {
+     "name": "# of Bags for Mixing",
+     "col": "Q",
+     "stored": "[@Planned Total]",
+     "cell": [
+      "[@Planned Total]",
+      "2"
+     ],
+     "header_row_cell": [
+      "[@Planned Total]",
+      "10"
+     ]
+    },
+    {
+     "name": "Finished Product#",
+     "col": "R",
+     "stored": "[@Sku]",
+     "cell": [
+      "[@Sku]",
+      "F1127"
+     ],
+     "header_row_cell": [
+      "[@Sku]",
+      "D10001"
+     ]
+    },
+    {
+     "name": "Product Description",
+     "col": "S",
+     "stored": "[@Description]",
+     "cell": [
+      "[@Description]",
+      "Challah 3-Braid 21oz"
+     ],
+     "header_row_cell": [
+      "[@Description]",
+      "Challah Dough"
+     ]
+    },
+    {
+     "name": "# of Individual Packs/Cases Neded",
+     "col": "T",
+     "stored": "[@Number of  Individual Packaged Units Needed]",
+     "cell": [
+      "[@Number of  Individual Packaged Units Needed]",
+      "0"
+     ],
+     "header_row_cell": [
+      "[@Number of  Individual Packaged Units Needed]",
+      null
+     ]
+    },
+    {
+     "name": "#of Trays/Cases Needed",
+     "col": "U",
+     "stored": "IFERROR(ROUNDUP([@Number of  Individual Packaged Units Needed]/[@Units per case/Tray],0),\"\")",
+     "cell": [
+      "IFERROR(ROUNDUP([@Number of  Individual Packaged Units Needed]/[@Units per case/Tray],0),\"\")",
+      "0"
+     ],
+     "header_row_cell": [
+      "IFERROR(ROUNDUP([@Number of  Individual Packaged Units Needed]/[@Units per case/Tray],0),\"\")",
+      null
+     ]
+    },
+    {
+     "name": "Tray/Case",
+     "col": "V",
+     "stored": "IFS(LEFT([@Sku],1)=\"D\",\"\",LEFT([@Sku],2)=\"F5\",\"Case\",TRUE,\"Tray\")",
+     "cell": [
+      "IFS(LEFT([@Sku],1)=\"D\",\"\",LEFT([@Sku],2)=\"F5\",\"Case\",TRUE,\"Tray\")",
+      "Tray"
+     ],
+     "header_row_cell": [
+      "IFS(LEFT([@Sku],1)=\"D\",\"\",LEFT([@Sku],2)=\"F5\",\"Case\",TRUE,\"Tray\")",
+      null
+     ]
+    },
+    {
+     "name": "Notes",
+     "col": "W",
+     "stored": "IF(LEFT([@Sku],2)<>\"F5\",\"\",LET(n,N([@'#of Trays/Cases Needed]),base,XLOOKUP([@Sku],Products[No.],Products[Non Case Sku],\"\"),bn,SUMIFS(Mix_Slice_Oven['#of Trays/Cases Needed],Mix_Slice_Oven[Sku],base),IF(AND(n>0,bn=0),\"Case Total\",\"\")))",
+     "cell": [
+      "IF(LEFT([@Sku],2)<>\"F5\",\"\",LET(n,N([@'#of Trays/Cases Needed]),base,XLOOKUP([@Sku],Products[No.],Products[Non Case Sku],\"\"),bn,SUMIFS(Mix_Slice_Oven['#of Trays/Cases Needed],Mix_Slice_Oven[Sku],base),IF(AND(n>0,bn=0),\"Case Total\",\"\")))",
+      null
+     ],
+     "header_row_cell": [
+      "IF(LEFT([@Sku],2)<>\"F5\",\"\",LET(n,N([@'#of Trays/Cases Needed]),base,XLOOKUP([@Sku],Products[No.],Products[Non Case Sku],\"\"),bn,SUMIFS(Mix_Slice_Oven['#of Trays/Cases Needed],Mix_Slice_Oven[Sku],base),IF(AND(n>0,bn=0),\"Case Total\",\"\")))",
+      null
+     ]
+    },
+    {
+     "name": "Extra Bread (Runout)",
+     "col": "X",
+     "stored": null,
+     "cell": null,
+     "header_row_cell": null
+    },
+    {
+     "name": "Run Time Per Mix (min)",
+     "col": "Y",
+     "stored": "IFERROR(XLOOKUP([@Unique Dough],UniqueDough[Dough],UniqueDough[Optimal Time]),\"\")",
+     "cell": [
+      "IFERROR(XLOOKUP([@Unique Dough],UniqueDough[Dough],UniqueDough[Optimal Time]),\"\")",
+      "30"
+     ],
+     "header_row_cell": [
+      "IFERROR(XLOOKUP([@Unique Dough],UniqueDough[Dough],UniqueDough[Optimal Time]),\"\")",
+      null
+     ]
+    },
+    {
+     "name": "S_Needed",
+     "col": "Z",
+     "stored": "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(p,XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[S_Production]),IF(p<0,ABS(p),\"0\")),\"0\"))",
+     "cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(p,XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[S_Production]),IF(p<0,ABS(p),\"0\")),\"0\"))",
+      "0"
+     ],
+     "header_row_cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(p,XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[S_Production]),IF(p<0,ABS(p),\"0\")),\"0\"))",
+      null
+     ]
+    },
+    {
+     "name": "S_Bags",
+     "col": "AA",
+     "stored": "IFERROR(ROUND((XLOOKUP([@Sku],DoughWeight[Sku],DoughWeight[Sun])/XLOOKUP([@Dough],Dough[No.],Dough[Weight]))*[@Scrap Factor],2),\"\")",
+     "cell": [
+      "IFERROR(ROUND((XLOOKUP([@Sku],DoughWeight[Sku],DoughWeight[Sun])/XLOOKUP([@Dough],Dough[No.],Dough[Weight]))*[@Scrap Factor],2),\"\")",
+      "0"
+     ],
+     "header_row_cell": [
+      "IFERROR(ROUND((XLOOKUP([@Sku],DoughWeight[Sku],DoughWeight[Sun])/XLOOKUP([@Dough],Dough[No.],Dough[Weight]))*[@Scrap Factor],2),\"\")",
+      null
+     ]
+    },
+    {
+     "name": "S_Raw",
+     "col": "AB",
+     "stored": "IF([@Bags By Unique Dough]<>\"\",SUMIFS(Mix_Slice_Oven[S_Bags],Mix_Slice_Oven[Unique Dough],[@Unique Dough])*IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),\"\")",
+     "cell": [
+      "IF([@Bags By Unique Dough]<>\"\",SUMIFS(Mix_Slice_Oven[S_Bags],Mix_Slice_Oven[Unique Dough],[@Unique Dough])*IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),\"\")",
+      "0"
+     ],
+     "header_row_cell": [
+      "IF([@Bags By Unique Dough]<>\"\",SUMIFS(Mix_Slice_Oven[S_Bags],Mix_Slice_Oven[Unique Dough],[@Unique Dough])*IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),\"\")",
+      null
+     ]
+    },
+    {
+     "name": "S_Optimal",
+     "col": "AC",
+     "stored": "IFERROR(CEILING([@S_Raw],IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,[@optimal bags per mix])),\"\")",
+     "cell": [
+      "IFERROR(CEILING([@S_Raw],IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,[@optimal bags per mix])),\"\")",
+      "0"
+     ],
+     "header_row_cell": [
+      "IFERROR(CEILING([@S_Raw],IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,[@optimal bags per mix])),\"\")",
+      null
+     ]
+    },
+    {
+     "name": "S_Planned",
+     "col": "AD",
+     "stored": "[@S_Optimal]",
+     "cell": [
+      "[@S_Optimal]",
+      "0"
+     ],
+     "header_row_cell": [
+      "[@S_Optimal]",
+      null
+     ]
+    },
+    {
+     "name": "M_Needed",
+     "col": "AE",
+     "stored": "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(p,XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[M_Production]),IF(p<0,ABS(p),\"0\")),\"0\"))",
+     "cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(p,XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[M_Production]),IF(p<0,ABS(p),\"0\")),\"0\"))",
+      "0"
+     ],
+     "header_row_cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(p,XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[M_Production]),IF(p<0,ABS(p),\"0\")),\"0\"))",
+      null
+     ]
+    },
+    {
+     "name": "M_Bags",
+     "col": "AF",
+     "stored": "IFERROR(ROUND((XLOOKUP([@Sku],DoughWeight[Sku],DoughWeight[Mon])/XLOOKUP([@Dough],Dough[No.],Dough[Weight]))*[@Scrap Factor],2),\"\")",
+     "cell": [
+      "IFERROR(ROUND((XLOOKUP([@Sku],DoughWeight[Sku],DoughWeight[Mon])/XLOOKUP([@Dough],Dough[No.],Dough[Weight]))*[@Scrap Factor],2),\"\")",
+      "0"
+     ],
+     "header_row_cell": [
+      "IFERROR(ROUND((XLOOKUP([@Sku],DoughWeight[Sku],DoughWeight[Mon])/XLOOKUP([@Dough],Dough[No.],Dough[Weight]))*[@Scrap Factor],2),\"\")",
+      null
+     ]
+    },
+    {
+     "name": "M_Raw",
+     "col": "AG",
+     "stored": "IF([@Bags By Unique Dough]<>\"\",SUMIFS(Mix_Slice_Oven[M_Bags],Mix_Slice_Oven[Unique Dough],[@Unique Dough])*IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),\"\")",
+     "cell": [
+      "IF([@Bags By Unique Dough]<>\"\",SUMIFS(Mix_Slice_Oven[M_Bags],Mix_Slice_Oven[Unique Dough],[@Unique Dough])*IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),\"\")",
+      "0"
+     ],
+     "header_row_cell": [
+      "IF([@Bags By Unique Dough]<>\"\",SUMIFS(Mix_Slice_Oven[M_Bags],Mix_Slice_Oven[Unique Dough],[@Unique Dough])*IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),\"\")",
+      null
+     ]
+    },
+    {
+     "name": "M_Optimal",
+     "col": "AH",
+     "stored": "IFERROR(CEILING([@M_Raw],IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,[@optimal bags per mix])),\"\")",
+     "cell": [
+      "IFERROR(CEILING([@M_Raw],IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,[@optimal bags per mix])),\"\")",
+      "0"
+     ],
+     "header_row_cell": [
+      "IFERROR(CEILING([@M_Raw],IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,[@optimal bags per mix])),\"\")",
+      null
+     ]
+    },
+    {
+     "name": "M_Planned",
+     "col": "AI",
+     "stored": "[@M_Optimal]",
+     "cell": [
+      "[@M_Optimal]",
+      "0"
+     ],
+     "header_row_cell": [
+      "[@M_Optimal]",
+      null
+     ]
+    },
+    {
+     "name": "T_Needed",
+     "col": "AJ",
+     "stored": "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(p,XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[T_Production]),IF(p<0,ABS(p),\"0\")),\"0\"))",
+     "cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(p,XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[T_Production]),IF(p<0,ABS(p),\"0\")),\"0\"))",
+      "0"
+     ],
+     "header_row_cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(p,XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[T_Production]),IF(p<0,ABS(p),\"0\")),\"0\"))",
+      null
+     ]
+    },
+    {
+     "name": "T_Bags",
+     "col": "AK",
+     "stored": "IFERROR(ROUND((XLOOKUP([@Sku],DoughWeight[Sku],DoughWeight[Tue])/XLOOKUP([@Dough],Dough[No.],Dough[Weight]))*[@Scrap Factor],2),\"\")",
+     "cell": [
+      "IFERROR(ROUND((XLOOKUP([@Sku],DoughWeight[Sku],DoughWeight[Tue])/XLOOKUP([@Dough],Dough[No.],Dough[Weight]))*[@Scrap Factor],2),\"\")",
+      "0"
+     ],
+     "header_row_cell": [
+      "IFERROR(ROUND((XLOOKUP([@Sku],DoughWeight[Sku],DoughWeight[Tue])/XLOOKUP([@Dough],Dough[No.],Dough[Weight]))*[@Scrap Factor],2),\"\")",
+      null
+     ]
+    },
+    {
+     "name": "T_Raw",
+     "col": "AL",
+     "stored": "IF([@Bags By Unique Dough]<>\"\",SUMIFS(Mix_Slice_Oven[T_Bags],Mix_Slice_Oven[Unique Dough],[@Unique Dough])*IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),\"\")",
+     "cell": [
+      "IF([@Bags By Unique Dough]<>\"\",SUMIFS(Mix_Slice_Oven[T_Bags],Mix_Slice_Oven[Unique Dough],[@Unique Dough])*IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),\"\")",
+      "1.3"
+     ],
+     "header_row_cell": [
+      "IF([@Bags By Unique Dough]<>\"\",SUMIFS(Mix_Slice_Oven[T_Bags],Mix_Slice_Oven[Unique Dough],[@Unique Dough])*IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),\"\")",
+      null
+     ]
+    },
+    {
+     "name": "T_Optimal",
+     "col": "AM",
+     "stored": null,
+     "cell": [
+      "IFERROR(CEILING([@T_Raw],IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,[@optimal bags per mix])),\"\")",
+      "2"
+     ],
+     "header_row_cell": [
+      "IFERROR(CEILING([@T_Raw],IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,[@optimal bags per mix])),\"\")",
+      null
+     ]
+    },
+    {
+     "name": "T_Planned",
+     "col": "AN",
+     "stored": "[@T_Optimal]",
+     "cell": [
+      "[@T_Optimal]",
+      "2"
+     ],
+     "header_row_cell": [
+      "[@T_Optimal]",
+      null
+     ]
+    },
+    {
+     "name": "W_Needed",
+     "col": "AO",
+     "stored": "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(p,XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[W_Production]),IF(p<0,ABS(p),\"0\")),\"0\"))",
+     "cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(p,XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[W_Production]),IF(p<0,ABS(p),\"0\")),\"0\"))",
+      "0"
+     ],
+     "header_row_cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(p,XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[W_Production]),IF(p<0,ABS(p),\"0\")),\"0\"))",
+      null
+     ]
+    },
+    {
+     "name": "W_Bags",
+     "col": "AP",
+     "stored": "IFERROR(ROUND((XLOOKUP([@Sku],DoughWeight[Sku],DoughWeight[Wed])/XLOOKUP([@Dough],Dough[No.],Dough[Weight]))*[@Scrap Factor],2),\"\")",
+     "cell": [
+      "IFERROR(ROUND((XLOOKUP([@Sku],DoughWeight[Sku],DoughWeight[Wed])/XLOOKUP([@Dough],Dough[No.],Dough[Weight]))*[@Scrap Factor],2),\"\")",
+      "0"
+     ],
+     "header_row_cell": [
+      "IFERROR(ROUND((XLOOKUP([@Sku],DoughWeight[Sku],DoughWeight[Wed])/XLOOKUP([@Dough],Dough[No.],Dough[Weight]))*[@Scrap Factor],2),\"\")",
+      null
+     ]
+    },
+    {
+     "name": "W_Raw",
+     "col": "AQ",
+     "stored": "IF([@Bags By Unique Dough]<>\"\",SUMIFS(Mix_Slice_Oven[W_Bags],Mix_Slice_Oven[Unique Dough],[@Unique Dough])*IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),\"\")",
+     "cell": [
+      "IF([@Bags By Unique Dough]<>\"\",SUMIFS(Mix_Slice_Oven[W_Bags],Mix_Slice_Oven[Unique Dough],[@Unique Dough])*IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),\"\")",
+      "1.3"
+     ],
+     "header_row_cell": [
+      "IF([@Bags By Unique Dough]<>\"\",SUMIFS(Mix_Slice_Oven[W_Bags],Mix_Slice_Oven[Unique Dough],[@Unique Dough])*IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),\"\")",
+      null
+     ]
+    },
+    {
+     "name": "W_Optimal",
+     "col": "AR",
+     "stored": "IFERROR(CEILING([@W_Raw],IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,[@optimal bags per mix])),\"\")",
+     "cell": [
+      "IFERROR(CEILING([@W_Raw],IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,[@optimal bags per mix])),\"\")",
+      "2"
+     ],
+     "header_row_cell": [
+      "IFERROR(CEILING([@W_Raw],IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,[@optimal bags per mix])),\"\")",
+      null
+     ]
+    },
+    {
+     "name": "W_Planned",
+     "col": "AS",
+     "stored": "[@W_Optimal]",
+     "cell": [
+      "[@W_Optimal]",
+      "2"
+     ],
+     "header_row_cell": [
+      "[@W_Optimal]",
+      null
+     ]
+    },
+    {
+     "name": "TH_Needed",
+     "col": "AT",
+     "stored": "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(p,XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[TH_Production]),IF(p<0,ABS(p),\"0\")),\"0\"))",
+     "cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(p,XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[TH_Production]),IF(p<0,ABS(p),\"0\")),\"0\"))",
+      "0"
+     ],
+     "header_row_cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(p,XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[TH_Production]),IF(p<0,ABS(p),\"0\")),\"0\"))",
+      null
+     ]
+    },
+    {
+     "name": "TH_Bags",
+     "col": "AU",
+     "stored": "IFERROR(ROUND((XLOOKUP([@Sku],DoughWeight[Sku],DoughWeight[Thur])/XLOOKUP([@Dough],Dough[No.],Dough[Weight]))*[@Scrap Factor],2),\"\")",
+     "cell": [
+      "IFERROR(ROUND((XLOOKUP([@Sku],DoughWeight[Sku],DoughWeight[Thur])/XLOOKUP([@Dough],Dough[No.],Dough[Weight]))*[@Scrap Factor],2),\"\")",
+      "0"
+     ],
+     "header_row_cell": [
+      "IFERROR(ROUND((XLOOKUP([@Sku],DoughWeight[Sku],DoughWeight[Thur])/XLOOKUP([@Dough],Dough[No.],Dough[Weight]))*[@Scrap Factor],2),\"\")",
+      null
+     ]
+    },
+    {
+     "name": "TH_Raw",
+     "col": "AV",
+     "stored": "IF([@Bags By Unique Dough]<>\"\",SUMIFS(Mix_Slice_Oven[TH_Bags],Mix_Slice_Oven[Unique Dough],[@Unique Dough])*IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),\"\")",
+     "cell": [
+      "IF([@Bags By Unique Dough]<>\"\",SUMIFS(Mix_Slice_Oven[TH_Bags],Mix_Slice_Oven[Unique Dough],[@Unique Dough])*IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),\"\")",
+      "0"
+     ],
+     "header_row_cell": [
+      "IF([@Bags By Unique Dough]<>\"\",SUMIFS(Mix_Slice_Oven[TH_Bags],Mix_Slice_Oven[Unique Dough],[@Unique Dough])*IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),\"\")",
+      null
+     ]
+    },
+    {
+     "name": "TH_Optimal",
+     "col": "AW",
+     "stored": "IFERROR(CEILING([@TH_Raw],IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,[@optimal bags per mix])),\"\")",
+     "cell": [
+      "IFERROR(CEILING([@TH_Raw],IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,[@optimal bags per mix])),\"\")",
+      "0"
+     ],
+     "header_row_cell": [
+      "IFERROR(CEILING([@TH_Raw],IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,[@optimal bags per mix])),\"\")",
+      null
+     ]
+    },
+    {
+     "name": "TH_Planned",
+     "col": "AX",
+     "stored": "[@TH_Optimal]",
+     "cell": [
+      "[@TH_Optimal]",
+      "0"
+     ],
+     "header_row_cell": [
+      "[@TH_Optimal]",
+      null
+     ]
+    },
+    {
+     "name": "F_Needed",
+     "col": "AY",
+     "stored": "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(p,XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[F_Production]),IF(p<0,ABS(p),\"0\")),\"0\"))",
+     "cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(p,XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[F_Production]),IF(p<0,ABS(p),\"0\")),\"0\"))",
+      "36"
+     ],
+     "header_row_cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(p,XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[F_Production]),IF(p<0,ABS(p),\"0\")),\"0\"))",
+      null
+     ]
+    },
+    {
+     "name": "F_Bags",
+     "col": "AZ",
+     "stored": "IFERROR(ROUND((XLOOKUP([@Sku],DoughWeight[Sku],DoughWeight[Fri])/XLOOKUP([@Dough],Dough[No.],Dough[Weight]))*[@Scrap Factor],2),\"\")",
+     "cell": [
+      "IFERROR(ROUND((XLOOKUP([@Sku],DoughWeight[Sku],DoughWeight[Fri])/XLOOKUP([@Dough],Dough[No.],Dough[Weight]))*[@Scrap Factor],2),\"\")",
+      "0.28999999999999998"
+     ],
+     "header_row_cell": [
+      "IFERROR(ROUND((XLOOKUP([@Sku],DoughWeight[Sku],DoughWeight[Fri])/XLOOKUP([@Dough],Dough[No.],Dough[Weight]))*[@Scrap Factor],2),\"\")",
+      null
+     ]
+    },
+    {
+     "name": "F_Raw",
+     "col": "BA",
+     "stored": "IF([@Bags By Unique Dough]<>\"\",SUMIFS(Mix_Slice_Oven[F_Bags],Mix_Slice_Oven[Unique Dough],[@Unique Dough])*IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),\"\")",
+     "cell": [
+      "IF([@Bags By Unique Dough]<>\"\",SUMIFS(Mix_Slice_Oven[F_Bags],Mix_Slice_Oven[Unique Dough],[@Unique Dough])*IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),\"\")",
+      "0.28999999999999998"
+     ],
+     "header_row_cell": [
+      "IF([@Bags By Unique Dough]<>\"\",SUMIFS(Mix_Slice_Oven[F_Bags],Mix_Slice_Oven[Unique Dough],[@Unique Dough])*IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),\"\")",
+      null
+     ]
+    },
+    {
+     "name": "F_Optimal",
+     "col": "BB",
+     "stored": "IFERROR(CEILING([@F_Raw],IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,[@optimal bags per mix])),\"\")",
+     "cell": [
+      "IFERROR(CEILING([@F_Raw],IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,[@optimal bags per mix])),\"\")",
+      "1"
+     ],
+     "header_row_cell": [
+      "IFERROR(CEILING([@F_Raw],IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,[@optimal bags per mix])),\"\")",
+      null
+     ]
+    },
+    {
+     "name": "F_Planned",
+     "col": "BC",
+     "stored": "[@F_Optimal]",
+     "cell": [
+      "[@F_Optimal]",
+      "1"
+     ],
+     "header_row_cell": [
+      "[@F_Optimal]",
+      null
+     ]
+    },
+    {
+     "name": "S_Minutes",
+     "col": "BD",
+     "stored": "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(([@S_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),0))",
+     "cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(([@S_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),0))",
+      "0"
+     ],
+     "header_row_cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(([@S_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),0))",
+      null
+     ]
+    },
+    {
+     "name": "M_Minutes",
+     "col": "BE",
+     "stored": "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(([@M_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),0))",
+     "cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(([@M_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),0))",
+      "0"
+     ],
+     "header_row_cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(([@M_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),0))",
+      null
+     ]
+    },
+    {
+     "name": "T_Minutes",
+     "col": "BF",
+     "stored": "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(([@T_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),0))",
+     "cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(([@T_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),0))",
+      "60"
+     ],
+     "header_row_cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(([@T_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),0))",
+      null
+     ]
+    },
+    {
+     "name": "W_Minutes",
+     "col": "BG",
+     "stored": "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(([@W_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),0))",
+     "cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(([@W_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),0))",
+      "60"
+     ],
+     "header_row_cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(([@W_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),0))",
+      null
+     ]
+    },
+    {
+     "name": "TH_Minutes",
+     "col": "BH",
+     "stored": "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(([@TH_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),0))",
+     "cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(([@TH_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),0))",
+      "0"
+     ],
+     "header_row_cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(([@TH_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),0))",
+      null
+     ]
+    },
+    {
+     "name": "F_Minutes",
+     "col": "BI",
+     "stored": "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(([@F_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),0))",
+     "cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(([@F_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),0))",
+      "30"
+     ],
+     "header_row_cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(([@F_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),0))",
+      null
+     ]
+    }
+   ]
+  },
+  "BOMQty": {
+   "sheet": "DoughWeights",
+   "ref": "O3:AJ15121",
+   "rows": 15118,
+   "cols": [
+    {
+     "name": "AsOfCalcDate",
+     "col": "O",
+     "stored": null
+    },
+    {
+     "name": "CompanyName",
+     "col": "P",
+     "stored": null
+    },
+    {
+     "name": "TodayFormatted",
+     "col": "Q",
+     "stored": null
+    },
+    {
+     "name": "ItemTableCaptionFilter",
+     "col": "R",
+     "stored": null
+    },
+    {
+     "name": "ItemFilter",
+     "col": "S",
+     "stored": null
+    },
+    {
+     "name": "No_Item",
+     "col": "T",
+     "stored": null
+    },
+    {
+     "name": "Desc_Item",
+     "col": "U",
+     "stored": null
+    },
+    {
+     "name": "QtyExplosionofBOMCapt",
+     "col": "V",
+     "stored": null
+    },
+    {
+     "name": "CurrReportPageNoCapt",
+     "col": "W",
+     "stored": null
+    },
+    {
+     "name": "BOMQtyCaption",
+     "col": "X",
+     "stored": null
+    },
+    {
+     "name": "BomCompLevelQtyCapt",
+     "col": "Y",
+     "stored": null
+    },
+    {
+     "name": "BomCompLevelDescCapt",
+     "col": "Z",
+     "stored": null
+    },
+    {
+     "name": "BomCompLevelNoCapt",
+     "col": "AA",
+     "stored": null
+    },
+    {
+     "name": "LevelCapt",
+     "col": "AB",
+     "stored": null
+    },
+    {
+     "name": "BomCompLevelUOMCodeCapt",
+     "col": "AC",
+     "stored": null
+    },
+    {
+     "name": "BomCompLevelNo",
+     "col": "AD",
+     "stored": null
+    },
+    {
+     "name": "BomCompLevelDesc",
+     "col": "AE",
+     "stored": null
+    },
+    {
+     "name": "BOMQty",
+     "col": "AF",
+     "stored": null
+    },
+    {
+     "name": "FormatLevel",
+     "col": "AG",
+     "stored": null
+    },
+    {
+     "name": "BomCompLevelQty",
+     "col": "AH",
+     "stored": null
+    },
+    {
+     "name": "BomCompLevelUOMCode",
+     "col": "AI",
+     "stored": null
+    },
+    {
+     "name": "Column1",
+     "col": "AJ",
+     "stored": null
+    }
+   ]
+  },
+  "Products": {
+   "sheet": "Products",
+   "ref": "A1:S479",
+   "rows": 478,
+   "cols": [
+    {
+     "name": "No.",
+     "col": "A",
+     "stored": null,
+     "cell": [
+      null,
+      "F1000"
+     ]
+    },
+    {
+     "name": "Description",
+     "col": "B",
+     "stored": null,
+     "cell": [
+      null,
+      "Rye 1/2\""
+     ]
+    },
+    {
+     "name": "Production BOM No.",
+     "col": "C",
+     "stored": null,
+     "cell": [
+      null,
+      "F1000"
+     ]
+    },
+    {
+     "name": "Unit Cost",
+     "col": "D",
+     "stored": null,
+     "cell": [
+      null,
+      "0.97799999999999998"
+     ]
+    },
+    {
+     "name": "Unit Price",
+     "col": "E",
+     "stored": null,
+     "cell": [
+      null,
+      "0"
+     ]
+    },
+    {
+     "name": "Gen. Prod. Posting Group",
+     "col": "F",
+     "stored": null,
+     "cell": [
+      null,
+      "FG"
+     ]
+    },
+    {
+     "name": "Asset",
+     "col": "G",
+     "stored": null,
+     "cell": [
+      null,
+      "Breadline"
+     ]
+    },
+    {
+     "name": "Weight",
+     "col": "H",
+     "stored": null,
+     "cell": [
+      null,
+      "2.25"
+     ]
+    },
+    {
+     "name": "Unique Dough",
+     "col": "I",
+     "stored": null,
+     "cell": [
+      null,
+      "Rye Bread-Hearth"
+     ]
+    },
+    {
+     "name": "Packs Per Tray/Case",
+     "col": "J",
+     "stored": null,
+     "cell": [
+      null,
+      "8"
+     ]
+    },
+    {
+     "name": "Pieces Per Tray/Case",
+     "col": "K",
+     "stored": null,
+     "cell": [
+      null,
+      ""
+     ]
+    },
+    {
+     "name": "Dough",
+     "col": "L",
+     "stored": null,
+     "cell": [
+      null,
+      "D10009"
+     ]
+    },
+    {
+     "name": "Dough Description",
+     "col": "M",
+     "stored": "IFERROR(XLOOKUP([@Dough],Dough[No.],Dough[Description]),\"\")",
+     "cell": [
+      "IFERROR(XLOOKUP([@Dough],Dough[No.],Dough[Description]),\"\")",
+      "Rye Dough"
+     ]
+    },
+    {
+     "name": "Scrap Factor",
+     "col": "N",
+     "stored": null,
+     "cell": [
+      null,
+      "1.1000000000000001"
+     ]
+    },
+    {
+     "name": "Batch Size",
+     "col": "O",
+     "stored": null,
+     "cell": [
+      null,
+      "280"
+     ]
+    },
+    {
+     "name": "Asset Rank",
+     "col": "P",
+     "stored": "IFERROR(MATCH([@Asset],{\"Breadline\";\"Breadline/Artisan\";\"MCS LINE\";\"3rd Party\";\"3rd Party - Bake\";\"Third Party  - Repack\"},0),99)",
+     "cell": [
+      "IFERROR(MATCH([@Asset],{\"Breadline\";\"Breadline/Artisan\";\"MCS LINE\";\"3rd Party\";\"3rd Party - Bake\";\"Third Party  - Repack\"},0),99)",
+      "1"
+     ]
+    },
+    {
+     "name": "Pans/Boxes",
+     "col": "Q",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "Non Case Sku",
+     "col": "R",
+     "stored": "IF(LEFT([@No.],2)=\"F5\",\"F\"&MID([@No.],3,100),[@No.])",
+     "cell": [
+      "IF(LEFT([@No.],2)=\"F5\",\"F\"&MID([@No.],3,100),[@No.])",
+      "F1000"
+     ]
+    },
+    {
+     "name": "Topping",
+     "col": "S",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    }
+   ]
+  },
+  "Dough": {
+   "sheet": "Dough",
+   "ref": "A1:K64",
+   "rows": 63,
+   "cols": [
+    {
+     "name": "No.",
+     "col": "A",
+     "stored": null,
+     "cell": [
+      null,
+      "D10001"
+     ]
+    },
+    {
+     "name": "Description",
+     "col": "B",
+     "stored": null,
+     "cell": [
+      null,
+      "Challah Dough"
+     ]
+    },
+    {
+     "name": "Type",
+     "col": "C",
+     "stored": null,
+     "cell": [
+      null,
+      "Inventory"
+     ]
+    },
+    {
+     "name": "Item Tracking Code",
+     "col": "D",
+     "stored": null,
+     "cell": [
+      null,
+      "RM-LOT-EXP"
+     ]
+    },
+    {
+     "name": "Production BOM No.",
+     "col": "E",
+     "stored": null,
+     "cell": [
+      null,
+      "D10001"
+     ]
+    },
+    {
+     "name": "Unit Cost",
+     "col": "F",
+     "stored": null,
+     "cell": [
+      null,
+      "0.27700000000000002"
+     ]
+    },
+    {
+     "name": "Unit Price",
+     "col": "G",
+     "stored": null,
+     "cell": [
+      null,
+      "0"
+     ]
+    },
+    {
+     "name": "Gen. Prod. Posting Group",
+     "col": "H",
+     "stored": null,
+     "cell": [
+      null,
+      "RAW-IG"
+     ]
+    },
+    {
+     "name": "Weight",
+     "col": "I",
+     "stored": "SUMIFS(BOMQty[BOMQty],BOMQty[No_Item],[@No.])",
+     "cell": [
+      "SUMIFS(BOMQty[BOMQty],BOMQty[No_Item],[@No.])",
+      "177.27"
+     ]
+    },
+    {
+     "name": "Uni Dou #",
+     "col": "J",
+     "stored": "COUNTIFS(UniqueDough[Dough Sku],[@No.])",
+     "cell": [
+      "COUNTIFS(UniqueDough[Dough Sku],[@No.])",
+      "4"
+     ]
+    },
+    {
+     "name": "Uni Dou Desc",
+     "col": "K",
+     "stored": "TEXTJOIN(\", \",TRUE,FILTER(UniqueDough[Dough],UniqueDough[Dough Sku]=[@No.],\"\"))",
+     "cell": [
+      "TEXTJOIN(\", \",TRUE,FILTER(UniqueDough[Dough],UniqueDough[Dough Sku]=[@No.],\"\"))",
+      "Challah- Hearth- (38 oz.), Challah-Lg Pullman, Challah 3 Braided, Challah Dough"
+     ]
+    }
+   ]
+  },
+  "UniqueDough": {
+   "sheet": "Unique Dough",
+   "ref": "A1:S140",
+   "rows": 139,
+   "cols": [
+    {
+     "name": "Dough",
+     "col": "A",
+     "stored": null,
+     "cell": [
+      null,
+      "2# Sour Dough Batard"
+     ]
+    },
+    {
+     "name": "Pan Constraints",
+     "col": "B",
+     "stored": null,
+     "cell": [
+      null,
+      "None"
+     ]
+    },
+    {
+     "name": "Placement On Scedule",
+     "col": "C",
+     "stored": null,
+     "cell": [
+      null,
+      "Doesn't run on Big mixer, mixed in small mixer while larger mixes are running"
+     ]
+    },
+    {
+     "name": "Optimal Bag",
+     "col": "D",
+     "stored": null,
+     "cell": [
+      null,
+      "1"
+     ]
+    },
+    {
+     "name": "Optimal Time",
+     "col": "E",
+     "stored": null,
+     "cell": null
+    },
+    {
+     "name": "4 Bag Mix",
+     "col": "F",
+     "stored": null,
+     "cell": [
+      null,
+      "0"
+     ]
+    },
+    {
+     "name": "3 Bag Mix",
+     "col": "G",
+     "stored": null,
+     "cell": [
+      null,
+      "0"
+     ]
+    },
+    {
+     "name": "2 Bag Mix",
+     "col": "H",
+     "stored": null,
+     "cell": [
+      null,
+      "0"
+     ]
+    },
+    {
+     "name": "1 Bag Mix",
+     "col": "I",
+     "stored": null,
+     "cell": [
+      null,
+      "0"
+     ]
+    },
+    {
+     "name": "1.5 Bag Mix",
+     "col": "J",
+     "stored": null,
+     "cell": [
+      null,
+      "0"
+     ]
+    },
+    {
+     "name": "Dough Color",
+     "col": "K",
+     "stored": null,
+     "cell": [
+      null,
+      "White"
+     ]
+    },
+    {
+     "name": "Steamed?",
+     "col": "L",
+     "stored": null,
+     "cell": [
+      null,
+      "Not Steamed"
+     ]
+    },
+    {
+     "name": "Schedule Notes",
+     "col": "M",
+     "stored": null,
+     "cell": null
+    },
+    {
+     "name": "Schedule Notes2",
+     "col": "N",
+     "stored": null,
+     "cell": [
+      null,
+      "Keep 2-3 Hour Buffer in between Artisan Mixes"
+     ]
+    },
+    {
+     "name": "Notes",
+     "col": "O",
+     "stored": null,
+     "cell": null
+    },
+    {
+     "name": "Count",
+     "col": "P",
+     "stored": "COUNTIFS(Products[Unique Dough],[@Dough])",
+     "cell": [
+      "COUNTIFS(Products[Unique Dough],[@Dough])",
+      "8"
+     ]
+    },
+    {
+     "name": "List of Count",
+     "col": "Q",
+     "stored": "TEXTJOIN(\", \",TRUE,FILTER(Products[Description],IFERROR(Products[Unique Dough],\"\")=[@Dough],\"\"))",
+     "cell": [
+      "TEXTJOIN(\", \",TRUE,FILTER(Products[Description],IFERROR(Products[Unique Dough],\"\")=[@Dough],\"\"))",
+      "Sour Dough Batard 1/2\", Sour Dough Batard Unsliced, Sour Dough Batard 5/8\", Sour Dough Batard Horizontal 5/8\", Sour Dough Batard 3/4\", Cs. Sour Dough Batard 1/2\" 8lvs, Cs. Sour Dough Batard Unsliced 8lvs, Cs. Sour Dough Batard 5/8\" 8lvs"
+     ]
+    },
+    {
+     "name": "Dough Sku",
+     "col": "R",
+     "stored": "LET(r,IFERROR(MATCH([@Dough],'Mix-Slice-Oven'!$C:$C,0),0),rng,'Mix-Slice-Oven'!$H$1:INDEX('Mix-Slice-Oven'!$H:$H,MAX(r,1)),IF(r=0,\"\",IFERROR(XLOOKUP(TRUE,LEFT(rng,1)=\"D\",rng,\"\",0,-1),\"\")))",
+     "cell": [
+      "LET(r,IFERROR(MATCH([@Dough],'Mix-Slice-Oven'!$C:$C,0),0),rng,'Mix-Slice-Oven'!$H$1:INDEX('Mix-Slice-Oven'!$H:$H,MAX(r,1)),IF(r=0,\"\",IFERROR(XLOOKUP(TRUE,LEFT(rng,1)=\"D\",rng,\"\",0,-1),\"\")))",
+      "D10056"
+     ]
+    },
+    {
+     "name": "Dough Desc",
+     "col": "S",
+     "stored": "IFERROR(XLOOKUP([@Dough Sku],Dough[No.],Dough[Description]),\"\")",
+     "cell": [
+      "IFERROR(XLOOKUP([@Dough Sku],Dough[No.],Dough[Description]),\"\")",
+      "Artisan Sour Dough"
+     ]
+    }
+   ]
+  },
+  "Pans": {
+   "sheet": "Pans",
+   "ref": "B3:E44",
+   "rows": 41,
+   "cols": [
+    {
+     "name": "Pans/Boxes",
+     "col": "B",
+     "stored": null,
+     "cell": [
+      null,
+      "5\" Challah Sesame Buns"
+     ]
+    },
+    {
+     "name": "Pieces Per Pan",
+     "col": "C",
+     "stored": null,
+     "cell": [
+      null,
+      "15"
+     ]
+    },
+    {
+     "name": "Trays Per 1 bag Mix",
+     "col": "D",
+     "stored": null,
+     "cell": [
+      null,
+      "60"
+     ]
+    },
+    {
+     "name": "Unique Dough",
+     "col": "E",
+     "stored": null,
+     "cell": [
+      null,
+      "5\" Challah Bun"
+     ]
+    }
+   ]
+  },
+  "Oven_Info": {
+   "sheet": "Mix-Slice-Oven",
+   "ref": "B409:Q495",
+   "rows": 86,
+   "cols": [
+    {
+     "name": "Pans",
+     "col": "B",
+     "stored": "IF(OR([@Finished Product]=\"\",[@Finished Product]=0),\"\",IF(ISNUMBER(MATCH([@Finished Product],Pans[Pans/Boxes],0)),\"Pan\",XLOOKUP([@Finished Product],Products[No.],Products[Asset])))",
+     "cell": [
+      "IF(OR([@Finished Product]=\"\",[@Finished Product]=0),\"\",IF(ISNUMBER(MATCH([@Finished Product],Pans[Pans/Boxes],0)),\"Pan\",XLOOKUP([@Finished Product],Products[No.],Products[Asset])))",
+      "MCS LINE"
+     ],
+     "header_row_cell": [
+      "IF(OR([@Finished Product]=\"\",[@Finished Product]=0),\"\",IF(ISNUMBER(MATCH([@Finished Product],Pans[Pans/Boxes],0)),\"Pan\",XLOOKUP([@Finished Product],Products[No.],Products[Asset])))",
+      "Pan"
+     ]
+    },
+    {
+     "name": "Unique Dough",
+     "col": "C",
+     "stored": "IFERROR(XLOOKUP([@Finished Product],Products[No.],Products[Unique Dough],,0),\"\")",
+     "cell": [
+      "IFERROR(XLOOKUP([@Finished Product],Products[No.],Products[Unique Dough],,0),\"\")",
+      "5\" Challah Bun - Sesame"
+     ],
+     "header_row_cell": [
+      "IFERROR(XLOOKUP([@Finished Product],Products[No.],Products[Unique Dough],,0),\"\")",
+      null
+     ]
+    },
+    {
+     "name": "Daily Bags Per Mix",
+     "col": "D",
+     "stored": null,
+     "cell": [
+      "IFERROR(XLOOKUP([@Unique Dough],UniqueDough[Dough],UniqueDough[Optimal Bag]),\"\")",
+      "4"
+     ],
+     "header_row_cell": [
+      "IFERROR(XLOOKUP([@Unique Dough],UniqueDough[Dough],UniqueDough[Optimal Bag]),\"\")",
+      null
+     ]
+    },
+    {
+     "name": "Finished Product",
+     "col": "E",
+     "stored": null,
+     "cell": [
+      "A411",
+      "F53070"
+     ],
+     "header_row_cell": [
+      "A410",
+      "5\" Challah Sesame Buns"
+     ]
+    },
+    {
+     "name": "Finished Product Description",
+     "col": "F",
+     "stored": "IFERROR(XLOOKUP([@Finished Product],Products[No.],Products[Description]),\"\")",
+     "cell": [
+      "IFERROR(XLOOKUP([@Finished Product],Products[No.],Products[Description]),\"\")",
+      "Cs. 5\" Challah Sesame Buns "
+     ],
+     "header_row_cell": [
+      "IFERROR(XLOOKUP([@Finished Product],Products[No.],Products[Description]),\"\")",
+      null
+     ]
+    },
+    {
+     "name": "Trays per 1 Bag Mix",
+     "col": "G",
+     "stored": "IFERROR(XLOOKUP([@Finished Product],Pans[Pans/Boxes],Pans[Trays Per 1 bag Mix]),\"\")",
+     "cell": [
+      "IFERROR(XLOOKUP([@Finished Product],Pans[Pans/Boxes],Pans[Trays Per 1 bag Mix]),\"\")",
+      null
+     ],
+     "header_row_cell": [
+      "IFERROR(XLOOKUP([@Finished Product],Pans[Pans/Boxes],Pans[Trays Per 1 bag Mix]),\"\")",
+      "60"
+     ]
+    },
+    {
+     "name": "Demand",
+     "col": "H",
+     "stored": "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(d,MATCH($K$4,{\"Sunday\",\"Monday\",\"Tuesday\",\"Wednesday\",\"Thursday\",\"Friday\"},0),p,IF(LEFT([@Sku],2)=\"F5\",XLOOKUP([@Sku],Dist_DSnD[Sku],CHOOSE(d,Dist_DSnD[S_Production],Dist_DSnD[M_Production],Dist_DSnD[T_Production],Dist_DSnD[W_Production],Dist_DSnD[TH_Production],Dist_DSnD[F_Production]),0),XLOOKUP([@Sku],DSD_DSnD[Sku],CHOOSE(d,DSD_DSnD[S_Production],DSD_DSnD[M_Production],DSD_DSnD[T_Production],DSD_DSnD[W_Production],DSD_DSnD[TH_Production],DSD_DSnD[F_Production]),0)),IF(p<0,ABS(p),\"0\")),\"0\"))",
+     "cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(d,MATCH($K$4,{\"Sunday\",\"Monday\",\"Tuesday\",\"Wednesday\",\"Thursday\",\"Friday\"},0),p,IF(LEFT([@Sku],2)=\"F5\",XLOOKUP([@Sku],Dist_DSnD[Sku],CHOOSE(d,Dist_DSnD[S_Production],Dist_DSnD[M_Production],Dist_DSnD[T_Production],Dist_DSnD[W_Production],Dist_DSnD[TH_Production],Dist_DSnD[F_Production]),0),XLOOKUP([@Sku],DSD_DSnD[Sku],CHOOSE(d,DSD_DSnD[S_Production],DSD_DSnD[M_Production],DSD_DSnD[T_Production],DSD_DSnD[W_Production],DSD_DSnD[TH_Production],DSD_DSnD[F_Production]),0)),IF(p<0,ABS(p),\"0\")),\"0\"))",
+      "0"
+     ],
+     "header_row_cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(d,MATCH($K$4,{\"Sunday\",\"Monday\",\"Tuesday\",\"Wednesday\",\"Thursday\",\"Friday\"},0),p,IF(LEFT([@Sku],2)=\"F5\",XLOOKUP([@Sku],Dist_DSnD[Sku],CHOOSE(d,Dist_DSnD[S_Production],Dist_DSnD[M_Production],Dist_DSnD[T_Production],Dist_DSnD[W_Production],Dist_DSnD[TH_Production],Dist_DSnD[F_Production]),0),XLOOKUP([@Sku],DSD_DSnD[Sku],CHOOSE(d,DSD_DSnD[S_Production],DSD_DSnD[M_Production],DSD_DSnD[T_Production],DSD_DSnD[W_Production],DSD_DSnD[TH_Production],DSD_DSnD[F_Production]),0)),IF(p<0,ABS(p),\"0\")),\"0\"))",
+      "0"
+     ]
+    },
+    {
+     "name": "Sku",
+     "col": "I",
+     "stored": "[@Today''s Date]",
+     "cell": [
+      "[@Today''s Date]",
+      "F53070"
+     ],
+     "header_row_cell": [
+      "[@Today''s Date]",
+      "5\" Challah Sesame Buns"
+     ]
+    },
+    {
+     "name": "#N/A",
+     "col": "J",
+     "stored": "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(d,MATCH($K$4,{\"Sunday\",\"Monday\",\"Tuesday\",\"Wednesday\",\"Thursday\",\"Friday\"},0),p,IF(LEFT([@Sku],2)=\"F5\",XLOOKUP([@Sku],Dist_DSnD[Sku],CHOOSE(d,Dist_DSnD[S_Production],Dist_DSnD[M_Production],Dist_DSnD[T_Production],Dist_DSnD[W_Production],Dist_DSnD[TH_Production],Dist_DSnD[F_Production]),0),XLOOKUP([@Sku],DSD_DSnD[Sku],CHOOSE(d,DSD_DSnD[S_Production],DSD_DSnD[M_Production],DSD_DSnD[T_Production],DSD_DSnD[W_Production],DSD_DSnD[TH_Production],DSD_DSnD[F_Production]),0)),IF(p<0,ABS(p),\"0\")),\"0\"))",
+     "cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(d,MATCH($K$4,{\"Sunday\",\"Monday\",\"Tuesday\",\"Wednesday\",\"Thursday\",\"Friday\"},0),p,IF(LEFT([@Sku],2)=\"F5\",XLOOKUP([@Sku],Dist_DSnD[Sku],CHOOSE(d,Dist_DSnD[S_Production],Dist_DSnD[M_Production],Dist_DSnD[T_Production],Dist_DSnD[W_Production],Dist_DSnD[TH_Production],Dist_DSnD[F_Production]),0),XLOOKUP([@Sku],DSD_DSnD[Sku],CHOOSE(d,DSD_DSnD[S_Production],DSD_DSnD[M_Production],DSD_DSnD[T_Production],DSD_DSnD[W_Production],DSD_DSnD[TH_Production],DSD_DSnD[F_Production]),0)),IF(p<0,ABS(p),\"0\")),\"0\"))",
+      "0"
+     ],
+     "header_row_cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(d,MATCH($K$4,{\"Sunday\",\"Monday\",\"Tuesday\",\"Wednesday\",\"Thursday\",\"Friday\"},0),p,IF(LEFT([@Sku],2)=\"F5\",XLOOKUP([@Sku],Dist_DSnD[Sku],CHOOSE(d,Dist_DSnD[S_Production],Dist_DSnD[M_Production],Dist_DSnD[T_Production],Dist_DSnD[W_Production],Dist_DSnD[TH_Production],Dist_DSnD[F_Production]),0),XLOOKUP([@Sku],DSD_DSnD[Sku],CHOOSE(d,DSD_DSnD[S_Production],DSD_DSnD[M_Production],DSD_DSnD[T_Production],DSD_DSnD[W_Production],DSD_DSnD[TH_Production],DSD_DSnD[F_Production]),0)),IF(p<0,ABS(p),\"0\")),\"0\"))",
+      "0"
+     ]
+    },
+    {
+     "name": "# of pieces per tray/box",
+     "col": "K",
+     "stored": "IFERROR(XLOOKUP([@Finished Product],Products[No.],Products[Pieces Per Tray/Case]),\"\")",
+     "cell": [
+      "IFERROR(XLOOKUP([@Finished Product],Products[No.],Products[Pieces Per Tray/Case]),\"\")",
+      "64"
+     ],
+     "header_row_cell": [
+      "IFERROR(XLOOKUP([@Finished Product],Products[No.],Products[Pieces Per Tray/Case]),\"\")",
+      null
+     ]
+    },
+    {
+     "name": "Pieces Per Pan",
+     "col": "L",
+     "stored": "IFERROR(XLOOKUP([@Finished Product],Pans[Pans/Boxes],Pans[Pieces Per Pan]),\"\")",
+     "cell": [
+      "IFERROR(XLOOKUP([@Finished Product],Pans[Pans/Boxes],Pans[Pieces Per Pan]),\"\")",
+      null
+     ],
+     "header_row_cell": [
+      "IFERROR(XLOOKUP([@Finished Product],Pans[Pans/Boxes],Pans[Pieces Per Pan]),\"\")",
+      "15"
+     ]
+    },
+    {
+     "name": "Column4",
+     "col": "M",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ],
+     "header_row_cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "Today's Date",
+     "col": "N",
+     "stored": "[@Finished Product]",
+     "cell": [
+      "[@Finished Product]",
+      "F53070"
+     ],
+     "header_row_cell": [
+      "[@Finished Product]",
+      "5\" Challah Sesame Buns"
+     ]
+    },
+    {
+     "name": "Pans / Boxes",
+     "col": "O",
+     "stored": "[@Pans]",
+     "cell": [
+      "[@Pans]",
+      "MCS LINE"
+     ],
+     "header_row_cell": [
+      "[@Pans]",
+      "Pan"
+     ]
+    },
+    {
+     "name": "# of Pans/Boxes to set out",
+     "col": "P",
+     "stored": "IFERROR(IF([@Pans]<>\"Pan\",\"\",ROUNDUP(SUMPRODUCT(--(XLOOKUP(Oven_Info[Finished Product],Products[No.],Products[Pans/Boxes],\"\")=[@Finished Product]),IFERROR(--Oven_Info[Demand],0),IFERROR(--Oven_Info['# of pieces per tray/box],0))/[@Pieces Per Pan],0)),\"\")",
+     "cell": [
+      "IFERROR(IF([@Pans]<>\"Pan\",\"\",ROUNDUP(SUMPRODUCT(--(XLOOKUP(Oven_Info[Finished Product],Products[No.],Products[Pans/Boxes],\"\")=[@Finished Product]),IFERROR(--Oven_Info[Demand],0),IFERROR(--Oven_Info['# of pieces per tray/box],0))/[@Pieces Per Pan],0)),\"\")",
+      null
+     ],
+     "header_row_cell": [
+      "IFERROR(IF([@Pans]<>\"Pan\",\"\",ROUNDUP(SUMPRODUCT(--(XLOOKUP(Oven_Info[Finished Product],Products[No.],Products[Pans/Boxes],\"\")=[@Finished Product]),IFERROR(--Oven_Info[Demand],0),IFERROR(--Oven_Info['# of pieces per tray/box],0))/[@Pieces Per Pan],0)),\"\")",
+      "0"
+     ]
+    },
+    {
+     "name": "Notes/ Comments",
+     "col": "Q",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ],
+     "header_row_cell": [
+      null,
+      null
+     ]
+    }
+   ]
+  },
+  "Table14": {
+   "sheet": "Business Central Items List",
+   "ref": "A1:P1245",
+   "rows": 1244,
+   "cols": [
+    {
+     "name": "No.",
+     "col": "A",
+     "stored": null
+    },
+    {
+     "name": "Description",
+     "col": "B",
+     "stored": null
+    },
+    {
+     "name": "Type",
+     "col": "C",
+     "stored": null
+    },
+    {
+     "name": "Quantity on Hand",
+     "col": "D",
+     "stored": null
+    },
+    {
+     "name": "Substitutes Exist",
+     "col": "E",
+     "stored": null
+    },
+    {
+     "name": "Assembly BOM",
+     "col": "F",
+     "stored": null
+    },
+    {
+     "name": "Production BOM No.",
+     "col": "G",
+     "stored": null
+    },
+    {
+     "name": "Routing No.",
+     "col": "H",
+     "stored": null
+    },
+    {
+     "name": "Base Unit of Measure",
+     "col": "I",
+     "stored": null
+    },
+    {
+     "name": "Cost is Adjusted",
+     "col": "J",
+     "stored": null
+    },
+    {
+     "name": "Unit Cost",
+     "col": "K",
+     "stored": null
+    },
+    {
+     "name": "Unit Price",
+     "col": "L",
+     "stored": null
+    },
+    {
+     "name": "Gen. Prod. Posting Group",
+     "col": "M",
+     "stored": null
+    },
+    {
+     "name": "Vendor No.",
+     "col": "N",
+     "stored": null
+    },
+    {
+     "name": "Common Item No.",
+     "col": "O",
+     "stored": null
+    },
+    {
+     "name": "Default Deferral Template",
+     "col": "P",
+     "stored": null
+    }
+   ]
+  }
+ },
+ "cells": {
+  "Sunday!B1": [
+   null,
+   "46264"
+  ],
+  "Sunday!A3": [
+   "LET(no,Products[No.],grp,Products[Gen. Prod. Posting Group],ast,IFERROR(Products[Asset],\"\"),keep,((grp=\"FG\")+(grp=\"FG-DIST\"))*(ast<>\"Charges / Fees\"),SORTBY(FILTER(no,keep),FILTER(grp,keep),1))",
+   "F1000"
+  ],
+  "Sunday!U3": [
+   "B$1-DATE(YEAR(B$1),1,1)+1",
+   "242"
+  ],
+  "Monday!B1": [
+   "Sunday!B1+1",
+   "46265"
+  ],
+  "Monday!D3": [
+   "XLOOKUP([@Code],Sunday[Code],Sunday[Final Inventory])",
+   "52"
+  ],
+  "Monday!E3": [
+   "XLOOKUP([@Code],Sunday[Code],Sunday[Freezer])-XLOOKUP([@Code],Sunday[Code],Sunday[Order])",
+   "52"
+  ],
+  "Daily Supply & Demand!B1": [
+   "TODAY()",
+   "46290"
+  ],
+  "Daily Supply & Demand!W1": [
+   "'Mix-Slice-Oven'!AD1",
+   "48"
+  ],
+  "Daily Supply & Demand!H2": [
+   null,
+   "46285"
+  ],
+  "Daily Supply & Demand!W2": [
+   "'Mix-Slice-Oven'!BD1",
+   "8.5"
+  ],
+  "Daily Supply & Demand!DT2": [
+   "IF(WEEKDAY(TODAY(),1)=7,1,WEEKDAY(TODAY(),1))",
+   "6"
+  ],
+  "Daily Supply & Demand!H3": [
+   "H2-6",
+   "46279"
+  ],
+  "Daily Supply & Demand!W3": [
+   "'Mix-Slice-Oven'!AD2",
+   "174"
+  ],
+  "Daily Supply & Demand!W4": [
+   "'Mix-Slice-Oven'!BD2",
+   "16.083333333333332"
+  ],
+  "Daily Supply & Demand!C5": [
+   null,
+   "1.2"
+  ],
+  "Daily Supply & Demand!A8": [
+   "LET(no,Products[No.],grp,Products[Gen. Prod. Posting Group],ast,IFERROR(Products[Asset],\"\"),keep,((grp=\"FG\"))*(ast<>\"Charges / Fees\"),SORTBY(FILTER(no,keep),FILTER(grp,keep),1))",
+   "F1000"
+  ],
+  "Daily Supply & Demand!AW8": [
+   "IF([@Asset]<>\"MCS LINE\",ROUNDUP(([@Thur/Fri]*$C$5)+([@Fri/Sat]*$C$5),0),ROUNDUP(([@Thur/Fri]*$C$5),0))",
+   "45"
+  ],
+  "Daily Supply & Demand!H283": [
+   "SUM(SUMIFS(Dist_DSnD[Sun/Mon],Dist_DSnD[Asset],{\"Breadline\",\"Breadline/Artisan\"}))",
+   "78"
+  ],
+  "Daily Supply & Demand!H284": [
+   "SUMIFS(Dist_DSnD[Sun/Mon],Dist_DSnD[Asset],\"MCS LINE\")",
+   "1146"
+  ],
+  "Daily Supply & Demand!BI284": [
+   null,
+   "8/31/2026"
+  ],
+  "Daily Supply & Demand!H285": [
+   "SUM(H283:H284)",
+   "1224"
+  ],
+  "Daily Supply & Demand!A287": [
+   "LET(no,Products[No.],grp,Products[Gen. Prod. Posting Group],ast,IFERROR(Products[Asset],\"\"),keep,((grp=\"FG-DIST\"))*(ast<>\"Charges / Fees\"),SORTBY(FILTER(no,keep),FILTER(grp,keep),1))",
+   "F51000"
+  ],
+  "Daily Supply & Demand!C287": [
+   "IF($DA287=\"No match found (primary or 3rd party)\",\"(Case Only)\",$CZ287)",
+   "F1000"
+  ],
+  "Daily Supply & Demand!D287": [
+   "IF($C287=\"(Case Only)\",\"(Case Only)\",IF(OR($DC287=\"\",$DD287=\"\",$DE287=\"\"),\"No DSD bread available\",IF($DC287>($DD287+$DE287),$DC287-($DD287+$DE287),\"No DSD bread available\")))",
+   "No DSD bread available"
+  ],
+  "Daily Supply & Demand!E287": [
+   "IF($D287=\"No DSD bread available\",\"No DSD bread available\",IF($D287=\"(Case Only)\",\"(Case Only)\",ROUNDDOWN($D287/XLOOKUP($F287,'Critical Lookup Information'!$Q:$Q,'Critical Lookup Information'!$S:$S),0)))",
+   "No DSD bread available"
+  ],
+  "DoughWeights!F2": [
+   "'Daily Supply & Demand'!H2",
+   "46285"
+  ],
+  "DoughWeights!A4": [
+   "DROP(REDUCE(\"\",Dough[No.],LAMBDA(a,x,VSTACK(a,x,IFERROR(FILTER(Products[No.],(Products[Dough]=x)*(ISNUMBER(SEARCH(\"OBS\",Products[Description]))=FALSE)*(LEFT(Products[No.],1)<>\"Z\")),\"(no products)\")))),1)",
+   "D10001"
+  ],
+  "Mix-Slice-Oven!O1": [
+   "SUM(SUMIFS(Mix_Slice_Oven[Planned Total],Mix_Slice_Oven[Asset],{\"Breadline\",\"Breadline/Artisan\"}))",
+   "54.5"
+  ],
+  "Mix-Slice-Oven!Y1": [
+   "COUNTA(Pans[Pans/Boxes])",
+   "41"
+  ],
+  "Mix-Slice-Oven!AD1": [
+   "SUM(SUMIFS(Mix_Slice_Oven[S_Planned],Mix_Slice_Oven[Asset],{\"Breadline\",\"Breadline/Artisan\"}))",
+   "48"
+  ],
+  "Mix-Slice-Oven!BD1": [
+   "SUM(SUMIFS(Mix_Slice_Oven[S_Minutes],Mix_Slice_Oven[Asset],{\"Breadline\",\"Breadline/Artisan\"}))/60",
+   "8.5"
+  ],
+  "Mix-Slice-Oven!BK1": [
+   "1453/60",
+   "24.216666666666665"
+  ],
+  "Mix-Slice-Oven!O2": [
+   "SUM(SUMIFS(Mix_Slice_Oven[Planned Total],Mix_Slice_Oven[Asset],\"MCS LINE\"))",
+   "180"
+  ],
+  "Mix-Slice-Oven!T2": [
+   "O1+O2",
+   "234.5"
+  ],
+  "Mix-Slice-Oven!AD2": [
+   "SUM(SUMIFS(Mix_Slice_Oven[S_Planned],Mix_Slice_Oven[Asset],\"MCS LINE\"))",
+   "174"
+  ],
+  "Mix-Slice-Oven!BD2": [
+   "SUM(SUMIFS(Mix_Slice_Oven[S_Minutes],Mix_Slice_Oven[Asset],\"MCS LINE\"))/60",
+   "16.083333333333332"
+  ],
+  "Mix-Slice-Oven!Q3": [
+   "TODAY()",
+   "46290"
+  ],
+  "Mix-Slice-Oven!R3": [
+   "TEXT(Q3,\"dddd\")",
+   "Friday"
+  ],
+  "Mix-Slice-Oven!K4": [
+   null,
+   "Tuesday"
+  ],
+  "Mix-Slice-Oven!A6": [
+   "LET(rk,Products[Asset Rank],d,Products[Dough],p,Products[No.],u,Products[Unique Dough],gp,Products[Gen. Prod. Posting Group],k,(rk<=3)*(d<>\"\")*(gp<>\"OBS\"),dg,FILTER(d,k),sk,FILTER(p,k),rr,FILTER(rk,k),ud,FILTER(u,k),srt,SORTBY(HSTACK(dg,sk),rr,1,dg,1,ud,1,sk,1),ds,INDEX(srt,0,1),ss,INDEX(srt,0,2),hdr,IF(ds<>VSTACK(\"\",DROP(ds,-1)),ds,NA()),TOCOL(HSTACK(hdr,ss),2))",
+   "D10001"
+  ],
+  "Mix-Slice-Oven!N6": [
+   "IFERROR(IF(LEFT([@Sku],1)=\"D\",SUMIFS(Mix_Slice_Oven[Optimal Total],Mix_Slice_Oven[Dough],[@Sku],Mix_Slice_Oven[Asset],D7),IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),CEILING([@Bags By Unique Dough],[@optimal bags per mix])*2.5,CEILING([@Bags By Unique Dough],[@optimal bags per mix]))),\"\")",
+   "10"
+  ],
+  "Mix-Slice-Oven!M7": [
+   "IF(LEFT([@Sku],1)=\"D\",\"\",LET(u,[@Unique Dough],IF(C6=u,\"\",SUMIFS(Mix_Slice_Oven[Dough Weight],Mix_Slice_Oven[Unique Dough],u))))",
+   "1.298"
+  ],
+  "Mix-Slice-Oven!N7": [
+   "IFERROR(IF(LEFT([@Sku],1)=\"D\",SUMIFS(Mix_Slice_Oven[Optimal Total],Mix_Slice_Oven[Dough],[@Sku],Mix_Slice_Oven[Asset],D8),IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),CEILING([@Bags By Unique Dough],[@optimal bags per mix])*2.5,CEILING([@Bags By Unique Dough],[@optimal bags per mix]))),\"\")",
+   "2"
+  ],
+  "Mix-Slice-Oven!ZZ7": [
+   "SUMIF(DoughWeights!T:T,'Mix-Slice-Oven'!$H382:$H382,DoughWeights!AF:AF)",
+   "156.23079999999999"
+  ],
+  "Mix-Slice-Oven!A410": [
+   "LET(pn,FILTER(Pans[Pans/Boxes],Pans[Pans/Boxes]<>\"\"),sku,Products[No.],pan,Products[Pans/Boxes],gpg,Products[Gen. Prod. Posting Group],DROP(REDUCE(\"\",pn,LAMBDA(a,p,LET(m,FILTER(sku,(pan=p)*(gpg<>\"OBS\"),\"\"),IF(AND(ROWS(m)=1,INDEX(m,1)=\"\"),a,VSTACK(a,p,m))))),1))",
+   "5\" Challah Sesame Buns"
+  ],
+  "Mix-Slice-Oven!CA500": [
+   "LET(pn,FILTER(Pans[Pans/Boxes],Pans[Pans/Boxes]<>\"\"),sku,Products[No.],dsc,Products[Description],pan,Products[Pans/Boxes],DROP(REDUCE(\"\",pn,LAMBDA(a,p,VSTACK(a,p,FILTER(\"   \"&sku&\" - \"&dsc,pan=p,\"   (no products assigned)\"),\"\"))),1))",
+   "5\" Challah Sesame Buns"
+  ],
+  "MCS Schedule!A2": [
+   "TODAY()",
+   "46290"
+  ],
+  "MCS Schedule!H2": [
+   "'Mix-Slice-Oven'!O2",
+   "180"
+  ],
+  "MCS Schedule!D4": [
+   "IFS(C4=1,XLOOKUP($A4,'Critical Lookup Information'!$D:$D,'Critical Lookup Information'!$J:$J),C4=2,XLOOKUP($A4,'Critical Lookup Information'!$D:$D,'Critical Lookup Information'!$I:$I),C4=3,XLOOKUP($A4,'Critical Lookup Information'!$D:$D,'Critical Lookup Information'!$H:$H),C4=4,XLOOKUP($A4,'Critical Lookup Information'!$D:$D,'Critical Lookup Information'!$G:$G),C4=1.5,XLOOKUP($A4,'Critical Lookup Information'!$D:$D,'Critical Lookup Information'!$K:$K),C4=0,\"0\")",
+   "#N/A"
+  ],
+  "MCS Schedule!E4": [
+   null,
+   "0.28125"
+  ],
+  "MCS Schedule!A5": [
+   "LET(ud,Mix_Slice_Oven[Unique Dough],pt,IFERROR(--Mix_Slice_Oven[Planned Total],0),as,Mix_Slice_Oven[Asset],keep,FILTER(ud,(pt>0)*(ud<>\"\")*(as=\"MCS LINE\"),\"\"),u,UNIQUE(keep),x,XLOOKUP(u,UniqueDough[Dough],UniqueDough[Placement On Scedule],\"\"),p,IF(x=\"\",9999,IFERROR(--x,9999)),s,SORTBY(u,p),ps,SORTBY(p,p),tot,SUMIFS(Mix_Slice_Oven[Planned Total],Mix_Slice_Oven[Unique Dough],s),bpm,IFERROR(--XLOOKUP(s,UniqueDough[Dough],UniqueDough[Optimal Bag],\"\"),0),tm,XLOOKUP(s,UniqueDough[Dough],UniqueDough[Optimal Time],\"\"),k,IF(bpm>0,ROUNDUP(tot/bpm,0),1),n,SUM(k),cum,SCAN(0,k,LAMBDA(a,v,a+v)),r,SEQUENCE(n),idx,MAP(r,LAMBDA(v,XMATCH(v,cum,1))),st,MAP(idx,LAMBDA(v,INDEX(s,v))),tt,MAP(idx,LAMBDA(v,INDEX(tot,v))),bb,MAP(idx,LAMBDA(v,INDEX(bpm,v))),mm,MAP(idx,LAMBDA(v,INDEX(tm,v))),ord,MAP(idx,LAMBDA(v,INDEX(ps,v))),dg,UniqueDough[Dough],upl,UniqueDough[Placement On Scedule],utm,UniqueDough[Optimal Time],rr,SEQUENCE(ROWS(dg)),ci,FILTER(rr,dg=\"Changeover\",0),co_ord,MAP(ci,LAMBDA(v,IF(v=0,0,IFERROR(--INDEX(upl,v-1),0)+0.5))),co_tm,MAP(ci,LAMBDA(v,IF(v=0,0,IFERROR(--INDEX(utm,v),0)))),co_nm,MAP(ci,LAMBDA(v,IF(v=0,\"\",INDEX(dg,v)))),okco,(co_ord>MIN(ord))*(co_ord<MAX(ord)),allrows,VSTACK(HSTACK(st,tt,bb,mm),HSTACK(co_nm,0*ci,0*ci,co_tm)),allkeys,VSTACK(ord,co_ord),flt,VSTACK(0*ord+1,okco),SORTBY(FILTER(allrows,flt=1),FILTER(allkeys,flt=1)))",
+   "6\" Italian Rolls"
+  ],
+  "MCS Schedule!F5": [
+   "LET(a,CHOOSECOLS(ANCHORARRAY(A5),1),c,CHOOSECOLS(ANCHORARRAY(A5),3),u,UNIQUE(a),sk,Mix_Slice_Oven[Sku],dw,IFERROR(--Mix_Slice_Oven[Dough Weight],0),ud,Mix_Slice_Oven[Unique Dough],g,XLOOKUP(sk,Products[No.],Products[Gen. Prod. Posting Group],\"\"),HSTACK(u,MAP(u,LAMBDA(v,SUM((a=v)*c))),MAP(u,LAMBDA(v,SUM((ud=v)*(g=\"FG\")*dw))),MAP(u,LAMBDA(v,SUM((ud=v)*(g=\"FG-DIST\")*dw)))))",
+   "6\" Italian Rolls"
+  ],
+  "MCS Schedule!N5": [
+   "XLOOKUP($A5,'Critical Lookup Information'!$D:$D,'Critical Lookup Information'!$E:$E)",
+   "12 bags max in a single run"
+  ],
+  "MCS Schedule!F29": [
+   "LET(p,Oven_Info[Pans],nm,Oven_Info[Finished Product],n,IFERROR(--Oven_Info['# of Pans/Boxes to set out],0),nx,DROP(VSTACK(p,\"\"),1),FILTER(HSTACK(nm,n),(p=\"Pan\")*(nx=\"MCS LINE\")*(n>0),\"No MCS pans\"))",
+   "3.5\" Challah Onion Bun"
+  ],
+  "Breadline Schedule!A2": [
+   "TODAY()",
+   "46290"
+  ],
+  "Breadline Schedule!H2": [
+   "'Mix-Slice-Oven'!O1",
+   "54.5"
+  ],
+  "Breadline Schedule!D4": [
+   "IFS(C4=1,XLOOKUP($A4,'Critical Lookup Information'!$D:$D,'Critical Lookup Information'!$J:$J),C4=2,XLOOKUP($A4,'Critical Lookup Information'!$D:$D,'Critical Lookup Information'!$I:$I),C4=3,XLOOKUP($A4,'Critical Lookup Information'!$D:$D,'Critical Lookup Information'!$H:$H),C4=4,XLOOKUP($A4,'Critical Lookup Information'!$D:$D,'Critical Lookup Information'!$G:$G),C4=1.5,XLOOKUP($A4,'Critical Lookup Information'!$D:$D,'Critical Lookup Information'!$K:$K),C4=0,\"0\")",
+   "#N/A"
+  ],
+  "Breadline Schedule!E4": [
+   null,
+   "0.3263888888888889"
+  ],
+  "Breadline Schedule!A5": [
+   "LET(ud,Mix_Slice_Oven[Unique Dough],pt,IFERROR(--Mix_Slice_Oven[Planned Total],0),as,Mix_Slice_Oven[Asset],keep,FILTER(ud,(pt>0)*(ud<>\"\")*((as=\"Breadline\")+(as=\"Breadline/Artisan\")),\"\"),u,UNIQUE(keep),dnm,UniqueDough[Dough],ob,UniqueDough[Optimal Bag],ot,UniqueDough[Optimal Time],pl,UniqueDough[Placement On Scedule],mk,ISNUMBER(SEARCH(\"Marble\",u)),nu,FILTER(u,NOT(mk),\"\"),nt,IF(nu=\"\",0,SUMIFS(Mix_Slice_Oven[Planned Total],Mix_Slice_Oven[Unique Dough],nu)),nb,IFERROR(--XLOOKUP(nu,dnm,ob,\"\"),0),ntm,IFERROR(--XLOOKUP(nu,dnm,ot,\"\"),0),nk,IFERROR(--XLOOKUP(nu,dnm,pl,\"\"),9999),mu,FILTER(u,mk,\"\"),sfx,IF(ISNUMBER(SEARCH(\"Pullman\",mu)),\"Pullman\",\"Hearth\"),pnm,IF(mu=\"\",\"\",\"Pump for Marble \"&sfx),rnm,IF(mu=\"\",\"\",\"Rye for Marble \"&sfx),mt,IF(mu=\"\",0,SUMIFS(Mix_Slice_Oven[Planned Total],Mix_Slice_Oven[Unique Dough],mu)),pb,IFERROR(--XLOOKUP(pnm,dnm,ob,1),1),rb,IFERROR(--XLOOKUP(rnm,dnm,ob,1.5),1.5),ptm,IFERROR(--XLOOKUP(pnm,dnm,ot,0),0),rtm,IFERROR(--XLOOKUP(rnm,dnm,ot,0),0),pk,IFERROR(--XLOOKUP(pnm,dnm,pl,\"\"),9999),rk,IFERROR(--XLOOKUP(rnm,dnm,pl,\"\"),9999),sets,IF(mu=\"\",0,ROUNDUP(mt/(pb+rb),0)),anm,VSTACK(nu,pnm,rnm),ato,VSTACK(nt,sets*pb,sets*rb),abp,VSTACK(nb,pb,rb),atm,VSTACK(ntm,ptm,rtm),aky,VSTACK(nk,pk,rk),ok,anm<>\"\",fnm,FILTER(anm,ok),fto,FILTER(ato,ok),fbp,FILTER(abp,ok),ftm,FILTER(atm,ok),fky,FILTER(aky,ok),s,SORTBY(fnm,fky),tot,SORTBY(fto,fky),bpm,SORTBY(fbp,fky),tm,SORTBY(ftm,fky),k,IF(bpm>0,ROUNDUP(tot/bpm,0),1),n,SUM(k),cum,SCAN(0,k,LAMBDA(a,v,a+v)),r,SEQUENCE(n),idx,MAP(r,LAMBDA(v,XMATCH(v,cum,1))),nm,MAP(idx,LAMBDA(v,INDEX(s,v))),occ,MAP(r,LAMBDA(v,LET(i,INDEX(idx,v),v-INDEX(cum,i)+INDEX(k,i)))),mg,IF(ISNUMBER(SEARCH(\"for Marble\",nm)),TRIM(MID(nm,SEARCH(\"for Marble\",nm)+10,50)),\"\"),gk,MAP(r,LAMBDA(v,LET(m,INDEX(mg,v),IF(m=\"\",INDEX(idx,v),MIN(FILTER(idx,mg=m)))))),oc,IF(mg=\"\",0,occ),out,HSTACK(nm,MAP(idx,LAMBDA(v,INDEX(tot,v))),MAP(idx,LAMBDA(v,INDEX(bpm,v))),MAP(idx,LAMBDA(v,INDEX(tm,v)))),SORTBY(out,gk,1,oc,1,idx,1))",
+   "Sour Dough Hearth"
+  ],
+  "Breadline Schedule!G5": [
+   "LET(a,CHOOSECOLS(ANCHORARRAY(A5),1),c,CHOOSECOLS(ANCHORARRAY(A5),3),u,UNIQUE(a),sk,Mix_Slice_Oven[Sku],dw,IFERROR(--Mix_Slice_Oven[Dough Weight],0),ud,Mix_Slice_Oven[Unique Dough],g,XLOOKUP(sk,Products[No.],Products[Gen. Prod. Posting Group],\"\"),HSTACK(u,MAP(u,LAMBDA(v,SUM((a=v)*c))),MAP(u,LAMBDA(v,SUM((ud=v)*(g=\"FG\")*dw))),MAP(u,LAMBDA(v,SUM((ud=v)*(g=\"FG-DIST\")*dw)))))",
+   "Sour Dough Hearth"
+  ],
+  "Breadline Schedule!N5": [
+   "XLOOKUP(A5,'Critical Lookup Information'!D:D,'Critical Lookup Information'!E:E)",
+   " Hearth 16 bags in a single run"
+  ],
+  "Recon!A1": [
+   null,
+   "Recon \u2013 Column A lookup arrays vs. table length"
+  ],
+  "Recon!A2": [
+   null,
+   "Column A spilled arrays (e.g. A3#) vs. the table next to them. Green = match | Yellow = table longer (OK) | Red = array longer (rows not in table)"
+  ],
+  "Recon!A4": [
+   null,
+   "Sheet"
+  ],
+  "Recon!B4": [
+   null,
+   "Array Cell"
+  ],
+  "Recon!C4": [
+   null,
+   "Array Rows"
+  ],
+  "Recon!D4": [
+   null,
+   "Adjacent Table"
+  ],
+  "Recon!E4": [
+   null,
+   "Table Rows"
+  ],
+  "Recon!F4": [
+   null,
+   "Difference (Array \u2212 Table)"
+  ],
+  "Recon!G4": [
+   null,
+   "Status"
+  ],
+  "Recon!A5": [
+   null,
+   "Sunday"
+  ],
+  "Recon!B5": [
+   "SUBSTITUTE(MID(FORMULATEXT(C5),FIND(\"!\",FORMULATEXT(C5))+1,99),\")\",\"\")",
+   "A3#"
+  ],
+  "Recon!C5": [
+   "ROWS(ANCHORARRAY(Sunday!A3))",
+   "395"
+  ],
+  "Recon!D5": [
+   null,
+   "Sunday"
+  ],
+  "Recon!E5": [
+   "ROWS(Sunday[])",
+   "395"
+  ],
+  "Recon!F5": [
+   "C5-E5",
+   "0"
+  ],
+  "Recon!G5": [
+   "IF(C5=E5,\"Match\",IF(E5>C5,\"Table longer\",\"Array longer\"))",
+   "Match"
+  ],
+  "Recon!A6": [
+   null,
+   "Monday"
+  ],
+  "Recon!B6": [
+   "SUBSTITUTE(MID(FORMULATEXT(C6),FIND(\"!\",FORMULATEXT(C6))+1,99),\")\",\"\")",
+   "A3#"
+  ],
+  "Recon!C6": [
+   "ROWS(ANCHORARRAY(Monday!A3))",
+   "395"
+  ],
+  "Recon!D6": [
+   null,
+   "Monday"
+  ],
+  "Recon!E6": [
+   "ROWS(Monday[])",
+   "395"
+  ],
+  "Recon!F6": [
+   "C6-E6",
+   "0"
+  ],
+  "Recon!G6": [
+   "IF(C6=E6,\"Match\",IF(E6>C6,\"Table longer\",\"Array longer\"))",
+   "Match"
+  ],
+  "Recon!A7": [
+   null,
+   "Tuesday"
+  ],
+  "Recon!B7": [
+   "SUBSTITUTE(MID(FORMULATEXT(C7),FIND(\"!\",FORMULATEXT(C7))+1,99),\")\",\"\")",
+   "A3#"
+  ],
+  "Recon!C7": [
+   "ROWS(ANCHORARRAY(Tuesday!A3))",
+   "395"
+  ],
+  "Recon!D7": [
+   null,
+   "Tuesday"
+  ],
+  "Recon!E7": [
+   "ROWS(Tuesday[])",
+   "398"
+  ],
+  "Recon!F7": [
+   "C7-E7",
+   "-3"
+  ],
+  "Recon!G7": [
+   "IF(C7=E7,\"Match\",IF(E7>C7,\"Table longer\",\"Array longer\"))",
+   "Table longer"
+  ],
+  "Recon!A8": [
+   null,
+   "Wednesday"
+  ],
+  "Recon!B8": [
+   "SUBSTITUTE(MID(FORMULATEXT(C8),FIND(\"!\",FORMULATEXT(C8))+1,99),\")\",\"\")",
+   "A3#"
+  ],
+  "Recon!C8": [
+   "ROWS(ANCHORARRAY(Wednesday!A3))",
+   "395"
+  ],
+  "Recon!D8": [
+   null,
+   "Wednesday"
+  ],
+  "Recon!E8": [
+   "ROWS(Wednesday[])",
+   "447"
+  ],
+  "Recon!F8": [
+   "C8-E8",
+   "-52"
+  ],
+  "Recon!G8": [
+   "IF(C8=E8,\"Match\",IF(E8>C8,\"Table longer\",\"Array longer\"))",
+   "Table longer"
+  ],
+  "Recon!A9": [
+   null,
+   "Thursday"
+  ],
+  "Recon!B9": [
+   "SUBSTITUTE(MID(FORMULATEXT(C9),FIND(\"!\",FORMULATEXT(C9))+1,99),\")\",\"\")",
+   "A3#"
+  ],
+  "Recon!C9": [
+   "ROWS(ANCHORARRAY(Thursday!A3))",
+   "395"
+  ],
+  "Recon!D9": [
+   null,
+   "Thursday"
+  ],
+  "Recon!E9": [
+   "ROWS(Thursday[])",
+   "447"
+  ],
+  "Recon!F9": [
+   "C9-E9",
+   "-52"
+  ],
+  "Recon!G9": [
+   "IF(C9=E9,\"Match\",IF(E9>C9,\"Table longer\",\"Array longer\"))",
+   "Table longer"
+  ],
+  "Recon!A10": [
+   null,
+   "Friday"
+  ],
+  "Recon!B10": [
+   "SUBSTITUTE(MID(FORMULATEXT(C10),FIND(\"!\",FORMULATEXT(C10))+1,99),\")\",\"\")",
+   "A3#"
+  ],
+  "Recon!C10": [
+   "ROWS(ANCHORARRAY(Friday!A3))",
+   "395"
+  ],
+  "Recon!D10": [
+   null,
+   "Friday"
+  ],
+  "Recon!E10": [
+   "ROWS(Friday[])",
+   "447"
+  ],
+  "Recon!F10": [
+   "C10-E10",
+   "-52"
+  ],
+  "Recon!G10": [
+   "IF(C10=E10,\"Match\",IF(E10>C10,\"Table longer\",\"Array longer\"))",
+   "Table longer"
+  ],
+  "Recon!A11": [
+   null,
+   "Daily Supply & Demand"
+  ],
+  "Recon!B11": [
+   "SUBSTITUTE(MID(FORMULATEXT(C11),FIND(\"!\",FORMULATEXT(C11))+1,99),\")\",\"\")",
+   "A8#"
+  ],
+  "Recon!C11": [
+   "ROWS(ANCHORARRAY('Daily Supply & Demand'!A8))",
+   "275"
+  ],
+  "Recon!D11": [
+   null,
+   "DSD_DSnD"
+  ],
+  "Recon!E11": [
+   "ROWS(DSD_DSnD[])",
+   "275"
+  ],
+  "Recon!F11": [
+   "C11-E11",
+   "0"
+  ],
+  "Recon!G11": [
+   "IF(C11=E11,\"Match\",IF(E11>C11,\"Table longer\",\"Array longer\"))",
+   "Match"
+  ],
+  "Recon!A12": [
+   null,
+   "Daily Supply & Demand"
+  ],
+  "Recon!B12": [
+   "SUBSTITUTE(MID(FORMULATEXT(C12),FIND(\"!\",FORMULATEXT(C12))+1,99),\")\",\"\")",
+   "A287#"
+  ],
+  "Recon!C12": [
+   "ROWS(ANCHORARRAY('Daily Supply & Demand'!A287))",
+   "120"
+  ],
+  "Recon!D12": [
+   null,
+   "Dist_DSnD"
+  ],
+  "Recon!E12": [
+   "ROWS(Dist_DSnD[])",
+   "120"
+  ],
+  "Recon!F12": [
+   "C12-E12",
+   "0"
+  ],
+  "Recon!G12": [
+   "IF(C12=E12,\"Match\",IF(E12>C12,\"Table longer\",\"Array longer\"))",
+   "Match"
+  ],
+  "Recon!A13": [
+   null,
+   "Mix-Slice-Oven"
+  ],
+  "Recon!B13": [
+   "SUBSTITUTE(MID(FORMULATEXT(C13),FIND(\"!\",FORMULATEXT(C13))+1,99),\")\",\"\")",
+   "A6#"
+  ],
+  "Recon!C13": [
+   "ROWS(ANCHORARRAY('Mix-Slice-Oven'!A6))",
+   "390"
+  ],
+  "Recon!D13": [
+   null,
+   "Mix_Slice_Oven"
+  ],
+  "Recon!E13": [
+   "ROWS(Mix_Slice_Oven[])",
+   "391"
+  ],
+  "Recon!F13": [
+   "C13-E13",
+   "-1"
+  ],
+  "Recon!G13": [
+   "IF(C13=E13,\"Match\",IF(E13>C13,\"Table longer\",\"Array longer\"))",
+   "Table longer"
+  ],
+  "Recon!A14": [
+   null,
+   "Mix-Slice-Oven"
+  ],
+  "Recon!B14": [
+   "SUBSTITUTE(MID(FORMULATEXT(C14),FIND(\"!\",FORMULATEXT(C14))+1,99),\")\",\"\")",
+   "A410#"
+  ],
+  "Recon!C14": [
+   "ROWS(ANCHORARRAY('Mix-Slice-Oven'!A410))",
+   "68"
+  ],
+  "Recon!D14": [
+   null,
+   "Oven_Info"
+  ],
+  "Recon!E14": [
+   "ROWS(Oven_Info[])",
+   "86"
+  ],
+  "Recon!F14": [
+   "C14-E14",
+   "-18"
+  ],
+  "Recon!G14": [
+   "IF(C14=E14,\"Match\",IF(E14>C14,\"Table longer\",\"Array longer\"))",
+   "Table longer"
+  ],
+  "Recon!A15": [
+   null,
+   "DoughWeights"
+  ],
+  "Recon!B15": [
+   "SUBSTITUTE(MID(FORMULATEXT(C15),FIND(\"!\",FORMULATEXT(C15))+1,99),\")\",\"\")",
+   "A4#"
+  ],
+  "Recon!C15": [
+   "ROWS(ANCHORARRAY(DoughWeights!A4))",
+   "453"
+  ],
+  "Recon!D15": [
+   null,
+   "DoughWeight"
+  ],
+  "Recon!E15": [
+   "ROWS(DoughWeight[])",
+   "452"
+  ],
+  "Recon!F15": [
+   "C15-E15",
+   "1"
+  ],
+  "Recon!G15": [
+   "IF(C15=E15,\"Match\",IF(E15>C15,\"Table longer\",\"Array longer\"))",
+   "Array longer"
+  ],
+  "Dist Shipping Schedule!B2": [
+   null,
+   "DIST"
+  ],
+  "Dist Shipping Schedule!C2": [
+   "XLOOKUP(C$6,'Critical Lookup Information'!$A:$A,'Critical Lookup Information'!$B:$B)",
+   "Chep"
+  ],
+  "Dist Shipping Schedule!C3": [
+   "IFERROR(SINGLE(XLOOKUP(C7,#REF!,#REF!)),\"\")",
+   null
+  ],
+  "Critical Lookup Information!V10": [
+   "INDEX($V$2:$V$8,MATCH(WEEKDAY(TODAY()),$U$2:$U$8,0))",
+   "Friday-Inventory"
+  ]
+ }
+}

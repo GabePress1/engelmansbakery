@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg">
+<g id="f8" transform="translate(31008,0)" data-frame="8. Recon">
+  <rect data-type="frame" x="0" y="0" width="2464" height="1520" fill="#ffffff" data-title="8. Recon"/>
+  <text id="t8" x="64" y="120" font-size="67" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">8. Recon</text>
+  <text id="s8" x="64" y="184" font-size="22" font-family="noto_sans" fill="#595959">One check per table: does the spilled row list have exactly as many rows as the table built beside it?</text>
+  <text id="h8_0" x="1728" y="262" font-size="22" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">How each row works</text>
+  <rect id="c8_0_0" data-type="custom-widget" data-widget-type="card" data-title="B Array Cell" data-description="FORMULA (this sheet). Reads the spill address out of column C's own formula: =SUBSTITUTE(MID(FORMULATEXT(C5),FIND(&quot;!&quot;,FORMULATEXT(C5))+1,99),&quot;)&quot;,&quot;&quot;)" data-color="#2d9bf0" x="1728" y="288" width="320" height="88" fill="none" stroke="none"/>
+  <rect id="c8_0_1" data-type="custom-widget" data-widget-type="card" data-title="C Array Rows" data-description="LOOKUP (other sheet or table). =ROWS(ANCHORARRAY(Sunday!A3)), and the same for each sheet's row list." data-color="#ff8c00" x="1728" y="396" width="320" height="88" fill="none" stroke="none"/>
+  <rect id="c8_0_2" data-type="custom-widget" data-widget-type="card" data-title="E Table Rows" data-description="LOOKUP (other sheet or table). =ROWS(Sunday[])." data-color="#ff8c00" x="1728" y="504" width="320" height="88" fill="none" stroke="none"/>
+  <rect id="c8_0_3" data-type="custom-widget" data-widget-type="card" data-title="F Difference, G Status" data-description="FORMULA (this sheet). F =C5-E5. G =IF(C5=E5,&quot;Match&quot;,IF(E5&gt;C5,&quot;Table longer&quot;,&quot;Array longer&quot;))." data-color="#2d9bf0" x="1728" y="612" width="320" height="88" fill="none" stroke="none"/>
+  <rect id="c8_0_4" data-type="custom-widget" data-widget-type="card" data-title="What Recon does not check" data-description="NOTE. It only counts rows. It would not catch the BOM double count, K4 not matching today, the stale Sunday!B1 date, the dead order grids or #N/A values inside matching tables." data-color="#2d3142" x="1728" y="720" width="320" height="88" fill="none" stroke="none"/>
+  <text id="h8_1" x="2080" y="262" font-size="22" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">Checks as saved</text>
+  <rect id="c8_1_0" data-type="custom-widget" data-widget-type="card" data-title="Sunday: Match" data-description="FORMULA (this sheet). Sunday!A3# has 395 rows, table Sunday has 395; difference 0. Match: every SKU has a row." data-color="#2d9bf0" x="2080" y="288" width="320" height="88" fill="none" stroke="none"/>
+  <rect id="c8_1_1" data-type="custom-widget" data-widget-type="card" data-title="Monday: Match" data-description="FORMULA (this sheet). Monday!A3# has 395 rows, table Monday has 395; difference 0. Match: every SKU has a row." data-color="#2d9bf0" x="2080" y="396" width="320" height="88" fill="none" stroke="none"/>
+  <rect id="c8_1_2" data-type="custom-widget" data-widget-type="card" data-title="Tuesday: Table longer" data-description="FORMULA (this sheet). Tuesday!A3# has 395 rows, table Tuesday has 398; difference -3. Table longer: extra table rows below the spill show #N/A; harmless." data-color="#2d9bf0" x="2080" y="504" width="320" height="88" fill="none" stroke="none"/>
+  <rect id="c8_1_3" data-type="custom-widget" data-widget-type="card" data-title="Wednesday: Table longer" data-description="FORMULA (this sheet). Wednesday!A3# has 395 rows, table Wednesday has 447; difference -52. Table longer: extra table rows below the spill show #N/A; harmless." data-color="#2d9bf0" x="2080" y="612" width="320" height="88" fill="none" stroke="none"/>
+  <rect id="c8_1_4" data-type="custom-widget" data-widget-type="card" data-title="Thursday: Table longer" data-description="FORMULA (this sheet). Thursday!A3# has 395 rows, table Thursday has 447; difference -52. Table longer: extra table rows below the spill show #N/A; harmless." data-color="#2d9bf0" x="2080" y="720" width="320" height="88" fill="none" stroke="none"/>
+  <rect id="c8_1_5" data-type="custom-widget" data-widget-type="card" data-title="Friday: Table longer" data-description="FORMULA (this sheet). Friday!A3# has 395 rows, table Friday has 447; difference -52. Table longer: extra table rows below the spill show #N/A; harmless." data-color="#2d9bf0" x="2080" y="828" width="320" height="88" fill="none" stroke="none"/>
+  <rect id="c8_1_6" data-type="custom-widget" data-widget-type="card" data-title="DSD_DSnD: Match" data-description="FORMULA (this sheet). Daily Supply &amp; Demand!A8# has 275 rows, table DSD_DSnD has 275; difference 0. Match: every SKU has a row." data-color="#2d9bf0" x="2080" y="936" width="320" height="88" fill="none" stroke="none"/>
+  <rect id="c8_1_7" data-type="custom-widget" data-widget-type="card" data-title="Dist_DSnD: Match" data-description="FORMULA (this sheet). Daily Supply &amp; Demand!A287# has 120 rows, table Dist_DSnD has 120; difference 0. Match: every SKU has a row." data-color="#2d9bf0" x="2080" y="1044" width="320" height="88" fill="none" stroke="none"/>
+  <rect id="c8_1_8" data-type="custom-widget" data-widget-type="card" data-title="Mix_Slice_Oven: Table longer" data-description="FORMULA (this sheet). Mix-Slice-Oven!A6# has 390 rows, table Mix_Slice_Oven has 391; difference -1. Table longer: extra table rows below the spill show #N/A; harmless." data-color="#2d9bf0" x="2080" y="1152" width="320" height="88" fill="none" stroke="none"/>
+  <rect id="c8_1_9" data-type="custom-widget" data-widget-type="card" data-title="Oven_Info: Table longer" data-description="FORMULA (this sheet). Mix-Slice-Oven!A410# has 68 rows, table Oven_Info has 86; difference -18. Table longer: extra table rows below the spill show #N/A; harmless." data-color="#2d9bf0" x="2080" y="1260" width="320" height="88" fill="none" stroke="none"/>
+  <rect id="c8_1_10" data-type="custom-widget" data-widget-type="card" data-title="DoughWeight: Array longer" data-description="ISSUE. DoughWeights!A4# has 453 rows, table DoughWeight has 452; difference 1. Array longer: SKUs at the end of the spill have no table row and are silently dropped." data-color="#da0063" x="2080" y="1368" width="320" height="88" fill="none" stroke="none"/>
+</g>
+<foreignObject id="d8" x="31872" y="690" width="1600" height="900" data-type="diagram" data-title="8. Recon">
+flowchart LR
+    classDef input fill:#B3E65F,stroke:#6E9A24,color:#2F440B
+    classDef export fill:#B8ACFB,stroke:#8A7BE0,color:#231266
+    classDef calc fill:#9CE6FF,stroke:#2C97BB,color:#1C4657
+    classDef lookup fill:#FFB575,stroke:#CC7830,color:#542700
+    classDef output fill:#DDDDD8,stroke:#8A8A7E,color:#434339
+    classDef issue fill:#FFC6C6,stroke:#BD0A0A,color:#5C0A0A
+
+    SP["Spill row lists&lt;br/&gt;A3, A8, A287, A4, A6, A410"]:::lookup
+    TB["Tables beside them&lt;br/&gt;Sunday to Friday, DSD_DSnD, Dist_DSnD,&lt;br/&gt;DoughWeight, Mix_Slice_Oven, Oven_Info"]:::lookup
+    C["C = ROWS(ANCHORARRAY(spill))"]:::calc
+    E["E = ROWS(Table[])"]:::calc
+    F["F = C - E"]:::calc
+    G{"G status"}:::calc
+    OK["Match"]:::calc
+    TL["Table longer&lt;br/&gt;blank rows, harmless"]:::calc
+    AL["Array longer&lt;br/&gt;SKUs silently dropped"]:::issue
+    SP --&gt; C
+    TB --&gt; E
+    C --&gt; F
+    E --&gt; F
+    F --&gt; G
+    G --&gt;|"0"| OK
+    G --&gt;|"E bigger"| TL
+    G --&gt;|"C bigger"| AL
+</foreignObject>
+</svg>
