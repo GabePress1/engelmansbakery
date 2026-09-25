@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg">
+<g id="sf7" transform="translate(28240,2910)" data-frame="7. MCS and Breadline schedules: Logic Spec">
+  <rect data-type="frame" x="0" y="0" width="3168" height="1392" fill="#ffffff" data-title="7. MCS and Breadline schedules: Logic Spec"/>
+  <textArea id="st7" x="64" y="53" width="3040" font-size="67" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">7. MCS and Breadline schedules: Logic Spec</textArea>
+  <textArea id="ss7" x="64" y="162" width="3040" font-size="22" font-family="noto_sans" fill="#595959">How the A5 formula turns Planned Total into one printed row per mix, in placement order.</textArea>
+  <rect id="sp7_0" x="1728" y="240" width="672" height="515" rx="12" fill="#f7f7f7" stroke="#e7e7e7"/>
+  <textArea id="sh7_0" x="1760" y="272" width="608" font-size="26" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">Inputs</textArea>
+  <textArea id="sb7_0" x="1760" y="325" width="608" font-size="18" font-family="noto_sans" fill="#313131"><b>Mix_Slice_Oven</b>: Unique Dough, Asset and Planned Total.<br/><br/><b>Unique Dough table</b>: Placement On Scedule, Optimal Bag, Optimal Time. Changeover rows carry Optimal Time 10.<br/><br/><b>Critical Lookup Information D:O</b>: notes and attributes shown in N:S.<br/><br/><b>Oven_Info</b>: # of Pans/Boxes to set out, listed in MCS F29.<br/><br/><b>E4</b>: typed first-mix start (MCS 6:45, Breadline 7:50).<br/><br/><b>H2 total bags</b>: MCS ='Mix-Slice-Oven'!O2, Breadline ='Mix-Slice-Oven'!O1.</textArea>
+  <rect id="sp7_1" x="2432" y="240" width="672" height="541" rx="12" fill="#f7f7f7" stroke="#e7e7e7"/>
+  <textArea id="sh7_1" x="2464" y="272" width="608" font-size="26" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">Formula reference</textArea>
+  <textArea id="sb7_1" x="2464" y="325" width="608" font-size="18" font-family="noto_sans" fill="#313131"><b>Keep (MCS A5)</b> keep,FILTER(ud,(pt&gt;0)*(ud&lt;&gt;"")*(as="MCS LINE"),"")<br/><br/><b>Sort key</b> p,IF(x="",9999,IFERROR(--x,9999))<br/><br/><b>Mixes per run</b> k,IF(bpm&gt;0,ROUNDUP(tot/bpm,0),1)<br/><br/><b>One row per mix</b> cum,SCAN(0,k,LAMBDA(a,v,a+v)),r,SEQUENCE(n),idx,MAP(r,LAMBDA(v,XMATCH(v,cum,1)))<br/><br/><b>Changeover placement</b> co_ord,MAP(ci,LAMBDA(v,IF(v=0,0,IFERROR(--INDEX(upl,v-1),0)+0.5))), kept if okco,(co_ord&gt;MIN(ord))*(co_ord&lt;MAX(ord))<br/><br/><b>Marble sets (Breadline A5)</b> sets,IF(mu="",0,ROUNDUP(mt/(pb+rb),0))</textArea>
+  <rect id="sp7_2" x="1728" y="787" width="672" height="541" rx="12" fill="#f7f7f7" stroke="#e7e7e7"/>
+  <textArea id="sh7_2" x="1760" y="819" width="608" font-size="26" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">Worked example</textArea>
+  <textArea id="sb7_2" x="1760" y="872" width="608" font-size="18" font-family="noto_sans" fill="#313131"><b>6" Italian Rolls (MCS)</b>: Planned 12 bags, Optimal Bag 4, so ROUNDUP(12 / 4) = 3 mixes on rows 5 to 7, 4 bags and 20 minutes each.<br/><br/><b>Its Bag Count row</b>: 12 bags mixed against 3.641 raw DSD bags and 4.774 raw DIST bags.<br/><br/><b>Changeover</b>: the Bag Count lists a Changeover between 7" Potato Hot Dog Roll and Challah Slider Roll.<br/><br/><b>Marble (Breadline)</b>: the Marble Hearth run becomes Pump for Marble Hearth 2 bags and Rye for Marble Hearth 3 bags.<br/><br/><b>As saved</b>: MCS 47 mixes + 2 changeovers, 180 bags; Breadline 25 mixes, 54.5 bags.</textArea>
+  <rect id="sp7_3" x="2432" y="813" width="672" height="411" rx="12" fill="#f7f7f7" stroke="#e7e7e7"/>
+  <textArea id="sh7_3" x="2464" y="845" width="608" font-size="26" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">Open questions</textArea>
+  <textArea id="sb7_3" x="2464" y="898" width="608" font-size="18" font-family="noto_sans" fill="#313131">Should the sheet calculate start and finish times from E4 and the run minutes?<br/><br/>Several runs share a placement (48, 50, 53): which should go first?<br/><br/>Should the Bag Count summary move so it no longer covers Time Start, Time Finish, Temp and Operator?<br/><br/>Should notes and attributes come from Unique Dough so there is one list to maintain?</textArea>
+  <foreignObject id="sd7" x="64" y="240" width="1600" height="900" data-type="diagram" data-title="7. MCS and Breadline schedules: Logic Spec">
+flowchart TD
+    classDef terminator fill:#FFFFFF,stroke:#757575,color:#313131
+    classDef input fill:#B3E65F,stroke:#6E9A24,color:#2F440B
+    classDef export fill:#B8ACFB,stroke:#8A7BE0,color:#231266
+    classDef calc fill:#9CE6FF,stroke:#2C97BB,color:#1C4657
+    classDef decision fill:#9CE6FF,stroke:#2C97BB,color:#1C4657
+    classDef lookup fill:#FFB575,stroke:#CC7830,color:#542700
+    classDef output fill:#DDDDD8,stroke:#8A8A7E,color:#434339
+    classDef issue fill:#FFC6C6,stroke:#BD0A0A,color:#5C0A0A
+
+    s(["Planned Total ready&lt;br/&gt;on Mix-Slice-Oven"]):::terminator
+    f["Keep runs with Planned above 0&lt;br/&gt;on this line"]:::calc
+    line{{"Breadline sheet?"}}:::decision
+    mar["Marble runs become sets of&lt;br/&gt;Pump 1 bag + Rye 1.5 bags"]:::calc
+    srt["Sort runs by Placement On Scedule:&lt;br/&gt;text or blank sorts last"]:::lookup
+    k["Mixes per run = ROUNDUP(bags /&lt;br/&gt;Optimal Bag), 1 if none"]:::calc
+    scan["SCAN running count:&lt;br/&gt;one row per mix"]:::calc
+    mcs{{"MCS sheet?"}}:::decision
+    co["Add Changeover rows at placement&lt;br/&gt;above + 0.5, inside the day only"]:::calc
+    il["Keep Pump and Rye rows&lt;br/&gt;alternating"]:::calc
+    att[/"Notes and attributes N:S from&lt;br/&gt;Critical Lookup Information"/]:::lookup
+    bc["Bag Count: bags mixed,&lt;br/&gt;raw DSD and raw DIST per run"]:::calc
+    pan[/"MCS only: pans to set out&lt;br/&gt;from Oven_Info"/]:::lookup
+    e4[/"E4 start time, typed"/]:::input
+    nt["No start or finish times&lt;br/&gt;are calculated"]:::issue
+    out(["Printed run sheet"]):::terminator
+    s --&gt; f
+    f --&gt; line
+    line --&gt;|"Yes"| mar
+    line --&gt;|"No"| srt
+    mar --&gt; srt
+    srt --&gt; k
+    k --&gt; scan
+    scan --&gt; mcs
+    mcs --&gt;|"Yes"| co
+    mcs --&gt;|"No"| il
+    co --&gt; att
+    il --&gt; att
+    att --&gt; bc
+    bc --&gt; pan
+    pan --&gt; out
+    e4 -.-&gt; nt
+    nt -.-&gt; out
+</foreignObject>
+</g>
+</svg>

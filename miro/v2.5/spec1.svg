@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg">
+<g id="sf1" transform="translate(4368,2910)" data-frame="1. Master data: Logic Spec">
+  <rect data-type="frame" x="0" y="0" width="3872" height="1314" fill="#ffffff" data-title="1. Master data: Logic Spec"/>
+  <textArea id="st1" x="64" y="53" width="3744" font-size="67" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">1. Master data: Logic Spec</textArea>
+  <textArea id="ss1" x="64" y="162" width="3744" font-size="22" font-family="noto_sans" fill="#595959">How one Products row decides which lists, lines, doughs and pans it reaches downstream.</textArea>
+  <rect id="sp1_0" x="1728" y="240" width="672" height="671" rx="12" fill="#f7f7f7" stroke="#e7e7e7"/>
+  <textArea id="sh1_0" x="1760" y="272" width="608" font-size="26" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">Inputs</textArea>
+  <textArea id="sb1_0" x="1760" y="325" width="608" font-size="18" font-family="noto_sans" fill="#313131"><b>No.</b> (Products A): item number. F5 at the start marks the case version of a pack (F51000 is the case of F1000).<br/><br/><b>Gen. Prod. Posting Group</b> (F): FG 277 items, FG-DIST 122, OBS 79.<br/><br/><b>Asset</b> (G): the production line, turned into Asset Rank.<br/><br/><b>Weight</b> (H): lb of dough in one pack.<br/><br/><b>Dough</b> (L) and <b>Unique Dough</b> (I): the dough code and the mixing run.<br/><br/><b>Scrap Factor</b> (N), <b>Packs Per Tray/Case</b> (J), <b>Pans/Boxes</b> (Q).<br/><br/><b>BOMQty export</b> (DoughWeights O:AJ): component lb for each dough, pasted from Business Central.<br/><br/><b>Unique Dough table</b>: Placement On Scedule, Optimal Bag and Optimal Time for each run.</textArea>
+  <rect id="sp1_1" x="2432" y="240" width="672" height="619" rx="12" fill="#f7f7f7" stroke="#e7e7e7"/>
+  <textArea id="sh1_1" x="2464" y="272" width="608" font-size="26" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">Formula reference</textArea>
+  <textArea id="sb1_1" x="2464" y="325" width="608" font-size="18" font-family="noto_sans" fill="#313131"><b>Asset Rank (P)</b> 1 Breadline, 2 Breadline/Artisan, 3 MCS LINE, 4 to 6 third party, 99 anything else: =IFERROR(MATCH([@Asset],{"Breadline";"Breadline/Artisan";"MCS LINE";"3rd Party";"3rd Party - Bake";"Third Party  - Repack"},0),99)<br/><br/><b>Dough Description (M)</b> =IFERROR(XLOOKUP([@Dough],Dough[No.],Dough[Description]),"")<br/><br/><b>Non Case Sku (R)</b> =IF(LEFT([@No.],2)="F5","F"&amp;MID([@No.],3,100),[@No.])<br/><br/><b>Dough Weight (Dough I)</b> =SUMIFS(BOMQty[BOMQty],BOMQty[No_Item],[@No.])<br/><br/><b>Obsolete test in DoughWeights A4</b> ISNUMBER(SEARCH("OBS",Products[Description]))=FALSE<br/><br/><b>Mix-Slice-Oven A6 keeps</b> k,(rk&lt;=3)*(d&lt;&gt;"")*(gp&lt;&gt;"OBS")</textArea>
+  <rect id="sp1_2" x="3136" y="240" width="672" height="489" rx="12" fill="#f7f7f7" stroke="#e7e7e7"/>
+  <textArea id="sh1_2" x="3168" y="272" width="608" font-size="26" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">Worked example</textArea>
+  <textArea id="sb1_2" x="3168" y="325" width="608" font-size="18" font-family="noto_sans" fill="#313131"><b>F1127 Challah 3-Braid 21oz</b>: posting group FG, Asset Breadline, so Asset Rank 1.<br/><br/><b>Dough</b> D10001 Challah Dough. Dough Weight = 177.27 lb per bag, summed from BOMQty.<br/><br/><b>Unique Dough</b> Challah 3 Braided: Placement 49, Optimal Bag 1, Optimal Time 30 minutes.<br/><br/><b>Pack data</b> Weight 1.3125 lb per pack, Scrap Factor 1.1, Packs Per Tray/Case 6.<br/><br/><b>Case twin</b> F51127: Non Case Sku = F1127. On Tuesday its 20 cases short give the run its 1.298 bags.</textArea>
+  <rect id="sp1_3" x="3136" y="761" width="672" height="489" rx="12" fill="#f7f7f7" stroke="#e7e7e7"/>
+  <textArea id="sh1_3" x="3168" y="793" width="608" font-size="26" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">Open questions</textArea>
+  <textArea id="sb1_3" x="3168" y="846" width="608" font-size="18" font-family="noto_sans" fill="#313131">Should the obsolete filter use Gen. Prod. Posting Group instead of looking for OBS in the description?<br/><br/>Should Dough Weight count only level-1 BOM lines, and who confirms the real batch weight of the 11 affected doughs?<br/><br/>Should the schedules read notes and attributes from Unique Dough, so Critical Lookup Information D:O can be retired?<br/><br/>What should happen to products whose Unique Dough is not in the table (Gourmet Hawaiian Bun, 8 and 6 inch Philly Roll, Bread Stick)?</textArea>
+  <foreignObject id="sd1" x="64" y="240" width="1600" height="900" data-type="diagram" data-title="1. Master data: Logic Spec">
+flowchart TD
+    classDef terminator fill:#FFFFFF,stroke:#757575,color:#313131
+    classDef input fill:#B3E65F,stroke:#6E9A24,color:#2F440B
+    classDef export fill:#B8ACFB,stroke:#8A7BE0,color:#231266
+    classDef calc fill:#9CE6FF,stroke:#2C97BB,color:#1C4657
+    classDef decision fill:#9CE6FF,stroke:#2C97BB,color:#1C4657
+    classDef lookup fill:#FFB575,stroke:#CC7830,color:#542700
+    classDef output fill:#DDDDD8,stroke:#8A8A7E,color:#434339
+    classDef issue fill:#FFC6C6,stroke:#BD0A0A,color:#5C0A0A
+
+    s(["One product row in Products"]):::terminator
+    g{{"Gen. Prod. Posting Group?"}}:::decision
+    obs["OBS: left out of the row lists"]:::output
+    fg[/"FG: day tables and DSD_DSnD"/]:::input
+    dist[/"FG-DIST: day tables and Dist_DSnD"/]:::input
+    oc{{"Description contains OBS?"}}:::decision
+    lob["Skipped by DoughWeights:&lt;br/&gt;Lobster rolls get no dough"]:::issue
+    dw["DoughWeights row under its&lt;br/&gt;Dough code, lb = packs x Weight"]:::calc
+    wt["Dough Weight = SUMIFS of BOMQty&lt;br/&gt;for the D-code, lb per bag"]:::lookup
+    r{{"Asset Rank at most 3?"}}:::decision
+    tp["Third party: no Mix-Slice-Oven row,&lt;br/&gt;so no bags or minutes"]:::output
+    ud{{"Unique Dough name found&lt;br/&gt;in the Unique Dough table?"}}:::decision
+    blank["Blank bags per mix and minutes"]:::issue
+    mix["Mix-Slice-Oven row: Optimal Bag,&lt;br/&gt;Optimal Time, Placement"]:::lookup
+    pan[/"Pans/Boxes: Oven_Info pan block"/]:::lookup
+    e(["Row feeds Supply and Demand,&lt;br/&gt;DoughWeights and Mix-Slice-Oven"]):::terminator
+    s --&gt; g
+    g --&gt;|"OBS"| obs
+    g --&gt;|"FG"| fg
+    g --&gt;|"FG-DIST"| dist
+    fg --&gt; oc
+    dist --&gt; oc
+    oc --&gt;|"Yes"| lob
+    oc --&gt;|"No"| dw
+    dw --&gt; wt
+    lob -.-&gt; r
+    wt --&gt; r
+    r --&gt;|"No"| tp
+    r --&gt;|"Yes"| ud
+    ud --&gt;|"No"| blank
+    ud --&gt;|"Yes"| mix
+    mix --&gt; pan
+    pan --&gt; e
+</foreignObject>
+</g>
+</svg>

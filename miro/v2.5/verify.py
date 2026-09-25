@@ -11,6 +11,7 @@
 Usage: python3 verify.py <workbook.xlsm>
 """
 import glob
+import json
 import os
 import re
 import sys
@@ -39,6 +40,8 @@ def boxes():
                         w = len(ch.text) * PX_PER_CHAR[(fs, ch.get('font-weight') == 'bold')]
                         h = TEXT_H[fs]
                         b = (fx + x, fy + y - h * 0.7, w, h)
+                    elif ch.tag.endswith('textArea') and not ch.get('height'):   # one-line text box
+                        b = (fx + x, fy + y, float(ch.get('width')), TEXT_H[int(ch.get('font-size'))])
                     else:
                         b = (fx + x, fy + y, float(ch.get('width')), float(ch.get('height')))
                     out.append(('item', ch.get('id'), b, fbox))
@@ -66,6 +69,15 @@ def check_layout():
         for b in frames[i + 1:]:
             if overlap(a[2], b[2]):
                 problems.append(f'frames overlap: {a[1]} {b[1]}')
+    # the Logic Spec row (spec*.svg) must clear the main row and itself; its panels hold
+    # their text by design, so only whole frames are compared
+    manifest = os.path.join(HERE, 'spec_manifest.json')
+    if os.path.exists(manifest):
+        specs = [(f"sf{m['section']}", (m['x'], m['y'], m['w'], m['h'])) for m in json.load(open(manifest))]
+        for i, (sid, sb) in enumerate(specs):
+            for fid, fb in [(f[1], f[2]) for f in frames] + specs[i + 1:]:
+                if overlap(sb, fb):
+                    problems.append(f'frames overlap: {sid} {fid}')
     for i, a in enumerate(items):
         if a[3] and not inside(a[2], a[3]):
             problems.append(f'{a[1]} leaves its frame')

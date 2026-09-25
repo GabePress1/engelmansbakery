@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg">
+<g id="sf6" transform="translate(23968,2910)" data-frame="6. Mix-Slice-Oven: Logic Spec">
+  <rect data-type="frame" x="0" y="0" width="3872" height="1236" fill="#ffffff" data-title="6. Mix-Slice-Oven: Logic Spec"/>
+  <textArea id="st6" x="64" y="53" width="3744" font-size="67" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">6. Mix-Slice-Oven: Logic Spec</textArea>
+  <textArea id="ss6" x="64" y="162" width="3744" font-size="22" font-family="noto_sans" fill="#595959">One run on the K4 day: pounds become bags, bags round up to whole mixes, mixes become minutes.</textArea>
+  <rect id="sp6_0" x="1728" y="240" width="672" height="489" rx="12" fill="#f7f7f7" stroke="#e7e7e7"/>
+  <textArea id="sh6_0" x="1760" y="272" width="608" font-size="26" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">Inputs</textArea>
+  <textArea id="sb6_0" x="1760" y="325" width="608" font-size="18" font-family="noto_sans" fill="#313131"><b>K4</b> (Mix-Slice-Oven!K4): the day, typed. This week Tuesday.<br/><br/><b>DoughWeight lb</b> for that day (Sun to Fri columns).<br/><br/><b>Dough Weight</b> (Dough I): lb in one bag of dough.<br/><br/><b>Scrap Factor</b>, <b>optimal bags per mix</b> and <b>Run Time Per Mix</b>: from Products and Unique Dough.<br/><br/><b>Unique Dough</b>: groups SKUs into runs. The A6 list is sorted so each run is one block of rows.<br/><br/><b>Pans</b>: pieces per pan, for Oven_Info.</textArea>
+  <rect id="sp6_1" x="2432" y="240" width="672" height="879" rx="12" fill="#f7f7f7" stroke="#e7e7e7"/>
+  <textArea id="sh6_1" x="2464" y="272" width="608" font-size="26" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">Formula reference</textArea>
+  <textArea id="sb6_1" x="2464" y="325" width="608" font-size="18" font-family="noto_sans" fill="#313131"><b>L Dough Weight</b> =IFERROR(ROUND(LET(d,MATCH($K$4,{"Sunday","Monday","Tuesday","Wednesday","Thursday","Friday"},0),XLOOKUP([@Sku],DoughWeight[Sku],CHOOSE(d,DoughWeight[Sun],DoughWeight[Mon],DoughWeight[Tue],DoughWeight[Wed],DoughWeight[Thur],DoughWeight[Fri]))/XLOOKUP([@Dough],Dough[No.],Dough[Weight])),2)*[@Scrap Factor],"")<br/><br/><b>M Bags By Unique Dough</b> =IF(LEFT([@Sku],1)="D","",LET(u,[@Unique Dough],IF(C6=u,"",SUMIFS(Mix_Slice_Oven[Dough Weight],Mix_Slice_Oven[Unique Dough],u))))<br/><br/><b>N Optimal Total</b> =IFERROR(IF(LEFT([@Sku],1)="D",SUMIFS(Mix_Slice_Oven[Optimal Total],Mix_Slice_Oven[Dough],[@Sku],Mix_Slice_Oven[Asset],D8),IF(OR([@Unique Dough]="Marble Hearth",[@Unique Dough]="Marble Lg Pullman"),CEILING([@Bags By Unique Dough],[@optimal bags per mix])*2.5,CEILING([@Bags By Unique Dough],[@optimal bags per mix]))),"")<br/><br/><b>O Planned Total</b> =[@Optimal Total]<br/><br/><b>S_Minutes (BD)</b> =IF(LEFT([@Sku],1)="D","",IFERROR(([@S_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]="Marble Hearth",[@Unique Dough]="Marble Lg Pullman"),2.5,1),0))<br/><br/><b>O1 Breadline bags</b> =SUM(SUMIFS(Mix_Slice_Oven[Planned Total],Mix_Slice_Oven[Asset],{"Breadline","Breadline/Artisan"}))</textArea>
+  <rect id="sp6_2" x="3136" y="240" width="672" height="541" rx="12" fill="#f7f7f7" stroke="#e7e7e7"/>
+  <textArea id="sh6_2" x="3168" y="272" width="608" font-size="26" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">Worked example</textArea>
+  <textArea id="sb6_2" x="3168" y="325" width="608" font-size="18" font-family="noto_sans" fill="#313131"><b>6" Italian Rolls, Tuesday (MCS LINE)</b>: L for each SKU is F3091 2.849, F3094 0.759, F3092 0.011, F30941 0.022 and case F53094 4.774 bags.<br/><br/><b>Run total</b>: M = 8.415 bags on the first row. Optimal bags per mix 4, so N = CEILING(8.415, 4) = 12 and Planned 12.<br/><br/><b>On the MCS sheet</b>: 3 mixes of 4 bags, 20 minutes each.<br/><br/><b>Challah 3 Braided, Tuesday</b>: F1127 0 bags; case F51127 is 20 cases short, 1.298 bags. N = CEILING(1.298, 1) = 2; T_Minutes = 2 / 1 x 30 = 60.<br/><br/><b>Line totals</b>: O1 Breadline 54.5 bags, O2 MCS LINE 180 bags.</textArea>
+  <rect id="sp6_3" x="1728" y="761" width="672" height="411" rx="12" fill="#f7f7f7" stroke="#e7e7e7"/>
+  <textArea id="sh6_3" x="1760" y="793" width="608" font-size="26" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">Open questions</textArea>
+  <textArea id="sb6_3" x="1760" y="846" width="608" font-size="18" font-family="noto_sans" fill="#313131">Should K4 follow today's date by default?<br/><br/>Should Extra Bread (Runout) in column X add to the bags before they are rounded up?<br/><br/>The per-day blocks round after scrap while L rounds before: which is intended?<br/><br/>For Marble runs, is 2.5 the Pump plus Rye bags per set, and should it live in Unique Dough instead of the formula?</textArea>
+  <foreignObject id="sd6" x="64" y="240" width="1600" height="900" data-type="diagram" data-title="6. Mix-Slice-Oven: Logic Spec">
+flowchart TD
+    classDef terminator fill:#FFFFFF,stroke:#757575,color:#313131
+    classDef input fill:#B3E65F,stroke:#6E9A24,color:#2F440B
+    classDef export fill:#B8ACFB,stroke:#8A7BE0,color:#231266
+    classDef calc fill:#9CE6FF,stroke:#2C97BB,color:#1C4657
+    classDef decision fill:#9CE6FF,stroke:#2C97BB,color:#1C4657
+    classDef lookup fill:#FFB575,stroke:#CC7830,color:#542700
+    classDef output fill:#DDDDD8,stroke:#8A8A7E,color:#434339
+    classDef issue fill:#FFC6C6,stroke:#BD0A0A,color:#5C0A0A
+
+    s(["One mixing run on the K4 day"]):::terminator
+    k4[/"K4 day selector: Tuesday"/]:::input
+    lbd[/"lb for that day&lt;br/&gt;from DoughWeight"/]:::lookup
+    l["L = ROUND(lb / Dough Weight, 2)&lt;br/&gt;x Scrap Factor, for each SKU"]:::calc
+    first{{"First row of this&lt;br/&gt;Unique Dough run?"}}:::decision
+    blank["M blank on the later rows"]:::calc
+    m["M = SUMIFS of L over the run"]:::calc
+    marble{{"Marble Hearth or&lt;br/&gt;Marble Lg Pullman?"}}:::decision
+    n1["N = CEILING(M, bags per mix)"]:::calc
+    n2["N = CEILING(M, bags per mix) x 2.5"]:::calc
+    o["O Planned Total = N&lt;br/&gt;type over it to override"]:::calc
+    tot["O1 Breadline, O2 MCS LINE:&lt;br/&gt;line totals"]:::output
+    mins["_Minutes per day = _Planned /&lt;br/&gt;bags per mix x Run Time Per Mix"]:::calc
+    hrs["Rows 1-2: bags and hours&lt;br/&gt;back to Supply and Demand"]:::output
+    e(["Schedules print the planned bags"]):::terminator
+    s --&gt; k4
+    k4 --&gt; lbd
+    lbd --&gt; l
+    l --&gt; first
+    first --&gt;|"No"| blank
+    first --&gt;|"Yes"| m
+    m --&gt; marble
+    marble --&gt;|"No"| n1
+    marble --&gt;|"Yes"| n2
+    n1 --&gt; o
+    n2 --&gt; o
+    o --&gt; tot
+    o -.-&gt;|"each day"| mins
+    mins --&gt; hrs
+    tot --&gt; e
+</foreignObject>
+</g>
+</svg>

@@ -9,7 +9,7 @@
   "cards": 40,
   "columns": 4,
   "diagram": true,
-  "bytes": 16414
+  "bytes": 16535
  },
  {
   "frame": 1,
@@ -21,7 +21,7 @@
   "cards": 46,
   "columns": 6,
   "diagram": true,
-  "bytes": 21293
+  "bytes": 21454
  },
  {
   "frame": 2,
@@ -33,7 +33,7 @@
   "cards": 31,
   "columns": 6,
   "diagram": true,
-  "bytes": 13150
+  "bytes": 13311
  },
  {
   "frame": 3,
@@ -45,7 +45,7 @@
   "cards": 31,
   "columns": 4,
   "diagram": true,
-  "bytes": 13497
+  "bytes": 13618
  },
  {
   "frame": 4,
@@ -57,7 +57,7 @@
   "cards": 48,
   "columns": 6,
   "diagram": true,
-  "bytes": 22332
+  "bytes": 22493
  },
  {
   "frame": 5,
@@ -69,7 +69,7 @@
   "cards": 18,
   "columns": 3,
   "diagram": true,
-  "bytes": 8828
+  "bytes": 8929
  },
  {
   "frame": 6,
@@ -81,7 +81,7 @@
   "cards": 58,
   "columns": 6,
   "diagram": true,
-  "bytes": 26606
+  "bytes": 26767
  },
  {
   "frame": 7,
@@ -93,7 +93,7 @@
   "cards": 24,
   "columns": 4,
   "diagram": true,
-  "bytes": 15827
+  "bytes": 15948
  },
  {
   "frame": 8,
@@ -105,7 +105,7 @@
   "cards": 16,
   "columns": 2,
   "diagram": true,
-  "bytes": 7589
+  "bytes": 7670
  },
  {
   "frame": 9,
@@ -117,6 +117,6 @@
   "cards": 15,
   "columns": 3,
   "diagram": false,
-  "bytes": 6104
+  "bytes": 6205
  }
 ]

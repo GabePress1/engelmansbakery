@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg">
+<g id="sf5" transform="translate(20752,2910)" data-frame="5. DoughWeights: Logic Spec">
+  <rect data-type="frame" x="0" y="0" width="2816" height="1862" fill="#ffffff" data-title="5. DoughWeights: Logic Spec"/>
+  <textArea id="st5" x="64" y="53" width="2688" font-size="67" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">5. DoughWeights: Logic Spec</textArea>
+  <textArea id="ss5" x="64" y="162" width="2688" font-size="22" font-family="noto_sans" fill="#595959">Only packs that are short become pounds of dough; each dough row then adds up its products.</textArea>
+  <rect id="sp5_0" x="1728" y="240" width="1024" height="307" rx="12" fill="#f7f7f7" stroke="#e7e7e7"/>
+  <textArea id="sh5_0" x="1760" y="272" width="960" font-size="26" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">Inputs</textArea>
+  <textArea id="sb5_0" x="1760" y="325" width="960" font-size="18" font-family="noto_sans" fill="#313131"><b>Sku</b> (B): the row's own A cell, from the A4 list of 453 rows.<br/><br/><b>Dough Desc</b> (D) and <b>Weight</b> (E): from Products.<br/><br/><b>Production</b>: S_ to F_Production from DSD_DSnD, or from Dist_DSnD for F5 case SKUs.<br/><br/><b>F2 anchor date</b>: ='Daily Supply &amp; Demand'!H2, display only.</textArea>
+  <rect id="sp5_1" x="1728" y="579" width="1024" height="489" rx="12" fill="#f7f7f7" stroke="#e7e7e7"/>
+  <textArea id="sh5_1" x="1760" y="611" width="960" font-size="26" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">Formula reference</textArea>
+  <textArea id="sb5_1" x="1760" y="664" width="960" font-size="18" font-family="noto_sans" fill="#313131"><b>Row list (A4)</b> =DROP(REDUCE("",Dough[No.],LAMBDA(a,x,VSTACK(a,x,IFERROR(FILTER(Products[No.],(Products[Dough]=x)*(ISNUMBER(SEARCH("OBS",Products[Description]))=FALSE)*(LEFT(Products[No.],1)&lt;&gt;"Z")),"(no products)")))),1)<br/><br/><b>Sun (F)</b> =LET(prod,IF(LEFT([@Sku],2)="F5",XLOOKUP([@Sku],Dist_DSnD[Sku],Dist_DSnD[S_Production],0),XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[S_Production],0)),IF(LEFT([@Sku],1)="D",SUMIFS(DoughWeight[Sun],DoughWeight[Dough Desc],[@Desciption]),IF(prod&lt;0,ABS(prod)*[@Weight],0)))<br/><br/><b>Dough Desc (D)</b> =IFERROR(XLOOKUP([@Sku],Products[No.],Products[Dough Description]),"")<br/><br/><b>Weight (E)</b> =IFERROR(XLOOKUP([@Sku],Products[No.],Products[Weight]),"")<br/><br/><b>Day columns</b> F Sun reads S_Production, G Mon M_, H Tue T_, I Wed W_, J Thur TH_, K Fri F_.</textArea>
+  <rect id="sp5_2" x="1728" y="1100" width="1024" height="333" rx="12" fill="#f7f7f7" stroke="#e7e7e7"/>
+  <textArea id="sh5_2" x="1760" y="1132" width="960" font-size="26" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">Worked example</textArea>
+  <textArea id="sb5_2" x="1760" y="1185" width="960" font-size="18" font-family="noto_sans" fill="#313131"><b>F1127 Challah 3-Braid 21oz, Friday</b>: F_Production -36 in DSD_DSnD, so 36 packs are short.<br/><br/><b>Pounds</b>: 36 x 1.3125 = 47.25 lb in DoughWeight Fri.<br/><br/><b>Sunday to Thursday</b>: F1127 shows 0 lb because its balance was not negative on those days.<br/><br/><b>D10001 Challah Dough row</b>: Sun 454, Mon 965, Tue 1,176, Wed 402.5, Thu 1,074, Fri 1,220.25 lb.</textArea>
+  <rect id="sp5_3" x="1728" y="1465" width="1024" height="333" rx="12" fill="#f7f7f7" stroke="#e7e7e7"/>
+  <textArea id="sh5_3" x="1760" y="1497" width="960" font-size="26" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">Open questions</textArea>
+  <textArea id="sb5_3" x="1760" y="1550" width="960" font-size="18" font-family="noto_sans" fill="#313131">Should the obsolete filter use Gen. Prod. Posting Group so Lobster rolls get dough?<br/><br/>Should case SKUs net against cases on hand before they create dough?<br/><br/>The D-code rows repeat the product totals: keep them for reading, or remove them now that Mix-Slice-Oven sums products itself?<br/><br/>Column L (the old existence check) is broken on every row: delete it?</textArea>
+  <foreignObject id="sd5" x="64" y="240" width="1600" height="900" data-type="diagram" data-title="5. DoughWeights: Logic Spec">
+flowchart TD
+    classDef terminator fill:#FFFFFF,stroke:#757575,color:#313131
+    classDef input fill:#B3E65F,stroke:#6E9A24,color:#2F440B
+    classDef export fill:#B8ACFB,stroke:#8A7BE0,color:#231266
+    classDef calc fill:#9CE6FF,stroke:#2C97BB,color:#1C4657
+    classDef decision fill:#9CE6FF,stroke:#2C97BB,color:#1C4657
+    classDef lookup fill:#FFB575,stroke:#CC7830,color:#542700
+    classDef output fill:#DDDDD8,stroke:#8A8A7E,color:#434339
+    classDef issue fill:#FFC6C6,stroke:#BD0A0A,color:#5C0A0A
+
+    s(["One row of the DoughWeight table"]):::terminator
+    row[/"Sku from the A4 row list:&lt;br/&gt;each dough, then its products"/]:::lookup
+    filt["Row list skips descriptions&lt;br/&gt;with OBS and Z codes"]:::calc
+    lob["Lobster rolls match OBS&lt;br/&gt;and are skipped"]:::issue
+    dq{{"D-code dough row?"}}:::decision
+    sum["Dough row = SUMIFS of the column&lt;br/&gt;over rows with the same Dough Desc"]:::calc
+    cq{{"Case SKU, starts F5?"}}:::decision
+    dist[/"Production from Dist_DSnD"/]:::lookup
+    dsd[/"Production from DSD_DSnD"/]:::lookup
+    q{{"Production below 0?"}}:::decision
+    zero["0 lb"]:::calc
+    w[/"Weight: lb of dough per pack,&lt;br/&gt;from Products"/]:::lookup
+    lb["lb = ABS(Production) x Weight"]:::calc
+    out["Mix-Slice-Oven: bags =&lt;br/&gt;lb / Dough Weight x Scrap"]:::output
+    e(["Pounds per day, Sunday to Friday"]):::terminator
+    s --&gt; row
+    row --&gt; filt
+    filt -.-&gt; lob
+    filt --&gt; dq
+    dq --&gt;|"Yes"| sum
+    dq --&gt;|"No"| cq
+    cq --&gt;|"Yes"| dist
+    cq --&gt;|"No"| dsd
+    dist --&gt; q
+    dsd --&gt; q
+    q --&gt;|"No"| zero
+    q --&gt;|"Yes"| lb
+    w --&gt; lb
+    lb --&gt; out
+    lb -.-&gt;|"rolls up"| sum
+    zero --&gt; e
+    sum --&gt; e
+    out --&gt; e
+</foreignObject>
+</g>
+</svg>

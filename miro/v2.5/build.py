@@ -5,12 +5,12 @@ card is the workbook's own text, not a retyping. Card wording, flowcharts and is
 are authored below, one FRAME per board section. Writes frame0.svg ... frame9.svg.
 
 Layout (per frame, frame-relative):
-  title (y 120 baseline) / one-line subtitle (y 184)
+  title / one-line subtitle: fixed-width text boxes, tops at y 53 / 162
   flowchart 1600x900 at (64, 240), nested in the frame <g> so it moves with the frame
       (its x/y is the diagram's top-left, as the composer spec says). A diagram can never be
       moved through the API on its own. Send each frame with canvas_update_from_svg, which
       places exactly; canvas_create_from_svg may relocate a batch it thinks collides.
-  card stacks from x 1728 (or 64 with no flowchart), 352 apart; heading baseline y 262,
+  card stacks from x 1728 (or 64 with no flowchart), 352 apart; heading box 320 wide at y 240,
       cards 320x88 from y 288 on a 108 pitch, at most MAXC cards per column
 Frames sit side by side from (FRAME_X0, FRAME_Y0) with a 400px gutter. The board's frames
 were moved to (800, 450) after the first build, when the diagrams turned out to be placed by
@@ -955,12 +955,13 @@ def build():
         assert all(len(h) <= 23 for h, _ in cols), (n, 'stack heading wider than a column')
         parts = [f'<g id="f{n}" transform="translate({fx},{fy})" data-frame="{esc(fr["title"])}">',
                  f'  <rect data-type="frame" x="0" y="0" width="{W}" height="{H}" fill="#ffffff" data-title="{esc(fr["title"])}"/>',
-                 f'  <text id="t{n}" x="{PAD}" y="120" font-size="67" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">{esc_body(fr["title"])}</text>',
-                 f'  <text id="s{n}" x="{PAD}" y="184" font-size="22" font-family="noto_sans" fill="#595959">{esc_body(fr["subtitle"])}</text>']
+                 # fixed-width text boxes: auto-sized <text> was measured a little narrow and wrapped
+                 f'  <textArea id="t{n}" x="{PAD}" y="53" width="{W - 2 * PAD}" font-size="67" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">{esc_body(fr["title"])}</textArea>',
+                 f'  <textArea id="s{n}" x="{PAD}" y="162" width="{W - 2 * PAD}" font-size="22" font-family="noto_sans" fill="#595959">{esc_body(fr["subtitle"])}</textArea>']
         ncards = 0
         for i, (heading, cards) in enumerate(cols):
             cx = x0 + i * COLW
-            parts.append(f'  <text id="h{n}_{i}" x="{cx}" y="262" font-size="22" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">{esc_body(heading)}</text>')
+            parts.append(f'  <textArea id="h{n}_{i}" x="{cx}" y="240" width="{CARD_W}" font-size="22" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">{esc_body(heading)}</textArea>')
             for j, c in enumerate(cards):
                 desc = f"{LABEL[c['kind']]}. {c['text']}"
                 parts.append(

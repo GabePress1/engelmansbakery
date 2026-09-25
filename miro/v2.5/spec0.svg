@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg">
+<g id="sf0" transform="translate(800,2910)" data-frame="0. A planning week: Logic Spec">
+  <rect data-type="frame" x="0" y="0" width="3168" height="1548" fill="#ffffff" data-title="0. A planning week: Logic Spec"/>
+  <textArea id="st0" x="64" y="53" width="3040" font-size="67" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">0. A planning week: Logic Spec</textArea>
+  <textArea id="ss0" x="64" y="162" width="3040" font-size="22" font-family="noto_sans" fill="#595959">The weekly routine, from pasting the exports to the printed run sheets.</textArea>
+  <rect id="sp0_0" x="1728" y="240" width="672" height="723" rx="12" fill="#f7f7f7" stroke="#e7e7e7"/>
+  <textArea id="sh0_0" x="1760" y="272" width="608" font-size="26" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">Inputs</textArea>
+  <textArea id="sb0_0" x="1760" y="325" width="608" font-size="18" font-family="noto_sans" fill="#313131"><b>Sales History</b> (table SalesHistory): pasted Business Central posted invoice lines. The average needs the sample week and the three weeks before it.<br/><br/><b>H2 anchor date</b> ('Daily Supply &amp; Demand'!H2): the planning Sunday, typed. This week 2026-09-20.<br/><br/><b>Open Sales Lines</b> (table SalesOrders): pasted open order lines, then refresh the Dist Shipping Schedule pivot.<br/><br/><b>Floor counts</b>: typed in the external _BC.xlsm day tabs (Sunday - Inventory to Friday-Inventory) and read by XLOOKUP.<br/><br/><b>K4 day selector</b> (Mix-Slice-Oven!K4): the day being planned, typed. This week it says Tuesday.<br/><br/><b>BOMQty</b> (DoughWeights O:AJ): pasted Quantity Explosion of BOM when recipes change. The header says As of 03/24/26.<br/><br/><b>E4 start times</b> on each schedule: typed first-mix start (MCS 6:45, Breadline 7:50).</textArea>
+  <rect id="sp0_1" x="2432" y="240" width="672" height="645" rx="12" fill="#f7f7f7" stroke="#e7e7e7"/>
+  <textArea id="sh0_1" x="2464" y="272" width="608" font-size="26" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">Formula reference</textArea>
+  <textArea id="sb0_1" x="2464" y="325" width="608" font-size="18" font-family="noto_sans" fill="#313131"><b>Sample dates (H3)</b> one week before the anchor Monday: =H2-6. I3:M3 continue to Saturday.<br/><br/><b>Daily demand (S_Demand)</b> =ROUNDUP(([@Sun/Mon]*$C$5),0). The average in H:M is described in section 4.<br/><br/><b>Balance and production</b> =([@S_Freeze]+[@S_Floor])-[@S_Demand], then S_Production =[@S_Balanace]. Negative means bake.<br/><br/><b>Breadline bags (O1)</b> =SUM(SUMIFS(Mix_Slice_Oven[Planned Total],Mix_Slice_Oven[Asset],{"Breadline","Breadline/Artisan"}))<br/><br/><b>MCS bags (O2)</b> =SUM(SUMIFS(Mix_Slice_Oven[Planned Total],Mix_Slice_Oven[Asset],"MCS LINE")). The MCS Schedule shows it in H2: ='Mix-Slice-Oven'!O2.<br/><br/><b>Recon status (G5)</b> =IF(C5=E5,"Match",IF(E5&gt;C5,"Table longer","Array longer"))</textArea>
+  <rect id="sp0_2" x="2432" y="917" width="672" height="567" rx="12" fill="#f7f7f7" stroke="#e7e7e7"/>
+  <textArea id="sh0_2" x="2464" y="949" width="608" font-size="26" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">Worked example</textArea>
+  <textArea id="sb0_2" x="2464" y="1002" width="608" font-size="18" font-family="noto_sans" fill="#313131"><b>Anchor</b> H2 = 2026-09-20. Sample dates run 9/14 to 9/19; the Sun/Mon average also reads 9/7, 8/31 and 8/24.<br/><br/><b>Today</b> 2026-09-25 is a Friday, so DT2 = 6 and every sheet header prints Friday.<br/><br/><b>K4</b> = Tuesday, so Planned Total, the slice sheet and both schedules show Tuesday's quantities.<br/><br/><b>Line totals</b> O1 Breadline 54.5 bags, O2 MCS LINE 180 bags, T2 234.5.<br/><br/><b>Run sheets as saved</b> MCS 47 mixes + 2 changeovers; Breadline 25 mixes.<br/><br/><b>Recon</b> DoughWeight shows Array longer (453 against 452), so F2562 has no DoughWeight row.</textArea>
+  <rect id="sp0_3" x="1728" y="995" width="672" height="437" rx="12" fill="#f7f7f7" stroke="#e7e7e7"/>
+  <textArea id="sh0_3" x="1760" y="1027" width="608" font-size="26" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">Open questions</textArea>
+  <textArea id="sb0_3" x="1760" y="1080" width="608" font-size="18" font-family="noto_sans" fill="#313131">Should K4 default to today's day (TEXT(TODAY(),"dddd")) with a separate override cell, or is planning a different day the normal use?<br/><br/>Who pastes each export, on which day, and should the workbook record the paste date next to each one?<br/><br/>Should Sunday!B1 be tied to H2 so all dates in the week move together?<br/><br/>Should the floor count keep being typed in the external _BC.xlsm, or move into this workbook?</textArea>
+  <foreignObject id="sd0" x="64" y="240" width="1600" height="900" data-type="diagram" data-title="0. A planning week: Logic Spec">
+flowchart TD
+    classDef terminator fill:#FFFFFF,stroke:#757575,color:#313131
+    classDef input fill:#B3E65F,stroke:#6E9A24,color:#2F440B
+    classDef export fill:#B8ACFB,stroke:#8A7BE0,color:#231266
+    classDef calc fill:#9CE6FF,stroke:#2C97BB,color:#1C4657
+    classDef decision fill:#9CE6FF,stroke:#2C97BB,color:#1C4657
+    classDef lookup fill:#FFB575,stroke:#CC7830,color:#542700
+    classDef output fill:#DDDDD8,stroke:#8A8A7E,color:#434339
+    classDef issue fill:#FFC6C6,stroke:#BD0A0A,color:#5C0A0A
+
+    s(["Start of the planning week"]):::terminator
+    p1[/"Paste Sales History&lt;br/&gt;posted invoice lines"/]:::export
+    p2[/"Set Daily Supply and Demand H2&lt;br/&gt;to the planning Sunday"/]:::input
+    p3[/"Paste Open Sales Lines&lt;br/&gt;refresh the Dist Shipping pivot"/]:::export
+    c1[/"Floor counts typed in the&lt;br/&gt;_BC.xlsm day tabs"/]:::input
+    d1["Sunday to Friday tables:&lt;br/&gt;Total and Final Inventory"]:::lookup
+    d2["Supply and Demand:&lt;br/&gt;stock minus demand = Production"]:::calc
+    d3["DoughWeights:&lt;br/&gt;packs short x lb per pack"]:::calc
+    k4{{"Is K4 the day&lt;br/&gt;being baked?"}}:::decision
+    fix[/"Set Mix-Slice-Oven K4"/]:::input
+    d4["Mix-Slice-Oven:&lt;br/&gt;bags, planned bags, minutes"]:::calc
+    r1{{"Recon shows&lt;br/&gt;Array longer?"}}:::decision
+    iss["SKUs dropped from a table:&lt;br/&gt;resize it before printing"]:::issue
+    o1["MCS and Breadline schedules&lt;br/&gt;printed run sheets"]:::output
+    e(["Bake"]):::terminator
+    s --&gt; p1
+    p1 --&gt; p2
+    p2 --&gt; p3
+    p3 --&gt; c1
+    c1 --&gt; d1
+    d1 --&gt; d2
+    d2 --&gt; d3
+    d3 --&gt; k4
+    k4 --&gt;|"No"| fix
+    fix --&gt; d4
+    k4 --&gt;|"Yes"| d4
+    d4 --&gt; r1
+    r1 --&gt;|"Yes"| iss
+    iss -.-&gt; o1
+    r1 --&gt;|"No"| o1
+    o1 --&gt; e
+</foreignObject>
+</g>
+</svg>

@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg">
+<g id="sf3" transform="translate(12912,2910)" data-frame="3. Inventory, Sunday to Friday: Logic Spec">
+  <rect data-type="frame" x="0" y="0" width="3168" height="1262" fill="#ffffff" data-title="3. Inventory, Sunday to Friday: Logic Spec"/>
+  <textArea id="st3" x="64" y="53" width="3040" font-size="67" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">3. Inventory, Sunday to Friday: Logic Spec</textArea>
+  <textArea id="ss3" x="64" y="162" width="3040" font-size="22" font-family="noto_sans" fill="#595959">One SKU on one day: counts come in from _BC.xlsm, reconcile against yesterday and close the day.</textArea>
+  <rect id="sp3_0" x="1728" y="240" width="672" height="515" rx="12" fill="#f7f7f7" stroke="#e7e7e7"/>
+  <textArea id="sh3_0" x="1760" y="272" width="608" font-size="26" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">Inputs</textArea>
+  <textArea id="sb3_0" x="1760" y="325" width="608" font-size="18" font-family="noto_sans" fill="#313131"><b>Code</b> (B): =A3, from the row list of 395 SKUs.<br/><br/><b>_BC.xlsm day tab</b> (external file on SharePoint): where the floor count is typed. Tabs Sunday - Inventory to Friday-Inventory.<br/><br/><b>Freezer F, Floor G, Late/Day Orders H, Wrapped J, Order K, Inv. Discounts M</b>: columns of the external tab, read by XLOOKUP on the code.<br/><br/><b>Initial Inventory</b>: external column C on Sunday; the previous day's Final Inventory after that.<br/><br/><b>QC columns O:T</b>: typed on the sheet and not read by any formula.</textArea>
+  <rect id="sp3_1" x="2432" y="240" width="672" height="515" rx="12" fill="#f7f7f7" stroke="#e7e7e7"/>
+  <textArea id="sh3_1" x="2464" y="272" width="608" font-size="26" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">Formula reference</textArea>
+  <textArea id="sb3_1" x="2464" y="325" width="608" font-size="18" font-family="noto_sans" fill="#313131"><b>Freezer (G)</b> =XLOOKUP([@Code],'[1]Sunday - Inventory'!$A$4:$A$450,'[1]Sunday - Inventory'!$F$4:$F$450)<br/><br/><b>Initial Inventory, Monday (D)</b> =XLOOKUP([@Code],Sunday[Code],Sunday[Final Inventory])<br/><br/><b>Diferencias (F)</b> =[@Initial Inventory]-([@Freezer]+[@Floor])<br/><br/><b>Total (J)</b> =[@Freezer]+[@Floor]-[@Late/Day Orders]-[@Inv. Discounts]<br/><br/><b>Final Inventory (M)</b> =[@Total]+[@Wrapped]-[@Order]<br/><br/><b>Julian Date (U)</b> =B$1-DATE(YEAR(B$1),1,1)+1</textArea>
+  <rect id="sp3_2" x="1728" y="787" width="672" height="411" rx="12" fill="#f7f7f7" stroke="#e7e7e7"/>
+  <textArea id="sh3_2" x="1760" y="819" width="608" font-size="26" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">Worked example</textArea>
+  <textArea id="sb3_2" x="1760" y="872" width="608" font-size="18" font-family="noto_sans" fill="#313131"><b>F1000 Rye 1/2 inch, Sunday</b>: Initial 79 (external C), Freezer 79, Floor 0, so Diferencias = 79 - (79 + 0) = 0.<br/><br/><b>Sunday close</b>: Total 79; Wrapped 0 and Order 27, so Final Inventory 52.<br/><br/><b>Monday</b>: Initial 52 (Sunday's Final); Freezer 52, Floor 0, Diferencias 0; Wrapped 96, Order 9, Final 139.<br/><br/><b>Hand-off</b>: DSD_DSnD S_Floor for F1000 = 79 and M_Floor = 52.</textArea>
+  <rect id="sp3_3" x="2432" y="787" width="672" height="411" rx="12" fill="#f7f7f7" stroke="#e7e7e7"/>
+  <textArea id="sh3_3" x="2464" y="819" width="608" font-size="26" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">Open questions</textArea>
+  <textArea id="sb3_3" x="2464" y="872" width="608" font-size="18" font-family="noto_sans" fill="#313131">When Diferencias is not 0, should the day stop, or is the count taken as right and the difference only logged?<br/><br/>Freezer (Day Before) is calculated on Monday to Friday but nothing reads it: keep it as a check, or remove it?<br/><br/>Should the counts be typed in this workbook instead of the external _BC.xlsm file?<br/><br/>Should the Tuesday to Friday tables be trimmed to the 395-row list so the extra N/A rows go away?</textArea>
+  <foreignObject id="sd3" x="64" y="240" width="1600" height="900" data-type="diagram" data-title="3. Inventory, Sunday to Friday: Logic Spec">
+flowchart TD
+    classDef terminator fill:#FFFFFF,stroke:#757575,color:#313131
+    classDef input fill:#B3E65F,stroke:#6E9A24,color:#2F440B
+    classDef export fill:#B8ACFB,stroke:#8A7BE0,color:#231266
+    classDef calc fill:#9CE6FF,stroke:#2C97BB,color:#1C4657
+    classDef decision fill:#9CE6FF,stroke:#2C97BB,color:#1C4657
+    classDef lookup fill:#FFB575,stroke:#CC7830,color:#542700
+    classDef output fill:#DDDDD8,stroke:#8A8A7E,color:#434339
+    classDef issue fill:#FFC6C6,stroke:#BD0A0A,color:#5C0A0A
+
+    s(["Start of day, one SKU"]):::terminator
+    row[/"Code from the A3 row list:&lt;br/&gt;FG then FG-DIST"/]:::lookup
+    init{{"Sunday?"}}:::decision
+    i1[/"Initial Inventory from&lt;br/&gt;_BC.xlsm column C"/]:::lookup
+    i2[/"Initial Inventory =&lt;br/&gt;yesterday's Final Inventory"/]:::lookup
+    cnt[/"Freezer and Floor from&lt;br/&gt;_BC.xlsm columns F and G"/]:::lookup
+    dif["Diferencias =&lt;br/&gt;Initial - (Freezer + Floor)"]:::calc
+    q{{"Diferencias = 0?"}}:::decision
+    var["Count and chain disagree:&lt;br/&gt;check the count"]:::issue
+    ld[/"Late/Day Orders (H) and&lt;br/&gt;Inv. Discounts (M)"/]:::lookup
+    tot["Total = Freezer + Floor&lt;br/&gt;- Late/Day Orders - Inv. Discounts"]:::calc
+    wo[/"Wrapped (J) and Order (K)"/]:::lookup
+    fin["Final Inventory =&lt;br/&gt;Total + Wrapped - Order"]:::calc
+    dsd["Total goes to DSD_DSnD _Floor&lt;br/&gt;and Dist_DSnD 0_Inventory"]:::output
+    e(["Final Inventory becomes&lt;br/&gt;tomorrow's Initial Inventory"]):::terminator
+    s --&gt; row
+    row --&gt; init
+    init --&gt;|"Yes"| i1
+    init --&gt;|"No"| i2
+    i1 --&gt; cnt
+    i2 --&gt; cnt
+    cnt --&gt; dif
+    dif --&gt; q
+    q --&gt;|"No"| var
+    q --&gt;|"Yes"| ld
+    var -.-&gt; ld
+    ld --&gt; tot
+    tot --&gt; dsd
+    tot --&gt; wo
+    wo --&gt; fin
+    fin --&gt; e
+    e -.-&gt;|"next day"| init
+</foreignObject>
+</g>
+</svg>

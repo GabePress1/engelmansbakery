@@ -32,7 +32,6 @@ CHAR_W = 10.6                     # noto_sans 18 px, measured about 0.58 em per 
 LINE_H = 26
 PANELS = [('inputs', 'Inputs'), ('formulas', 'Formula reference'),
           ('example', 'Worked example'), ('questions', 'Open questions')]
-KEEP_OUT = [(864, 5592, 1600, 900)]   # stray loose diagram left from the first build
 
 CLASSDEF = """    classDef terminator fill:#FFFFFF,stroke:#757575,color:#313131
     classDef input fill:#B3E65F,stroke:#6E9A24,color:#2F440B
@@ -125,13 +124,12 @@ def frame_svg(spec, main, measured=None):
     n = spec['section']
     fx, width = main['x'], main['w']
     boxes, height = layout(spec, width, measured)
-    for kx, ky, kw, kh in KEEP_OUT:
-        assert not (fx < kx + kw and kx < fx + width and ROW_Y < ky + kh and ky < ROW_Y + height), (n, 'overlaps keep-out')
     title = esc(spec['title'])
     parts = [f'<g id="sf{n}" transform="translate({fx},{ROW_Y})" data-frame="{title}">',
              f'  <rect data-type="frame" x="0" y="0" width="{width}" height="{height}" fill="#ffffff" data-title="{title}"/>',
-             f'  <text id="st{n}" x="{PAD}" y="120" font-size="67" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">{title}</text>',
-             f'  <text id="ss{n}" x="{PAD}" y="184" font-size="22" font-family="noto_sans" fill="#595959">{esc(spec["subtitle"])}</text>']
+             # fixed-width text boxes: auto-sized <text> was measured a little narrow and wrapped
+             f'  <textArea id="st{n}" x="{PAD}" y="53" width="{width - 2 * PAD}" font-size="67" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">{title}</textArea>',
+             f'  <textArea id="ss{n}" x="{PAD}" y="162" width="{width - 2 * PAD}" font-size="22" font-family="noto_sans" fill="#595959">{esc(spec["subtitle"])}</textArea>']
     for i, b in enumerate(boxes):
         parts.append(f'  <rect id="sp{n}_{i}" x="{b["x"]}" y="{b["y"]}" width="{b["w"]}" height="{b["h"]}" rx="12" fill="#f7f7f7" stroke="#e7e7e7"/>')
         parts.append(f'  <textArea id="sh{n}_{i}" x="{b["x"] + GAP}" y="{b["y"] + GAP}" width="{b["w"] - 2 * GAP}" font-size="{HEAD_FS}" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">{b["head"]}</textArea>')
