@@ -49,10 +49,10 @@ Ten frames, left to right at y = 450, 400 px apart. Inside each frame (frame-rel
 | 5 | DoughWeights | 20752 | 2816 | 18 | 3458764685005312292 | 3458764685005312324 |
 | 6 | Mix-Slice-Oven | 23968 | 3872 | 58 | 3458764685005590032 | 3458764685005590121 |
 | 7 | MCS and Breadline schedules | 28240 | 3168 | 24 | 3458764685005711509 | 3458764685005711545 |
-| 8 | Recon | 31808 | 2464 | 16 | 3458764685005827237 | 3458764685005827259 |
+| 8 | Recon | 31808 | 2464 | 19 | 3458764685005827237 | 3458764685005827259 |
 | 9 | Known issues, ranked | 34672 | 1152 | 15 | 3458764685005827484 | — |
 
-All frames sit at y = 450. 327 cards, 410 widgets in total. Deep link to a frame: `https://miro.com/app/board/uXjVHiOiwa0=/?moveToWidget=<frame id>`.
+All frames sit at y = 450. 330 cards, 413 widgets in total. Deep link to a frame: `https://miro.com/app/board/uXjVHiOiwa0=/?moveToWidget=<frame id>`.
 
 ## Colour key
 
@@ -65,6 +65,15 @@ All frames sit at y = 450. 327 cards, 410 widgets in total. Deep link to a frame
 | Grey `#8c8c8c` | `#DDDDD8` | printed output, or not used |
 | Red `#da0063` | `#FFC6C6` | known issue |
 | Dark `#2d3142` | — | note, worked example or saved state |
+
+## Recon table
+
+Recon!A4:G15 is the Excel table **Recon** (made by hand in Excel). Section 8 and its spec name
+its columns (Sheet, Array Cell, Array Rows, Adjacent Table, Table Rows, Difference
+(Array − Table), Status) instead of letters. `build.py` derives the table formulas from the
+workbook's row-5 formulas with `recon_ref()` (C5 → `[@[Array Rows]]`, E5 → `[@[Table Rows]]`)
+and asserts the result. Array Rows and Table Rows name a different spill and table on each
+row, so they are not calculated columns.
 
 ## Logic Spec row
 
@@ -85,7 +94,7 @@ Section 9 has no spec: it is already a ranked list.
 
 | # | Spec frame | Frame id | Diagram id | Height |
 |---|---|---|---|---|
-| 0 | A planning week | 3458764685010249395 | 3458764685010249427 | 1548 |
+| 0 | A planning week | 3458764685010249395 | 3458764685010249427 | 1574 |
 | 1 | Master data | 3458764685010249396 | 3458764685010249428 | 1314 |
 | 2 | Business Central exports | 3458764685010477419 | 3458764685010477453 | 1204 |
 | 3 | Inventory, Sunday to Friday | 3458764685010477420 | 3458764685010477454 | 1262 |
@@ -93,7 +102,7 @@ Section 9 has no spec: it is already a ranked list.
 | 5 | DoughWeights | 3458764685010737227 | 3458764685010737263 | 1862 |
 | 6 | Mix-Slice-Oven | 3458764685011306340 | 3458764685011306377 | 1236 |
 | 7 | MCS and Breadline schedules | 3458764685011306341 | 3458764685011306378 | 1392 |
-| 8 | Recon | 3458764685010172627 | 3458764685010172645 | 1862 |
+| 8 | Recon | 3458764685010172627 | 3458764685010172645 | 1992 |
 
 ## Diagram placement
 

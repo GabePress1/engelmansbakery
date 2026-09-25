@@ -18,6 +18,7 @@ their top-left corner; these origins reproduce the board as it now stands.
 """
 import json
 import os
+import re
 import sys
 import xml.etree.ElementTree as ET
 
@@ -857,6 +858,29 @@ FRAMES.append({
 })
 
 # ---------------------------------------------------------------- 8 Recon
+# Recon!A4:G15 is the Excel table "Recon". Its row-5 formulas are read from the workbook and
+# re-written with the table's structured references (C5 -> [@[Array Rows]], E5 -> [@[Table Rows]]).
+RECON_COLS = ['Sheet', 'Array Cell', 'Array Rows', 'Adjacent Table', 'Table Rows',
+              'Difference (Array − Table)', 'Status']
+
+
+def recon_ref(formula):
+    out = re.sub(r'\bC5\b', '[@[Array Rows]]', formula)
+    return re.sub(r'\bE5\b', '[@[Table Rows]]', out)
+
+
+RECON_F = {
+    'Array Cell': recon_ref(X('Recon!B5')),
+    'Array Rows': X('Recon!C5'),
+    'Table Rows': X('Recon!E5'),
+    'Difference (Array − Table)': recon_ref(X('Recon!F5')),
+    'Status': recon_ref(X('Recon!G5')),
+}
+assert RECON_F['Difference (Array − Table)'] == '=[@[Array Rows]]-[@[Table Rows]]'
+assert RECON_F['Status'] == '=IF([@[Array Rows]]=[@[Table Rows]],"Match",IF([@[Table Rows]]>[@[Array Rows]],"Table longer","Array longer"))'
+assert RECON_F['Array Cell'] == '=SUBSTITUTE(MID(FORMULATEXT([@[Array Rows]]),FIND("!",FORMULATEXT([@[Array Rows]]))+1,99),")","")'
+assert [V(f'Recon!{c}4') for c in 'ABCDEFG'] == RECON_COLS
+
 recon_rows = []
 for r in range(5, 16):
     sheet, arr, rows, table, trows, diff, status = (V(f'Recon!{c}{r}') for c in 'ABCDEFG')
@@ -865,18 +889,18 @@ for r in range(5, 16):
             'Table longer': 'extra table rows below the spill show #N/A; harmless.',
             'Array longer': 'SKUs at the end of the spill have no table row and are silently dropped.'}[status]
     recon_rows.append(card(f'{table}: {status}', kind,
-                           f'{sheet}!{arr} has {rows} rows, table {table} has {trows}; difference {diff}. {status}: {note}'))
+                           f'Sheet {sheet}, Array Cell {arr}: Array Rows {rows}, Table Rows {trows}, Difference {diff}. {status}: {note}'))
 FRAMES.append({
     'title': '8. Recon',
-    'subtitle': 'One check per table: does the spilled row list have exactly as many rows as the table built beside it?',
+    'subtitle': 'The Recon table: one row per spilled row list, compared with the table built beside it.',
     'mermaid': r"""flowchart LR
 {classdef}
-    SP["Spill row lists&lt;br/&gt;A3, A8, A287, A4, A6, A410"]:::lookup
-    TB["Tables beside them&lt;br/&gt;Sunday to Friday, DSD_DSnD, Dist_DSnD,&lt;br/&gt;DoughWeight, Mix_Slice_Oven, Oven_Info"]:::lookup
-    C["C = ROWS(ANCHORARRAY(spill))"]:::calc
-    E["E = ROWS(Table[])"]:::calc
-    F["F = C - E"]:::calc
-    G{"G status"}:::calc
+    SP["Sheet, Array Cell&lt;br/&gt;spilled row lists A3, A8, A287, A4, A6, A410"]:::lookup
+    TB["Adjacent Table&lt;br/&gt;Sunday to Friday, DSD_DSnD, Dist_DSnD,&lt;br/&gt;DoughWeight, Mix_Slice_Oven, Oven_Info"]:::lookup
+    C["Array Rows =&lt;br/&gt;ROWS(ANCHORARRAY(spill))"]:::calc
+    E["Table Rows =&lt;br/&gt;ROWS(Table[])"]:::calc
+    F["Difference =&lt;br/&gt;Array Rows - Table Rows"]:::calc
+    G{"Status"}:::calc
     OK["Match"]:::calc
     TL["Table longer&lt;br/&gt;blank rows, harmless"]:::calc
     AL["Array longer&lt;br/&gt;SKUs silently dropped"]:::issue
@@ -886,15 +910,18 @@ FRAMES.append({
     E --> F
     F --> G
     G -->|"0"| OK
-    G -->|"E bigger"| TL
-    G -->|"C bigger"| AL
+    G -->|"Table Rows bigger"| TL
+    G -->|"Array Rows bigger"| AL
 """,
     'stacks': [
-        ('How each row works', [
-            card('B Array Cell', 'calc', f"Reads the spill address out of column C's own formula: {X('Recon!B5')}"),
-            card('C Array Rows', 'lookup', f"{X('Recon!C5')}, and the same for each sheet's row list."),
-            card('E Table Rows', 'lookup', f"{X('Recon!E5')}."),
-            card('F Difference, G Status', 'calc', f"F {X('Recon!F5')}. G {X('Recon!G5')}."),
+        ('Recon table columns', [
+            card('Sheet', 'input', 'Typed label: the sheet that holds the spilled row list (Sunday to Friday, Daily Supply & Demand, DoughWeights, Mix-Slice-Oven).'),
+            card('Array Cell', 'calc', f"Reads the spill address out of the Array Rows formula: {RECON_F['Array Cell']}"),
+            card('Array Rows', 'lookup', f"{RECON_F['Array Rows']} on the Sunday row; each row points at its own sheet's spill, so Excel flags the column as inconsistent. That is expected."),
+            card('Adjacent Table', 'input', 'Typed label: the Excel table built beside that row list (Sunday to Friday, DSD_DSnD, Dist_DSnD, DoughWeight, Mix_Slice_Oven, Oven_Info).'),
+            card('Table Rows', 'lookup', f"{RECON_F['Table Rows']} on the Sunday row; each row names its own table, so this column is not a calculated column either."),
+            card('Difference (Array − Table)', 'calc', f"{RECON_F['Difference (Array − Table)']}. Positive means SKUs are missing from the table."),
+            card('Status', 'calc', f"{RECON_F['Status']}"),
             card('What Recon does not check', 'note', 'It only counts rows. It would not catch the BOM double count, K4 not matching today, the stale Sunday!B1 date, the dead order grids or #N/A values inside matching tables.'),
         ]),
         ('Checks as saved', recon_rows),

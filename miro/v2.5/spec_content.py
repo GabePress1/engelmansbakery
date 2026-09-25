@@ -9,7 +9,7 @@ Writes specs.json for spec.py.
 import json
 import os
 
-from build import T, X
+from build import RECON_F, T, X
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
@@ -73,7 +73,7 @@ o1 --> e''',
         f"**Balance and production** {T('DSD_DSnD', 'S_Balanace')}, then S_Production {T('DSD_DSnD', 'S_Production')}. Negative means bake.",
         f"**Breadline bags (O1)** {X('Mix-Slice-Oven!O1')}",
         f"**MCS bags (O2)** {X('Mix-Slice-Oven!O2')}. The MCS Schedule shows it in H2: {X('MCS Schedule!H2')}.",
-        f"**Recon status (G5)** {X('Recon!G5')}",
+        f"**Recon[Status]** {RECON_F['Status']}",
     ],
     'example': [
         '**Anchor** H2 = 2026-09-20. Sample dates run 9/14 to 9/19; the Sun/Mon average also reads 9/7, 8/31 and 8/24.',
@@ -583,22 +583,22 @@ nt -.-> out''',
 SPECS.append({
     'section': 8,
     'title': '8. Recon: Logic Spec',
-    'subtitle': 'Each check row compares a spilled row list with the table beside it.',
+    'subtitle': 'Each row of the Recon table compares a spilled row list with the table beside it.',
     'mermaid': '''flowchart TD
-s(["One Recon check row"]):::terminator
-b["B: read the spill address from<br/>column C's formula text"]:::calc
-c[/"C = ROWS(ANCHORARRAY(spill))"/]:::lookup
-t[/"E = ROWS(Table[])"/]:::lookup
-f["F = C - E"]:::calc
-g1{{"C = E?"}}:::decision
-m(["Match: every SKU has a row"]):::terminator
-g2{{"E bigger than C?"}}:::decision
-tl["Table longer: extra rows<br/>show N/A, harmless"]:::output
-al["Array longer: the last SKUs<br/>have no table row"]:::issue
+s(["One row of the Recon table"]):::terminator
+b["Array Cell: read the spill address<br/>from the Array Rows formula text"]:::calc
+c[/"Array Rows = ROWS(ANCHORARRAY(spill))"/]:::lookup
+t[/"Table Rows = ROWS(Adjacent Table[])"/]:::lookup
+f["Difference = Array Rows - Table Rows"]:::calc
+g1{{"Array Rows = Table Rows?"}}:::decision
+m(["Status Match: every SKU has a row"]):::terminator
+g2{{"Table Rows bigger?"}}:::decision
+tl["Status Table longer: extra rows<br/>show N/A, harmless"]:::output
+al["Status Array longer: the last SKUs<br/>have no table row"]:::issue
 fix[/"Resize the table to the spill"/]:::input
 nc["Not checked: values inside rows,<br/>BOM weights, K4, dates"]:::output
-s --> b
-b --> c
+s --> c
+c --> b
 s --> t
 c --> f
 t --> f
@@ -611,22 +611,22 @@ al --> fix
 tl -.-> fix
 m -.-> nc''',
     'inputs': [
-        '**Spill row lists**: Sunday to Friday A3, Daily Supply & Demand A8 and A287, DoughWeights A4, Mix-Slice-Oven A6 and A410.',
-        '**Tables beside them**: Sunday to Friday, DSD_DSnD, Dist_DSnD, DoughWeight, Mix_Slice_Oven, Oven_Info.',
-        '**Sheet and table names** in columns A and D: typed labels.',
+        '**Sheet** and **Adjacent Table**: typed labels in the Recon table.',
+        '**Spilled row lists**: Sunday to Friday A3, Daily Supply & Demand A8 and A287, DoughWeights A4, Mix-Slice-Oven A6 and A410.',
+        '**Adjacent tables**: Sunday to Friday, DSD_DSnD, Dist_DSnD, DoughWeight, Mix_Slice_Oven, Oven_Info.',
     ],
     'formulas': [
-        f"**B Array Cell** {X('Recon!B5')}",
-        f"**C Array Rows** {X('Recon!C5')}",
-        f"**E Table Rows** {X('Recon!E5')}",
-        f"**F Difference** {X('Recon!F5')}",
-        f"**G Status** {X('Recon!G5')}",
+        f"**Array Cell** {RECON_F['Array Cell']}",
+        f"**Array Rows** {RECON_F['Array Rows']} (Sunday row; each row names its own spill)",
+        f"**Table Rows** {RECON_F['Table Rows']} (Sunday row; each row names its own table)",
+        f"**Difference (Array − Table)** {RECON_F['Difference (Array − Table)']}",
+        f"**Status** {RECON_F['Status']}",
     ],
     'example': [
-        '**DoughWeight (row 15)**: DoughWeights!A4# has 453 rows, the table 452. F = 1, Array longer: the last SKU, F2562, gets no formulas.',
-        '**Wednesday (row 8)**: 395 against 447. F = -52, Table longer: 52 rows of N/A under the list.',
-        '**Mix_Slice_Oven (row 13)**: 390 against 391. Table longer by 1.',
-        '**Sunday, Monday, DSD_DSnD, Dist_DSnD**: Match.',
+        '**DoughWeight**: Array Rows 453 (DoughWeights A4#), Table Rows 452, Difference 1, Status Array longer: the last SKU, F2562, gets no formulas.',
+        '**Wednesday**: Array Rows 395, Table Rows 447, Difference -52, Status Table longer: 52 rows of N/A under the list.',
+        '**Mix_Slice_Oven**: Array Rows 390, Table Rows 391, Difference -1, Status Table longer.',
+        '**Sunday, Monday, DSD_DSnD, Dist_DSnD**: Status Match.',
     ],
     'questions': [
         'Should Recon also count N/A errors inside each table?',

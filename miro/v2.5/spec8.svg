@@ -1,20 +1,20 @@
 <svg xmlns="http://www.w3.org/2000/svg">
 <g id="sf8" transform="translate(31808,2910)" data-frame="8. Recon: Logic Spec">
-  <rect data-type="frame" x="0" y="0" width="2464" height="1862" fill="#ffffff" data-title="8. Recon: Logic Spec"/>
+  <rect data-type="frame" x="0" y="0" width="2464" height="1992" fill="#ffffff" data-title="8. Recon: Logic Spec"/>
   <textArea id="st8" x="64" y="53" width="2336" font-size="67" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">8. Recon: Logic Spec</textArea>
-  <textArea id="ss8" x="64" y="162" width="2336" font-size="22" font-family="noto_sans" fill="#595959">Each check row compares a spilled row list with the table beside it.</textArea>
-  <rect id="sp8_0" x="1728" y="240" width="672" height="333" rx="12" fill="#f7f7f7" stroke="#e7e7e7"/>
+  <textArea id="ss8" x="64" y="162" width="2336" font-size="22" font-family="noto_sans" fill="#595959">Each row of the Recon table compares a spilled row list with the table beside it.</textArea>
+  <rect id="sp8_0" x="1728" y="240" width="672" height="359" rx="12" fill="#f7f7f7" stroke="#e7e7e7"/>
   <textArea id="sh8_0" x="1760" y="272" width="608" font-size="26" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">Inputs</textArea>
-  <textArea id="sb8_0" x="1760" y="325" width="608" font-size="18" font-family="noto_sans" fill="#313131"><b>Spill row lists</b>: Sunday to Friday A3, Daily Supply &amp; Demand A8 and A287, DoughWeights A4, Mix-Slice-Oven A6 and A410.<br/><br/><b>Tables beside them</b>: Sunday to Friday, DSD_DSnD, Dist_DSnD, DoughWeight, Mix_Slice_Oven, Oven_Info.<br/><br/><b>Sheet and table names</b> in columns A and D: typed labels.</textArea>
-  <rect id="sp8_1" x="1728" y="605" width="672" height="411" rx="12" fill="#f7f7f7" stroke="#e7e7e7"/>
-  <textArea id="sh8_1" x="1760" y="637" width="608" font-size="26" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">Formula reference</textArea>
-  <textArea id="sb8_1" x="1760" y="690" width="608" font-size="18" font-family="noto_sans" fill="#313131"><b>B Array Cell</b> =SUBSTITUTE(MID(FORMULATEXT(C5),FIND("!",FORMULATEXT(C5))+1,99),")","")<br/><br/><b>C Array Rows</b> =ROWS(ANCHORARRAY(Sunday!A3))<br/><br/><b>E Table Rows</b> =ROWS(Sunday[])<br/><br/><b>F Difference</b> =C5-E5<br/><br/><b>G Status</b> =IF(C5=E5,"Match",IF(E5&gt;C5,"Table longer","Array longer"))</textArea>
-  <rect id="sp8_2" x="1728" y="1048" width="672" height="411" rx="12" fill="#f7f7f7" stroke="#e7e7e7"/>
-  <textArea id="sh8_2" x="1760" y="1080" width="608" font-size="26" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">Worked example</textArea>
-  <textArea id="sb8_2" x="1760" y="1133" width="608" font-size="18" font-family="noto_sans" fill="#313131"><b>DoughWeight (row 15)</b>: DoughWeights!A4# has 453 rows, the table 452. F = 1, Array longer: the last SKU, F2562, gets no formulas.<br/><br/><b>Wednesday (row 8)</b>: 395 against 447. F = -52, Table longer: 52 rows of N/A under the list.<br/><br/><b>Mix_Slice_Oven (row 13)</b>: 390 against 391. Table longer by 1.<br/><br/><b>Sunday, Monday, DSD_DSnD, Dist_DSnD</b>: Match.</textArea>
-  <rect id="sp8_3" x="1728" y="1491" width="672" height="307" rx="12" fill="#f7f7f7" stroke="#e7e7e7"/>
-  <textArea id="sh8_3" x="1760" y="1523" width="608" font-size="26" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">Open questions</textArea>
-  <textArea id="sb8_3" x="1760" y="1576" width="608" font-size="18" font-family="noto_sans" fill="#313131">Should Recon also count N/A errors inside each table?<br/><br/>Should any status other than Match turn a header red so it is seen before printing?<br/><br/>Should Recon compare Sunday!B1 with the anchor date and K4 with today's day?</textArea>
+  <textArea id="sb8_0" x="1760" y="325" width="608" font-size="18" font-family="noto_sans" fill="#313131"><b>Sheet</b> and <b>Adjacent Table</b>: typed labels in the Recon table.<br/><br/><b>Spilled row lists</b>: Sunday to Friday A3, Daily Supply &amp; Demand A8 and A287, DoughWeights A4, Mix-Slice-Oven A6 and A410.<br/><br/><b>Adjacent tables</b>: Sunday to Friday, DSD_DSnD, Dist_DSnD, DoughWeight, Mix_Slice_Oven, Oven_Info.</textArea>
+  <rect id="sp8_1" x="1728" y="631" width="672" height="515" rx="12" fill="#f7f7f7" stroke="#e7e7e7"/>
+  <textArea id="sh8_1" x="1760" y="663" width="608" font-size="26" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">Formula reference</textArea>
+  <textArea id="sb8_1" x="1760" y="716" width="608" font-size="18" font-family="noto_sans" fill="#313131"><b>Array Cell</b> =SUBSTITUTE(MID(FORMULATEXT([@[Array Rows]]),FIND("!",FORMULATEXT([@[Array Rows]]))+1,99),")","")<br/><br/><b>Array Rows</b> =ROWS(ANCHORARRAY(Sunday!A3)) (Sunday row; each row names its own spill)<br/><br/><b>Table Rows</b> =ROWS(Sunday[]) (Sunday row; each row names its own table)<br/><br/><b>Difference (Array − Table)</b> =[@[Array Rows]]-[@[Table Rows]]<br/><br/><b>Status</b> =IF([@[Array Rows]]=[@[Table Rows]],"Match",IF([@[Table Rows]]&gt;[@[Array Rows]],"Table longer","Array longer"))</textArea>
+  <rect id="sp8_2" x="1728" y="1178" width="672" height="411" rx="12" fill="#f7f7f7" stroke="#e7e7e7"/>
+  <textArea id="sh8_2" x="1760" y="1210" width="608" font-size="26" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">Worked example</textArea>
+  <textArea id="sb8_2" x="1760" y="1263" width="608" font-size="18" font-family="noto_sans" fill="#313131"><b>DoughWeight</b>: Array Rows 453 (DoughWeights A4#), Table Rows 452, Difference 1, Status Array longer: the last SKU, F2562, gets no formulas.<br/><br/><b>Wednesday</b>: Array Rows 395, Table Rows 447, Difference -52, Status Table longer: 52 rows of N/A under the list.<br/><br/><b>Mix_Slice_Oven</b>: Array Rows 390, Table Rows 391, Difference -1, Status Table longer.<br/><br/><b>Sunday, Monday, DSD_DSnD, Dist_DSnD</b>: Status Match.</textArea>
+  <rect id="sp8_3" x="1728" y="1621" width="672" height="307" rx="12" fill="#f7f7f7" stroke="#e7e7e7"/>
+  <textArea id="sh8_3" x="1760" y="1653" width="608" font-size="26" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">Open questions</textArea>
+  <textArea id="sb8_3" x="1760" y="1706" width="608" font-size="18" font-family="noto_sans" fill="#313131">Should Recon also count N/A errors inside each table?<br/><br/>Should any status other than Match turn a header red so it is seen before printing?<br/><br/>Should Recon compare Sunday!B1 with the anchor date and K4 with today's day?</textArea>
   <foreignObject id="sd8" x="64" y="240" width="1600" height="900" data-type="diagram" data-title="8. Recon: Logic Spec">
 flowchart TD
     classDef terminator fill:#FFFFFF,stroke:#757575,color:#313131
@@ -26,20 +26,20 @@ flowchart TD
     classDef output fill:#DDDDD8,stroke:#8A8A7E,color:#434339
     classDef issue fill:#FFC6C6,stroke:#BD0A0A,color:#5C0A0A
 
-    s(["One Recon check row"]):::terminator
-    b["B: read the spill address from&lt;br/&gt;column C's formula text"]:::calc
-    c[/"C = ROWS(ANCHORARRAY(spill))"/]:::lookup
-    t[/"E = ROWS(Table[])"/]:::lookup
-    f["F = C - E"]:::calc
-    g1{{"C = E?"}}:::decision
-    m(["Match: every SKU has a row"]):::terminator
-    g2{{"E bigger than C?"}}:::decision
-    tl["Table longer: extra rows&lt;br/&gt;show N/A, harmless"]:::output
-    al["Array longer: the last SKUs&lt;br/&gt;have no table row"]:::issue
+    s(["One row of the Recon table"]):::terminator
+    b["Array Cell: read the spill address&lt;br/&gt;from the Array Rows formula text"]:::calc
+    c[/"Array Rows = ROWS(ANCHORARRAY(spill))"/]:::lookup
+    t[/"Table Rows = ROWS(Adjacent Table[])"/]:::lookup
+    f["Difference = Array Rows - Table Rows"]:::calc
+    g1{{"Array Rows = Table Rows?"}}:::decision
+    m(["Status Match: every SKU has a row"]):::terminator
+    g2{{"Table Rows bigger?"}}:::decision
+    tl["Status Table longer: extra rows&lt;br/&gt;show N/A, harmless"]:::output
+    al["Status Array longer: the last SKUs&lt;br/&gt;have no table row"]:::issue
     fix[/"Resize the table to the spill"/]:::input
     nc["Not checked: values inside rows,&lt;br/&gt;BOM weights, K4, dates"]:::output
-    s --&gt; b
-    b --&gt; c
+    s --&gt; c
+    c --&gt; b
     s --&gt; t
     c --&gt; f
     t --&gt; f

@@ -19,7 +19,7 @@
    "**Balance and production** =([@S_Freeze]+[@S_Floor])-[@S_Demand], then S_Production =[@S_Balanace]. Negative means bake.",
    "**Breadline bags (O1)** =SUM(SUMIFS(Mix_Slice_Oven[Planned Total],Mix_Slice_Oven[Asset],{\"Breadline\",\"Breadline/Artisan\"}))",
    "**MCS bags (O2)** =SUM(SUMIFS(Mix_Slice_Oven[Planned Total],Mix_Slice_Oven[Asset],\"MCS LINE\")). The MCS Schedule shows it in H2: ='Mix-Slice-Oven'!O2.",
-   "**Recon status (G5)** =IF(C5=E5,\"Match\",IF(E5>C5,\"Table longer\",\"Array longer\"))"
+   "**Recon[Status]** =IF([@[Array Rows]]=[@[Table Rows]],\"Match\",IF([@[Table Rows]]>[@[Array Rows]],\"Table longer\",\"Array longer\"))"
   ],
   "example": [
    "**Anchor** H2 = 2026-09-20. Sample dates run 9/14 to 9/19; the Sun/Mon average also reads 9/7, 8/31 and 8/24.",
@@ -277,25 +277,25 @@
  {
   "section": 8,
   "title": "8. Recon: Logic Spec",
-  "subtitle": "Each check row compares a spilled row list with the table beside it.",
-  "mermaid": "flowchart TD\ns([\"One Recon check row\"]):::terminator\nb[\"B: read the spill address from<br/>column C's formula text\"]:::calc\nc[/\"C = ROWS(ANCHORARRAY(spill))\"/]:::lookup\nt[/\"E = ROWS(Table[])\"/]:::lookup\nf[\"F = C - E\"]:::calc\ng1{{\"C = E?\"}}:::decision\nm([\"Match: every SKU has a row\"]):::terminator\ng2{{\"E bigger than C?\"}}:::decision\ntl[\"Table longer: extra rows<br/>show N/A, harmless\"]:::output\nal[\"Array longer: the last SKUs<br/>have no table row\"]:::issue\nfix[/\"Resize the table to the spill\"/]:::input\nnc[\"Not checked: values inside rows,<br/>BOM weights, K4, dates\"]:::output\ns --> b\nb --> c\ns --> t\nc --> f\nt --> f\nf --> g1\ng1 -->|\"Yes\"| m\ng1 -->|\"No\"| g2\ng2 -->|\"Yes\"| tl\ng2 -->|\"No\"| al\nal --> fix\ntl -.-> fix\nm -.-> nc",
+  "subtitle": "Each row of the Recon table compares a spilled row list with the table beside it.",
+  "mermaid": "flowchart TD\ns([\"One row of the Recon table\"]):::terminator\nb[\"Array Cell: read the spill address<br/>from the Array Rows formula text\"]:::calc\nc[/\"Array Rows = ROWS(ANCHORARRAY(spill))\"/]:::lookup\nt[/\"Table Rows = ROWS(Adjacent Table[])\"/]:::lookup\nf[\"Difference = Array Rows - Table Rows\"]:::calc\ng1{{\"Array Rows = Table Rows?\"}}:::decision\nm([\"Status Match: every SKU has a row\"]):::terminator\ng2{{\"Table Rows bigger?\"}}:::decision\ntl[\"Status Table longer: extra rows<br/>show N/A, harmless\"]:::output\nal[\"Status Array longer: the last SKUs<br/>have no table row\"]:::issue\nfix[/\"Resize the table to the spill\"/]:::input\nnc[\"Not checked: values inside rows,<br/>BOM weights, K4, dates\"]:::output\ns --> c\nc --> b\ns --> t\nc --> f\nt --> f\nf --> g1\ng1 -->|\"Yes\"| m\ng1 -->|\"No\"| g2\ng2 -->|\"Yes\"| tl\ng2 -->|\"No\"| al\nal --> fix\ntl -.-> fix\nm -.-> nc",
   "inputs": [
-   "**Spill row lists**: Sunday to Friday A3, Daily Supply & Demand A8 and A287, DoughWeights A4, Mix-Slice-Oven A6 and A410.",
-   "**Tables beside them**: Sunday to Friday, DSD_DSnD, Dist_DSnD, DoughWeight, Mix_Slice_Oven, Oven_Info.",
-   "**Sheet and table names** in columns A and D: typed labels."
+   "**Sheet** and **Adjacent Table**: typed labels in the Recon table.",
+   "**Spilled row lists**: Sunday to Friday A3, Daily Supply & Demand A8 and A287, DoughWeights A4, Mix-Slice-Oven A6 and A410.",
+   "**Adjacent tables**: Sunday to Friday, DSD_DSnD, Dist_DSnD, DoughWeight, Mix_Slice_Oven, Oven_Info."
   ],
   "formulas": [
-   "**B Array Cell** =SUBSTITUTE(MID(FORMULATEXT(C5),FIND(\"!\",FORMULATEXT(C5))+1,99),\")\",\"\")",
-   "**C Array Rows** =ROWS(ANCHORARRAY(Sunday!A3))",
-   "**E Table Rows** =ROWS(Sunday[])",
-   "**F Difference** =C5-E5",
-   "**G Status** =IF(C5=E5,\"Match\",IF(E5>C5,\"Table longer\",\"Array longer\"))"
+   "**Array Cell** =SUBSTITUTE(MID(FORMULATEXT([@[Array Rows]]),FIND(\"!\",FORMULATEXT([@[Array Rows]]))+1,99),\")\",\"\")",
+   "**Array Rows** =ROWS(ANCHORARRAY(Sunday!A3)) (Sunday row; each row names its own spill)",
+   "**Table Rows** =ROWS(Sunday[]) (Sunday row; each row names its own table)",
+   "**Difference (Array \u2212 Table)** =[@[Array Rows]]-[@[Table Rows]]",
+   "**Status** =IF([@[Array Rows]]=[@[Table Rows]],\"Match\",IF([@[Table Rows]]>[@[Array Rows]],\"Table longer\",\"Array longer\"))"
   ],
   "example": [
-   "**DoughWeight (row 15)**: DoughWeights!A4# has 453 rows, the table 452. F = 1, Array longer: the last SKU, F2562, gets no formulas.",
-   "**Wednesday (row 8)**: 395 against 447. F = -52, Table longer: 52 rows of N/A under the list.",
-   "**Mix_Slice_Oven (row 13)**: 390 against 391. Table longer by 1.",
-   "**Sunday, Monday, DSD_DSnD, Dist_DSnD**: Match."
+   "**DoughWeight**: Array Rows 453 (DoughWeights A4#), Table Rows 452, Difference 1, Status Array longer: the last SKU, F2562, gets no formulas.",
+   "**Wednesday**: Array Rows 395, Table Rows 447, Difference -52, Status Table longer: 52 rows of N/A under the list.",
+   "**Mix_Slice_Oven**: Array Rows 390, Table Rows 391, Difference -1, Status Table longer.",
+   "**Sunday, Monday, DSD_DSnD, Dist_DSnD**: Status Match."
   ],
   "questions": [
    "Should Recon also count N/A errors inside each table?",
