@@ -69,8 +69,8 @@ def check_layout():
         for b in frames[i + 1:]:
             if overlap(a[2], b[2]):
                 problems.append(f'frames overlap: {a[1]} {b[1]}')
-    # the Logic Spec row (spec*.svg) must clear the main row and itself; its panels hold
-    # their text by design, so only whole frames are compared
+    # the Logic Spec row (spec*.svg) must clear the main row and itself; inside a spec
+    # there is only the flowchart and a Doc that Miro sizes, so whole frames are compared
     manifest = os.path.join(HERE, 'spec_manifest.json')
     if os.path.exists(manifest):
         specs = [(f"sf{m['section']}", (m['x'], m['y'], m['w'], m['h'])) for m in json.load(open(manifest))]

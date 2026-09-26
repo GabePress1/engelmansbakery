@@ -1,20 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg">
 <g id="sf6" transform="translate(23968,2910)" data-frame="6. Mix_Slice: Logic Spec">
-  <rect data-type="frame" x="0" y="0" width="3872" height="1261" fill="#ffffff" data-title="6. Mix_Slice: Logic Spec"/>
+  <rect data-type="frame" x="0" y="0" width="3872" height="1814" fill="#ffffff" data-title="6. Mix_Slice: Logic Spec"/>
   <textArea id="st6" x="64" y="53" width="3744" font-size="67" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">6. Mix_Slice: Logic Spec</textArea>
   <textArea id="ss6" x="64" y="162" width="3744" font-size="22" font-family="noto_sans" fill="#595959">One run on one day: bags round up to whole mixes, minutes follow, and Asset puts the run on Breadline or MCS.</textArea>
-  <rect id="sp6_0" x="1728" y="240" width="672" height="411" rx="12" fill="#f7f7f7" stroke="#e7e7e7"/>
-  <textArea id="sh6_0" x="1760" y="272" width="608" font-size="26" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">Inputs</textArea>
-  <textArea id="sb6_0" x="1760" y="325" width="608" font-size="18" font-family="noto_sans" fill="#313131"><b>K4</b> (Mix-Slice-Oven!K4): the day for Planned Total and O1/O2, typed. This week Tuesday.<br/><br/><b>DoughWeight lb</b> per SKU and day; <b>Dough Weight</b> (Dough I) = lb in one bag.<br/><br/><b>Scrap Factor</b> (Products); <b>optimal bags per mix</b> and <b>Run Time Per Mix</b> (Unique Dough Optimal Bag and Optimal Time).<br/><br/><b>Asset</b> (Products): Breadline or Breadline/Artisan = Breadline; MCS LINE = MCS.</textArea>
-  <rect id="sp6_1" x="2432" y="240" width="672" height="957" rx="12" fill="#f7f7f7" stroke="#e7e7e7"/>
-  <textArea id="sh6_1" x="2464" y="272" width="608" font-size="26" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">Formula reference</textArea>
-  <textArea id="sb6_1" x="2464" y="325" width="608" font-size="18" font-family="noto_sans" fill="#313131"><b>L Dough Weight</b> =IFERROR(ROUND(LET(d,MATCH($K$4,{"Sunday","Monday","Tuesday","Wednesday","Thursday","Friday"},0),XLOOKUP([@Sku],DoughWeight[Sku],CHOOSE(d,DoughWeight[Sun],DoughWeight[Mon],DoughWeight[Tue],DoughWeight[Wed],DoughWeight[Thur],DoughWeight[Fri]))/XLOOKUP([@Dough],Dough[No.],Dough[Weight])),2)*[@Scrap Factor],"")<br/><br/><b>N Optimal Total</b> =IFERROR(IF(LEFT([@Sku],1)="D",SUMIFS(Mix_Slice[Optimal Total],Mix_Slice[Dough],[@Sku],Mix_Slice[Asset],D8),IF(OR([@Unique Dough]="Marble Hearth",[@Unique Dough]="Marble Lg Pullman"),CEILING([@Bags By Unique Dough],[@optimal bags per mix])*2.5,CEILING([@Bags By Unique Dough],[@optimal bags per mix]))),"")<br/><br/><b>S_Minutes</b> =IF(LEFT([@Sku],1)="D","",IFERROR(([@S_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]="Marble Hearth",[@Unique Dough]="Marble Lg Pullman"),2.5,1),0))<br/><br/><b>O1 Breadline / O2 MCS bags</b> =SUM(SUMIFS(Mix_Slice[Planned Total],Mix_Slice[Asset],{"Breadline","Breadline/Artisan"})); =SUM(SUMIFS(Mix_Slice[Planned Total],Mix_Slice[Asset],"MCS LINE"))<br/><br/><b>Row 1 Breadline, Sunday</b> bags =SUM(SUMIFS(Mix_Slice[S_Planned],Mix_Slice[Asset],{"Breadline","Breadline/Artisan"})), hours =SUM(SUMIFS(Mix_Slice[S_Minutes],Mix_Slice[Asset],{"Breadline","Breadline/Artisan"}))/60<br/><br/><b>Row 2 MCS, Sunday</b> bags =SUM(SUMIFS(Mix_Slice[S_Planned],Mix_Slice[Asset],"MCS LINE")), hours =SUM(SUMIFS(Mix_Slice[S_Minutes],Mix_Slice[Asset],"MCS LINE"))/60</textArea>
-  <rect id="sp6_2" x="3136" y="240" width="672" height="619" rx="12" fill="#f7f7f7" stroke="#e7e7e7"/>
-  <textArea id="sh6_2" x="3168" y="272" width="608" font-size="26" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">Worked example</textArea>
-  <textArea id="sb6_2" x="3168" y="325" width="608" font-size="18" font-family="noto_sans" fill="#313131"><b>Breadline: Challah 3 Braided, Tuesday</b>: M 1.298 bags, 1 bag per mix: N = 2, Planned 2, minutes 2 / 1 x 30 = 60.<br/><br/><b>MCS: 6" Italian Rolls, Tuesday</b>: M 8.415 bags, 4 bags per mix: N = 12, 3 mixes x 20 min = 60.<br/><br/><b>Breadline Marble Hearth, Tuesday</b>: M 1.672: CEILING = 2, x 2.5 = 5 bags; minutes 5 / 1 x 45 / 2.5 = 90.<br/><br/><b>Breadline by day</b>: bags Sun 48, Mon 50.5, Tue 54.5, Wed 53.5, Thu 76.5, Fri 135.5; hours Sun 8.5, Mon 7.25, Tue 9.92, Wed 9.2, Thu 13.08, Fri 22.7.<br/><br/><b>MCS by day</b>: bags Sun 174, Mon 200, Tue 180, Wed 188, Thu 219, Fri 255; hours Sun 16.08, Mon 18.58, Tue 16.92, Wed 17.5, Thu 20.42, Fri 25.25.<br/><br/><b>K4 day (Tuesday)</b>: O1 54.5 and O2 180 bags, the same as row 1 and row 2 Tuesday.</textArea>
-  <rect id="sp6_3" x="1728" y="683" width="672" height="411" rx="12" fill="#f7f7f7" stroke="#e7e7e7"/>
-  <textArea id="sh6_3" x="1760" y="715" width="608" font-size="26" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">Open questions</textArea>
-  <textArea id="sb6_3" x="1760" y="768" width="608" font-size="18" font-family="noto_sans" fill="#313131">Should K4 follow today's date by default, and should there be a K4-day hours cell next to O1 and O2?<br/><br/>Should MCS changeover minutes, which exist only on the MCS Schedule, count in the MCS hours?<br/><br/>The per-day blocks round after scrap while L rounds before: which is intended?<br/><br/>Should Extra Bread (Runout) in column X add to the bags before they are rounded up?</textArea>
   <foreignObject id="sd6" x="64" y="240" width="1600" height="900" data-type="diagram" data-title="6. Mix_Slice: Logic Spec">
 flowchart TD
     classDef terminator fill:#FFFFFF,stroke:#757575,color:#313131
@@ -26,37 +14,80 @@ flowchart TD
     classDef output fill:#DDDDD8,stroke:#8A8A7E,color:#434339
     classDef issue fill:#FFC6C6,stroke:#BD0A0A,color:#5C0A0A
 
-    s(["One Unique Dough run, one day"]):::terminator
-    lbd[/"lb for that day from DoughWeight"/]:::lookup
-    l["L = ROUND(lb / Dough Weight, 2)&lt;br/&gt;x Scrap Factor, for each SKU"]:::calc
-    m["M = SUMIFS of L over the run,&lt;br/&gt;on its first row"]:::calc
-    marble{{"Marble Hearth or&lt;br/&gt;Marble Lg Pullman?"}}:::decision
-    n1["N = CEILING(M, bags per mix)"]:::calc
-    n2["N = CEILING(M, bags per mix) x 2.5"]:::calc
-    o["O Planned Total = N,&lt;br/&gt;type over it to override"]:::calc
-    mins["Minutes = Planned / bags per mix&lt;br/&gt;x minutes per mix, Marble / 2.5"]:::calc
-    line{{"Asset?"}}:::decision
-    bl["Breadline or Breadline/Artisan:&lt;br/&gt;O1 bags, row 1 bags and hours"]:::output
-    mcs["MCS LINE:&lt;br/&gt;O2 bags, row 2 bags and hours"]:::output
-    sch(["Schedules print H2 bags"]):::terminator
-    dsd["Daily Supply and Demand&lt;br/&gt;rows 1-4 per day"]:::output
-    s --&gt; lbd
-    lbd --&gt; l
-    l --&gt; m
-    m --&gt; marble
-    marble --&gt;|"No"| n1
-    marble --&gt;|"Yes"| n2
-    n1 --&gt; o
-    n2 --&gt; o
-    o --&gt; mins
-    o --&gt; line
-    mins --&gt; line
-    line --&gt;|"Breadline"| bl
-    line --&gt;|"MCS LINE"| mcs
-    bl --&gt; sch
-    mcs --&gt; sch
-    bl --&gt; dsd
-    mcs --&gt; dsd
+    subgraph row1["1. Bags for each SKU, then the run"]
+        direction LR
+        s(["One Unique Dough run, one day"]):::terminator
+        lbd[/"lb for that day from DoughWeight"/]:::lookup
+        l["L = ROUND(lb / Dough Weight, 2)&lt;br/&gt;x Scrap Factor, for each SKU"]:::calc
+        m["M = SUMIFS of L over the run,&lt;br/&gt;on its first row"]:::calc
+        s --&gt; lbd
+        lbd --&gt; l
+        l --&gt; m
+    end
+    subgraph row2["2. Round up to whole mixes, then minutes"]
+        direction LR
+        marble{{"Marble Hearth or&lt;br/&gt;Marble Lg Pullman?"}}:::decision
+        n1["N = CEILING(M, bags per mix)"]:::calc
+        n2["N = CEILING(M, bags per mix) x 2.5"]:::calc
+        o["O Planned Total = N,&lt;br/&gt;type over it to override"]:::calc
+        mins["Minutes = Planned / bags per mix&lt;br/&gt;x minutes per mix, Marble / 2.5"]:::calc
+        marble --&gt;|"No"| n1
+        marble --&gt;|"Yes"| n2
+        n1 --&gt; o
+        n2 --&gt; o
+        o --&gt; mins
+    end
+    subgraph row3["3. Breadline or MCS"]
+        direction LR
+        line{{"Asset?"}}:::decision
+        bl["Breadline or Breadline/Artisan:&lt;br/&gt;O1 bags, row 1 bags and hours"]:::output
+        mcs["MCS LINE:&lt;br/&gt;O2 bags, row 2 bags and hours"]:::output
+        sch(["Schedules print H2 bags"]):::terminator
+        dsd["Daily Supply and Demand&lt;br/&gt;rows 1-4 per day"]:::output
+        line --&gt;|"Breadline"| bl
+        line --&gt;|"MCS LINE"| mcs
+        bl --&gt; sch
+        mcs --&gt; sch
+        bl --&gt; dsd
+        mcs --&gt; dsd
+    end
+    row1 --&gt;|"M bags for the run"| row2
+    row2 --&gt;|"planned bags and minutes"| row3
+</foreignObject>
+  <foreignObject id="doc6" x="1728" y="240" width="784" height="1470" data-type="doc">
+# 6. Mix_Slice: details
+
+## Inputs
+
+- **K4** (Mix-Slice-Oven!K4): the day for Planned Total and O1/O2, typed. This week Tuesday.
+- **DoughWeight lb** per SKU and day; **Dough Weight** (Dough I) = lb in one bag.
+- **Scrap Factor** (Products); **optimal bags per mix** and **Run Time Per Mix** (Unique Dough Optimal Bag and Optimal Time).
+- **Asset** (Products): Breadline or Breadline/Artisan = Breadline; MCS LINE = MCS.
+
+## Formula reference
+
+- **L Dough Weight**: `=IFERROR(ROUND(LET(d,MATCH($K$4,{"Sunday","Monday","Tuesday","Wednesday","Thursday","Friday"},0),XLOOKUP([@Sku],DoughWeight[Sku],CHOOSE(d,DoughWeight[Sun],DoughWeight[Mon],DoughWeight[Tue],DoughWeight[Wed],DoughWeight[Thur],DoughWeight[Fri]))/XLOOKUP([@Dough],Dough[No.],Dough[Weight])),2)*[@Scrap Factor],"")`
+- **N Optimal Total**: `=IFERROR(IF(LEFT([@Sku],1)="D",SUMIFS(Mix_Slice[Optimal Total],Mix_Slice[Dough],[@Sku],Mix_Slice[Asset],D8),IF(OR([@Unique Dough]="Marble Hearth",[@Unique Dough]="Marble Lg Pullman"),CEILING([@Bags By Unique Dough],[@optimal bags per mix])*2.5,CEILING([@Bags By Unique Dough],[@optimal bags per mix]))),"")`
+- **S_Minutes**: `=IF(LEFT([@Sku],1)="D","",IFERROR(([@S_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]="Marble Hearth",[@Unique Dough]="Marble Lg Pullman"),2.5,1),0))`
+- **O1 Breadline / O2 MCS bags**: `=SUM(SUMIFS(Mix_Slice[Planned Total],Mix_Slice[Asset],{"Breadline","Breadline/Artisan"}))`; `=SUM(SUMIFS(Mix_Slice[Planned Total],Mix_Slice[Asset],"MCS LINE"))`
+- **Row 1 Breadline, Sunday**: bags `=SUM(SUMIFS(Mix_Slice[S_Planned],Mix_Slice[Asset],{"Breadline","Breadline/Artisan"}))`, hours `=SUM(SUMIFS(Mix_Slice[S_Minutes],Mix_Slice[Asset],{"Breadline","Breadline/Artisan"}))/60`
+- **Row 2 MCS, Sunday**: bags `=SUM(SUMIFS(Mix_Slice[S_Planned],Mix_Slice[Asset],"MCS LINE"))`, hours `=SUM(SUMIFS(Mix_Slice[S_Minutes],Mix_Slice[Asset],"MCS LINE"))/60`
+
+## Worked example
+
+- **Breadline: Challah 3 Braided, Tuesday**: M 1.298 bags, 1 bag per mix: N = 2, Planned 2, minutes 2 / 1 x 30 = 60.
+- **MCS: 6" Italian Rolls, Tuesday**: M 8.415 bags, 4 bags per mix: N = 12, 3 mixes x 20 min = 60.
+- **Breadline Marble Hearth, Tuesday**: M 1.672: CEILING = 2, x 2.5 = 5 bags; minutes 5 / 1 x 45 / 2.5 = 90.
+- **Breadline by day**: bags Sun 48, Mon 50.5, Tue 54.5, Wed 53.5, Thu 76.5, Fri 135.5; hours Sun 8.5, Mon 7.25, Tue 9.92, Wed 9.2, Thu 13.08, Fri 22.7.
+- **MCS by day**: bags Sun 174, Mon 200, Tue 180, Wed 188, Thu 219, Fri 255; hours Sun 16.08, Mon 18.58, Tue 16.92, Wed 17.5, Thu 20.42, Fri 25.25.
+- **K4 day (Tuesday)**: O1 54.5 and O2 180 bags, the same as row 1 and row 2 Tuesday.
+
+## Open questions
+
+- Should K4 follow today's date by default, and should there be a K4-day hours cell next to O1 and O2?
+- Should MCS changeover minutes, which exist only on the MCS Schedule, count in the MCS hours?
+- The per-day blocks round after scrap while L rounds before: which is intended?
+- Should Extra Bread (Runout) in column X add to the bags before they are rounded up?
 </foreignObject>
 </g>
 </svg>

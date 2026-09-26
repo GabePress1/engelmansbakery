@@ -1,20 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg">
 <g id="sf4" transform="translate(16480,2910)" data-frame="4. Daily Supply and Demand: Logic Spec">
-  <rect data-type="frame" x="0" y="0" width="3872" height="1288" fill="#ffffff" data-title="4. Daily Supply and Demand: Logic Spec"/>
+  <rect data-type="frame" x="0" y="0" width="3872" height="1666" fill="#ffffff" data-title="4. Daily Supply and Demand: Logic Spec"/>
   <textArea id="st4" x="64" y="53" width="3744" font-size="67" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">4. Daily Supply and Demand: Logic Spec</textArea>
   <textArea id="ss4" x="64" y="162" width="3744" font-size="22" font-family="noto_sans" fill="#595959">One SKU on one day: average past sales, add the buffer, subtract stock, and bake what is left.</textArea>
-  <rect id="sp4_0" x="1728" y="240" width="672" height="541" rx="12" fill="#f7f7f7" stroke="#e7e7e7"/>
-  <textArea id="sh4_0" x="1760" y="272" width="608" font-size="26" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">Inputs</textArea>
-  <textArea id="sb4_0" x="1760" y="325" width="608" font-size="18" font-family="noto_sans" fill="#313131"><b>Sku</b> (F): =A8, from the row list of 275 FG SKUs.<br/><br/><b>Asset</b> (B): from Products. Decides the 3rd-party branch and the Thursday rule.<br/><br/><b>SalesHistory</b>: No., Posting Date, Quantity.<br/><br/><b>H3:M3 sample dates</b>: H3 =H2-6 = 9/14.<br/><br/><b>C5 buffer</b>: 1.2, typed.<br/><br/><b>_Floor</b>: that day's Total from the day table. <b>_Freeze</b>: typed, blank today.<br/><br/><b>Dist side</b>: demand from the external file's 'Daily Supply &amp; Demand'!E249:L374; open orders from SalesOrders.</textArea>
-  <rect id="sp4_1" x="2432" y="240" width="672" height="645" rx="12" fill="#f7f7f7" stroke="#e7e7e7"/>
-  <textArea id="sh4_1" x="2464" y="272" width="608" font-size="26" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">Formula reference</textArea>
-  <textArea id="sb4_1" x="2464" y="325" width="608" font-size="18" font-family="noto_sans" fill="#313131"><b>Sun/Mon demand (H)</b> =LET(q,SalesHistory[Quantity],s,SalesHistory[No.],d,SalesHistory[Posting Date],k,[@Sku],a,[@Asset],IF(OR(a="3rd Party",a="3rd Party - Bake"),SUMIFS(q,s,k,d,H$3),AVERAGE(MAP({0,7,14,21},LAMBDA(o,SUMIFS(q,s,k,d,H$3-o))))))<br/><br/><b>S_Demand (U)</b> =ROUNDUP(([@Sun/Mon]*$C$5),0)<br/><br/><b>TH_Demand (AW)</b> =IF([@Asset]&lt;&gt;"MCS LINE",ROUNDUP(([@Thur/Fri]*$C$5)+([@Fri/Sat]*$C$5),0),ROUNDUP(([@Thur/Fri]*$C$5),0))<br/><br/><b>S_Floor (T)</b> =SUMIFS(Sunday[Total],Sunday[Code],[@Sku])<br/><br/><b>S_Balanace (V)</b> =([@S_Freeze]+[@S_Floor])-[@S_Demand]; <b>S_Production (W)</b> =[@S_Balanace]<br/><br/><b>Dist demand (Dist_DSnD H)</b> =VLOOKUP([@Sku],'[1]Daily Supply &amp; Demand'!$E$249:$L$374,3,FALSE). No buffer; Dist _Production = minus demand.</textArea>
-  <rect id="sp4_2" x="3136" y="240" width="672" height="515" rx="12" fill="#f7f7f7" stroke="#e7e7e7"/>
-  <textArea id="sh4_2" x="3168" y="272" width="608" font-size="26" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">Worked example</textArea>
-  <textArea id="sb4_2" x="3168" y="325" width="608" font-size="18" font-family="noto_sans" fill="#313131"><b>F1000 Rye 1/2 inch, Sunday</b>: Sun/Mon average 17.5 packs, so S_Demand = ROUNDUP(17.5 x 1.2) = 21.<br/><br/><b>Sunday stock</b>: S_Floor 79, so S_Balanace = (0 + 79) - 21 = 58. Nothing to bake.<br/><br/><b>Thursday</b>: Asset Breadline is not MCS LINE, so TH_Demand = ROUNDUP(27.75 x 1.2 + 9.5 x 1.2) = 45. TH_Floor 113, balance 68.<br/><br/><b>Friday</b>: F_Floor 0 (not counted yet), F_Demand = ROUNDUP(9.5 x 1.2) = 12, F_Production -12. Bake 12 packs.<br/><br/><b>Case twin F51000</b>: Dist demand is 0 on every day, so its production is 0.</textArea>
-  <rect id="sp4_3" x="3136" y="787" width="672" height="437" rx="12" fill="#f7f7f7" stroke="#e7e7e7"/>
-  <textArea id="sh4_3" x="3168" y="819" width="608" font-size="26" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">Open questions</textArea>
-  <textArea id="sb4_3" x="3168" y="872" width="608" font-size="18" font-family="noto_sans" fill="#313131">Is baking Fri/Sat demand on Thursday meant for every line except MCS, given that Friday still carries its own Fri/Sat demand?<br/><br/>Should Dist demand get the same 1.2 buffer, and net against cases on hand?<br/><br/>Should the 4-week average skip holidays such as Labor Day (9/7)?<br/><br/>Is the typed row 264 (F6502, 48 every day) a deliberate override? If so, where should overrides live?</textArea>
   <foreignObject id="sd4" x="64" y="240" width="1600" height="900" data-type="diagram" data-title="4. Daily Supply and Demand: Logic Spec">
 flowchart TD
     classDef terminator fill:#FFFFFF,stroke:#757575,color:#313131
@@ -26,39 +14,83 @@ flowchart TD
     classDef output fill:#DDDDD8,stroke:#8A8A7E,color:#434339
     classDef issue fill:#FFC6C6,stroke:#BD0A0A,color:#5C0A0A
 
-    s(["One DSD SKU, one day"]):::terminator
-    row[/"Sku from the A8 row list, FG only"/]:::lookup
-    a[/"Asset from Products"/]:::lookup
-    tp{{"3rd Party or&lt;br/&gt;3rd Party - Bake?"}}:::decision
-    one["Sales on the sample date only"]:::calc
-    avg["Average of the same weekday&lt;br/&gt;over 4 weeks: 0, 7, 14, 21 days back"]:::calc
-    th{{"Thursday and Asset&lt;br/&gt;not MCS LINE?"}}:::decision
-    d1["_Demand = ROUNDUP(avg x 1.2)"]:::calc
-    d2["TH_Demand = ROUNDUP(Thur/Fri x 1.2&lt;br/&gt;+ Fri/Sat x 1.2)"]:::calc
-    fl[/"_Floor = that day's Total"/]:::lookup
-    fz[/"_Freeze: typed, blank today"/]:::input
-    bal["_Balance = Freeze + Floor - Demand"]:::calc
-    pr["_Production = _Balance"]:::calc
-    q{{"Production below 0?"}}:::decision
-    bake["Bake ABS(Production) packs:&lt;br/&gt;to DoughWeights and Mix-Slice-Oven"]:::output
-    e(["Stock covers demand"]):::terminator
-    s --&gt; row
-    row --&gt; a
-    a --&gt; tp
-    tp --&gt;|"Yes"| one
-    tp --&gt;|"No"| avg
-    one --&gt; th
-    avg --&gt; th
-    th --&gt;|"No"| d1
-    th --&gt;|"Yes"| d2
-    d1 --&gt; bal
-    d2 --&gt; bal
-    fl --&gt; bal
-    fz -.-&gt; bal
-    bal --&gt; pr
-    pr --&gt; q
-    q --&gt;|"Yes"| bake
-    q --&gt;|"No"| e
+    subgraph row1["1. Sales to average"]
+        direction LR
+        s(["One DSD SKU, one day"]):::terminator
+        row[/"Sku from the A8 row list, FG only"/]:::lookup
+        a[/"Asset from Products"/]:::lookup
+        tp{{"3rd Party or&lt;br/&gt;3rd Party - Bake?"}}:::decision
+        one["Sales on the sample date only"]:::calc
+        avg["Average of the same weekday&lt;br/&gt;over 4 weeks: 0, 7, 14, 21 days back"]:::calc
+        s --&gt; row
+        row --&gt; a
+        a --&gt; tp
+        tp --&gt;|"Yes"| one
+        tp --&gt;|"No"| avg
+    end
+    subgraph row2["2. Demand with a 20% buffer"]
+        direction LR
+        th{{"Thursday and Asset&lt;br/&gt;not MCS LINE?"}}:::decision
+        d1["_Demand = ROUNDUP(avg x 1.2)"]:::calc
+        d2["TH_Demand = ROUNDUP(Thur/Fri x 1.2&lt;br/&gt;+ Fri/Sat x 1.2)"]:::calc
+        th --&gt;|"No"| d1
+        th --&gt;|"Yes"| d2
+    end
+    subgraph row3["3. Balance"]
+        direction LR
+        fl[/"_Floor = that day's Total"/]:::lookup
+        fz[/"_Freeze: typed, blank today"/]:::input
+        bal["_Balance = Freeze + Floor - Demand"]:::calc
+        pr["_Production = _Balance"]:::calc
+        q{{"Production below 0?"}}:::decision
+        bake["Bake ABS(Production) packs:&lt;br/&gt;to DoughWeights and Mix-Slice-Oven"]:::output
+        e(["Stock covers demand"]):::terminator
+        fl --&gt; bal
+        fz -.-&gt; bal
+        bal --&gt; pr
+        pr --&gt; q
+        q --&gt;|"Yes"| bake
+        q --&gt;|"No"| e
+    end
+    row1 --&gt;|"average"| row2
+    row2 --&gt;|"_Demand"| row3
+</foreignObject>
+  <foreignObject id="doc4" x="1728" y="240" width="784" height="1322" data-type="doc">
+# 4. Daily Supply and Demand: details
+
+## Inputs
+
+- **Sku** (F): =A8, from the row list of 275 FG SKUs.
+- **Asset** (B): from Products. Decides the 3rd-party branch and the Thursday rule.
+- **SalesHistory**: No., Posting Date, Quantity.
+- **H3:M3 sample dates**: H3 =H2-6 = 9/14.
+- **C5 buffer**: 1.2, typed.
+- **_Floor**: that day's Total from the day table. **_Freeze**: typed, blank today.
+- **Dist side**: demand from the external file's 'Daily Supply &amp; Demand'!E249:L374; open orders from SalesOrders.
+
+## Formula reference
+
+- **Sun/Mon demand (H)**: `=LET(q,SalesHistory[Quantity],s,SalesHistory[No.],d,SalesHistory[Posting Date],k,[@Sku],a,[@Asset],IF(OR(a="3rd Party",a="3rd Party - Bake"),SUMIFS(q,s,k,d,H$3),AVERAGE(MAP({0,7,14,21},LAMBDA(o,SUMIFS(q,s,k,d,H$3-o))))))`
+- **S_Demand (U)**: `=ROUNDUP(([@Sun/Mon]*$C$5),0)`
+- **TH_Demand (AW)**: `=IF([@Asset]&lt;&gt;"MCS LINE",ROUNDUP(([@Thur/Fri]*$C$5)+([@Fri/Sat]*$C$5),0),ROUNDUP(([@Thur/Fri]*$C$5),0))`
+- **S_Floor (T)**: `=SUMIFS(Sunday[Total],Sunday[Code],[@Sku])`
+- **S_Balanace (V)**: `=([@S_Freeze]+[@S_Floor])-[@S_Demand]`; **S_Production (W)** `=[@S_Balanace]`
+- **Dist demand (Dist_DSnD H)**: `=VLOOKUP([@Sku],'[1]Daily Supply &amp; Demand'!$E$249:$L$374,3,FALSE)`. No buffer; Dist `_Production` = minus demand.
+
+## Worked example
+
+- **F1000 Rye 1/2 inch, Sunday**: Sun/Mon average 17.5 packs, so `S_Demand` = ROUNDUP(17.5 x 1.2) = 21.
+- **Sunday stock**: `S_Floor` 79, so `S_Balanace` = (0 + 79) - 21 = 58. Nothing to bake.
+- **Thursday**: Asset Breadline is not MCS LINE, so `TH_Demand` = ROUNDUP(27.75 x 1.2 + 9.5 x 1.2) = 45. `TH_Floor` 113, balance 68.
+- **Friday**: `F_Floor` 0 (not counted yet), `F_Demand` = ROUNDUP(9.5 x 1.2) = 12, `F_Production` -12. Bake 12 packs.
+- **Case twin F51000**: Dist demand is 0 on every day, so its production is 0.
+
+## Open questions
+
+- Is baking Fri/Sat demand on Thursday meant for every line except MCS, given that Friday still carries its own Fri/Sat demand?
+- Should Dist demand get the same 1.2 buffer, and net against cases on hand?
+- Should the 4-week average skip holidays such as Labor Day (9/7)?
+- Is the typed row 264 (F6502, 48 every day) a deliberate override? If so, where should overrides live?
 </foreignObject>
 </g>
 </svg>

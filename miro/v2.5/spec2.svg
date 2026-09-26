@@ -1,20 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg">
 <g id="sf2" transform="translate(8640,2910)" data-frame="2. Business Central exports: Logic Spec">
-  <rect data-type="frame" x="0" y="0" width="3872" height="1204" fill="#ffffff" data-title="2. Business Central exports: Logic Spec"/>
+  <rect data-type="frame" x="0" y="0" width="3872" height="1506" fill="#ffffff" data-title="2. Business Central exports: Logic Spec"/>
   <textArea id="st2" x="64" y="53" width="3744" font-size="67" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">2. Business Central exports: Logic Spec</textArea>
   <textArea id="ss2" x="64" y="162" width="3744" font-size="22" font-family="noto_sans" fill="#595959">What each weekly paste feeds, and the checks that decide whether the numbers can be trusted.</textArea>
-  <rect id="sp2_0" x="1728" y="240" width="672" height="463" rx="12" fill="#f7f7f7" stroke="#e7e7e7"/>
-  <textArea id="sh2_0" x="1760" y="272" width="608" font-size="26" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">Inputs</textArea>
-  <textArea id="sb2_0" x="1760" y="325" width="608" font-size="18" font-family="noto_sans" fill="#313131"><b>Sales History</b>: 203,445 rows, posting dates 5/2 to 9/23/2026. Used: No. (E), Posting Date (G), Quantity (L).<br/><br/><b>Open Sales Lines</b>: 1,438 rows. Used: No. (F), Quantity (J), Shipment Date (N), Outstanding Quantity (O). DSD or DIST (P) is a formula.<br/><br/><b>BOMQty</b>: 15,118 rows on DoughWeights O:AJ. Used: No_Item (T) and BOMQty (AF).<br/><br/><b>H3:M3 sample dates</b>: built from H2.<br/><br/><b>Row 284 dates</b>: typed above each Dist_DSnD order grid.</textArea>
-  <rect id="sp2_1" x="2432" y="240" width="672" height="515" rx="12" fill="#f7f7f7" stroke="#e7e7e7"/>
-  <textArea id="sh2_1" x="2464" y="272" width="608" font-size="26" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">Formula reference</textArea>
-  <textArea id="sb2_1" x="2464" y="325" width="608" font-size="18" font-family="noto_sans" fill="#313131"><b>Sun/Mon demand (DSD_DSnD H)</b> =LET(q,SalesHistory[Quantity],s,SalesHistory[No.],d,SalesHistory[Posting Date],k,[@Sku],a,[@Asset],IF(OR(a="3rd Party",a="3rd Party - Bake"),SUMIFS(q,s,k,d,H$3),AVERAGE(MAP({0,7,14,21},LAMBDA(o,SUMIFS(q,s,k,d,H$3-o))))))<br/><br/><b>Order grid (Dist_DSnD 0_Sun)</b> =SUMIFS(SalesOrders[Quantity],SalesOrders[No.],[@0_Sku],SalesOrders[Shipment Date],BI$284)<br/><br/><b>DSD or DIST (SalesOrders P)</b> =IF([@No.]="","",IF(LEFT([@No.],2)="F5","DIST","DSD"))<br/><br/><b>Dough Weight (Dough I)</b> =SUMIFS(BOMQty[BOMQty],BOMQty[No_Item],[@No.])</textArea>
-  <rect id="sp2_2" x="3136" y="240" width="672" height="385" rx="12" fill="#f7f7f7" stroke="#e7e7e7"/>
-  <textArea id="sh2_2" x="3168" y="272" width="608" font-size="26" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">Worked example</textArea>
-  <textArea id="sb2_2" x="3168" y="325" width="608" font-size="18" font-family="noto_sans" fill="#313131"><b>F1000 Rye 1/2 inch, Sun/Mon</b>: H3 = 9/14. SUMIFS reads 9/14, 9/7, 8/31 and 8/24; the average is 17.5 packs.<br/><br/><b>Labor Day</b> 9/7 is one of those four dates.<br/><br/><b>F51000 case, 0_Sun</b>: BI284 holds the text 8/31/2026, which never equals a Shipment Date, so the grid shows 0.<br/><br/><b>D10001 Challah Dough</b>: Dough Weight 177.27 lb is the sum of its BOMQty lines (Flour 100, Water 56, and the rest).</textArea>
-  <rect id="sp2_3" x="3136" y="657" width="672" height="437" rx="12" fill="#f7f7f7" stroke="#e7e7e7"/>
-  <textArea id="sh2_3" x="3168" y="689" width="608" font-size="26" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">Open questions</textArea>
-  <textArea id="sb2_3" x="3168" y="742" width="608" font-size="18" font-family="noto_sans" fill="#313131">How many weeks of Sales History should be pasted? The formulas need 4 weeks up to the sample week; the file holds about 20.<br/><br/>Should the order-grid dates in row 284 be formulas from H2 instead of typed text?<br/><br/>Who refreshes BOMQty, and should Dough Weight warn when the export is older than a set number of days?<br/><br/>Should the Dist Shipping pivot refresh when the file opens so it cannot go stale?</textArea>
   <foreignObject id="sd2" x="64" y="240" width="1600" height="900" data-type="diagram" data-title="2. Business Central exports: Logic Spec">
 flowchart TD
     classDef terminator fill:#FFFFFF,stroke:#757575,color:#313131
@@ -26,38 +14,79 @@ flowchart TD
     classDef output fill:#DDDDD8,stroke:#8A8A7E,color:#434339
     classDef issue fill:#FFC6C6,stroke:#BD0A0A,color:#5C0A0A
 
-    s(["Weekly export day"]):::terminator
-    sh[/"Paste Sales History&lt;br/&gt;posted invoice lines"/]:::export
-    c1{{"Covers the sample week&lt;br/&gt;and 3 weeks before?"}}:::decision
-    short["Missing weeks count as 0&lt;br/&gt;and pull the average down"]:::issue
-    avg["DSD_DSnD H:M: SUMIFS of Quantity&lt;br/&gt;by No. and Posting Date"]:::calc
-    so[/"Paste Open Sales Lines&lt;br/&gt;open order lines"/]:::export
-    c2{{"Row 284 grid dates&lt;br/&gt;are real dates?"}}:::decision
-    zero["Order grids stay 0"]:::issue
-    grid["Dist_DSnD order grids: SUMIFS of&lt;br/&gt;Quantity by Shipment Date"]:::calc
-    piv["Refresh the Dist Shipping pivot:&lt;br/&gt;Outstanding Quantity, DIST only"]:::output
-    bom[/"Paste BOMQty when BOMs change&lt;br/&gt;Quantity Explosion of BOM"/]:::export
-    c3{{"BOMQty current?"}}:::decision
-    old["Bags use old recipes:&lt;br/&gt;As of 03/24/26"]:::issue
-    wt["Dough Weight = SUMIFS of BOMQty&lt;br/&gt;by No_Item"]:::lookup
-    e(["Exports ready for the week"]):::terminator
-    s --&gt; sh
-    sh --&gt; c1
-    c1 --&gt;|"No"| short
-    c1 --&gt;|"Yes"| avg
-    short -.-&gt; avg
-    avg --&gt; so
-    so --&gt; c2
-    c2 --&gt;|"No"| zero
-    c2 --&gt;|"Yes"| grid
-    zero -.-&gt; grid
-    grid --&gt; piv
-    piv --&gt; bom
-    bom --&gt; c3
-    c3 --&gt;|"No"| old
-    c3 --&gt;|"Yes"| wt
-    old -.-&gt; wt
-    wt --&gt; e
+    subgraph row1["1. Sales History"]
+        direction LR
+        s(["Weekly export day"]):::terminator
+        sh[/"Paste Sales History&lt;br/&gt;posted invoice lines"/]:::export
+        c1{{"Covers the sample week&lt;br/&gt;and 3 weeks before?"}}:::decision
+        short["Missing weeks count as 0&lt;br/&gt;and pull the average down"]:::issue
+        avg["DSD_DSnD H:M: SUMIFS of Quantity&lt;br/&gt;by No. and Posting Date"]:::calc
+        s --&gt; sh
+        sh --&gt; c1
+        c1 --&gt;|"No"| short
+        c1 --&gt;|"Yes"| avg
+        short -.-&gt; avg
+    end
+    subgraph row2["2. Open Sales Lines"]
+        direction LR
+        so[/"Paste Open Sales Lines&lt;br/&gt;open order lines"/]:::export
+        c2{{"Row 284 grid dates&lt;br/&gt;are real dates?"}}:::decision
+        zero["Order grids stay 0"]:::issue
+        grid["Dist_DSnD order grids: SUMIFS of&lt;br/&gt;Quantity by Shipment Date"]:::calc
+        piv["Refresh the Dist Shipping pivot:&lt;br/&gt;Outstanding Quantity, DIST only"]:::output
+        so --&gt; c2
+        c2 --&gt;|"No"| zero
+        c2 --&gt;|"Yes"| grid
+        zero -.-&gt; grid
+        grid --&gt; piv
+    end
+    subgraph row3["3. BOMQty, when BOMs change"]
+        direction LR
+        bom[/"Paste BOMQty&lt;br/&gt;Quantity Explosion of BOM"/]:::export
+        c3{{"BOMQty current?"}}:::decision
+        old["Bags use old recipes:&lt;br/&gt;As of 03/24/26"]:::issue
+        wt["Dough Weight = SUMIFS of BOMQty&lt;br/&gt;by No_Item"]:::lookup
+        e(["Exports ready for the week"]):::terminator
+        bom --&gt; c3
+        c3 --&gt;|"No"| old
+        c3 --&gt;|"Yes"| wt
+        old -.-&gt; wt
+        wt --&gt; e
+    end
+    row1 --&gt; row2
+    row2 --&gt; row3
+</foreignObject>
+  <foreignObject id="doc2" x="1728" y="240" width="784" height="1162" data-type="doc">
+# 2. Business Central exports: details
+
+## Inputs
+
+- **Sales History**: 203,445 rows, posting dates 5/2 to 9/23/2026. Used: No. (E), Posting Date (G), Quantity (L).
+- **Open Sales Lines**: 1,438 rows. Used: No. (F), Quantity (J), Shipment Date (N), Outstanding Quantity (O). DSD or DIST (P) is a formula.
+- **BOMQty**: 15,118 rows on DoughWeights O:AJ. Used: `No_Item` (T) and BOMQty (AF).
+- **H3:M3 sample dates**: built from H2.
+- **Row 284 dates**: typed above each `Dist_DSnD` order grid.
+
+## Formula reference
+
+- **Sun/Mon demand (DSD_DSnD H)**: `=LET(q,SalesHistory[Quantity],s,SalesHistory[No.],d,SalesHistory[Posting Date],k,[@Sku],a,[@Asset],IF(OR(a="3rd Party",a="3rd Party - Bake"),SUMIFS(q,s,k,d,H$3),AVERAGE(MAP({0,7,14,21},LAMBDA(o,SUMIFS(q,s,k,d,H$3-o))))))`
+- **Order grid (Dist_DSnD 0_Sun)**: `=SUMIFS(SalesOrders[Quantity],SalesOrders[No.],[@0_Sku],SalesOrders[Shipment Date],BI$284)`
+- **DSD or DIST (SalesOrders P)**: `=IF([@No.]="","",IF(LEFT([@No.],2)="F5","DIST","DSD"))`
+- **Dough Weight (Dough I)**: `=SUMIFS(BOMQty[BOMQty],BOMQty[No_Item],[@No.])`
+
+## Worked example
+
+- **F1000 Rye 1/2 inch, Sun/Mon**: H3 = 9/14. SUMIFS reads 9/14, 9/7, 8/31 and 8/24; the average is 17.5 packs.
+- **Labor Day** 9/7 is one of those four dates.
+- **F51000 case, 0_Sun**: BI284 holds the text 8/31/2026, which never equals a Shipment Date, so the grid shows 0.
+- **D10001 Challah Dough**: Dough Weight 177.27 lb is the sum of its BOMQty lines (Flour 100, Water 56, and the rest).
+
+## Open questions
+
+- How many weeks of Sales History should be pasted? The formulas need 4 weeks up to the sample week; the file holds about 20.
+- Should the order-grid dates in row 284 be formulas from H2 instead of typed text?
+- Who refreshes BOMQty, and should Dough Weight warn when the export is older than a set number of days?
+- Should the Dist Shipping pivot refresh when the file opens so it cannot go stale?
 </foreignObject>
 </g>
 </svg>

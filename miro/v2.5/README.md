@@ -104,32 +104,44 @@ in section 9.
 ## Logic Spec row
 
 A second row of ten frames at y = 2910, 400 px below the tallest main frame. Each spec sits
-directly under its section, with the same x and width, and follows the "Operating Schedule —
-Logic Spec" pattern: one step-by-step `flowchart TD` for a single SKU or run, plus four panels.
+directly under its section, with the same x and width (spec 9 is widened to 2576 to fit its
+Doc), and follows the "Operating Schedule — Logic Spec" pattern: one flowchart for a single
+SKU or run, plus the details.
 
 | Element | Position (frame-relative) |
 |---|---|
 | Title / subtitle | as in the main row |
-| Flowchart, Mermaid TD, 1600 × 900 | x 64…1664, y 240…1140, nested in the frame |
-| Panels: Inputs, Formula reference, Worked example, Open questions | from x 1728; 1–3 columns of about 672 px, filled shortest-column-first |
+| Flowchart, Mermaid, 1600 × 900 | x 64…1664, y 240, nested in the frame |
+| Doc: Inputs, Formula reference, Worked example, Open questions | x 1728, y 240, 784 wide, nested in the frame |
 
-Panel heights are estimated from the text (18 px noto_sans, about 10.6 px a character, 26 px
-lines). Every body text box was checked against its panel after placement; if one ever
-overflows, put the measured body heights in `spec_measured.json` and run `spec.py --measured`.
+**Flowcharts are laid out in rows** (`spec_flow.py`). Miro draws a diagram at its natural
+Mermaid size, not the nominal 1600 × 900, so a long `flowchart TD` chain ran far below its
+frame. Each chart is `flowchart TD` over two or three row subgraphs, each `direction LR`.
+Edges between rows join the subgraphs themselves: Mermaid ignores a subgraph's direction as
+soon as one of its nodes links outside it. `spec.py` checks this.
+
+**The details are one Miro Doc per spec** (`spec_doc.py` writes the Markdown; formulas and
+underscore names are code spans). The first build used a grey panel per section with a
+heading and a body textArea. Miro drew those multi-line bodies as if they were one line tall,
+centred on the box, so the text started halfway down each panel and ran out of it; the API's
+read-back still showed the boxes in place. A Doc is laid out by Miro itself. Docs keep their
+784 px width and grow with their text; the measured heights are in `spec_doc_heights.json`
+and each frame is sized to `max(240 + 900, 240 + Doc + 40) + 64`.
+
 Section 10 has no spec: it is already a ranked list.
 
-| # | Spec frame | Frame id | Diagram id | Height |
-|---|---|---|---|---|
-| 0 | A planning week | 3458764685010249395 | 3458764685010249427 | 1574 |
-| 1 | Master data | 3458764685010249396 | 3458764685010249428 | 1314 |
-| 2 | Business Central exports | 3458764685010477419 | 3458764685010477453 | 1204 |
-| 3 | Inventory, Sunday to Friday | 3458764685010477420 | 3458764685010477454 | 1262 |
-| 4 | Daily Supply and Demand | 3458764685010737226 | 3458764685010737265 | 1288 |
-| 5 | DoughWeights | 3458764685010737227 | 3458764685010737263 | 1862 |
-| 6 | Mix_Slice | 3458764685011306340 | 3458764685011306377 | 1261 |
-| 7 | Oven_Info | 3458764685086338827 | 3458764685086338844 | 1236 |
-| 8 | MCS and Breadline schedules | 3458764685011306341 | 3458764685011306378 | 1392 |
-| 9 | Recon | 3458764685010172627 | 3458764685010172645 | 2122 |
+| # | Spec frame | Frame id | Diagram id | Doc id | Height |
+|---|---|---|---|---|---|
+| 0 | A planning week | 3458764685010249395 | 3458764685010249427 | 3458764685087483130 | 1834 |
+| 1 | Master data | 3458764685010249396 | 3458764685010249428 | 3458764685087483553 | 1656 |
+| 2 | Business Central exports | 3458764685010477419 | 3458764685010477453 | 3458764685087534161 | 1506 |
+| 3 | Inventory, Sunday to Friday | 3458764685010477420 | 3458764685010477454 | 3458764685087534629 | 1526 |
+| 4 | Daily Supply and Demand | 3458764685010737226 | 3458764685010737265 | 3458764685087586123 | 1666 |
+| 5 | DoughWeights | 3458764685010737227 | 3458764685010737263 | 3458764685087586634 | 1594 |
+| 6 | Mix_Slice | 3458764685011306340 | 3458764685011306377 | 3458764685087432532 | 1814 |
+| 7 | Oven_Info | 3458764685086338827 | 3458764685086338844 | 3458764685087637279 | 1449 |
+| 8 | MCS and Breadline schedules | 3458764685011306341 | 3458764685011306378 | 3458764685087637735 | 1550 |
+| 9 | Recon | 3458764685010172627 | 3458764685010172645 | 3458764685087700104 | 1449 |
 
 ## Diagram placement
 
@@ -147,8 +159,9 @@ Section 10 has no spec: it is already a ranked list.
   edge, and section 1's at (-425, 259), crossing into frame 0. They have to be dragged back to
   (64, 240) by hand. Section 6's flowchart is at (-131, 305) and needs the same.
 - Frame 1 is 1952 tall on the board; `build.py` makes it 2060 for the new Original Mix Order
-  card, which overhangs the bottom by 44 px. Miro refuses the resize while the section 1
-  flowchart sits outside the frame, so resize it after that flowchart is dragged back.
+  card, which overhangs the bottom by 44 px. Miro refuses the resize ("child widget cannot be
+  placed outside the bounds") because its server still has the section 1 flowchart at
+  (-425, 259), even after it was dragged back by hand. Resize frame 1 by hand.
 
 ## Text boxes
 

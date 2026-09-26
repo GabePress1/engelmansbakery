@@ -1,20 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg">
 <g id="sf7" transform="translate(28240,2910)" data-frame="7. Oven_Info: Logic Spec">
-  <rect data-type="frame" x="0" y="0" width="3168" height="1236" fill="#ffffff" data-title="7. Oven_Info: Logic Spec"/>
+  <rect data-type="frame" x="0" y="0" width="3168" height="1449" fill="#ffffff" data-title="7. Oven_Info: Logic Spec"/>
   <textArea id="st7" x="64" y="53" width="3040" font-size="67" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">7. Oven_Info: Logic Spec</textArea>
   <textArea id="ss7" x="64" y="162" width="3040" font-size="22" font-family="noto_sans" fill="#595959">One pan on the K4 day: every product on it adds its pieces, and the total becomes whole pans.</textArea>
-  <rect id="sp7_0" x="1728" y="240" width="672" height="385" rx="12" fill="#f7f7f7" stroke="#e7e7e7"/>
-  <textArea id="sh7_0" x="1760" y="272" width="608" font-size="26" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">Inputs</textArea>
-  <textArea id="sb7_0" x="1760" y="325" width="608" font-size="18" font-family="noto_sans" fill="#313131"><b>K4</b> (Mix-Slice-Oven!K4): Demand is for this day. This week Tuesday.<br/><br/><b>Products</b>: Pans/Boxes (which pan a product goes on) and Pieces Per Tray/Case.<br/><br/><b>Pans</b>: Pieces Per Pan for each pan or box.<br/><br/><b>_Production</b> on DSD_DSnD (packs) or Dist_DSnD (F5 cases) for the K4 day.</textArea>
-  <rect id="sp7_1" x="2432" y="240" width="672" height="567" rx="12" fill="#f7f7f7" stroke="#e7e7e7"/>
-  <textArea id="sh7_1" x="2464" y="272" width="608" font-size="26" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">Formula reference</textArea>
-  <textArea id="sb7_1" x="2464" y="325" width="608" font-size="18" font-family="noto_sans" fill="#313131"><b>Row list (A410)</b> =LET(pn,FILTER(Pans[Pans/Boxes],Pans[Pans/Boxes]&lt;&gt;""),sku,Products[No.],pan,Products[Pans/Boxes],gpg,Products[Gen. Prod. Posting Group],DROP(REDUCE("",pn,LAMBDA(a,p,LET(m,FILTER(sku,(pan=p)*(gpg&lt;&gt;"OBS"),""),IF(AND(ROWS(m)=1,INDEX(m,1)=""),a,VSTACK(a,p,m))))),1))<br/><br/><b># of Pans/Boxes to set out (P)</b> =IFERROR(IF([@Pans]&lt;&gt;"Pan","",ROUNDUP(SUMPRODUCT(--(XLOOKUP(Oven_Info[Finished Product],Products[No.],Products[Pans/Boxes],"")=[@Finished Product]),IFERROR(--Oven_Info[Demand],0),IFERROR(--Oven_Info['# of pieces per tray/box],0))/[@Pieces Per Pan],0)),"")<br/><br/><b>MCS Schedule F29</b> =LET(p,Oven_Info[Pans],nm,Oven_Info[Finished Product],n,IFERROR(--Oven_Info['# of Pans/Boxes to set out],0),nx,DROP(VSTACK(p,""),1),FILTER(HSTACK(nm,n),(p="Pan")*(nx="MCS LINE")*(n&gt;0),"No MCS pans"))</textArea>
-  <rect id="sp7_2" x="1728" y="657" width="672" height="359" rx="12" fill="#f7f7f7" stroke="#e7e7e7"/>
-  <textArea id="sh7_2" x="1760" y="689" width="608" font-size="26" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">Worked example</textArea>
-  <textArea id="sb7_2" x="1760" y="742" width="608" font-size="18" font-family="noto_sans" fill="#313131"><b>3.5" Challah Onion Bun pan, Tuesday</b>: F3082 (MCS LINE) is short 55 packs x 12 pieces = 660 pieces.<br/><br/><b>Pans</b>: 660 / 28 pieces per pan = 23.6, ROUNDUP = 24. MCS Schedule F29 lists it: 24.<br/><br/><b>(Grande) Large Croissant</b>: F8006 76 x 1 = 76 pieces / 10 = 7.6, so 8 pans. It is 3rd Party - Bake, so F29 skips it.</textArea>
-  <rect id="sp7_3" x="2432" y="839" width="672" height="333" rx="12" fill="#f7f7f7" stroke="#e7e7e7"/>
-  <textArea id="sh7_3" x="2464" y="871" width="608" font-size="26" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">Open questions</textArea>
-  <textArea id="sb7_3" x="2464" y="924" width="608" font-size="18" font-family="noto_sans" fill="#313131">Should the Breadline Schedule and 3rd Party - Bake products get their own pan list?<br/><br/>Should F29 check every product on a pan instead of only the first one under it?<br/><br/>Should the print area be widened to include rows 453 to 477?</textArea>
   <foreignObject id="sd7" x="64" y="240" width="1600" height="900" data-type="diagram" data-title="7. Oven_Info: Logic Spec">
 flowchart TD
     classDef terminator fill:#FFFFFF,stroke:#757575,color:#313131
@@ -26,27 +14,61 @@ flowchart TD
     classDef output fill:#DDDDD8,stroke:#8A8A7E,color:#434339
     classDef issue fill:#FFC6C6,stroke:#BD0A0A,color:#5C0A0A
 
-    s(["One pan on the K4 day"]):::terminator
-    rows[/"A410 row list: the pan,&lt;br/&gt;then each non-OBS product on it"/]:::lookup
-    k4[/"K4 day selector: Tuesday"/]:::input
-    d[/"Demand = packs short on the K4 day&lt;br/&gt;from DSD_DSnD or Dist_DSnD"/]:::lookup
-    pc["pieces = Demand x&lt;br/&gt;pieces per tray/box"]:::calc
-    sum["Pan row: SUMPRODUCT over products&lt;br/&gt;whose Pans/Boxes is this pan"]:::calc
-    pp[/"Pieces Per Pan from Pans"/]:::lookup
-    set["Set out = ROUNDUP(pieces / Pieces Per Pan)"]:::calc
-    q{{"Product under the pan on MCS LINE&lt;br/&gt;and set out above 0?"}}:::decision
-    f29(["Listed on MCS Schedule F29"]):::terminator
-    no["Counted but not printed:&lt;br/&gt;no pan list for other lines"]:::issue
-    s --&gt; rows
-    rows --&gt; d
-    k4 --&gt; d
-    d --&gt; pc
-    pc --&gt; sum
-    sum --&gt; set
-    pp --&gt; set
-    set --&gt; q
-    q --&gt;|"Yes"| f29
-    q --&gt;|"No"| no
+    subgraph row1["1. Pieces needed"]
+        direction LR
+        s(["One pan on the K4 day"]):::terminator
+        k4[/"K4 day selector: Tuesday"/]:::input
+        rows[/"A410 row list: the pan,&lt;br/&gt;then each non-OBS product on it"/]:::lookup
+        d[/"Demand = packs short on the K4 day&lt;br/&gt;from DSD_DSnD or Dist_DSnD"/]:::lookup
+        pc["pieces = Demand x&lt;br/&gt;pieces per tray/box"]:::calc
+        s --&gt; rows
+        rows --&gt; d
+        k4 --&gt; d
+        d --&gt; pc
+    end
+    subgraph row2["2. Pans to set out"]
+        direction LR
+        sum["Pan row: SUMPRODUCT over products&lt;br/&gt;whose Pans/Boxes is this pan"]:::calc
+        pp[/"Pieces Per Pan from Pans"/]:::lookup
+        set["Set out = ROUNDUP(pieces / Pieces Per Pan)"]:::calc
+        q{{"Product under the pan on MCS LINE&lt;br/&gt;and set out above 0?"}}:::decision
+        f29(["Listed on MCS Schedule F29"]):::terminator
+        no["Counted but not printed:&lt;br/&gt;no pan list for other lines"]:::issue
+        sum --&gt; set
+        pp --&gt; set
+        set --&gt; q
+        q --&gt;|"Yes"| f29
+        q --&gt;|"No"| no
+    end
+    row1 --&gt;|"pieces per product"| row2
+</foreignObject>
+  <foreignObject id="doc7" x="1728" y="240" width="784" height="1105" data-type="doc">
+# 7. Oven_Info: details
+
+## Inputs
+
+- **K4** (Mix-Slice-Oven!K4): Demand is for this day. This week Tuesday.
+- **Products**: Pans/Boxes (which pan a product goes on) and Pieces Per Tray/Case.
+- **Pans**: Pieces Per Pan for each pan or box.
+- **_Production** on `DSD_DSnD` (packs) or `Dist_DSnD` (F5 cases) for the K4 day.
+
+## Formula reference
+
+- **Row list (A410)**: `=LET(pn,FILTER(Pans[Pans/Boxes],Pans[Pans/Boxes]&lt;&gt;""),sku,Products[No.],pan,Products[Pans/Boxes],gpg,Products[Gen. Prod. Posting Group],DROP(REDUCE("",pn,LAMBDA(a,p,LET(m,FILTER(sku,(pan=p)*(gpg&lt;&gt;"OBS"),""),IF(AND(ROWS(m)=1,INDEX(m,1)=""),a,VSTACK(a,p,m))))),1))`
+- **# of Pans/Boxes to set out (P)**: `=IFERROR(IF([@Pans]&lt;&gt;"Pan","",ROUNDUP(SUMPRODUCT(--(XLOOKUP(Oven_Info[Finished Product],Products[No.],Products[Pans/Boxes],"")=[@Finished Product]),IFERROR(--Oven_Info[Demand],0),IFERROR(--Oven_Info['# of pieces per tray/box],0))/[@Pieces Per Pan],0)),"")`
+- **MCS Schedule F29**: `=LET(p,Oven_Info[Pans],nm,Oven_Info[Finished Product],n,IFERROR(--Oven_Info['# of Pans/Boxes to set out],0),nx,DROP(VSTACK(p,""),1),FILTER(HSTACK(nm,n),(p="Pan")*(nx="MCS LINE")*(n&gt;0),"No MCS pans"))`
+
+## Worked example
+
+- **3.5" Challah Onion Bun pan, Tuesday**: F3082 (MCS LINE) is short 55 packs x 12 pieces = 660 pieces.
+- **Pans**: 660 / 28 pieces per pan = 23.6, ROUNDUP = 24. MCS Schedule F29 lists it: 24.
+- **(Grande) Large Croissant**: F8006 76 x 1 = 76 pieces / 10 = 7.6, so 8 pans. It is 3rd Party - Bake, so F29 skips it.
+
+## Open questions
+
+- Should the Breadline Schedule and 3rd Party - Bake products get their own pan list?
+- Should F29 check every product on a pan instead of only the first one under it?
+- Should the print area be widened to include rows 453 to 477?
 </foreignObject>
 </g>
 </svg>

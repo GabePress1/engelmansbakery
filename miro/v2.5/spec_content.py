@@ -10,6 +10,7 @@ import json
 import os
 
 from build import RECON_F, T, V, X
+from spec_flow import FLOWS
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
@@ -26,38 +27,7 @@ SPECS.append({
     'section': 0,
     'title': '0. A planning week: Logic Spec',
     'subtitle': 'The weekly routine, from pasting the exports to the printed run sheets.',
-    'mermaid': '''flowchart TD
-s(["Start of the planning week"]):::terminator
-p1[/"Paste Sales History<br/>posted invoice lines"/]:::export
-p2[/"Set Daily Supply and Demand H2<br/>to the planning Sunday"/]:::input
-p3[/"Paste Open Sales Lines<br/>refresh the Dist Shipping pivot"/]:::export
-c1[/"Floor counts typed in the<br/>_BC.xlsm day tabs"/]:::input
-d1["Sunday to Friday tables:<br/>Total and Final Inventory"]:::lookup
-d2["Supply and Demand:<br/>stock minus demand = Production"]:::calc
-d3["DoughWeights:<br/>packs short x lb per pack"]:::calc
-k4{{"Is K4 the day<br/>being baked?"}}:::decision
-fix[/"Set Mix-Slice-Oven K4"/]:::input
-d4["Mix-Slice-Oven:<br/>bags, planned bags, minutes"]:::calc
-r1{{"Recon shows<br/>Array longer?"}}:::decision
-iss["SKUs dropped from a table:<br/>resize it before printing"]:::issue
-o1["MCS and Breadline schedules<br/>printed run sheets"]:::output
-e(["Bake"]):::terminator
-s --> p1
-p1 --> p2
-p2 --> p3
-p3 --> c1
-c1 --> d1
-d1 --> d2
-d2 --> d3
-d3 --> k4
-k4 -->|"No"| fix
-fix --> d4
-k4 -->|"Yes"| d4
-d4 --> r1
-r1 -->|"Yes"| iss
-iss -.-> o1
-r1 -->|"No"| o1
-o1 --> e''',
+    'mermaid': FLOWS[0],
     'inputs': [
         '**Sales History** (table SalesHistory): pasted Business Central posted invoice lines. The average needs the sample week and the three weeks before it.',
         "**H2 anchor date** ('Daily Supply & Demand'!H2): the planning Sunday, typed. This week 2026-09-20.",
@@ -98,40 +68,7 @@ SPECS.append({
     'section': 1,
     'title': '1. Master data: Logic Spec',
     'subtitle': 'How one Products row decides which lists, lines, doughs and pans it reaches downstream.',
-    'mermaid': '''flowchart TD
-s(["One product row in Products"]):::terminator
-g{{"Gen. Prod. Posting Group?"}}:::decision
-obs["OBS: left out of the row lists"]:::output
-fg[/"FG: day tables and DSD_DSnD"/]:::input
-dist[/"FG-DIST: day tables and Dist_DSnD"/]:::input
-oc{{"Description contains OBS?"}}:::decision
-lob["Skipped by DoughWeights:<br/>Lobster rolls get no dough"]:::issue
-dw["DoughWeights row under its<br/>Dough code, lb = packs x Weight"]:::calc
-wt["Dough Weight = SUMIFS of BOMQty<br/>for the D-code, lb per bag"]:::lookup
-r{{"Asset Rank at most 3?"}}:::decision
-tp["Third party: no Mix-Slice-Oven row,<br/>so no bags or minutes"]:::output
-ud{{"Unique Dough name found<br/>in the Unique Dough table?"}}:::decision
-blank["Blank bags per mix and minutes"]:::issue
-mix["Mix-Slice-Oven row: Optimal Bag,<br/>Optimal Time, Placement"]:::lookup
-pan[/"Pans/Boxes: Oven_Info pan block"/]:::lookup
-e(["Row feeds Supply and Demand,<br/>DoughWeights and Mix-Slice-Oven"]):::terminator
-s --> g
-g -->|"OBS"| obs
-g -->|"FG"| fg
-g -->|"FG-DIST"| dist
-fg --> oc
-dist --> oc
-oc -->|"Yes"| lob
-oc -->|"No"| dw
-dw --> wt
-lob -.-> r
-wt --> r
-r -->|"No"| tp
-r -->|"Yes"| ud
-ud -->|"No"| blank
-ud -->|"Yes"| mix
-mix --> pan
-pan --> e''',
+    'mermaid': FLOWS[1],
     'inputs': [
         '**No.** (Products A): item number. F5 at the start marks the case version of a pack (F51000 is the case of F1000).',
         '**Gen. Prod. Posting Group** (F): FG 277 items, FG-DIST 122, OBS 79.',
@@ -170,39 +107,7 @@ SPECS.append({
     'section': 2,
     'title': '2. Business Central exports: Logic Spec',
     'subtitle': 'What each weekly paste feeds, and the checks that decide whether the numbers can be trusted.',
-    'mermaid': '''flowchart TD
-s(["Weekly export day"]):::terminator
-sh[/"Paste Sales History<br/>posted invoice lines"/]:::export
-c1{{"Covers the sample week<br/>and 3 weeks before?"}}:::decision
-short["Missing weeks count as 0<br/>and pull the average down"]:::issue
-avg["DSD_DSnD H:M: SUMIFS of Quantity<br/>by No. and Posting Date"]:::calc
-so[/"Paste Open Sales Lines<br/>open order lines"/]:::export
-c2{{"Row 284 grid dates<br/>are real dates?"}}:::decision
-zero["Order grids stay 0"]:::issue
-grid["Dist_DSnD order grids: SUMIFS of<br/>Quantity by Shipment Date"]:::calc
-piv["Refresh the Dist Shipping pivot:<br/>Outstanding Quantity, DIST only"]:::output
-bom[/"Paste BOMQty when BOMs change<br/>Quantity Explosion of BOM"/]:::export
-c3{{"BOMQty current?"}}:::decision
-old["Bags use old recipes:<br/>As of 03/24/26"]:::issue
-wt["Dough Weight = SUMIFS of BOMQty<br/>by No_Item"]:::lookup
-e(["Exports ready for the week"]):::terminator
-s --> sh
-sh --> c1
-c1 -->|"No"| short
-c1 -->|"Yes"| avg
-short -.-> avg
-avg --> so
-so --> c2
-c2 -->|"No"| zero
-c2 -->|"Yes"| grid
-zero -.-> grid
-grid --> piv
-piv --> bom
-bom --> c3
-c3 -->|"No"| old
-c3 -->|"Yes"| wt
-old -.-> wt
-wt --> e''',
+    'mermaid': FLOWS[2],
     'inputs': [
         '**Sales History**: 203,445 rows, posting dates 5/2 to 9/23/2026. Used: No. (E), Posting Date (G), Quantity (L).',
         '**Open Sales Lines**: 1,438 rows. Used: No. (F), Quantity (J), Shipment Date (N), Outstanding Quantity (O). DSD or DIST (P) is a formula.',
@@ -235,39 +140,7 @@ SPECS.append({
     'section': 3,
     'title': '3. Inventory, Sunday to Friday: Logic Spec',
     'subtitle': 'One SKU on one day: counts come in from _BC.xlsm, reconcile against yesterday and close the day.',
-    'mermaid': '''flowchart TD
-s(["Start of day, one SKU"]):::terminator
-row[/"Code from the A3 row list:<br/>FG then FG-DIST"/]:::lookup
-init{{"Sunday?"}}:::decision
-i1[/"Initial Inventory from<br/>_BC.xlsm column C"/]:::lookup
-i2[/"Initial Inventory =<br/>yesterday's Final Inventory"/]:::lookup
-cnt[/"Freezer and Floor from<br/>_BC.xlsm columns F and G"/]:::lookup
-dif["Diferencias =<br/>Initial - (Freezer + Floor)"]:::calc
-q{{"Diferencias = 0?"}}:::decision
-var["Count and chain disagree:<br/>check the count"]:::issue
-ld[/"Late/Day Orders (H) and<br/>Inv. Discounts (M)"/]:::lookup
-tot["Total = Freezer + Floor<br/>- Late/Day Orders - Inv. Discounts"]:::calc
-wo[/"Wrapped (J) and Order (K)"/]:::lookup
-fin["Final Inventory =<br/>Total + Wrapped - Order"]:::calc
-dsd["Total goes to DSD_DSnD _Floor<br/>and Dist_DSnD 0_Inventory"]:::output
-e(["Final Inventory becomes<br/>tomorrow's Initial Inventory"]):::terminator
-s --> row
-row --> init
-init -->|"Yes"| i1
-init -->|"No"| i2
-i1 --> cnt
-i2 --> cnt
-cnt --> dif
-dif --> q
-q -->|"No"| var
-q -->|"Yes"| ld
-var -.-> ld
-ld --> tot
-tot --> dsd
-tot --> wo
-wo --> fin
-fin --> e
-e -.->|"next day"| init''',
+    'mermaid': FLOWS[3],
     'inputs': [
         f"**Code** (B): {T('Sunday', 'Code')}, from the row list of 395 SKUs.",
         '**_BC.xlsm day tab** (external file on SharePoint): where the floor count is typed. Tabs Sunday - Inventory to Friday-Inventory.',
@@ -302,40 +175,7 @@ SPECS.append({
     'section': 4,
     'title': '4. Daily Supply and Demand: Logic Spec',
     'subtitle': 'One SKU on one day: average past sales, add the buffer, subtract stock, and bake what is left.',
-    'mermaid': '''flowchart TD
-s(["One DSD SKU, one day"]):::terminator
-row[/"Sku from the A8 row list, FG only"/]:::lookup
-a[/"Asset from Products"/]:::lookup
-tp{{"3rd Party or<br/>3rd Party - Bake?"}}:::decision
-one["Sales on the sample date only"]:::calc
-avg["Average of the same weekday<br/>over 4 weeks: 0, 7, 14, 21 days back"]:::calc
-th{{"Thursday and Asset<br/>not MCS LINE?"}}:::decision
-d1["_Demand = ROUNDUP(avg x 1.2)"]:::calc
-d2["TH_Demand = ROUNDUP(Thur/Fri x 1.2<br/>+ Fri/Sat x 1.2)"]:::calc
-fl[/"_Floor = that day's Total"/]:::lookup
-fz[/"_Freeze: typed, blank today"/]:::input
-bal["_Balance = Freeze + Floor - Demand"]:::calc
-pr["_Production = _Balance"]:::calc
-q{{"Production below 0?"}}:::decision
-bake["Bake ABS(Production) packs:<br/>to DoughWeights and Mix-Slice-Oven"]:::output
-e(["Stock covers demand"]):::terminator
-s --> row
-row --> a
-a --> tp
-tp -->|"Yes"| one
-tp -->|"No"| avg
-one --> th
-avg --> th
-th -->|"No"| d1
-th -->|"Yes"| d2
-d1 --> bal
-d2 --> bal
-fl --> bal
-fz -.-> bal
-bal --> pr
-pr --> q
-q -->|"Yes"| bake
-q -->|"No"| e''',
+    'mermaid': FLOWS[4],
     'inputs': [
         f"**Sku** (F): {T('DSD_DSnD', 'Sku')}, from the row list of 275 FG SKUs.",
         '**Asset** (B): from Products. Decides the 3rd-party branch and the Thursday rule.',
@@ -373,40 +213,7 @@ SPECS.append({
     'section': 5,
     'title': '5. DoughWeights: Logic Spec',
     'subtitle': 'Only packs that are short become pounds of dough; each dough row then adds up its products.',
-    'mermaid': '''flowchart TD
-s(["One row of the DoughWeight table"]):::terminator
-row[/"Sku from the A4 row list:<br/>each dough, then its products"/]:::lookup
-filt["Row list skips descriptions<br/>with OBS and Z codes"]:::calc
-lob["Lobster rolls match OBS<br/>and are skipped"]:::issue
-dq{{"D-code dough row?"}}:::decision
-sum["Dough row = SUMIFS of the column<br/>over rows with the same Dough Desc"]:::calc
-cq{{"Case SKU, starts F5?"}}:::decision
-dist[/"Production from Dist_DSnD"/]:::lookup
-dsd[/"Production from DSD_DSnD"/]:::lookup
-q{{"Production below 0?"}}:::decision
-zero["0 lb"]:::calc
-w[/"Weight: lb of dough per pack,<br/>from Products"/]:::lookup
-lb["lb = ABS(Production) x Weight"]:::calc
-out["Mix-Slice-Oven: bags =<br/>lb / Dough Weight x Scrap"]:::output
-e(["Pounds per day, Sunday to Friday"]):::terminator
-s --> row
-row --> filt
-filt -.-> lob
-filt --> dq
-dq -->|"Yes"| sum
-dq -->|"No"| cq
-cq -->|"Yes"| dist
-cq -->|"No"| dsd
-dist --> q
-dsd --> q
-q -->|"No"| zero
-q -->|"Yes"| lb
-w --> lb
-lb --> out
-lb -.->|"rolls up"| sum
-zero --> e
-sum --> e
-out --> e''',
+    'mermaid': FLOWS[5],
     'inputs': [
         "**Sku** (B): the row's own A cell, from the A4 list of 453 rows.",
         '**Dough Desc** (D) and **Weight** (E): from Products.',
@@ -443,38 +250,7 @@ SPECS.append({
     'section': 6,
     'title': '6. Mix_Slice: Logic Spec',
     'subtitle': 'One run on one day: bags round up to whole mixes, minutes follow, and Asset puts the run on Breadline or MCS.',
-    'mermaid': """flowchart TD
-s(["One Unique Dough run, one day"]):::terminator
-lbd[/"lb for that day from DoughWeight"/]:::lookup
-l["L = ROUND(lb / Dough Weight, 2)<br/>x Scrap Factor, for each SKU"]:::calc
-m["M = SUMIFS of L over the run,<br/>on its first row"]:::calc
-marble{{"Marble Hearth or<br/>Marble Lg Pullman?"}}:::decision
-n1["N = CEILING(M, bags per mix)"]:::calc
-n2["N = CEILING(M, bags per mix) x 2.5"]:::calc
-o["O Planned Total = N,<br/>type over it to override"]:::calc
-mins["Minutes = Planned / bags per mix<br/>x minutes per mix, Marble / 2.5"]:::calc
-line{{"Asset?"}}:::decision
-bl["Breadline or Breadline/Artisan:<br/>O1 bags, row 1 bags and hours"]:::output
-mcs["MCS LINE:<br/>O2 bags, row 2 bags and hours"]:::output
-sch(["Schedules print H2 bags"]):::terminator
-dsd["Daily Supply and Demand<br/>rows 1-4 per day"]:::output
-s --> lbd
-lbd --> l
-l --> m
-m --> marble
-marble -->|"No"| n1
-marble -->|"Yes"| n2
-n1 --> o
-n2 --> o
-o --> mins
-o --> line
-mins --> line
-line -->|"Breadline"| bl
-line -->|"MCS LINE"| mcs
-bl --> sch
-mcs --> sch
-bl --> dsd
-mcs --> dsd""",
+    'mermaid': FLOWS[6],
     'inputs': [
         "**K4** (Mix-Slice-Oven!K4): the day for Planned Total and O1/O2, typed. This week Tuesday.",
         '**DoughWeight lb** per SKU and day; **Dough Weight** (Dough I) = lb in one bag.',
@@ -510,28 +286,7 @@ SPECS.append({
     'section': 7,
     'title': '7. Oven_Info: Logic Spec',
     'subtitle': 'One pan on the K4 day: every product on it adds its pieces, and the total becomes whole pans.',
-    'mermaid': """flowchart TD
-s(["One pan on the K4 day"]):::terminator
-rows[/"A410 row list: the pan,<br/>then each non-OBS product on it"/]:::lookup
-k4[/"K4 day selector: Tuesday"/]:::input
-d[/"Demand = packs short on the K4 day<br/>from DSD_DSnD or Dist_DSnD"/]:::lookup
-pc["pieces = Demand x<br/>pieces per tray/box"]:::calc
-sum["Pan row: SUMPRODUCT over products<br/>whose Pans/Boxes is this pan"]:::calc
-pp[/"Pieces Per Pan from Pans"/]:::lookup
-set["Set out = ROUNDUP(pieces / Pieces Per Pan)"]:::calc
-q{{"Product under the pan on MCS LINE<br/>and set out above 0?"}}:::decision
-f29(["Listed on MCS Schedule F29"]):::terminator
-no["Counted but not printed:<br/>no pan list for other lines"]:::issue
-s --> rows
-rows --> d
-k4 --> d
-d --> pc
-pc --> sum
-sum --> set
-pp --> set
-set --> q
-q -->|"Yes"| f29
-q -->|"No"| no""",
+    'mermaid': FLOWS[7],
     'inputs': [
         "**K4** (Mix-Slice-Oven!K4): Demand is for this day. This week Tuesday.",
         '**Products**: Pans/Boxes (which pan a product goes on) and Pieces Per Tray/Case.',
@@ -568,40 +323,7 @@ SPECS.append({
     'section': 8,
     'title': '8. MCS and Breadline schedules: Logic Spec',
     'subtitle': 'How the A5 formula turns Planned Total into one printed row per mix, in placement order.',
-    'mermaid': '''flowchart TD
-s(["Planned Total ready<br/>on Mix-Slice-Oven"]):::terminator
-f["Keep runs with Planned above 0<br/>on this line"]:::calc
-line{{"Breadline sheet?"}}:::decision
-mar["Marble runs become sets of<br/>Pump 1 bag + Rye 1.5 bags"]:::calc
-srt["Sort runs by Placement On Scedule:<br/>text or blank sorts last"]:::lookup
-k["Mixes per run = ROUNDUP(bags /<br/>Optimal Bag), 1 if none"]:::calc
-scan["SCAN running count:<br/>one row per mix"]:::calc
-mcs{{"MCS sheet?"}}:::decision
-co["Add Changeover rows at placement<br/>above + 0.5, inside the day only"]:::calc
-il["Keep Pump and Rye rows<br/>alternating"]:::calc
-att[/"Notes and attributes N:S from<br/>Critical Lookup Information"/]:::lookup
-bc["Bag Count: bags mixed,<br/>raw DSD and raw DIST per run"]:::calc
-pan[/"MCS only: pans to set out<br/>from Oven_Info"/]:::lookup
-e4[/"E4 start time, typed"/]:::input
-nt["No start or finish times<br/>are calculated"]:::issue
-out(["Printed run sheet"]):::terminator
-s --> f
-f --> line
-line -->|"Yes"| mar
-line -->|"No"| srt
-mar --> srt
-srt --> k
-k --> scan
-scan --> mcs
-mcs -->|"Yes"| co
-mcs -->|"No"| il
-co --> att
-il --> att
-att --> bc
-bc --> pan
-pan --> out
-e4 -.-> nt
-nt -.-> out''',
+    'mermaid': FLOWS[8],
     'inputs': [
         '**Mix_Slice**: Unique Dough, Asset and Planned Total.',
         '**Unique Dough table**: Placement On Scedule, Optimal Bag, Optimal Time. Changeover rows carry Optimal Time 10.',
@@ -638,32 +360,7 @@ SPECS.append({
     'section': 9,
     'title': '9. Recon: Logic Spec',
     'subtitle': 'Each row of the Recon table compares a spilled row list with the table beside it.',
-    'mermaid': '''flowchart TD
-s(["One row of the Recon table"]):::terminator
-b["Array Cell: read the spill address<br/>from the Array Rows formula text"]:::calc
-c[/"Array Rows = ROWS(ANCHORARRAY(spill))"/]:::lookup
-t[/"Table Rows = ROWS(Adjacent Table[])"/]:::lookup
-f["Difference = Array Rows - Table Rows"]:::calc
-g1{{"Array Rows = Table Rows?"}}:::decision
-m(["Status Match: every SKU has a row"]):::terminator
-g2{{"Table Rows bigger?"}}:::decision
-tl["Status Table longer: extra rows<br/>show N/A, harmless"]:::output
-al["Status Array longer: the last SKUs<br/>have no table row"]:::issue
-fix[/"Resize the table to the spill"/]:::input
-nc["Not checked: values inside rows,<br/>BOM weights, K4, dates"]:::output
-s --> c
-c --> b
-s --> t
-c --> f
-t --> f
-f --> g1
-g1 -->|"Yes"| m
-g1 -->|"No"| g2
-g2 -->|"Yes"| tl
-g2 -->|"No"| al
-al --> fix
-tl -.-> fix
-m -.-> nc''',
+    'mermaid': FLOWS[9],
     'inputs': [
         '**Sheet** and **Adjacent Table**: typed labels in the Recon table.',
         '**Spilled row lists**: Sunday to Friday A3, Daily Supply & Demand A8 and A287, DoughWeights A4, Mix-Slice-Oven A6 and A410.',
