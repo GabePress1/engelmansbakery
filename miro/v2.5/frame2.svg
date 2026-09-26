@@ -27,7 +27,6 @@
   <textArea id="h2_3" x="2784" y="240" width="320" font-size="22" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">Other pasted sheets</textArea>
   <rect id="c2_3_0" data-type="custom-widget" data-widget-type="card" data-title="Table14 (Items List)" data-description="NOT USED. Business Central Items List, 16 columns, 1,244 rows. No live formula reads it. Only DSD_DSnD Gen. Prod.'s stored table formula points here, so it would come back if that column were refilled." data-color="#8c8c8c" x="2784" y="288" width="320" height="88" fill="none" stroke="none"/>
   <rect id="c2_3_1" data-type="custom-widget" data-widget-type="card" data-title="Session Log" data-description="NOT USED. Static text, unreferenced." data-color="#8c8c8c" x="2784" y="396" width="320" height="88" fill="none" stroke="none"/>
-  <rect id="c2_3_2" data-type="custom-widget" data-widget-type="card" data-title="Mix Order Backup" data-description="NOT USED. Static values, unreferenced." data-color="#8c8c8c" x="2784" y="504" width="320" height="88" fill="none" stroke="none"/>
   <textArea id="h2_4" x="3136" y="240" width="320" font-size="22" font-weight="bold" font-family="noto_sans" fill="#1a1a1a">Weekly routine</textArea>
   <rect id="c2_4_0" data-type="custom-widget" data-widget-type="card" data-title="1. Paste Sales History" data-description="INPUT (typed). At least 21 days before the anchor week plus the sample week, so all four same-weekday samples exist." data-color="#00b86b" x="3136" y="288" width="320" height="88" fill="none" stroke="none"/>
   <rect id="c2_4_1" data-type="custom-widget" data-widget-type="card" data-title="2. Set 'Daily Supply &amp; Demand'!H2" data-description="INPUT (typed). Type the new planning Sunday. H3:M3 and every demand average follow." data-color="#00b86b" x="3136" y="396" width="320" height="88" fill="none" stroke="none"/>
@@ -57,7 +56,7 @@ flowchart LR
     GRID["Dist_DSnD order grids&lt;br/&gt;0_, 1_, 2_"]:::calc
     PIV["Dist Shipping Schedule&lt;br/&gt;PivotTable, DIST only"]:::output
     DW["Dough Weight&lt;br/&gt;lb per bag"]:::lookup
-    MSO["Mix_Slice_Oven&lt;br/&gt;bags = lb / Dough Weight"]:::calc
+    MSO["Mix_Slice&lt;br/&gt;bags = lb / Dough Weight"]:::calc
     NONE["no live formula"]:::issue
     SH --&gt;|"No., Posting Date, Quantity"| DSD
     SO --&gt;|"No., Quantity, Shipment Date"| GRID

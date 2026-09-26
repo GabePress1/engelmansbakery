@@ -2,7 +2,8 @@
 
 Board: https://miro.com/app/board/uXjVHiOiwa0=/
 
-Documents `Master Scheduling - 09.19.26 Thur 09.25.26 Gabe Press Version v2.5 - Claude.xlsm`:
+Documents `Master Scheduling - 09.19.26 Thur 09.25.26 Gabe Press Version v2.6.xlsm` (first built
+from v2.5; everything was re-extracted from v2.6, saved on Saturday 2026-09-26):
 what is typed, what is pasted from Business Central, what is calculated, and where each
 column feeds. The older "Operating Schedule" board (`uXjVHtxtiBg=`) documents v2.4 and was
 left untouched.
@@ -11,9 +12,9 @@ left untouched.
 
 ```sh
 python3 extract.py "<workbook.xlsm>" formulas.json   # formulas + cached values, stdlib only
-python3 build.py                                     # frame0.svg ... frame9.svg + manifest.json
+python3 build.py                                     # frame0.svg ... frame10.svg + manifest.json
 python3 spec_content.py                              # specs.json (Logic Spec text + flowcharts)
-python3 spec.py                                      # spec0.svg ... spec8.svg + spec_manifest.json
+python3 spec.py                                      # spec0.svg ... spec9.svg + spec_manifest.json
 python3 verify.py "<workbook.xlsm>"                  # overlap check + 10 formulas vs raw sheet XML
 ```
 
@@ -28,31 +29,32 @@ shifted by its offset from the master (Recon!F7 is `C7-E7`, not the master's `C5
 
 ## Layout
 
-Ten frames, left to right at y = 450, 400 px apart. Inside each frame (frame-relative):
+Eleven frames, left to right at y = 450, 400 px apart. Inside each frame (frame-relative):
 
 | Element | Position |
 |---|---|
 | Title (67 px bold) / subtitle (22 px) | x 64, text boxes at y 53 / 162, frame width − 128 wide |
 | Flowchart, Mermaid, 1600 × 900 | x 64…1664, y 240…1140 |
-| Card stacks, one per table | from x 1728 (x 64 in frame 9), 352 apart |
+| Card stacks, one per table | from x 1728 (x 64 in frame 10), 352 apart |
 | Stack heading (22 px bold, ≤ 23 characters) | text box 320 wide at y 240 |
 | Cards, 320 × 88 | from y 288, 108 apart, at most 16 per column |
 | Issues stack (red) | last column |
 
 | # | Frame | x | Width | Cards | Frame id | Diagram id |
 |---|---|---|---|---|---|---|
-| 0 | Overview and legend | 800 | 3168 | 40 | 3458764685007732985 | 3458764685008008966 (in frame) |
-| 1 | Master data | 4368 | 3872 | 46 | 3458764685008428612 | 3458764685008428677 (in frame) |
-| 2 | Business Central exports | 8640 | 3872 | 31 | 3458764685004855392 | 3458764685004855435 |
+| 0 | Overview and legend | 800 | 3168 | 39 | 3458764685007732985 | 3458764685008008966 (in frame) |
+| 1 | Master data | 4368 | 3872 | 48 | 3458764685008428612 | 3458764685008428677 (in frame) |
+| 2 | Business Central exports | 8640 | 3872 | 30 | 3458764685004855392 | 3458764685004855435 |
 | 3 | Inventory, Sunday to Friday | 12912 | 3168 | 31 | 3458764685005044059 | 3458764685005044108 |
 | 4 | Daily Supply and Demand | 16480 | 3872 | 48 | 3458764685005179569 | 3458764685005179635 |
 | 5 | DoughWeights | 20752 | 2816 | 18 | 3458764685005312292 | 3458764685005312324 |
-| 6 | Mix-Slice-Oven | 23968 | 3872 | 58 | 3458764685005590032 | 3458764685005590121 |
-| 7 | MCS and Breadline schedules | 28240 | 3168 | 24 | 3458764685005711509 | 3458764685005711545 |
-| 8 | Recon | 31808 | 2464 | 19 | 3458764685005827237 | 3458764685005827259 |
-| 9 | Known issues, ranked | 34672 | 1152 | 15 | 3458764685005827484 | — |
+| 6 | Mix_Slice | 23968 | 3872 | 53 | 3458764685005590032 | 3458764685005590121 (in frame) |
+| 7 | Oven_Info | 28240 | 3168 | 27 | 3458764685085871542 | 3458764685005711545 (was Schedules') |
+| 8 | MCS and Breadline schedules | 31808 | 3168 | 24 | 3458764685005711509 | 3458764685005827259 (was Recon's) |
+| 9 | Recon | 35376 | 2464 | 20 | 3458764685005827237 | 3458764685086117132 (in frame) |
+| 10 | Known issues, ranked | 38240 | 1152 | 15 | 3458764685005827484 | — |
 
-All frames sit at y = 450. 330 cards, 413 widgets in total. Deep link to a frame: `https://miro.com/app/board/uXjVHiOiwa0=/?moveToWidget=<frame id>`.
+All frames sit at y = 450. 353 cards, 433 widgets in total. Deep link to a frame: `https://miro.com/app/board/uXjVHiOiwa0=/?moveToWidget=<frame id>`.
 
 ## Colour key
 
@@ -68,16 +70,40 @@ All frames sit at y = 450. 330 cards, 413 widgets in total. Deep link to a frame
 
 ## Recon table
 
-Recon!A4:G15 is the Excel table **Recon** (made by hand in Excel). Section 8 and its spec name
+Recon!A4:G15 is the Excel table **Recon** (made by hand in Excel). Section 9 and its spec name
 its columns (Sheet, Array Cell, Array Rows, Adjacent Table, Table Rows, Difference
 (Array − Table), Status) instead of letters. `build.py` derives the table formulas from the
 workbook's row-5 formulas with `recon_ref()` (C5 → `[@[Array Rows]]`, E5 → `[@[Table Rows]]`)
 and asserts the result. Array Rows and Table Rows name a different spill and table on each
 row, so they are not calculated columns.
 
+In v2.6 the table's formulas are still stored in A1 style (`=C5-E5`,
+`=IF(C5=E5,"Match",...)`), so the cards quote the file's formula and then the structured
+equivalent, and the spec lists both. Recon!D13 ("Adjacent Table") still reads
+`Mix_Slice_Oven` although its Table Rows formula counts `Mix_Slice[]`; that is an issue card
+in section 9.
+
+## v2.6 changes
+
+- The table Mix_Slice_Oven was renamed **Mix_Slice** (same sheet, Mix-Slice-Oven, same range).
+  Section 6 is now "6. Mix_Slice" and the Oven_Info table on the same sheet has its own
+  section, "7. Oven_Info"; Schedules, Recon and Known issues became 8, 9 and 10.
+- Section 6 has a "Bags and time by line" stack: how Asset puts a row on Breadline
+  (`{"Breadline","Breadline/Artisan"}`) or MCS (`"MCS LINE"`); L → M → N → O; O1/O2/T2 for
+  the K4 day; `_Minutes`; rows 1–2 bags and hours for each day, with the saved values; and
+  worked examples (6" Italian Rolls, Challah 3 Braided, Marble Hearth).
+- The Mix Order Backup sheet was deleted; its sequence now lives in the typed column
+  "Original Mix Order" (Products T, Dough L). Its two cards were removed and an input card
+  was added to the Products and Dough stacks.
+- Moving cards between frames is refused ("target parent is not the actual parent"), so
+  the Oven_Info cards were created in the new frame and the originals in frame 6 deleted.
+- No main-row diagram was orphaned: the loose Schedules diagram took the Oven_Info
+  source, the loose Recon diagram took the Schedules source, and Recon got a new
+  diagram nested in its frame.
+
 ## Logic Spec row
 
-A second row of nine frames at y = 2910, 400 px below the tallest main frame. Each spec sits
+A second row of ten frames at y = 2910, 400 px below the tallest main frame. Each spec sits
 directly under its section, with the same x and width, and follows the "Operating Schedule —
 Logic Spec" pattern: one step-by-step `flowchart TD` for a single SKU or run, plus four panels.
 
@@ -90,7 +116,7 @@ Logic Spec" pattern: one step-by-step `flowchart TD` for a single SKU or run, pl
 Panel heights are estimated from the text (18 px noto_sans, about 10.6 px a character, 26 px
 lines). Every body text box was checked against its panel after placement; if one ever
 overflows, put the measured body heights in `spec_measured.json` and run `spec.py --measured`.
-Section 9 has no spec: it is already a ranked list.
+Section 10 has no spec: it is already a ranked list.
 
 | # | Spec frame | Frame id | Diagram id | Height |
 |---|---|---|---|---|
@@ -100,9 +126,10 @@ Section 9 has no spec: it is already a ranked list.
 | 3 | Inventory, Sunday to Friday | 3458764685010477420 | 3458764685010477454 | 1262 |
 | 4 | Daily Supply and Demand | 3458764685010737226 | 3458764685010737265 | 1288 |
 | 5 | DoughWeights | 3458764685010737227 | 3458764685010737263 | 1862 |
-| 6 | Mix-Slice-Oven | 3458764685011306340 | 3458764685011306377 | 1236 |
-| 7 | MCS and Breadline schedules | 3458764685011306341 | 3458764685011306378 | 1392 |
-| 8 | Recon | 3458764685010172627 | 3458764685010172645 | 1992 |
+| 6 | Mix_Slice | 3458764685011306340 | 3458764685011306377 | 1261 |
+| 7 | Oven_Info | 3458764685086338827 | 3458764685086338844 | 1236 |
+| 8 | MCS and Breadline schedules | 3458764685011306341 | 3458764685011306378 | 1392 |
+| 9 | Recon | 3458764685010172627 | 3458764685010172645 | 2122 |
 
 ## Diagram placement
 
@@ -118,7 +145,10 @@ Section 9 has no spec: it is already a ranked list.
 - After the cleanup of the old copies, the main-row flowcharts of sections 0 and 1 were found
   off their spots: section 0's at frame-relative (-399, 321), hanging out of the frame's left
   edge, and section 1's at (-425, 259), crossing into frame 0. They have to be dragged back to
-  (64, 240) by hand.
+  (64, 240) by hand. Section 6's flowchart is at (-131, 305) and needs the same.
+- Frame 1 is 1952 tall on the board; `build.py` makes it 2060 for the new Original Mix Order
+  card, which overhangs the bottom by 44 px. Miro refuses the resize while the section 1
+  flowchart sits outside the frame, so resize it after that flowchart is dragged back.
 
 ## Text boxes
 

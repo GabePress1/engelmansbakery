@@ -14,16 +14,20 @@ R = '{http://schemas.openxmlformats.org/officeDocument/2006/relationships}'
 # table -> representative data row (a product row, not a header/dough row)
 REP_ROW = {'Products': 2, 'Dough': 2, 'UniqueDough': 2, 'Pans': 4, 'SalesOrders': 2,
            'Sunday': 3, 'Monday': 3, 'Tuesday': 3, 'Wednesday': 3, 'Thursday': 3, 'Friday': 3,
-           'DSD_DSnD': 8, 'Dist_DSnD': 287, 'DoughWeight': 5, 'Mix_Slice_Oven': 7, 'Oven_Info': 411}
-EXTRA_ROWS = {'DoughWeight': 4, 'Mix_Slice_Oven': 6, 'Oven_Info': 410}  # dough / pan header rows
+           'DSD_DSnD': 8, 'Dist_DSnD': 287, 'DoughWeight': 5, 'Mix_Slice': 7, 'Oven_Info': 411}
+EXTRA_ROWS = {'DoughWeight': 4, 'Mix_Slice': 6, 'Oven_Info': 410}  # dough / pan header rows
 
 CELLS = {
     'Sunday': ['A3', 'B1', 'U3'], 'Monday': ['B1', 'D3', 'E3'],
     'Daily Supply & Demand': ['B1', 'H2', 'H3', 'C5', 'DT2', 'W1', 'W2', 'W3', 'W4', 'A8', 'A287',
-                              'H283', 'H284', 'H285', 'BI284', 'C287', 'D287', 'E287', 'AW8'],
+                              'H283', 'H284', 'H285', 'BI284', 'C287', 'D287', 'E287', 'AW8']
+                             + [f'{c}{r}' for r in (1, 2, 3, 4) for c in ('W', 'AD', 'AK', 'AR', 'AY', 'BF')],
     'DoughWeights': ['A4', 'F2'],
-    'Mix-Slice-Oven': ['K4', 'O1', 'O2', 'T2', 'AD1', 'AD2', 'BD1', 'BD2', 'BK1', 'Q3', 'R3',
-                       'A6', 'A410', 'CA500', 'Y1', 'M7', 'N7', 'N6', 'ZZ7'],
+    'Mix-Slice-Oven': ['K4', 'O1', 'O2', 'T2', 'BK1', 'Q3', 'R3',
+                       'A6', 'A410', 'CA500', 'Y1', 'M7', 'N7', 'N6', 'ZZ7']
+                      # rows 1-2: Breadline / MCS LINE planned bags and hours for each day
+                      + [f'{c}{r}' for r in (1, 2) for c in ('AD', 'AI', 'AN', 'AS', 'AX', 'BC',
+                                                             'BD', 'BE', 'BF', 'BG', 'BH', 'BI')],
     'MCS Schedule': ['A2', 'H2', 'E4', 'A5', 'F5', 'F29', 'N5', 'D4'],
     'Breadline Schedule': ['A2', 'H2', 'E4', 'A5', 'G5', 'N5', 'D4'],
     'Recon': [f'{c}{r}' for r in range(1, 16) for c in 'ABCDEFG'],

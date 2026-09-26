@@ -17,13 +17,13 @@
    "**Sample dates (H3)** one week before the anchor Monday: =H2-6. I3:M3 continue to Saturday.",
    "**Daily demand (S_Demand)** =ROUNDUP(([@Sun/Mon]*$C$5),0). The average in H:M is described in section 4.",
    "**Balance and production** =([@S_Freeze]+[@S_Floor])-[@S_Demand], then S_Production =[@S_Balanace]. Negative means bake.",
-   "**Breadline bags (O1)** =SUM(SUMIFS(Mix_Slice_Oven[Planned Total],Mix_Slice_Oven[Asset],{\"Breadline\",\"Breadline/Artisan\"}))",
-   "**MCS bags (O2)** =SUM(SUMIFS(Mix_Slice_Oven[Planned Total],Mix_Slice_Oven[Asset],\"MCS LINE\")). The MCS Schedule shows it in H2: ='Mix-Slice-Oven'!O2.",
+   "**Breadline bags (O1)** =SUM(SUMIFS(Mix_Slice[Planned Total],Mix_Slice[Asset],{\"Breadline\",\"Breadline/Artisan\"}))",
+   "**MCS bags (O2)** =SUM(SUMIFS(Mix_Slice[Planned Total],Mix_Slice[Asset],\"MCS LINE\")). The MCS Schedule shows it in H2: ='Mix-Slice-Oven'!O2.",
    "**Recon[Status]** =IF([@[Array Rows]]=[@[Table Rows]],\"Match\",IF([@[Table Rows]]>[@[Array Rows]],\"Table longer\",\"Array longer\"))"
   ],
   "example": [
    "**Anchor** H2 = 2026-09-20. Sample dates run 9/14 to 9/19; the Sun/Mon average also reads 9/7, 8/31 and 8/24.",
-   "**Today** 2026-09-25 is a Friday, so DT2 = 6 and every sheet header prints Friday.",
+   "**Today** as saved 2026-09-26 is a Saturday, so DT2 = 1 and every sheet header prints Saturday.",
    "**K4** = Tuesday, so Planned Total, the slice sheet and both schedules show Tuesday's quantities.",
    "**Line totals** O1 Breadline 54.5 bags, O2 MCS LINE 180 bags, T2 234.5.",
    "**Run sheets as saved** MCS 47 mixes + 2 changeovers; Breadline 25 mixes.",
@@ -206,46 +206,72 @@
  },
  {
   "section": 6,
-  "title": "6. Mix-Slice-Oven: Logic Spec",
-  "subtitle": "One run on the K4 day: pounds become bags, bags round up to whole mixes, mixes become minutes.",
-  "mermaid": "flowchart TD\ns([\"One mixing run on the K4 day\"]):::terminator\nk4[/\"K4 day selector: Tuesday\"/]:::input\nlbd[/\"lb for that day<br/>from DoughWeight\"/]:::lookup\nl[\"L = ROUND(lb / Dough Weight, 2)<br/>x Scrap Factor, for each SKU\"]:::calc\nfirst{{\"First row of this<br/>Unique Dough run?\"}}:::decision\nblank[\"M blank on the later rows\"]:::calc\nm[\"M = SUMIFS of L over the run\"]:::calc\nmarble{{\"Marble Hearth or<br/>Marble Lg Pullman?\"}}:::decision\nn1[\"N = CEILING(M, bags per mix)\"]:::calc\nn2[\"N = CEILING(M, bags per mix) x 2.5\"]:::calc\no[\"O Planned Total = N<br/>type over it to override\"]:::calc\ntot[\"O1 Breadline, O2 MCS LINE:<br/>line totals\"]:::output\nmins[\"_Minutes per day = _Planned /<br/>bags per mix x Run Time Per Mix\"]:::calc\nhrs[\"Rows 1-2: bags and hours<br/>back to Supply and Demand\"]:::output\ne([\"Schedules print the planned bags\"]):::terminator\ns --> k4\nk4 --> lbd\nlbd --> l\nl --> first\nfirst -->|\"No\"| blank\nfirst -->|\"Yes\"| m\nm --> marble\nmarble -->|\"No\"| n1\nmarble -->|\"Yes\"| n2\nn1 --> o\nn2 --> o\no --> tot\no -.->|\"each day\"| mins\nmins --> hrs\ntot --> e",
+  "title": "6. Mix_Slice: Logic Spec",
+  "subtitle": "One run on one day: bags round up to whole mixes, minutes follow, and Asset puts the run on Breadline or MCS.",
+  "mermaid": "flowchart TD\ns([\"One Unique Dough run, one day\"]):::terminator\nlbd[/\"lb for that day from DoughWeight\"/]:::lookup\nl[\"L = ROUND(lb / Dough Weight, 2)<br/>x Scrap Factor, for each SKU\"]:::calc\nm[\"M = SUMIFS of L over the run,<br/>on its first row\"]:::calc\nmarble{{\"Marble Hearth or<br/>Marble Lg Pullman?\"}}:::decision\nn1[\"N = CEILING(M, bags per mix)\"]:::calc\nn2[\"N = CEILING(M, bags per mix) x 2.5\"]:::calc\no[\"O Planned Total = N,<br/>type over it to override\"]:::calc\nmins[\"Minutes = Planned / bags per mix<br/>x minutes per mix, Marble / 2.5\"]:::calc\nline{{\"Asset?\"}}:::decision\nbl[\"Breadline or Breadline/Artisan:<br/>O1 bags, row 1 bags and hours\"]:::output\nmcs[\"MCS LINE:<br/>O2 bags, row 2 bags and hours\"]:::output\nsch([\"Schedules print H2 bags\"]):::terminator\ndsd[\"Daily Supply and Demand<br/>rows 1-4 per day\"]:::output\ns --> lbd\nlbd --> l\nl --> m\nm --> marble\nmarble -->|\"No\"| n1\nmarble -->|\"Yes\"| n2\nn1 --> o\nn2 --> o\no --> mins\no --> line\nmins --> line\nline -->|\"Breadline\"| bl\nline -->|\"MCS LINE\"| mcs\nbl --> sch\nmcs --> sch\nbl --> dsd\nmcs --> dsd",
   "inputs": [
-   "**K4** (Mix-Slice-Oven!K4): the day, typed. This week Tuesday.",
-   "**DoughWeight lb** for that day (Sun to Fri columns).",
-   "**Dough Weight** (Dough I): lb in one bag of dough.",
-   "**Scrap Factor**, **optimal bags per mix** and **Run Time Per Mix**: from Products and Unique Dough.",
-   "**Unique Dough**: groups SKUs into runs. The A6 list is sorted so each run is one block of rows.",
-   "**Pans**: pieces per pan, for Oven_Info."
+   "**K4** (Mix-Slice-Oven!K4): the day for Planned Total and O1/O2, typed. This week Tuesday.",
+   "**DoughWeight lb** per SKU and day; **Dough Weight** (Dough I) = lb in one bag.",
+   "**Scrap Factor** (Products); **optimal bags per mix** and **Run Time Per Mix** (Unique Dough Optimal Bag and Optimal Time).",
+   "**Asset** (Products): Breadline or Breadline/Artisan = Breadline; MCS LINE = MCS."
   ],
   "formulas": [
    "**L Dough Weight** =IFERROR(ROUND(LET(d,MATCH($K$4,{\"Sunday\",\"Monday\",\"Tuesday\",\"Wednesday\",\"Thursday\",\"Friday\"},0),XLOOKUP([@Sku],DoughWeight[Sku],CHOOSE(d,DoughWeight[Sun],DoughWeight[Mon],DoughWeight[Tue],DoughWeight[Wed],DoughWeight[Thur],DoughWeight[Fri]))/XLOOKUP([@Dough],Dough[No.],Dough[Weight])),2)*[@Scrap Factor],\"\")",
-   "**M Bags By Unique Dough** =IF(LEFT([@Sku],1)=\"D\",\"\",LET(u,[@Unique Dough],IF(C6=u,\"\",SUMIFS(Mix_Slice_Oven[Dough Weight],Mix_Slice_Oven[Unique Dough],u))))",
-   "**N Optimal Total** =IFERROR(IF(LEFT([@Sku],1)=\"D\",SUMIFS(Mix_Slice_Oven[Optimal Total],Mix_Slice_Oven[Dough],[@Sku],Mix_Slice_Oven[Asset],D8),IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),CEILING([@Bags By Unique Dough],[@optimal bags per mix])*2.5,CEILING([@Bags By Unique Dough],[@optimal bags per mix]))),\"\")",
-   "**O Planned Total** =[@Optimal Total]",
-   "**S_Minutes (BD)** =IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(([@S_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),0))",
-   "**O1 Breadline bags** =SUM(SUMIFS(Mix_Slice_Oven[Planned Total],Mix_Slice_Oven[Asset],{\"Breadline\",\"Breadline/Artisan\"}))"
+   "**N Optimal Total** =IFERROR(IF(LEFT([@Sku],1)=\"D\",SUMIFS(Mix_Slice[Optimal Total],Mix_Slice[Dough],[@Sku],Mix_Slice[Asset],D8),IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),CEILING([@Bags By Unique Dough],[@optimal bags per mix])*2.5,CEILING([@Bags By Unique Dough],[@optimal bags per mix]))),\"\")",
+   "**S_Minutes** =IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(([@S_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),0))",
+   "**O1 Breadline / O2 MCS bags** =SUM(SUMIFS(Mix_Slice[Planned Total],Mix_Slice[Asset],{\"Breadline\",\"Breadline/Artisan\"})); =SUM(SUMIFS(Mix_Slice[Planned Total],Mix_Slice[Asset],\"MCS LINE\"))",
+   "**Row 1 Breadline, Sunday** bags =SUM(SUMIFS(Mix_Slice[S_Planned],Mix_Slice[Asset],{\"Breadline\",\"Breadline/Artisan\"})), hours =SUM(SUMIFS(Mix_Slice[S_Minutes],Mix_Slice[Asset],{\"Breadline\",\"Breadline/Artisan\"}))/60",
+   "**Row 2 MCS, Sunday** bags =SUM(SUMIFS(Mix_Slice[S_Planned],Mix_Slice[Asset],\"MCS LINE\")), hours =SUM(SUMIFS(Mix_Slice[S_Minutes],Mix_Slice[Asset],\"MCS LINE\"))/60"
   ],
   "example": [
-   "**6\" Italian Rolls, Tuesday (MCS LINE)**: L for each SKU is F3091 2.849, F3094 0.759, F3092 0.011, F30941 0.022 and case F53094 4.774 bags.",
-   "**Run total**: M = 8.415 bags on the first row. Optimal bags per mix 4, so N = CEILING(8.415, 4) = 12 and Planned 12.",
-   "**On the MCS sheet**: 3 mixes of 4 bags, 20 minutes each.",
-   "**Challah 3 Braided, Tuesday**: F1127 0 bags; case F51127 is 20 cases short, 1.298 bags. N = CEILING(1.298, 1) = 2; T_Minutes = 2 / 1 x 30 = 60.",
-   "**Line totals**: O1 Breadline 54.5 bags, O2 MCS LINE 180 bags."
+   "**Breadline: Challah 3 Braided, Tuesday**: M 1.298 bags, 1 bag per mix: N = 2, Planned 2, minutes 2 / 1 x 30 = 60.",
+   "**MCS: 6\" Italian Rolls, Tuesday**: M 8.415 bags, 4 bags per mix: N = 12, 3 mixes x 20 min = 60.",
+   "**Breadline Marble Hearth, Tuesday**: M 1.672: CEILING = 2, x 2.5 = 5 bags; minutes 5 / 1 x 45 / 2.5 = 90.",
+   "**Breadline by day**: bags Sun 48, Mon 50.5, Tue 54.5, Wed 53.5, Thu 76.5, Fri 135.5; hours Sun 8.5, Mon 7.25, Tue 9.92, Wed 9.2, Thu 13.08, Fri 22.7.",
+   "**MCS by day**: bags Sun 174, Mon 200, Tue 180, Wed 188, Thu 219, Fri 255; hours Sun 16.08, Mon 18.58, Tue 16.92, Wed 17.5, Thu 20.42, Fri 25.25.",
+   "**K4 day (Tuesday)**: O1 54.5 and O2 180 bags, the same as row 1 and row 2 Tuesday."
   ],
   "questions": [
-   "Should K4 follow today's date by default?",
-   "Should Extra Bread (Runout) in column X add to the bags before they are rounded up?",
+   "Should K4 follow today's date by default, and should there be a K4-day hours cell next to O1 and O2?",
+   "Should MCS changeover minutes, which exist only on the MCS Schedule, count in the MCS hours?",
    "The per-day blocks round after scrap while L rounds before: which is intended?",
-   "For Marble runs, is 2.5 the Pump plus Rye bags per set, and should it live in Unique Dough instead of the formula?"
+   "Should Extra Bread (Runout) in column X add to the bags before they are rounded up?"
   ]
  },
  {
   "section": 7,
-  "title": "7. MCS and Breadline schedules: Logic Spec",
+  "title": "7. Oven_Info: Logic Spec",
+  "subtitle": "One pan on the K4 day: every product on it adds its pieces, and the total becomes whole pans.",
+  "mermaid": "flowchart TD\ns([\"One pan on the K4 day\"]):::terminator\nrows[/\"A410 row list: the pan,<br/>then each non-OBS product on it\"/]:::lookup\nk4[/\"K4 day selector: Tuesday\"/]:::input\nd[/\"Demand = packs short on the K4 day<br/>from DSD_DSnD or Dist_DSnD\"/]:::lookup\npc[\"pieces = Demand x<br/>pieces per tray/box\"]:::calc\nsum[\"Pan row: SUMPRODUCT over products<br/>whose Pans/Boxes is this pan\"]:::calc\npp[/\"Pieces Per Pan from Pans\"/]:::lookup\nset[\"Set out = ROUNDUP(pieces / Pieces Per Pan)\"]:::calc\nq{{\"Product under the pan on MCS LINE<br/>and set out above 0?\"}}:::decision\nf29([\"Listed on MCS Schedule F29\"]):::terminator\nno[\"Counted but not printed:<br/>no pan list for other lines\"]:::issue\ns --> rows\nrows --> d\nk4 --> d\nd --> pc\npc --> sum\nsum --> set\npp --> set\nset --> q\nq -->|\"Yes\"| f29\nq -->|\"No\"| no",
+  "inputs": [
+   "**K4** (Mix-Slice-Oven!K4): Demand is for this day. This week Tuesday.",
+   "**Products**: Pans/Boxes (which pan a product goes on) and Pieces Per Tray/Case.",
+   "**Pans**: Pieces Per Pan for each pan or box.",
+   "**_Production** on DSD_DSnD (packs) or Dist_DSnD (F5 cases) for the K4 day."
+  ],
+  "formulas": [
+   "**Row list (A410)** =LET(pn,FILTER(Pans[Pans/Boxes],Pans[Pans/Boxes]<>\"\"),sku,Products[No.],pan,Products[Pans/Boxes],gpg,Products[Gen. Prod. Posting Group],DROP(REDUCE(\"\",pn,LAMBDA(a,p,LET(m,FILTER(sku,(pan=p)*(gpg<>\"OBS\"),\"\"),IF(AND(ROWS(m)=1,INDEX(m,1)=\"\"),a,VSTACK(a,p,m))))),1))",
+   "**# of Pans/Boxes to set out (P)** =IFERROR(IF([@Pans]<>\"Pan\",\"\",ROUNDUP(SUMPRODUCT(--(XLOOKUP(Oven_Info[Finished Product],Products[No.],Products[Pans/Boxes],\"\")=[@Finished Product]),IFERROR(--Oven_Info[Demand],0),IFERROR(--Oven_Info['# of pieces per tray/box],0))/[@Pieces Per Pan],0)),\"\")",
+   "**MCS Schedule F29** =LET(p,Oven_Info[Pans],nm,Oven_Info[Finished Product],n,IFERROR(--Oven_Info['# of Pans/Boxes to set out],0),nx,DROP(VSTACK(p,\"\"),1),FILTER(HSTACK(nm,n),(p=\"Pan\")*(nx=\"MCS LINE\")*(n>0),\"No MCS pans\"))"
+  ],
+  "example": [
+   "**3.5\" Challah Onion Bun pan, Tuesday**: F3082 (MCS LINE) is short 55 packs x 12 pieces = 660 pieces.",
+   "**Pans**: 660 / 28 pieces per pan = 23.6, ROUNDUP = 24. MCS Schedule F29 lists it: 24.",
+   "**(Grande) Large Croissant**: F8006 76 x 1 = 76 pieces / 10 = 7.6, so 8 pans. It is 3rd Party - Bake, so F29 skips it."
+  ],
+  "questions": [
+   "Should the Breadline Schedule and 3rd Party - Bake products get their own pan list?",
+   "Should F29 check every product on a pan instead of only the first one under it?",
+   "Should the print area be widened to include rows 453 to 477?"
+  ]
+ },
+ {
+  "section": 8,
+  "title": "8. MCS and Breadline schedules: Logic Spec",
   "subtitle": "How the A5 formula turns Planned Total into one printed row per mix, in placement order.",
   "mermaid": "flowchart TD\ns([\"Planned Total ready<br/>on Mix-Slice-Oven\"]):::terminator\nf[\"Keep runs with Planned above 0<br/>on this line\"]:::calc\nline{{\"Breadline sheet?\"}}:::decision\nmar[\"Marble runs become sets of<br/>Pump 1 bag + Rye 1.5 bags\"]:::calc\nsrt[\"Sort runs by Placement On Scedule:<br/>text or blank sorts last\"]:::lookup\nk[\"Mixes per run = ROUNDUP(bags /<br/>Optimal Bag), 1 if none\"]:::calc\nscan[\"SCAN running count:<br/>one row per mix\"]:::calc\nmcs{{\"MCS sheet?\"}}:::decision\nco[\"Add Changeover rows at placement<br/>above + 0.5, inside the day only\"]:::calc\nil[\"Keep Pump and Rye rows<br/>alternating\"]:::calc\natt[/\"Notes and attributes N:S from<br/>Critical Lookup Information\"/]:::lookup\nbc[\"Bag Count: bags mixed,<br/>raw DSD and raw DIST per run\"]:::calc\npan[/\"MCS only: pans to set out<br/>from Oven_Info\"/]:::lookup\ne4[/\"E4 start time, typed\"/]:::input\nnt[\"No start or finish times<br/>are calculated\"]:::issue\nout([\"Printed run sheet\"]):::terminator\ns --> f\nf --> line\nline -->|\"Yes\"| mar\nline -->|\"No\"| srt\nmar --> srt\nsrt --> k\nk --> scan\nscan --> mcs\nmcs -->|\"Yes\"| co\nmcs -->|\"No\"| il\nco --> att\nil --> att\natt --> bc\nbc --> pan\npan --> out\ne4 -.-> nt\nnt -.-> out",
   "inputs": [
-   "**Mix_Slice_Oven**: Unique Dough, Asset and Planned Total.",
+   "**Mix_Slice**: Unique Dough, Asset and Planned Total.",
    "**Unique Dough table**: Placement On Scedule, Optimal Bag, Optimal Time. Changeover rows carry Optimal Time 10.",
    "**Critical Lookup Information D:O**: notes and attributes shown in N:S.",
    "**Oven_Info**: # of Pans/Boxes to set out, listed in MCS F29.",
@@ -275,26 +301,27 @@
   ]
  },
  {
-  "section": 8,
-  "title": "8. Recon: Logic Spec",
+  "section": 9,
+  "title": "9. Recon: Logic Spec",
   "subtitle": "Each row of the Recon table compares a spilled row list with the table beside it.",
   "mermaid": "flowchart TD\ns([\"One row of the Recon table\"]):::terminator\nb[\"Array Cell: read the spill address<br/>from the Array Rows formula text\"]:::calc\nc[/\"Array Rows = ROWS(ANCHORARRAY(spill))\"/]:::lookup\nt[/\"Table Rows = ROWS(Adjacent Table[])\"/]:::lookup\nf[\"Difference = Array Rows - Table Rows\"]:::calc\ng1{{\"Array Rows = Table Rows?\"}}:::decision\nm([\"Status Match: every SKU has a row\"]):::terminator\ng2{{\"Table Rows bigger?\"}}:::decision\ntl[\"Status Table longer: extra rows<br/>show N/A, harmless\"]:::output\nal[\"Status Array longer: the last SKUs<br/>have no table row\"]:::issue\nfix[/\"Resize the table to the spill\"/]:::input\nnc[\"Not checked: values inside rows,<br/>BOM weights, K4, dates\"]:::output\ns --> c\nc --> b\ns --> t\nc --> f\nt --> f\nf --> g1\ng1 -->|\"Yes\"| m\ng1 -->|\"No\"| g2\ng2 -->|\"Yes\"| tl\ng2 -->|\"No\"| al\nal --> fix\ntl -.-> fix\nm -.-> nc",
   "inputs": [
    "**Sheet** and **Adjacent Table**: typed labels in the Recon table.",
    "**Spilled row lists**: Sunday to Friday A3, Daily Supply & Demand A8 and A287, DoughWeights A4, Mix-Slice-Oven A6 and A410.",
-   "**Adjacent tables**: Sunday to Friday, DSD_DSnD, Dist_DSnD, DoughWeight, Mix_Slice_Oven, Oven_Info."
+   "**Adjacent tables**: Sunday to Friday, DSD_DSnD, Dist_DSnD, DoughWeight, Mix_Slice, Oven_Info."
   ],
   "formulas": [
    "**Array Cell** =SUBSTITUTE(MID(FORMULATEXT([@[Array Rows]]),FIND(\"!\",FORMULATEXT([@[Array Rows]]))+1,99),\")\",\"\")",
    "**Array Rows** =ROWS(ANCHORARRAY(Sunday!A3)) (Sunday row; each row names its own spill)",
    "**Table Rows** =ROWS(Sunday[]) (Sunday row; each row names its own table)",
    "**Difference (Array \u2212 Table)** =[@[Array Rows]]-[@[Table Rows]]",
-   "**Status** =IF([@[Array Rows]]=[@[Table Rows]],\"Match\",IF([@[Table Rows]]>[@[Array Rows]],\"Table longer\",\"Array longer\"))"
+   "**Status** =IF([@[Array Rows]]=[@[Table Rows]],\"Match\",IF([@[Table Rows]]>[@[Array Rows]],\"Table longer\",\"Array longer\"))",
+   "**As stored in the file** (A1 style, same result): Array Cell =SUBSTITUTE(MID(FORMULATEXT(C5),FIND(\"!\",FORMULATEXT(C5))+1,99),\")\",\"\"); Difference =C5-E5; Status =IF(C5=E5,\"Match\",IF(E5>C5,\"Table longer\",\"Array longer\"))"
   ],
   "example": [
    "**DoughWeight**: Array Rows 453 (DoughWeights A4#), Table Rows 452, Difference 1, Status Array longer: the last SKU, F2562, gets no formulas.",
    "**Wednesday**: Array Rows 395, Table Rows 447, Difference -52, Status Table longer: 52 rows of N/A under the list.",
-   "**Mix_Slice_Oven**: Array Rows 390, Table Rows 391, Difference -1, Status Table longer.",
+   "**Mix_Slice**: Array Rows 390, Table Rows 391, Difference -1, Status Table longer.",
    "**Sunday, Monday, DSD_DSnD, Dist_DSnD**: Status Match."
   ],
   "questions": [

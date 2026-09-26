@@ -1391,9 +1391,9 @@
     {
      "name": "Mixing Sheet",
      "col": "D",
-     "stored": "VLOOKUP([@Sku],Mix_Slice_Oven[Sku],1,FALSE)",
+     "stored": "VLOOKUP([@Sku],Mix_Slice[Sku],1,FALSE)",
      "cell": [
-      "VLOOKUP([@Sku],Mix_Slice_Oven[Sku],1,FALSE)",
+      "VLOOKUP([@Sku],Mix_Slice[Sku],1,FALSE)",
       "F1000"
      ]
     },
@@ -1893,9 +1893,9 @@
     {
      "name": "Asset",
      "col": "B",
-     "stored": "XLOOKUP([@Sku],Mix_Slice_Oven[Sku],Mix_Slice_Oven[Asset])",
+     "stored": "XLOOKUP([@Sku],Mix_Slice[Sku],Mix_Slice[Asset])",
      "cell": [
-      "XLOOKUP([@Sku],Mix_Slice_Oven[Sku],Mix_Slice_Oven[Asset])",
+      "XLOOKUP([@Sku],Mix_Slice[Sku],Mix_Slice[Asset])",
       "Breadline"
      ]
     },
@@ -1914,7 +1914,7 @@
      "stored": "IF($C287=\"(Case Only)\",\"(Case Only)\",IF(OR($DC287=\"\",$DD287=\"\",$DE287=\"\"),\"No DSD bread available\",IF($DC287>($DD287+$DE287),$DC287-($DD287+$DE287),\"No DSD bread available\")))",
      "cell": [
       "IF($C287=\"(Case Only)\",\"(Case Only)\",IF(OR($DC287=\"\",$DD287=\"\",$DE287=\"\"),\"No DSD bread available\",IF($DC287>($DD287+$DE287),$DC287-($DD287+$DE287),\"No DSD bread available\")))",
-      "No DSD bread available"
+      "17"
      ]
     },
     {
@@ -1923,7 +1923,7 @@
      "stored": null,
      "cell": [
       "IF($D287=\"No DSD bread available\",\"No DSD bread available\",IF($D287=\"(Case Only)\",\"(Case Only)\",ROUNDDOWN($D287/XLOOKUP($F287,'Critical Lookup Information'!$Q:$Q,'Critical Lookup Information'!$S:$S),0)))",
-      "No DSD bread available"
+      "2"
      ]
     },
     {
@@ -2004,7 +2004,7 @@
      "stored": "[@0_StillNeeded]",
      "cell": [
       "[@0_StillNeeded]",
-      "0"
+      "-12"
      ]
     },
     {
@@ -2013,7 +2013,7 @@
      "stored": "[@1_StillNeeded]",
      "cell": [
       "[@1_StillNeeded]",
-      "0"
+      "-12"
      ]
     },
     {
@@ -2022,7 +2022,7 @@
      "stored": "[@2_StillNeeded]",
      "cell": [
       "[@2_StillNeeded]",
-      "0"
+      "-12"
      ]
     },
     {
@@ -2493,7 +2493,7 @@
      "stored": "IFERROR(LET(k,[@0_Sku],d,IF(WEEKDAY(TODAY())=7,1,WEEKDAY(TODAY())),CHOOSE(d,XLOOKUP(k,Sunday[Code],Sunday[Total]),XLOOKUP(k,Monday[Code],Monday[Total]),XLOOKUP(k,Tuesday[Code],Tuesday[Total]),XLOOKUP(k,Wednesday[Code],Wednesday[Total]),XLOOKUP(k,Thursday[Code],Thursday[Total]),XLOOKUP(k,Friday[Code],Friday[Total]))),\"0\")",
      "cell": [
       "IFERROR(LET(k,[@0_Sku],d,IF(WEEKDAY(TODAY())=7,1,WEEKDAY(TODAY())),CHOOSE(d,XLOOKUP(k,Sunday[Code],Sunday[Total]),XLOOKUP(k,Monday[Code],Monday[Total]),XLOOKUP(k,Tuesday[Code],Tuesday[Total]),XLOOKUP(k,Wednesday[Code],Wednesday[Total]),XLOOKUP(k,Thursday[Code],Thursday[Total]),XLOOKUP(k,Friday[Code],Friday[Total]))),\"0\")",
-      "0"
+      "12"
      ]
     },
     {
@@ -2502,7 +2502,7 @@
      "stored": "[@0_TotalOrders]-[@0_Inventory]",
      "cell": [
       "[@0_TotalOrders]-[@0_Inventory]",
-      "0"
+      "-12"
      ]
     },
     {
@@ -2628,7 +2628,7 @@
      "stored": "IFERROR(LET(k,[@0_Sku],d,IF(WEEKDAY(TODAY())=7,1,WEEKDAY(TODAY())),CHOOSE(d,XLOOKUP(k,Sunday[Code],Sunday[Total]),XLOOKUP(k,Monday[Code],Monday[Total]),XLOOKUP(k,Tuesday[Code],Tuesday[Total]),XLOOKUP(k,Wednesday[Code],Wednesday[Total]),XLOOKUP(k,Thursday[Code],Thursday[Total]),XLOOKUP(k,Friday[Code],Friday[Total]))),\"0\")",
      "cell": [
       "IFERROR(LET(k,[@0_Sku],d,IF(WEEKDAY(TODAY())=7,1,WEEKDAY(TODAY())),CHOOSE(d,XLOOKUP(k,Sunday[Code],Sunday[Total]),XLOOKUP(k,Monday[Code],Monday[Total]),XLOOKUP(k,Tuesday[Code],Tuesday[Total]),XLOOKUP(k,Wednesday[Code],Wednesday[Total]),XLOOKUP(k,Thursday[Code],Thursday[Total]),XLOOKUP(k,Friday[Code],Friday[Total]))),\"0\")",
-      "0"
+      "12"
      ]
     },
     {
@@ -2637,7 +2637,7 @@
      "stored": "[@0_TotalOrders]-[@0_Inventory]",
      "cell": [
       "[@0_TotalOrders]-[@0_Inventory]",
-      "0"
+      "-12"
      ]
     },
     {
@@ -2763,7 +2763,7 @@
      "stored": "IFERROR(LET(k,[@0_Sku],d,IF(WEEKDAY(TODAY())=7,1,WEEKDAY(TODAY())),CHOOSE(d,XLOOKUP(k,Sunday[Code],Sunday[Total]),XLOOKUP(k,Monday[Code],Monday[Total]),XLOOKUP(k,Tuesday[Code],Tuesday[Total]),XLOOKUP(k,Wednesday[Code],Wednesday[Total]),XLOOKUP(k,Thursday[Code],Thursday[Total]),XLOOKUP(k,Friday[Code],Friday[Total]))),\"0\")",
      "cell": [
       "IFERROR(LET(k,[@0_Sku],d,IF(WEEKDAY(TODAY())=7,1,WEEKDAY(TODAY())),CHOOSE(d,XLOOKUP(k,Sunday[Code],Sunday[Total]),XLOOKUP(k,Monday[Code],Monday[Total]),XLOOKUP(k,Tuesday[Code],Tuesday[Total]),XLOOKUP(k,Wednesday[Code],Wednesday[Total]),XLOOKUP(k,Thursday[Code],Thursday[Total]),XLOOKUP(k,Friday[Code],Friday[Total]))),\"0\")",
-      "0"
+      "12"
      ]
     },
     {
@@ -2772,7 +2772,7 @@
      "stored": "[@0_TotalOrders]-[@0_Inventory]",
      "cell": [
       "[@0_TotalOrders]-[@0_Inventory]",
-      "0"
+      "-12"
      ]
     },
     {
@@ -2835,7 +2835,7 @@
      "stored": "IFERROR(XLOOKUP($C287,DSD_DSnD[Sku],CHOOSE($DT$2,DSD_DSnD[S_Balanace],DSD_DSnD[M_Balance],DSD_DSnD[T_Balance],DSD_DSnD[W_Balance],DSD_DSnD[TH_Balance],DSD_DSnD[F_Balance])),\"\")",
      "cell": [
       "IFERROR(XLOOKUP($C287,DSD_DSnD[Sku],CHOOSE($DT$2,DSD_DSnD[S_Balanace],DSD_DSnD[M_Balance],DSD_DSnD[T_Balance],DSD_DSnD[W_Balance],DSD_DSnD[TH_Balance],DSD_DSnD[F_Balance])),\"\")",
-      "-12"
+      "58"
      ]
     },
     {
@@ -2844,7 +2844,7 @@
      "stored": "IFERROR(XLOOKUP($C287,DSD_DSnD[Sku],CHOOSE(MOD($DT$2,6)+1,DSD_DSnD[S_Demand],DSD_DSnD[M_Demand],DSD_DSnD[T_Demand],DSD_DSnD[W_Demand],DSD_DSnD[TH_Demand],DSD_DSnD[F_Demand])),\"\")",
      "cell": [
       "IFERROR(XLOOKUP($C287,DSD_DSnD[Sku],CHOOSE(MOD($DT$2,6)+1,DSD_DSnD[S_Demand],DSD_DSnD[M_Demand],DSD_DSnD[T_Demand],DSD_DSnD[W_Demand],DSD_DSnD[TH_Demand],DSD_DSnD[F_Demand])),\"\")",
-      "21"
+      "14"
      ]
     },
     {
@@ -2853,7 +2853,7 @@
      "stored": "IFERROR(XLOOKUP($C287,DSD_DSnD[Sku],CHOOSE(MOD($DT$2+1,6)+1,DSD_DSnD[S_Demand],DSD_DSnD[M_Demand],DSD_DSnD[T_Demand],DSD_DSnD[W_Demand],DSD_DSnD[TH_Demand],DSD_DSnD[F_Demand])),\"\")",
      "cell": [
       "IFERROR(XLOOKUP($C287,DSD_DSnD[Sku],CHOOSE(MOD($DT$2+1,6)+1,DSD_DSnD[S_Demand],DSD_DSnD[M_Demand],DSD_DSnD[T_Demand],DSD_DSnD[W_Demand],DSD_DSnD[TH_Demand],DSD_DSnD[F_Demand])),\"\")",
-      "14"
+      "27"
      ]
     }
    ]
@@ -2995,787 +2995,6 @@
     }
    ]
   },
-  "Mix_Slice_Oven": {
-   "sheet": "Mix-Slice-Oven",
-   "ref": "B5:BI396",
-   "rows": 391,
-   "cols": [
-    {
-     "name": "Dough",
-     "col": "B",
-     "stored": "IFERROR(XLOOKUP([@Sku],Products[No.],Products[Dough]),\"\")",
-     "cell": [
-      "IFERROR(XLOOKUP([@Sku],Products[No.],Products[Dough]),\"\")",
-      "D10001"
-     ],
-     "header_row_cell": [
-      "IFERROR(XLOOKUP([@Sku],Products[No.],Products[Dough]),\"\")",
-      null
-     ]
-    },
-    {
-     "name": "Unique Dough",
-     "col": "C",
-     "stored": null,
-     "cell": [
-      "IFERROR(XLOOKUP([@Sku],Products[No.],Products[Unique Dough]),\"\")",
-      "Challah 3 Braided"
-     ],
-     "header_row_cell": [
-      "IFERROR(XLOOKUP([@Sku],Products[No.],Products[Unique Dough]),\"\")",
-      null
-     ]
-    },
-    {
-     "name": "Asset",
-     "col": "D",
-     "stored": null,
-     "cell": [
-      "IFERROR(XLOOKUP([@Sku],Products[No.],Products[Asset]),\"\")",
-      "Breadline"
-     ],
-     "header_row_cell": [
-      null,
-      null
-     ]
-    },
-    {
-     "name": "Weight",
-     "col": "E",
-     "stored": "IFERROR(XLOOKUP([@Sku],Dough[No.],Dough[Weight]),\"\")",
-     "cell": [
-      "IFERROR(XLOOKUP([@Sku],Dough[No.],Dough[Weight]),\"\")",
-      null
-     ],
-     "header_row_cell": [
-      "IFERROR(XLOOKUP([@Sku],Dough[No.],Dough[Weight]),\"\")",
-      "177.27"
-     ]
-    },
-    {
-     "name": "optimal bags per mix",
-     "col": "F",
-     "stored": "IFERROR(XLOOKUP([@Unique Dough],UniqueDough[Dough],UniqueDough[Optimal Bag]),\"\")",
-     "cell": [
-      "IFERROR(XLOOKUP([@Unique Dough],UniqueDough[Dough],UniqueDough[Optimal Bag]),\"\")",
-      "1"
-     ],
-     "header_row_cell": [
-      "IFERROR(XLOOKUP([@Unique Dough],UniqueDough[Dough],UniqueDough[Optimal Bag]),\"\")",
-      null
-     ]
-    },
-    {
-     "name": "Scrap Factor",
-     "col": "G",
-     "stored": null,
-     "cell": [
-      "IFERROR(XLOOKUP([@Sku],Products[No.],Products[Scrap Factor]),\"\")",
-      "1.1000000000000001"
-     ],
-     "header_row_cell": [
-      "IFERROR(XLOOKUP([@Sku],Products[No.],Products[Scrap Factor]),\"\")",
-      null
-     ]
-    },
-    {
-     "name": "Sku",
-     "col": "H",
-     "stored": null,
-     "cell": [
-      "A7",
-      "F1127"
-     ],
-     "header_row_cell": [
-      "A6",
-      "D10001"
-     ]
-    },
-    {
-     "name": "Description",
-     "col": "I",
-     "stored": null,
-     "cell": [
-      "IFERROR(XLOOKUP([@Sku],Dough[No.],Dough[Description]),XLOOKUP([@Sku],Products[No.],Products[Description]))",
-      "Challah 3-Braid 21oz"
-     ],
-     "header_row_cell": [
-      "IFERROR(XLOOKUP([@Sku],Dough[No.],Dough[Description]),XLOOKUP([@Sku],Products[No.],Products[Description]))",
-      "Challah Dough"
-     ]
-    },
-    {
-     "name": "Units per case/Tray",
-     "col": "J",
-     "stored": "IFERROR(XLOOKUP([@Sku],Products[No.],Products[Packs Per Tray/Case]),\"\")",
-     "cell": [
-      "IFERROR(XLOOKUP([@Sku],Products[No.],Products[Packs Per Tray/Case]),\"\")",
-      "6"
-     ],
-     "header_row_cell": [
-      "IFERROR(XLOOKUP([@Sku],Products[No.],Products[Packs Per Tray/Case]),\"\")",
-      null
-     ]
-    },
-    {
-     "name": "Number of  Individual Packaged Units Needed",
-     "col": "K",
-     "stored": "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(d,MATCH($K$4,{\"Sunday\",\"Monday\",\"Tuesday\",\"Wednesday\",\"Thursday\",\"Friday\"},0),p,IF(LEFT([@Sku],2)=\"F5\",XLOOKUP([@Sku],Dist_DSnD[Sku],CHOOSE(d,Dist_DSnD[S_Production],Dist_DSnD[M_Production],Dist_DSnD[T_Production],Dist_DSnD[W_Production],Dist_DSnD[TH_Production],Dist_DSnD[F_Production]),0),XLOOKUP([@Sku],DSD_DSnD[Sku],CHOOSE(d,DSD_DSnD[S_Production],DSD_DSnD[M_Production],DSD_DSnD[T_Production],DSD_DSnD[W_Production],DSD_DSnD[TH_Production],DSD_DSnD[F_Production]),0)),IF(p<0,ABS(p),\"0\")),\"0\"))",
-     "cell": [
-      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(d,MATCH($K$4,{\"Sunday\",\"Monday\",\"Tuesday\",\"Wednesday\",\"Thursday\",\"Friday\"},0),p,IF(LEFT([@Sku],2)=\"F5\",XLOOKUP([@Sku],Dist_DSnD[Sku],CHOOSE(d,Dist_DSnD[S_Production],Dist_DSnD[M_Production],Dist_DSnD[T_Production],Dist_DSnD[W_Production],Dist_DSnD[TH_Production],Dist_DSnD[F_Production]),0),XLOOKUP([@Sku],DSD_DSnD[Sku],CHOOSE(d,DSD_DSnD[S_Production],DSD_DSnD[M_Production],DSD_DSnD[T_Production],DSD_DSnD[W_Production],DSD_DSnD[TH_Production],DSD_DSnD[F_Production]),0)),IF(p<0,ABS(p),\"0\")),\"0\"))",
-      "0"
-     ],
-     "header_row_cell": [
-      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(d,MATCH($K$4,{\"Sunday\",\"Monday\",\"Tuesday\",\"Wednesday\",\"Thursday\",\"Friday\"},0),p,IF(LEFT([@Sku],2)=\"F5\",XLOOKUP([@Sku],Dist_DSnD[Sku],CHOOSE(d,Dist_DSnD[S_Production],Dist_DSnD[M_Production],Dist_DSnD[T_Production],Dist_DSnD[W_Production],Dist_DSnD[TH_Production],Dist_DSnD[F_Production]),0),XLOOKUP([@Sku],DSD_DSnD[Sku],CHOOSE(d,DSD_DSnD[S_Production],DSD_DSnD[M_Production],DSD_DSnD[T_Production],DSD_DSnD[W_Production],DSD_DSnD[TH_Production],DSD_DSnD[F_Production]),0)),IF(p<0,ABS(p),\"0\")),\"0\"))",
-      null
-     ]
-    },
-    {
-     "name": "Dough Weight",
-     "col": "L",
-     "stored": "IFERROR(ROUND(LET(d,MATCH($K$4,{\"Sunday\",\"Monday\",\"Tuesday\",\"Wednesday\",\"Thursday\",\"Friday\"},0),XLOOKUP([@Sku],DoughWeight[Sku],CHOOSE(d,DoughWeight[Sun],DoughWeight[Mon],DoughWeight[Tue],DoughWeight[Wed],DoughWeight[Thur],DoughWeight[Fri]))/XLOOKUP([@Dough],Dough[No.],Dough[Weight])),2)*[@Scrap Factor],\"\")",
-     "cell": [
-      "IFERROR(ROUND(LET(d,MATCH($K$4,{\"Sunday\",\"Monday\",\"Tuesday\",\"Wednesday\",\"Thursday\",\"Friday\"},0),XLOOKUP([@Sku],DoughWeight[Sku],CHOOSE(d,DoughWeight[Sun],DoughWeight[Mon],DoughWeight[Tue],DoughWeight[Wed],DoughWeight[Thur],DoughWeight[Fri]))/XLOOKUP([@Dough],Dough[No.],Dough[Weight])),2)*[@Scrap Factor],\"\")",
-      "0"
-     ],
-     "header_row_cell": [
-      "IFERROR(ROUND(LET(d,MATCH($K$4,{\"Sunday\",\"Monday\",\"Tuesday\",\"Wednesday\",\"Thursday\",\"Friday\"},0),XLOOKUP([@Sku],DoughWeight[Sku],CHOOSE(d,DoughWeight[Sun],DoughWeight[Mon],DoughWeight[Tue],DoughWeight[Wed],DoughWeight[Thur],DoughWeight[Fri]))/XLOOKUP([@Dough],Dough[No.],Dough[Weight])),2)*[@Scrap Factor],\"\")",
-      null
-     ]
-    },
-    {
-     "name": "Bags By Unique Dough",
-     "col": "M",
-     "stored": "IF(LEFT([@Sku],1)=\"D\",\"\",LET(u,[@Unique Dough],IF(C5=u,\"\",SUMIFS(Mix_Slice_Oven[Dough Weight],Mix_Slice_Oven[Unique Dough],u))))",
-     "cell": [
-      "IF(LEFT([@Sku],1)=\"D\",\"\",LET(u,[@Unique Dough],IF(C6=u,\"\",SUMIFS(Mix_Slice_Oven[Dough Weight],Mix_Slice_Oven[Unique Dough],u))))",
-      "1.298"
-     ],
-     "header_row_cell": [
-      "IF(LEFT([@Sku],1)=\"D\",\"\",LET(u,[@Unique Dough],IF(C5=u,\"\",SUMIFS(Mix_Slice_Oven[Dough Weight],Mix_Slice_Oven[Unique Dough],u))))",
-      null
-     ]
-    },
-    {
-     "name": "Optimal Total",
-     "col": "N",
-     "stored": "IFERROR(IF(LEFT([@Sku],1)=\"D\",SUMIFS(Mix_Slice_Oven[Optimal Total],Mix_Slice_Oven[Dough],[@Sku],Mix_Slice_Oven[Asset],D7),IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),CEILING([@Bags By Unique Dough],[@optimal bags per mix])*2.5,CEILING([@Bags By Unique Dough],[@optimal bags per mix]))),\"\")",
-     "cell": [
-      "IFERROR(IF(LEFT([@Sku],1)=\"D\",SUMIFS(Mix_Slice_Oven[Optimal Total],Mix_Slice_Oven[Dough],[@Sku],Mix_Slice_Oven[Asset],D8),IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),CEILING([@Bags By Unique Dough],[@optimal bags per mix])*2.5,CEILING([@Bags By Unique Dough],[@optimal bags per mix]))),\"\")",
-      "2"
-     ],
-     "header_row_cell": [
-      "IFERROR(IF(LEFT([@Sku],1)=\"D\",SUMIFS(Mix_Slice_Oven[Optimal Total],Mix_Slice_Oven[Dough],[@Sku],Mix_Slice_Oven[Asset],D7),IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),CEILING([@Bags By Unique Dough],[@optimal bags per mix])*2.5,CEILING([@Bags By Unique Dough],[@optimal bags per mix]))),\"\")",
-      "10"
-     ]
-    },
-    {
-     "name": "Planned Total",
-     "col": "O",
-     "stored": null,
-     "cell": [
-      "[@Optimal Total]",
-      "2"
-     ],
-     "header_row_cell": [
-      "[@Optimal Total]",
-      "10"
-     ]
-    },
-    {
-     "name": "Dough Desc",
-     "col": "P",
-     "stored": "[@Unique Dough]",
-     "cell": [
-      "[@Unique Dough]",
-      "Challah 3 Braided"
-     ],
-     "header_row_cell": [
-      "[@Unique Dough]",
-      null
-     ]
-    },
-    {
-     "name": "# of Bags for Mixing",
-     "col": "Q",
-     "stored": "[@Planned Total]",
-     "cell": [
-      "[@Planned Total]",
-      "2"
-     ],
-     "header_row_cell": [
-      "[@Planned Total]",
-      "10"
-     ]
-    },
-    {
-     "name": "Finished Product#",
-     "col": "R",
-     "stored": "[@Sku]",
-     "cell": [
-      "[@Sku]",
-      "F1127"
-     ],
-     "header_row_cell": [
-      "[@Sku]",
-      "D10001"
-     ]
-    },
-    {
-     "name": "Product Description",
-     "col": "S",
-     "stored": "[@Description]",
-     "cell": [
-      "[@Description]",
-      "Challah 3-Braid 21oz"
-     ],
-     "header_row_cell": [
-      "[@Description]",
-      "Challah Dough"
-     ]
-    },
-    {
-     "name": "# of Individual Packs/Cases Neded",
-     "col": "T",
-     "stored": "[@Number of  Individual Packaged Units Needed]",
-     "cell": [
-      "[@Number of  Individual Packaged Units Needed]",
-      "0"
-     ],
-     "header_row_cell": [
-      "[@Number of  Individual Packaged Units Needed]",
-      null
-     ]
-    },
-    {
-     "name": "#of Trays/Cases Needed",
-     "col": "U",
-     "stored": "IFERROR(ROUNDUP([@Number of  Individual Packaged Units Needed]/[@Units per case/Tray],0),\"\")",
-     "cell": [
-      "IFERROR(ROUNDUP([@Number of  Individual Packaged Units Needed]/[@Units per case/Tray],0),\"\")",
-      "0"
-     ],
-     "header_row_cell": [
-      "IFERROR(ROUNDUP([@Number of  Individual Packaged Units Needed]/[@Units per case/Tray],0),\"\")",
-      null
-     ]
-    },
-    {
-     "name": "Tray/Case",
-     "col": "V",
-     "stored": "IFS(LEFT([@Sku],1)=\"D\",\"\",LEFT([@Sku],2)=\"F5\",\"Case\",TRUE,\"Tray\")",
-     "cell": [
-      "IFS(LEFT([@Sku],1)=\"D\",\"\",LEFT([@Sku],2)=\"F5\",\"Case\",TRUE,\"Tray\")",
-      "Tray"
-     ],
-     "header_row_cell": [
-      "IFS(LEFT([@Sku],1)=\"D\",\"\",LEFT([@Sku],2)=\"F5\",\"Case\",TRUE,\"Tray\")",
-      null
-     ]
-    },
-    {
-     "name": "Notes",
-     "col": "W",
-     "stored": "IF(LEFT([@Sku],2)<>\"F5\",\"\",LET(n,N([@'#of Trays/Cases Needed]),base,XLOOKUP([@Sku],Products[No.],Products[Non Case Sku],\"\"),bn,SUMIFS(Mix_Slice_Oven['#of Trays/Cases Needed],Mix_Slice_Oven[Sku],base),IF(AND(n>0,bn=0),\"Case Total\",\"\")))",
-     "cell": [
-      "IF(LEFT([@Sku],2)<>\"F5\",\"\",LET(n,N([@'#of Trays/Cases Needed]),base,XLOOKUP([@Sku],Products[No.],Products[Non Case Sku],\"\"),bn,SUMIFS(Mix_Slice_Oven['#of Trays/Cases Needed],Mix_Slice_Oven[Sku],base),IF(AND(n>0,bn=0),\"Case Total\",\"\")))",
-      null
-     ],
-     "header_row_cell": [
-      "IF(LEFT([@Sku],2)<>\"F5\",\"\",LET(n,N([@'#of Trays/Cases Needed]),base,XLOOKUP([@Sku],Products[No.],Products[Non Case Sku],\"\"),bn,SUMIFS(Mix_Slice_Oven['#of Trays/Cases Needed],Mix_Slice_Oven[Sku],base),IF(AND(n>0,bn=0),\"Case Total\",\"\")))",
-      null
-     ]
-    },
-    {
-     "name": "Extra Bread (Runout)",
-     "col": "X",
-     "stored": null,
-     "cell": null,
-     "header_row_cell": null
-    },
-    {
-     "name": "Run Time Per Mix (min)",
-     "col": "Y",
-     "stored": "IFERROR(XLOOKUP([@Unique Dough],UniqueDough[Dough],UniqueDough[Optimal Time]),\"\")",
-     "cell": [
-      "IFERROR(XLOOKUP([@Unique Dough],UniqueDough[Dough],UniqueDough[Optimal Time]),\"\")",
-      "30"
-     ],
-     "header_row_cell": [
-      "IFERROR(XLOOKUP([@Unique Dough],UniqueDough[Dough],UniqueDough[Optimal Time]),\"\")",
-      null
-     ]
-    },
-    {
-     "name": "S_Needed",
-     "col": "Z",
-     "stored": "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(p,XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[S_Production]),IF(p<0,ABS(p),\"0\")),\"0\"))",
-     "cell": [
-      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(p,XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[S_Production]),IF(p<0,ABS(p),\"0\")),\"0\"))",
-      "0"
-     ],
-     "header_row_cell": [
-      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(p,XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[S_Production]),IF(p<0,ABS(p),\"0\")),\"0\"))",
-      null
-     ]
-    },
-    {
-     "name": "S_Bags",
-     "col": "AA",
-     "stored": "IFERROR(ROUND((XLOOKUP([@Sku],DoughWeight[Sku],DoughWeight[Sun])/XLOOKUP([@Dough],Dough[No.],Dough[Weight]))*[@Scrap Factor],2),\"\")",
-     "cell": [
-      "IFERROR(ROUND((XLOOKUP([@Sku],DoughWeight[Sku],DoughWeight[Sun])/XLOOKUP([@Dough],Dough[No.],Dough[Weight]))*[@Scrap Factor],2),\"\")",
-      "0"
-     ],
-     "header_row_cell": [
-      "IFERROR(ROUND((XLOOKUP([@Sku],DoughWeight[Sku],DoughWeight[Sun])/XLOOKUP([@Dough],Dough[No.],Dough[Weight]))*[@Scrap Factor],2),\"\")",
-      null
-     ]
-    },
-    {
-     "name": "S_Raw",
-     "col": "AB",
-     "stored": "IF([@Bags By Unique Dough]<>\"\",SUMIFS(Mix_Slice_Oven[S_Bags],Mix_Slice_Oven[Unique Dough],[@Unique Dough])*IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),\"\")",
-     "cell": [
-      "IF([@Bags By Unique Dough]<>\"\",SUMIFS(Mix_Slice_Oven[S_Bags],Mix_Slice_Oven[Unique Dough],[@Unique Dough])*IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),\"\")",
-      "0"
-     ],
-     "header_row_cell": [
-      "IF([@Bags By Unique Dough]<>\"\",SUMIFS(Mix_Slice_Oven[S_Bags],Mix_Slice_Oven[Unique Dough],[@Unique Dough])*IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),\"\")",
-      null
-     ]
-    },
-    {
-     "name": "S_Optimal",
-     "col": "AC",
-     "stored": "IFERROR(CEILING([@S_Raw],IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,[@optimal bags per mix])),\"\")",
-     "cell": [
-      "IFERROR(CEILING([@S_Raw],IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,[@optimal bags per mix])),\"\")",
-      "0"
-     ],
-     "header_row_cell": [
-      "IFERROR(CEILING([@S_Raw],IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,[@optimal bags per mix])),\"\")",
-      null
-     ]
-    },
-    {
-     "name": "S_Planned",
-     "col": "AD",
-     "stored": "[@S_Optimal]",
-     "cell": [
-      "[@S_Optimal]",
-      "0"
-     ],
-     "header_row_cell": [
-      "[@S_Optimal]",
-      null
-     ]
-    },
-    {
-     "name": "M_Needed",
-     "col": "AE",
-     "stored": "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(p,XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[M_Production]),IF(p<0,ABS(p),\"0\")),\"0\"))",
-     "cell": [
-      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(p,XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[M_Production]),IF(p<0,ABS(p),\"0\")),\"0\"))",
-      "0"
-     ],
-     "header_row_cell": [
-      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(p,XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[M_Production]),IF(p<0,ABS(p),\"0\")),\"0\"))",
-      null
-     ]
-    },
-    {
-     "name": "M_Bags",
-     "col": "AF",
-     "stored": "IFERROR(ROUND((XLOOKUP([@Sku],DoughWeight[Sku],DoughWeight[Mon])/XLOOKUP([@Dough],Dough[No.],Dough[Weight]))*[@Scrap Factor],2),\"\")",
-     "cell": [
-      "IFERROR(ROUND((XLOOKUP([@Sku],DoughWeight[Sku],DoughWeight[Mon])/XLOOKUP([@Dough],Dough[No.],Dough[Weight]))*[@Scrap Factor],2),\"\")",
-      "0"
-     ],
-     "header_row_cell": [
-      "IFERROR(ROUND((XLOOKUP([@Sku],DoughWeight[Sku],DoughWeight[Mon])/XLOOKUP([@Dough],Dough[No.],Dough[Weight]))*[@Scrap Factor],2),\"\")",
-      null
-     ]
-    },
-    {
-     "name": "M_Raw",
-     "col": "AG",
-     "stored": "IF([@Bags By Unique Dough]<>\"\",SUMIFS(Mix_Slice_Oven[M_Bags],Mix_Slice_Oven[Unique Dough],[@Unique Dough])*IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),\"\")",
-     "cell": [
-      "IF([@Bags By Unique Dough]<>\"\",SUMIFS(Mix_Slice_Oven[M_Bags],Mix_Slice_Oven[Unique Dough],[@Unique Dough])*IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),\"\")",
-      "0"
-     ],
-     "header_row_cell": [
-      "IF([@Bags By Unique Dough]<>\"\",SUMIFS(Mix_Slice_Oven[M_Bags],Mix_Slice_Oven[Unique Dough],[@Unique Dough])*IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),\"\")",
-      null
-     ]
-    },
-    {
-     "name": "M_Optimal",
-     "col": "AH",
-     "stored": "IFERROR(CEILING([@M_Raw],IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,[@optimal bags per mix])),\"\")",
-     "cell": [
-      "IFERROR(CEILING([@M_Raw],IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,[@optimal bags per mix])),\"\")",
-      "0"
-     ],
-     "header_row_cell": [
-      "IFERROR(CEILING([@M_Raw],IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,[@optimal bags per mix])),\"\")",
-      null
-     ]
-    },
-    {
-     "name": "M_Planned",
-     "col": "AI",
-     "stored": "[@M_Optimal]",
-     "cell": [
-      "[@M_Optimal]",
-      "0"
-     ],
-     "header_row_cell": [
-      "[@M_Optimal]",
-      null
-     ]
-    },
-    {
-     "name": "T_Needed",
-     "col": "AJ",
-     "stored": "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(p,XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[T_Production]),IF(p<0,ABS(p),\"0\")),\"0\"))",
-     "cell": [
-      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(p,XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[T_Production]),IF(p<0,ABS(p),\"0\")),\"0\"))",
-      "0"
-     ],
-     "header_row_cell": [
-      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(p,XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[T_Production]),IF(p<0,ABS(p),\"0\")),\"0\"))",
-      null
-     ]
-    },
-    {
-     "name": "T_Bags",
-     "col": "AK",
-     "stored": "IFERROR(ROUND((XLOOKUP([@Sku],DoughWeight[Sku],DoughWeight[Tue])/XLOOKUP([@Dough],Dough[No.],Dough[Weight]))*[@Scrap Factor],2),\"\")",
-     "cell": [
-      "IFERROR(ROUND((XLOOKUP([@Sku],DoughWeight[Sku],DoughWeight[Tue])/XLOOKUP([@Dough],Dough[No.],Dough[Weight]))*[@Scrap Factor],2),\"\")",
-      "0"
-     ],
-     "header_row_cell": [
-      "IFERROR(ROUND((XLOOKUP([@Sku],DoughWeight[Sku],DoughWeight[Tue])/XLOOKUP([@Dough],Dough[No.],Dough[Weight]))*[@Scrap Factor],2),\"\")",
-      null
-     ]
-    },
-    {
-     "name": "T_Raw",
-     "col": "AL",
-     "stored": "IF([@Bags By Unique Dough]<>\"\",SUMIFS(Mix_Slice_Oven[T_Bags],Mix_Slice_Oven[Unique Dough],[@Unique Dough])*IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),\"\")",
-     "cell": [
-      "IF([@Bags By Unique Dough]<>\"\",SUMIFS(Mix_Slice_Oven[T_Bags],Mix_Slice_Oven[Unique Dough],[@Unique Dough])*IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),\"\")",
-      "1.3"
-     ],
-     "header_row_cell": [
-      "IF([@Bags By Unique Dough]<>\"\",SUMIFS(Mix_Slice_Oven[T_Bags],Mix_Slice_Oven[Unique Dough],[@Unique Dough])*IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),\"\")",
-      null
-     ]
-    },
-    {
-     "name": "T_Optimal",
-     "col": "AM",
-     "stored": null,
-     "cell": [
-      "IFERROR(CEILING([@T_Raw],IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,[@optimal bags per mix])),\"\")",
-      "2"
-     ],
-     "header_row_cell": [
-      "IFERROR(CEILING([@T_Raw],IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,[@optimal bags per mix])),\"\")",
-      null
-     ]
-    },
-    {
-     "name": "T_Planned",
-     "col": "AN",
-     "stored": "[@T_Optimal]",
-     "cell": [
-      "[@T_Optimal]",
-      "2"
-     ],
-     "header_row_cell": [
-      "[@T_Optimal]",
-      null
-     ]
-    },
-    {
-     "name": "W_Needed",
-     "col": "AO",
-     "stored": "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(p,XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[W_Production]),IF(p<0,ABS(p),\"0\")),\"0\"))",
-     "cell": [
-      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(p,XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[W_Production]),IF(p<0,ABS(p),\"0\")),\"0\"))",
-      "0"
-     ],
-     "header_row_cell": [
-      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(p,XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[W_Production]),IF(p<0,ABS(p),\"0\")),\"0\"))",
-      null
-     ]
-    },
-    {
-     "name": "W_Bags",
-     "col": "AP",
-     "stored": "IFERROR(ROUND((XLOOKUP([@Sku],DoughWeight[Sku],DoughWeight[Wed])/XLOOKUP([@Dough],Dough[No.],Dough[Weight]))*[@Scrap Factor],2),\"\")",
-     "cell": [
-      "IFERROR(ROUND((XLOOKUP([@Sku],DoughWeight[Sku],DoughWeight[Wed])/XLOOKUP([@Dough],Dough[No.],Dough[Weight]))*[@Scrap Factor],2),\"\")",
-      "0"
-     ],
-     "header_row_cell": [
-      "IFERROR(ROUND((XLOOKUP([@Sku],DoughWeight[Sku],DoughWeight[Wed])/XLOOKUP([@Dough],Dough[No.],Dough[Weight]))*[@Scrap Factor],2),\"\")",
-      null
-     ]
-    },
-    {
-     "name": "W_Raw",
-     "col": "AQ",
-     "stored": "IF([@Bags By Unique Dough]<>\"\",SUMIFS(Mix_Slice_Oven[W_Bags],Mix_Slice_Oven[Unique Dough],[@Unique Dough])*IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),\"\")",
-     "cell": [
-      "IF([@Bags By Unique Dough]<>\"\",SUMIFS(Mix_Slice_Oven[W_Bags],Mix_Slice_Oven[Unique Dough],[@Unique Dough])*IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),\"\")",
-      "1.3"
-     ],
-     "header_row_cell": [
-      "IF([@Bags By Unique Dough]<>\"\",SUMIFS(Mix_Slice_Oven[W_Bags],Mix_Slice_Oven[Unique Dough],[@Unique Dough])*IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),\"\")",
-      null
-     ]
-    },
-    {
-     "name": "W_Optimal",
-     "col": "AR",
-     "stored": "IFERROR(CEILING([@W_Raw],IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,[@optimal bags per mix])),\"\")",
-     "cell": [
-      "IFERROR(CEILING([@W_Raw],IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,[@optimal bags per mix])),\"\")",
-      "2"
-     ],
-     "header_row_cell": [
-      "IFERROR(CEILING([@W_Raw],IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,[@optimal bags per mix])),\"\")",
-      null
-     ]
-    },
-    {
-     "name": "W_Planned",
-     "col": "AS",
-     "stored": "[@W_Optimal]",
-     "cell": [
-      "[@W_Optimal]",
-      "2"
-     ],
-     "header_row_cell": [
-      "[@W_Optimal]",
-      null
-     ]
-    },
-    {
-     "name": "TH_Needed",
-     "col": "AT",
-     "stored": "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(p,XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[TH_Production]),IF(p<0,ABS(p),\"0\")),\"0\"))",
-     "cell": [
-      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(p,XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[TH_Production]),IF(p<0,ABS(p),\"0\")),\"0\"))",
-      "0"
-     ],
-     "header_row_cell": [
-      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(p,XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[TH_Production]),IF(p<0,ABS(p),\"0\")),\"0\"))",
-      null
-     ]
-    },
-    {
-     "name": "TH_Bags",
-     "col": "AU",
-     "stored": "IFERROR(ROUND((XLOOKUP([@Sku],DoughWeight[Sku],DoughWeight[Thur])/XLOOKUP([@Dough],Dough[No.],Dough[Weight]))*[@Scrap Factor],2),\"\")",
-     "cell": [
-      "IFERROR(ROUND((XLOOKUP([@Sku],DoughWeight[Sku],DoughWeight[Thur])/XLOOKUP([@Dough],Dough[No.],Dough[Weight]))*[@Scrap Factor],2),\"\")",
-      "0"
-     ],
-     "header_row_cell": [
-      "IFERROR(ROUND((XLOOKUP([@Sku],DoughWeight[Sku],DoughWeight[Thur])/XLOOKUP([@Dough],Dough[No.],Dough[Weight]))*[@Scrap Factor],2),\"\")",
-      null
-     ]
-    },
-    {
-     "name": "TH_Raw",
-     "col": "AV",
-     "stored": "IF([@Bags By Unique Dough]<>\"\",SUMIFS(Mix_Slice_Oven[TH_Bags],Mix_Slice_Oven[Unique Dough],[@Unique Dough])*IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),\"\")",
-     "cell": [
-      "IF([@Bags By Unique Dough]<>\"\",SUMIFS(Mix_Slice_Oven[TH_Bags],Mix_Slice_Oven[Unique Dough],[@Unique Dough])*IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),\"\")",
-      "0"
-     ],
-     "header_row_cell": [
-      "IF([@Bags By Unique Dough]<>\"\",SUMIFS(Mix_Slice_Oven[TH_Bags],Mix_Slice_Oven[Unique Dough],[@Unique Dough])*IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),\"\")",
-      null
-     ]
-    },
-    {
-     "name": "TH_Optimal",
-     "col": "AW",
-     "stored": "IFERROR(CEILING([@TH_Raw],IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,[@optimal bags per mix])),\"\")",
-     "cell": [
-      "IFERROR(CEILING([@TH_Raw],IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,[@optimal bags per mix])),\"\")",
-      "0"
-     ],
-     "header_row_cell": [
-      "IFERROR(CEILING([@TH_Raw],IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,[@optimal bags per mix])),\"\")",
-      null
-     ]
-    },
-    {
-     "name": "TH_Planned",
-     "col": "AX",
-     "stored": "[@TH_Optimal]",
-     "cell": [
-      "[@TH_Optimal]",
-      "0"
-     ],
-     "header_row_cell": [
-      "[@TH_Optimal]",
-      null
-     ]
-    },
-    {
-     "name": "F_Needed",
-     "col": "AY",
-     "stored": "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(p,XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[F_Production]),IF(p<0,ABS(p),\"0\")),\"0\"))",
-     "cell": [
-      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(p,XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[F_Production]),IF(p<0,ABS(p),\"0\")),\"0\"))",
-      "36"
-     ],
-     "header_row_cell": [
-      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(p,XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[F_Production]),IF(p<0,ABS(p),\"0\")),\"0\"))",
-      null
-     ]
-    },
-    {
-     "name": "F_Bags",
-     "col": "AZ",
-     "stored": "IFERROR(ROUND((XLOOKUP([@Sku],DoughWeight[Sku],DoughWeight[Fri])/XLOOKUP([@Dough],Dough[No.],Dough[Weight]))*[@Scrap Factor],2),\"\")",
-     "cell": [
-      "IFERROR(ROUND((XLOOKUP([@Sku],DoughWeight[Sku],DoughWeight[Fri])/XLOOKUP([@Dough],Dough[No.],Dough[Weight]))*[@Scrap Factor],2),\"\")",
-      "0.28999999999999998"
-     ],
-     "header_row_cell": [
-      "IFERROR(ROUND((XLOOKUP([@Sku],DoughWeight[Sku],DoughWeight[Fri])/XLOOKUP([@Dough],Dough[No.],Dough[Weight]))*[@Scrap Factor],2),\"\")",
-      null
-     ]
-    },
-    {
-     "name": "F_Raw",
-     "col": "BA",
-     "stored": "IF([@Bags By Unique Dough]<>\"\",SUMIFS(Mix_Slice_Oven[F_Bags],Mix_Slice_Oven[Unique Dough],[@Unique Dough])*IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),\"\")",
-     "cell": [
-      "IF([@Bags By Unique Dough]<>\"\",SUMIFS(Mix_Slice_Oven[F_Bags],Mix_Slice_Oven[Unique Dough],[@Unique Dough])*IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),\"\")",
-      "0.28999999999999998"
-     ],
-     "header_row_cell": [
-      "IF([@Bags By Unique Dough]<>\"\",SUMIFS(Mix_Slice_Oven[F_Bags],Mix_Slice_Oven[Unique Dough],[@Unique Dough])*IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),\"\")",
-      null
-     ]
-    },
-    {
-     "name": "F_Optimal",
-     "col": "BB",
-     "stored": "IFERROR(CEILING([@F_Raw],IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,[@optimal bags per mix])),\"\")",
-     "cell": [
-      "IFERROR(CEILING([@F_Raw],IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,[@optimal bags per mix])),\"\")",
-      "1"
-     ],
-     "header_row_cell": [
-      "IFERROR(CEILING([@F_Raw],IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,[@optimal bags per mix])),\"\")",
-      null
-     ]
-    },
-    {
-     "name": "F_Planned",
-     "col": "BC",
-     "stored": "[@F_Optimal]",
-     "cell": [
-      "[@F_Optimal]",
-      "1"
-     ],
-     "header_row_cell": [
-      "[@F_Optimal]",
-      null
-     ]
-    },
-    {
-     "name": "S_Minutes",
-     "col": "BD",
-     "stored": "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(([@S_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),0))",
-     "cell": [
-      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(([@S_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),0))",
-      "0"
-     ],
-     "header_row_cell": [
-      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(([@S_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),0))",
-      null
-     ]
-    },
-    {
-     "name": "M_Minutes",
-     "col": "BE",
-     "stored": "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(([@M_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),0))",
-     "cell": [
-      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(([@M_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),0))",
-      "0"
-     ],
-     "header_row_cell": [
-      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(([@M_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),0))",
-      null
-     ]
-    },
-    {
-     "name": "T_Minutes",
-     "col": "BF",
-     "stored": "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(([@T_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),0))",
-     "cell": [
-      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(([@T_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),0))",
-      "60"
-     ],
-     "header_row_cell": [
-      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(([@T_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),0))",
-      null
-     ]
-    },
-    {
-     "name": "W_Minutes",
-     "col": "BG",
-     "stored": "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(([@W_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),0))",
-     "cell": [
-      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(([@W_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),0))",
-      "60"
-     ],
-     "header_row_cell": [
-      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(([@W_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),0))",
-      null
-     ]
-    },
-    {
-     "name": "TH_Minutes",
-     "col": "BH",
-     "stored": "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(([@TH_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),0))",
-     "cell": [
-      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(([@TH_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),0))",
-      "0"
-     ],
-     "header_row_cell": [
-      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(([@TH_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),0))",
-      null
-     ]
-    },
-    {
-     "name": "F_Minutes",
-     "col": "BI",
-     "stored": "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(([@F_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),0))",
-     "cell": [
-      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(([@F_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),0))",
-      "30"
-     ],
-     "header_row_cell": [
-      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(([@F_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),0))",
-      null
-     ]
-    }
-   ]
-  },
   "BOMQty": {
    "sheet": "DoughWeights",
    "ref": "O3:AJ15121",
@@ -3890,502 +3109,6 @@
      "name": "Column1",
      "col": "AJ",
      "stored": null
-    }
-   ]
-  },
-  "Products": {
-   "sheet": "Products",
-   "ref": "A1:S479",
-   "rows": 478,
-   "cols": [
-    {
-     "name": "No.",
-     "col": "A",
-     "stored": null,
-     "cell": [
-      null,
-      "F1000"
-     ]
-    },
-    {
-     "name": "Description",
-     "col": "B",
-     "stored": null,
-     "cell": [
-      null,
-      "Rye 1/2\""
-     ]
-    },
-    {
-     "name": "Production BOM No.",
-     "col": "C",
-     "stored": null,
-     "cell": [
-      null,
-      "F1000"
-     ]
-    },
-    {
-     "name": "Unit Cost",
-     "col": "D",
-     "stored": null,
-     "cell": [
-      null,
-      "0.97799999999999998"
-     ]
-    },
-    {
-     "name": "Unit Price",
-     "col": "E",
-     "stored": null,
-     "cell": [
-      null,
-      "0"
-     ]
-    },
-    {
-     "name": "Gen. Prod. Posting Group",
-     "col": "F",
-     "stored": null,
-     "cell": [
-      null,
-      "FG"
-     ]
-    },
-    {
-     "name": "Asset",
-     "col": "G",
-     "stored": null,
-     "cell": [
-      null,
-      "Breadline"
-     ]
-    },
-    {
-     "name": "Weight",
-     "col": "H",
-     "stored": null,
-     "cell": [
-      null,
-      "2.25"
-     ]
-    },
-    {
-     "name": "Unique Dough",
-     "col": "I",
-     "stored": null,
-     "cell": [
-      null,
-      "Rye Bread-Hearth"
-     ]
-    },
-    {
-     "name": "Packs Per Tray/Case",
-     "col": "J",
-     "stored": null,
-     "cell": [
-      null,
-      "8"
-     ]
-    },
-    {
-     "name": "Pieces Per Tray/Case",
-     "col": "K",
-     "stored": null,
-     "cell": [
-      null,
-      ""
-     ]
-    },
-    {
-     "name": "Dough",
-     "col": "L",
-     "stored": null,
-     "cell": [
-      null,
-      "D10009"
-     ]
-    },
-    {
-     "name": "Dough Description",
-     "col": "M",
-     "stored": "IFERROR(XLOOKUP([@Dough],Dough[No.],Dough[Description]),\"\")",
-     "cell": [
-      "IFERROR(XLOOKUP([@Dough],Dough[No.],Dough[Description]),\"\")",
-      "Rye Dough"
-     ]
-    },
-    {
-     "name": "Scrap Factor",
-     "col": "N",
-     "stored": null,
-     "cell": [
-      null,
-      "1.1000000000000001"
-     ]
-    },
-    {
-     "name": "Batch Size",
-     "col": "O",
-     "stored": null,
-     "cell": [
-      null,
-      "280"
-     ]
-    },
-    {
-     "name": "Asset Rank",
-     "col": "P",
-     "stored": "IFERROR(MATCH([@Asset],{\"Breadline\";\"Breadline/Artisan\";\"MCS LINE\";\"3rd Party\";\"3rd Party - Bake\";\"Third Party  - Repack\"},0),99)",
-     "cell": [
-      "IFERROR(MATCH([@Asset],{\"Breadline\";\"Breadline/Artisan\";\"MCS LINE\";\"3rd Party\";\"3rd Party - Bake\";\"Third Party  - Repack\"},0),99)",
-      "1"
-     ]
-    },
-    {
-     "name": "Pans/Boxes",
-     "col": "Q",
-     "stored": null,
-     "cell": [
-      null,
-      null
-     ]
-    },
-    {
-     "name": "Non Case Sku",
-     "col": "R",
-     "stored": "IF(LEFT([@No.],2)=\"F5\",\"F\"&MID([@No.],3,100),[@No.])",
-     "cell": [
-      "IF(LEFT([@No.],2)=\"F5\",\"F\"&MID([@No.],3,100),[@No.])",
-      "F1000"
-     ]
-    },
-    {
-     "name": "Topping",
-     "col": "S",
-     "stored": null,
-     "cell": [
-      null,
-      null
-     ]
-    }
-   ]
-  },
-  "Dough": {
-   "sheet": "Dough",
-   "ref": "A1:K64",
-   "rows": 63,
-   "cols": [
-    {
-     "name": "No.",
-     "col": "A",
-     "stored": null,
-     "cell": [
-      null,
-      "D10001"
-     ]
-    },
-    {
-     "name": "Description",
-     "col": "B",
-     "stored": null,
-     "cell": [
-      null,
-      "Challah Dough"
-     ]
-    },
-    {
-     "name": "Type",
-     "col": "C",
-     "stored": null,
-     "cell": [
-      null,
-      "Inventory"
-     ]
-    },
-    {
-     "name": "Item Tracking Code",
-     "col": "D",
-     "stored": null,
-     "cell": [
-      null,
-      "RM-LOT-EXP"
-     ]
-    },
-    {
-     "name": "Production BOM No.",
-     "col": "E",
-     "stored": null,
-     "cell": [
-      null,
-      "D10001"
-     ]
-    },
-    {
-     "name": "Unit Cost",
-     "col": "F",
-     "stored": null,
-     "cell": [
-      null,
-      "0.27700000000000002"
-     ]
-    },
-    {
-     "name": "Unit Price",
-     "col": "G",
-     "stored": null,
-     "cell": [
-      null,
-      "0"
-     ]
-    },
-    {
-     "name": "Gen. Prod. Posting Group",
-     "col": "H",
-     "stored": null,
-     "cell": [
-      null,
-      "RAW-IG"
-     ]
-    },
-    {
-     "name": "Weight",
-     "col": "I",
-     "stored": "SUMIFS(BOMQty[BOMQty],BOMQty[No_Item],[@No.])",
-     "cell": [
-      "SUMIFS(BOMQty[BOMQty],BOMQty[No_Item],[@No.])",
-      "177.27"
-     ]
-    },
-    {
-     "name": "Uni Dou #",
-     "col": "J",
-     "stored": "COUNTIFS(UniqueDough[Dough Sku],[@No.])",
-     "cell": [
-      "COUNTIFS(UniqueDough[Dough Sku],[@No.])",
-      "4"
-     ]
-    },
-    {
-     "name": "Uni Dou Desc",
-     "col": "K",
-     "stored": "TEXTJOIN(\", \",TRUE,FILTER(UniqueDough[Dough],UniqueDough[Dough Sku]=[@No.],\"\"))",
-     "cell": [
-      "TEXTJOIN(\", \",TRUE,FILTER(UniqueDough[Dough],UniqueDough[Dough Sku]=[@No.],\"\"))",
-      "Challah- Hearth- (38 oz.), Challah-Lg Pullman, Challah 3 Braided, Challah Dough"
-     ]
-    }
-   ]
-  },
-  "UniqueDough": {
-   "sheet": "Unique Dough",
-   "ref": "A1:S140",
-   "rows": 139,
-   "cols": [
-    {
-     "name": "Dough",
-     "col": "A",
-     "stored": null,
-     "cell": [
-      null,
-      "2# Sour Dough Batard"
-     ]
-    },
-    {
-     "name": "Pan Constraints",
-     "col": "B",
-     "stored": null,
-     "cell": [
-      null,
-      "None"
-     ]
-    },
-    {
-     "name": "Placement On Scedule",
-     "col": "C",
-     "stored": null,
-     "cell": [
-      null,
-      "Doesn't run on Big mixer, mixed in small mixer while larger mixes are running"
-     ]
-    },
-    {
-     "name": "Optimal Bag",
-     "col": "D",
-     "stored": null,
-     "cell": [
-      null,
-      "1"
-     ]
-    },
-    {
-     "name": "Optimal Time",
-     "col": "E",
-     "stored": null,
-     "cell": null
-    },
-    {
-     "name": "4 Bag Mix",
-     "col": "F",
-     "stored": null,
-     "cell": [
-      null,
-      "0"
-     ]
-    },
-    {
-     "name": "3 Bag Mix",
-     "col": "G",
-     "stored": null,
-     "cell": [
-      null,
-      "0"
-     ]
-    },
-    {
-     "name": "2 Bag Mix",
-     "col": "H",
-     "stored": null,
-     "cell": [
-      null,
-      "0"
-     ]
-    },
-    {
-     "name": "1 Bag Mix",
-     "col": "I",
-     "stored": null,
-     "cell": [
-      null,
-      "0"
-     ]
-    },
-    {
-     "name": "1.5 Bag Mix",
-     "col": "J",
-     "stored": null,
-     "cell": [
-      null,
-      "0"
-     ]
-    },
-    {
-     "name": "Dough Color",
-     "col": "K",
-     "stored": null,
-     "cell": [
-      null,
-      "White"
-     ]
-    },
-    {
-     "name": "Steamed?",
-     "col": "L",
-     "stored": null,
-     "cell": [
-      null,
-      "Not Steamed"
-     ]
-    },
-    {
-     "name": "Schedule Notes",
-     "col": "M",
-     "stored": null,
-     "cell": null
-    },
-    {
-     "name": "Schedule Notes2",
-     "col": "N",
-     "stored": null,
-     "cell": [
-      null,
-      "Keep 2-3 Hour Buffer in between Artisan Mixes"
-     ]
-    },
-    {
-     "name": "Notes",
-     "col": "O",
-     "stored": null,
-     "cell": null
-    },
-    {
-     "name": "Count",
-     "col": "P",
-     "stored": "COUNTIFS(Products[Unique Dough],[@Dough])",
-     "cell": [
-      "COUNTIFS(Products[Unique Dough],[@Dough])",
-      "8"
-     ]
-    },
-    {
-     "name": "List of Count",
-     "col": "Q",
-     "stored": "TEXTJOIN(\", \",TRUE,FILTER(Products[Description],IFERROR(Products[Unique Dough],\"\")=[@Dough],\"\"))",
-     "cell": [
-      "TEXTJOIN(\", \",TRUE,FILTER(Products[Description],IFERROR(Products[Unique Dough],\"\")=[@Dough],\"\"))",
-      "Sour Dough Batard 1/2\", Sour Dough Batard Unsliced, Sour Dough Batard 5/8\", Sour Dough Batard Horizontal 5/8\", Sour Dough Batard 3/4\", Cs. Sour Dough Batard 1/2\" 8lvs, Cs. Sour Dough Batard Unsliced 8lvs, Cs. Sour Dough Batard 5/8\" 8lvs"
-     ]
-    },
-    {
-     "name": "Dough Sku",
-     "col": "R",
-     "stored": "LET(r,IFERROR(MATCH([@Dough],'Mix-Slice-Oven'!$C:$C,0),0),rng,'Mix-Slice-Oven'!$H$1:INDEX('Mix-Slice-Oven'!$H:$H,MAX(r,1)),IF(r=0,\"\",IFERROR(XLOOKUP(TRUE,LEFT(rng,1)=\"D\",rng,\"\",0,-1),\"\")))",
-     "cell": [
-      "LET(r,IFERROR(MATCH([@Dough],'Mix-Slice-Oven'!$C:$C,0),0),rng,'Mix-Slice-Oven'!$H$1:INDEX('Mix-Slice-Oven'!$H:$H,MAX(r,1)),IF(r=0,\"\",IFERROR(XLOOKUP(TRUE,LEFT(rng,1)=\"D\",rng,\"\",0,-1),\"\")))",
-      "D10056"
-     ]
-    },
-    {
-     "name": "Dough Desc",
-     "col": "S",
-     "stored": "IFERROR(XLOOKUP([@Dough Sku],Dough[No.],Dough[Description]),\"\")",
-     "cell": [
-      "IFERROR(XLOOKUP([@Dough Sku],Dough[No.],Dough[Description]),\"\")",
-      "Artisan Sour Dough"
-     ]
-    }
-   ]
-  },
-  "Pans": {
-   "sheet": "Pans",
-   "ref": "B3:E44",
-   "rows": 41,
-   "cols": [
-    {
-     "name": "Pans/Boxes",
-     "col": "B",
-     "stored": null,
-     "cell": [
-      null,
-      "5\" Challah Sesame Buns"
-     ]
-    },
-    {
-     "name": "Pieces Per Pan",
-     "col": "C",
-     "stored": null,
-     "cell": [
-      null,
-      "15"
-     ]
-    },
-    {
-     "name": "Trays Per 1 bag Mix",
-     "col": "D",
-     "stored": null,
-     "cell": [
-      null,
-      "60"
-     ]
-    },
-    {
-     "name": "Unique Dough",
-     "col": "E",
-     "stored": null,
-     "cell": [
-      null,
-      "5\" Challah Bun"
-     ]
     }
    ]
   },
@@ -4604,6 +3327,1343 @@
     }
    ]
   },
+  "Recon": {
+   "sheet": "Recon",
+   "ref": "A4:G15",
+   "rows": 11,
+   "cols": [
+    {
+     "name": "Sheet",
+     "col": "A",
+     "stored": null
+    },
+    {
+     "name": "Array Cell",
+     "col": "B",
+     "stored": "SUBSTITUTE(MID(FORMULATEXT(C5),FIND(\"!\",FORMULATEXT(C5))+1,99),\")\",\"\")"
+    },
+    {
+     "name": "Array Rows",
+     "col": "C",
+     "stored": null
+    },
+    {
+     "name": "Adjacent Table",
+     "col": "D",
+     "stored": null
+    },
+    {
+     "name": "Table Rows",
+     "col": "E",
+     "stored": null
+    },
+    {
+     "name": "Difference (Array \u2212 Table)",
+     "col": "F",
+     "stored": "C5-E5"
+    },
+    {
+     "name": "Status",
+     "col": "G",
+     "stored": "IF(C5=E5,\"Match\",IF(E5>C5,\"Table longer\",\"Array longer\"))"
+    }
+   ]
+  },
+  "Mix_Slice": {
+   "sheet": "Mix-Slice-Oven",
+   "ref": "B5:BI396",
+   "rows": 391,
+   "cols": [
+    {
+     "name": "Dough",
+     "col": "B",
+     "stored": "IFERROR(XLOOKUP([@Sku],Products[No.],Products[Dough]),\"\")",
+     "cell": [
+      "IFERROR(XLOOKUP([@Sku],Products[No.],Products[Dough]),\"\")",
+      "D10001"
+     ],
+     "header_row_cell": [
+      "IFERROR(XLOOKUP([@Sku],Products[No.],Products[Dough]),\"\")",
+      null
+     ]
+    },
+    {
+     "name": "Unique Dough",
+     "col": "C",
+     "stored": null,
+     "cell": [
+      "IFERROR(XLOOKUP([@Sku],Products[No.],Products[Unique Dough]),\"\")",
+      "Challah 3 Braided"
+     ],
+     "header_row_cell": [
+      "IFERROR(XLOOKUP([@Sku],Products[No.],Products[Unique Dough]),\"\")",
+      null
+     ]
+    },
+    {
+     "name": "Asset",
+     "col": "D",
+     "stored": null,
+     "cell": [
+      "IFERROR(XLOOKUP([@Sku],Products[No.],Products[Asset]),\"\")",
+      "Breadline"
+     ],
+     "header_row_cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "Weight",
+     "col": "E",
+     "stored": "IFERROR(XLOOKUP([@Sku],Dough[No.],Dough[Weight]),\"\")",
+     "cell": [
+      "IFERROR(XLOOKUP([@Sku],Dough[No.],Dough[Weight]),\"\")",
+      null
+     ],
+     "header_row_cell": [
+      "IFERROR(XLOOKUP([@Sku],Dough[No.],Dough[Weight]),\"\")",
+      "177.27"
+     ]
+    },
+    {
+     "name": "optimal bags per mix",
+     "col": "F",
+     "stored": "IFERROR(XLOOKUP([@Unique Dough],UniqueDough[Dough],UniqueDough[Optimal Bag]),\"\")",
+     "cell": [
+      "IFERROR(XLOOKUP([@Unique Dough],UniqueDough[Dough],UniqueDough[Optimal Bag]),\"\")",
+      "1"
+     ],
+     "header_row_cell": [
+      "IFERROR(XLOOKUP([@Unique Dough],UniqueDough[Dough],UniqueDough[Optimal Bag]),\"\")",
+      null
+     ]
+    },
+    {
+     "name": "Scrap Factor",
+     "col": "G",
+     "stored": null,
+     "cell": [
+      "IFERROR(XLOOKUP([@Sku],Products[No.],Products[Scrap Factor]),\"\")",
+      "1.1000000000000001"
+     ],
+     "header_row_cell": [
+      "IFERROR(XLOOKUP([@Sku],Products[No.],Products[Scrap Factor]),\"\")",
+      null
+     ]
+    },
+    {
+     "name": "Sku",
+     "col": "H",
+     "stored": null,
+     "cell": [
+      "A7",
+      "F1127"
+     ],
+     "header_row_cell": [
+      "A6",
+      "D10001"
+     ]
+    },
+    {
+     "name": "Description",
+     "col": "I",
+     "stored": null,
+     "cell": [
+      "IFERROR(XLOOKUP([@Sku],Dough[No.],Dough[Description]),XLOOKUP([@Sku],Products[No.],Products[Description]))",
+      "Challah 3-Braid 21oz"
+     ],
+     "header_row_cell": [
+      "IFERROR(XLOOKUP([@Sku],Dough[No.],Dough[Description]),XLOOKUP([@Sku],Products[No.],Products[Description]))",
+      "Challah Dough"
+     ]
+    },
+    {
+     "name": "Units per case/Tray",
+     "col": "J",
+     "stored": "IFERROR(XLOOKUP([@Sku],Products[No.],Products[Packs Per Tray/Case]),\"\")",
+     "cell": [
+      "IFERROR(XLOOKUP([@Sku],Products[No.],Products[Packs Per Tray/Case]),\"\")",
+      "6"
+     ],
+     "header_row_cell": [
+      "IFERROR(XLOOKUP([@Sku],Products[No.],Products[Packs Per Tray/Case]),\"\")",
+      null
+     ]
+    },
+    {
+     "name": "Number of  Individual Packaged Units Needed",
+     "col": "K",
+     "stored": "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(d,MATCH($K$4,{\"Sunday\",\"Monday\",\"Tuesday\",\"Wednesday\",\"Thursday\",\"Friday\"},0),p,IF(LEFT([@Sku],2)=\"F5\",XLOOKUP([@Sku],Dist_DSnD[Sku],CHOOSE(d,Dist_DSnD[S_Production],Dist_DSnD[M_Production],Dist_DSnD[T_Production],Dist_DSnD[W_Production],Dist_DSnD[TH_Production],Dist_DSnD[F_Production]),0),XLOOKUP([@Sku],DSD_DSnD[Sku],CHOOSE(d,DSD_DSnD[S_Production],DSD_DSnD[M_Production],DSD_DSnD[T_Production],DSD_DSnD[W_Production],DSD_DSnD[TH_Production],DSD_DSnD[F_Production]),0)),IF(p<0,ABS(p),\"0\")),\"0\"))",
+     "cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(d,MATCH($K$4,{\"Sunday\",\"Monday\",\"Tuesday\",\"Wednesday\",\"Thursday\",\"Friday\"},0),p,IF(LEFT([@Sku],2)=\"F5\",XLOOKUP([@Sku],Dist_DSnD[Sku],CHOOSE(d,Dist_DSnD[S_Production],Dist_DSnD[M_Production],Dist_DSnD[T_Production],Dist_DSnD[W_Production],Dist_DSnD[TH_Production],Dist_DSnD[F_Production]),0),XLOOKUP([@Sku],DSD_DSnD[Sku],CHOOSE(d,DSD_DSnD[S_Production],DSD_DSnD[M_Production],DSD_DSnD[T_Production],DSD_DSnD[W_Production],DSD_DSnD[TH_Production],DSD_DSnD[F_Production]),0)),IF(p<0,ABS(p),\"0\")),\"0\"))",
+      "0"
+     ],
+     "header_row_cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(d,MATCH($K$4,{\"Sunday\",\"Monday\",\"Tuesday\",\"Wednesday\",\"Thursday\",\"Friday\"},0),p,IF(LEFT([@Sku],2)=\"F5\",XLOOKUP([@Sku],Dist_DSnD[Sku],CHOOSE(d,Dist_DSnD[S_Production],Dist_DSnD[M_Production],Dist_DSnD[T_Production],Dist_DSnD[W_Production],Dist_DSnD[TH_Production],Dist_DSnD[F_Production]),0),XLOOKUP([@Sku],DSD_DSnD[Sku],CHOOSE(d,DSD_DSnD[S_Production],DSD_DSnD[M_Production],DSD_DSnD[T_Production],DSD_DSnD[W_Production],DSD_DSnD[TH_Production],DSD_DSnD[F_Production]),0)),IF(p<0,ABS(p),\"0\")),\"0\"))",
+      null
+     ]
+    },
+    {
+     "name": "Dough Weight",
+     "col": "L",
+     "stored": "IFERROR(ROUND(LET(d,MATCH($K$4,{\"Sunday\",\"Monday\",\"Tuesday\",\"Wednesday\",\"Thursday\",\"Friday\"},0),XLOOKUP([@Sku],DoughWeight[Sku],CHOOSE(d,DoughWeight[Sun],DoughWeight[Mon],DoughWeight[Tue],DoughWeight[Wed],DoughWeight[Thur],DoughWeight[Fri]))/XLOOKUP([@Dough],Dough[No.],Dough[Weight])),2)*[@Scrap Factor],\"\")",
+     "cell": [
+      "IFERROR(ROUND(LET(d,MATCH($K$4,{\"Sunday\",\"Monday\",\"Tuesday\",\"Wednesday\",\"Thursday\",\"Friday\"},0),XLOOKUP([@Sku],DoughWeight[Sku],CHOOSE(d,DoughWeight[Sun],DoughWeight[Mon],DoughWeight[Tue],DoughWeight[Wed],DoughWeight[Thur],DoughWeight[Fri]))/XLOOKUP([@Dough],Dough[No.],Dough[Weight])),2)*[@Scrap Factor],\"\")",
+      "0"
+     ],
+     "header_row_cell": [
+      "IFERROR(ROUND(LET(d,MATCH($K$4,{\"Sunday\",\"Monday\",\"Tuesday\",\"Wednesday\",\"Thursday\",\"Friday\"},0),XLOOKUP([@Sku],DoughWeight[Sku],CHOOSE(d,DoughWeight[Sun],DoughWeight[Mon],DoughWeight[Tue],DoughWeight[Wed],DoughWeight[Thur],DoughWeight[Fri]))/XLOOKUP([@Dough],Dough[No.],Dough[Weight])),2)*[@Scrap Factor],\"\")",
+      null
+     ]
+    },
+    {
+     "name": "Bags By Unique Dough",
+     "col": "M",
+     "stored": "IF(LEFT([@Sku],1)=\"D\",\"\",LET(u,[@Unique Dough],IF(C5=u,\"\",SUMIFS(Mix_Slice[Dough Weight],Mix_Slice[Unique Dough],u))))",
+     "cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",LET(u,[@Unique Dough],IF(C6=u,\"\",SUMIFS(Mix_Slice[Dough Weight],Mix_Slice[Unique Dough],u))))",
+      "1.298"
+     ],
+     "header_row_cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",LET(u,[@Unique Dough],IF(C5=u,\"\",SUMIFS(Mix_Slice[Dough Weight],Mix_Slice[Unique Dough],u))))",
+      null
+     ]
+    },
+    {
+     "name": "Optimal Total",
+     "col": "N",
+     "stored": "IFERROR(IF(LEFT([@Sku],1)=\"D\",SUMIFS(Mix_Slice[Optimal Total],Mix_Slice[Dough],[@Sku],Mix_Slice[Asset],D7),IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),CEILING([@Bags By Unique Dough],[@optimal bags per mix])*2.5,CEILING([@Bags By Unique Dough],[@optimal bags per mix]))),\"\")",
+     "cell": [
+      "IFERROR(IF(LEFT([@Sku],1)=\"D\",SUMIFS(Mix_Slice[Optimal Total],Mix_Slice[Dough],[@Sku],Mix_Slice[Asset],D8),IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),CEILING([@Bags By Unique Dough],[@optimal bags per mix])*2.5,CEILING([@Bags By Unique Dough],[@optimal bags per mix]))),\"\")",
+      "2"
+     ],
+     "header_row_cell": [
+      "IFERROR(IF(LEFT([@Sku],1)=\"D\",SUMIFS(Mix_Slice[Optimal Total],Mix_Slice[Dough],[@Sku],Mix_Slice[Asset],D7),IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),CEILING([@Bags By Unique Dough],[@optimal bags per mix])*2.5,CEILING([@Bags By Unique Dough],[@optimal bags per mix]))),\"\")",
+      "10"
+     ]
+    },
+    {
+     "name": "Planned Total",
+     "col": "O",
+     "stored": null,
+     "cell": [
+      "[@Optimal Total]",
+      "2"
+     ],
+     "header_row_cell": [
+      "[@Optimal Total]",
+      "10"
+     ]
+    },
+    {
+     "name": "Dough Desc",
+     "col": "P",
+     "stored": "[@Unique Dough]",
+     "cell": [
+      "[@Unique Dough]",
+      "Challah 3 Braided"
+     ],
+     "header_row_cell": [
+      "[@Unique Dough]",
+      null
+     ]
+    },
+    {
+     "name": "# of Bags for Mixing",
+     "col": "Q",
+     "stored": "[@Planned Total]",
+     "cell": [
+      "[@Planned Total]",
+      "2"
+     ],
+     "header_row_cell": [
+      "[@Planned Total]",
+      "10"
+     ]
+    },
+    {
+     "name": "Finished Product#",
+     "col": "R",
+     "stored": "[@Sku]",
+     "cell": [
+      "[@Sku]",
+      "F1127"
+     ],
+     "header_row_cell": [
+      "[@Sku]",
+      "D10001"
+     ]
+    },
+    {
+     "name": "Product Description",
+     "col": "S",
+     "stored": "[@Description]",
+     "cell": [
+      "[@Description]",
+      "Challah 3-Braid 21oz"
+     ],
+     "header_row_cell": [
+      "[@Description]",
+      "Challah Dough"
+     ]
+    },
+    {
+     "name": "# of Individual Packs/Cases Neded",
+     "col": "T",
+     "stored": "[@Number of  Individual Packaged Units Needed]",
+     "cell": [
+      "[@Number of  Individual Packaged Units Needed]",
+      "0"
+     ],
+     "header_row_cell": [
+      "[@Number of  Individual Packaged Units Needed]",
+      null
+     ]
+    },
+    {
+     "name": "#of Trays/Cases Needed",
+     "col": "U",
+     "stored": "IFERROR(ROUNDUP([@Number of  Individual Packaged Units Needed]/[@Units per case/Tray],0),\"\")",
+     "cell": [
+      "IFERROR(ROUNDUP([@Number of  Individual Packaged Units Needed]/[@Units per case/Tray],0),\"\")",
+      "0"
+     ],
+     "header_row_cell": [
+      "IFERROR(ROUNDUP([@Number of  Individual Packaged Units Needed]/[@Units per case/Tray],0),\"\")",
+      null
+     ]
+    },
+    {
+     "name": "Tray/Case",
+     "col": "V",
+     "stored": "IFS(LEFT([@Sku],1)=\"D\",\"\",LEFT([@Sku],2)=\"F5\",\"Case\",TRUE,\"Tray\")",
+     "cell": [
+      "IFS(LEFT([@Sku],1)=\"D\",\"\",LEFT([@Sku],2)=\"F5\",\"Case\",TRUE,\"Tray\")",
+      "Tray"
+     ],
+     "header_row_cell": [
+      "IFS(LEFT([@Sku],1)=\"D\",\"\",LEFT([@Sku],2)=\"F5\",\"Case\",TRUE,\"Tray\")",
+      null
+     ]
+    },
+    {
+     "name": "Notes",
+     "col": "W",
+     "stored": "IF(LEFT([@Sku],2)<>\"F5\",\"\",LET(n,N([@'#of Trays/Cases Needed]),base,XLOOKUP([@Sku],Products[No.],Products[Non Case Sku],\"\"),bn,SUMIFS(Mix_Slice['#of Trays/Cases Needed],Mix_Slice[Sku],base),IF(AND(n>0,bn=0),\"Case Total\",\"\")))",
+     "cell": [
+      "IF(LEFT([@Sku],2)<>\"F5\",\"\",LET(n,N([@'#of Trays/Cases Needed]),base,XLOOKUP([@Sku],Products[No.],Products[Non Case Sku],\"\"),bn,SUMIFS(Mix_Slice['#of Trays/Cases Needed],Mix_Slice[Sku],base),IF(AND(n>0,bn=0),\"Case Total\",\"\")))",
+      null
+     ],
+     "header_row_cell": [
+      "IF(LEFT([@Sku],2)<>\"F5\",\"\",LET(n,N([@'#of Trays/Cases Needed]),base,XLOOKUP([@Sku],Products[No.],Products[Non Case Sku],\"\"),bn,SUMIFS(Mix_Slice['#of Trays/Cases Needed],Mix_Slice[Sku],base),IF(AND(n>0,bn=0),\"Case Total\",\"\")))",
+      null
+     ]
+    },
+    {
+     "name": "Extra Bread (Runout)",
+     "col": "X",
+     "stored": null,
+     "cell": null,
+     "header_row_cell": null
+    },
+    {
+     "name": "Run Time Per Mix (min)",
+     "col": "Y",
+     "stored": "IFERROR(XLOOKUP([@Unique Dough],UniqueDough[Dough],UniqueDough[Optimal Time]),\"\")",
+     "cell": [
+      "IFERROR(XLOOKUP([@Unique Dough],UniqueDough[Dough],UniqueDough[Optimal Time]),\"\")",
+      "30"
+     ],
+     "header_row_cell": [
+      "IFERROR(XLOOKUP([@Unique Dough],UniqueDough[Dough],UniqueDough[Optimal Time]),\"\")",
+      null
+     ]
+    },
+    {
+     "name": "S_Needed",
+     "col": "Z",
+     "stored": "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(p,XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[S_Production]),IF(p<0,ABS(p),\"0\")),\"0\"))",
+     "cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(p,XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[S_Production]),IF(p<0,ABS(p),\"0\")),\"0\"))",
+      "0"
+     ],
+     "header_row_cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(p,XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[S_Production]),IF(p<0,ABS(p),\"0\")),\"0\"))",
+      null
+     ]
+    },
+    {
+     "name": "S_Bags",
+     "col": "AA",
+     "stored": "IFERROR(ROUND((XLOOKUP([@Sku],DoughWeight[Sku],DoughWeight[Sun])/XLOOKUP([@Dough],Dough[No.],Dough[Weight]))*[@Scrap Factor],2),\"\")",
+     "cell": [
+      "IFERROR(ROUND((XLOOKUP([@Sku],DoughWeight[Sku],DoughWeight[Sun])/XLOOKUP([@Dough],Dough[No.],Dough[Weight]))*[@Scrap Factor],2),\"\")",
+      "0"
+     ],
+     "header_row_cell": [
+      "IFERROR(ROUND((XLOOKUP([@Sku],DoughWeight[Sku],DoughWeight[Sun])/XLOOKUP([@Dough],Dough[No.],Dough[Weight]))*[@Scrap Factor],2),\"\")",
+      null
+     ]
+    },
+    {
+     "name": "S_Raw",
+     "col": "AB",
+     "stored": "IF([@Bags By Unique Dough]<>\"\",SUMIFS(Mix_Slice[S_Bags],Mix_Slice[Unique Dough],[@Unique Dough])*IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),\"\")",
+     "cell": [
+      "IF([@Bags By Unique Dough]<>\"\",SUMIFS(Mix_Slice[S_Bags],Mix_Slice[Unique Dough],[@Unique Dough])*IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),\"\")",
+      "0"
+     ],
+     "header_row_cell": [
+      "IF([@Bags By Unique Dough]<>\"\",SUMIFS(Mix_Slice[S_Bags],Mix_Slice[Unique Dough],[@Unique Dough])*IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),\"\")",
+      null
+     ]
+    },
+    {
+     "name": "S_Optimal",
+     "col": "AC",
+     "stored": "IFERROR(CEILING([@S_Raw],IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,[@optimal bags per mix])),\"\")",
+     "cell": [
+      "IFERROR(CEILING([@S_Raw],IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,[@optimal bags per mix])),\"\")",
+      "0"
+     ],
+     "header_row_cell": [
+      "IFERROR(CEILING([@S_Raw],IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,[@optimal bags per mix])),\"\")",
+      null
+     ]
+    },
+    {
+     "name": "S_Planned",
+     "col": "AD",
+     "stored": "[@S_Optimal]",
+     "cell": [
+      "[@S_Optimal]",
+      "0"
+     ],
+     "header_row_cell": [
+      "[@S_Optimal]",
+      null
+     ]
+    },
+    {
+     "name": "M_Needed",
+     "col": "AE",
+     "stored": "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(p,XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[M_Production]),IF(p<0,ABS(p),\"0\")),\"0\"))",
+     "cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(p,XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[M_Production]),IF(p<0,ABS(p),\"0\")),\"0\"))",
+      "0"
+     ],
+     "header_row_cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(p,XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[M_Production]),IF(p<0,ABS(p),\"0\")),\"0\"))",
+      null
+     ]
+    },
+    {
+     "name": "M_Bags",
+     "col": "AF",
+     "stored": "IFERROR(ROUND((XLOOKUP([@Sku],DoughWeight[Sku],DoughWeight[Mon])/XLOOKUP([@Dough],Dough[No.],Dough[Weight]))*[@Scrap Factor],2),\"\")",
+     "cell": [
+      "IFERROR(ROUND((XLOOKUP([@Sku],DoughWeight[Sku],DoughWeight[Mon])/XLOOKUP([@Dough],Dough[No.],Dough[Weight]))*[@Scrap Factor],2),\"\")",
+      "0"
+     ],
+     "header_row_cell": [
+      "IFERROR(ROUND((XLOOKUP([@Sku],DoughWeight[Sku],DoughWeight[Mon])/XLOOKUP([@Dough],Dough[No.],Dough[Weight]))*[@Scrap Factor],2),\"\")",
+      null
+     ]
+    },
+    {
+     "name": "M_Raw",
+     "col": "AG",
+     "stored": "IF([@Bags By Unique Dough]<>\"\",SUMIFS(Mix_Slice[M_Bags],Mix_Slice[Unique Dough],[@Unique Dough])*IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),\"\")",
+     "cell": [
+      "IF([@Bags By Unique Dough]<>\"\",SUMIFS(Mix_Slice[M_Bags],Mix_Slice[Unique Dough],[@Unique Dough])*IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),\"\")",
+      "0"
+     ],
+     "header_row_cell": [
+      "IF([@Bags By Unique Dough]<>\"\",SUMIFS(Mix_Slice[M_Bags],Mix_Slice[Unique Dough],[@Unique Dough])*IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),\"\")",
+      null
+     ]
+    },
+    {
+     "name": "M_Optimal",
+     "col": "AH",
+     "stored": "IFERROR(CEILING([@M_Raw],IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,[@optimal bags per mix])),\"\")",
+     "cell": [
+      "IFERROR(CEILING([@M_Raw],IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,[@optimal bags per mix])),\"\")",
+      "0"
+     ],
+     "header_row_cell": [
+      "IFERROR(CEILING([@M_Raw],IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,[@optimal bags per mix])),\"\")",
+      null
+     ]
+    },
+    {
+     "name": "M_Planned",
+     "col": "AI",
+     "stored": "[@M_Optimal]",
+     "cell": [
+      "[@M_Optimal]",
+      "0"
+     ],
+     "header_row_cell": [
+      "[@M_Optimal]",
+      null
+     ]
+    },
+    {
+     "name": "T_Needed",
+     "col": "AJ",
+     "stored": "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(p,XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[T_Production]),IF(p<0,ABS(p),\"0\")),\"0\"))",
+     "cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(p,XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[T_Production]),IF(p<0,ABS(p),\"0\")),\"0\"))",
+      "0"
+     ],
+     "header_row_cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(p,XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[T_Production]),IF(p<0,ABS(p),\"0\")),\"0\"))",
+      null
+     ]
+    },
+    {
+     "name": "T_Bags",
+     "col": "AK",
+     "stored": "IFERROR(ROUND((XLOOKUP([@Sku],DoughWeight[Sku],DoughWeight[Tue])/XLOOKUP([@Dough],Dough[No.],Dough[Weight]))*[@Scrap Factor],2),\"\")",
+     "cell": [
+      "IFERROR(ROUND((XLOOKUP([@Sku],DoughWeight[Sku],DoughWeight[Tue])/XLOOKUP([@Dough],Dough[No.],Dough[Weight]))*[@Scrap Factor],2),\"\")",
+      "0"
+     ],
+     "header_row_cell": [
+      "IFERROR(ROUND((XLOOKUP([@Sku],DoughWeight[Sku],DoughWeight[Tue])/XLOOKUP([@Dough],Dough[No.],Dough[Weight]))*[@Scrap Factor],2),\"\")",
+      null
+     ]
+    },
+    {
+     "name": "T_Raw",
+     "col": "AL",
+     "stored": "IF([@Bags By Unique Dough]<>\"\",SUMIFS(Mix_Slice[T_Bags],Mix_Slice[Unique Dough],[@Unique Dough])*IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),\"\")",
+     "cell": [
+      "IF([@Bags By Unique Dough]<>\"\",SUMIFS(Mix_Slice[T_Bags],Mix_Slice[Unique Dough],[@Unique Dough])*IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),\"\")",
+      "1.3"
+     ],
+     "header_row_cell": [
+      "IF([@Bags By Unique Dough]<>\"\",SUMIFS(Mix_Slice[T_Bags],Mix_Slice[Unique Dough],[@Unique Dough])*IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),\"\")",
+      null
+     ]
+    },
+    {
+     "name": "T_Optimal",
+     "col": "AM",
+     "stored": null,
+     "cell": [
+      "IFERROR(CEILING([@T_Raw],IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,[@optimal bags per mix])),\"\")",
+      "2"
+     ],
+     "header_row_cell": [
+      "IFERROR(CEILING([@T_Raw],IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,[@optimal bags per mix])),\"\")",
+      null
+     ]
+    },
+    {
+     "name": "T_Planned",
+     "col": "AN",
+     "stored": "[@T_Optimal]",
+     "cell": [
+      "[@T_Optimal]",
+      "2"
+     ],
+     "header_row_cell": [
+      "[@T_Optimal]",
+      null
+     ]
+    },
+    {
+     "name": "W_Needed",
+     "col": "AO",
+     "stored": "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(p,XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[W_Production]),IF(p<0,ABS(p),\"0\")),\"0\"))",
+     "cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(p,XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[W_Production]),IF(p<0,ABS(p),\"0\")),\"0\"))",
+      "0"
+     ],
+     "header_row_cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(p,XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[W_Production]),IF(p<0,ABS(p),\"0\")),\"0\"))",
+      null
+     ]
+    },
+    {
+     "name": "W_Bags",
+     "col": "AP",
+     "stored": "IFERROR(ROUND((XLOOKUP([@Sku],DoughWeight[Sku],DoughWeight[Wed])/XLOOKUP([@Dough],Dough[No.],Dough[Weight]))*[@Scrap Factor],2),\"\")",
+     "cell": [
+      "IFERROR(ROUND((XLOOKUP([@Sku],DoughWeight[Sku],DoughWeight[Wed])/XLOOKUP([@Dough],Dough[No.],Dough[Weight]))*[@Scrap Factor],2),\"\")",
+      "0"
+     ],
+     "header_row_cell": [
+      "IFERROR(ROUND((XLOOKUP([@Sku],DoughWeight[Sku],DoughWeight[Wed])/XLOOKUP([@Dough],Dough[No.],Dough[Weight]))*[@Scrap Factor],2),\"\")",
+      null
+     ]
+    },
+    {
+     "name": "W_Raw",
+     "col": "AQ",
+     "stored": "IF([@Bags By Unique Dough]<>\"\",SUMIFS(Mix_Slice[W_Bags],Mix_Slice[Unique Dough],[@Unique Dough])*IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),\"\")",
+     "cell": [
+      "IF([@Bags By Unique Dough]<>\"\",SUMIFS(Mix_Slice[W_Bags],Mix_Slice[Unique Dough],[@Unique Dough])*IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),\"\")",
+      "1.3"
+     ],
+     "header_row_cell": [
+      "IF([@Bags By Unique Dough]<>\"\",SUMIFS(Mix_Slice[W_Bags],Mix_Slice[Unique Dough],[@Unique Dough])*IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),\"\")",
+      null
+     ]
+    },
+    {
+     "name": "W_Optimal",
+     "col": "AR",
+     "stored": "IFERROR(CEILING([@W_Raw],IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,[@optimal bags per mix])),\"\")",
+     "cell": [
+      "IFERROR(CEILING([@W_Raw],IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,[@optimal bags per mix])),\"\")",
+      "2"
+     ],
+     "header_row_cell": [
+      "IFERROR(CEILING([@W_Raw],IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,[@optimal bags per mix])),\"\")",
+      null
+     ]
+    },
+    {
+     "name": "W_Planned",
+     "col": "AS",
+     "stored": "[@W_Optimal]",
+     "cell": [
+      "[@W_Optimal]",
+      "2"
+     ],
+     "header_row_cell": [
+      "[@W_Optimal]",
+      null
+     ]
+    },
+    {
+     "name": "TH_Needed",
+     "col": "AT",
+     "stored": "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(p,XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[TH_Production]),IF(p<0,ABS(p),\"0\")),\"0\"))",
+     "cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(p,XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[TH_Production]),IF(p<0,ABS(p),\"0\")),\"0\"))",
+      "0"
+     ],
+     "header_row_cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(p,XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[TH_Production]),IF(p<0,ABS(p),\"0\")),\"0\"))",
+      null
+     ]
+    },
+    {
+     "name": "TH_Bags",
+     "col": "AU",
+     "stored": "IFERROR(ROUND((XLOOKUP([@Sku],DoughWeight[Sku],DoughWeight[Thur])/XLOOKUP([@Dough],Dough[No.],Dough[Weight]))*[@Scrap Factor],2),\"\")",
+     "cell": [
+      "IFERROR(ROUND((XLOOKUP([@Sku],DoughWeight[Sku],DoughWeight[Thur])/XLOOKUP([@Dough],Dough[No.],Dough[Weight]))*[@Scrap Factor],2),\"\")",
+      "0"
+     ],
+     "header_row_cell": [
+      "IFERROR(ROUND((XLOOKUP([@Sku],DoughWeight[Sku],DoughWeight[Thur])/XLOOKUP([@Dough],Dough[No.],Dough[Weight]))*[@Scrap Factor],2),\"\")",
+      null
+     ]
+    },
+    {
+     "name": "TH_Raw",
+     "col": "AV",
+     "stored": "IF([@Bags By Unique Dough]<>\"\",SUMIFS(Mix_Slice[TH_Bags],Mix_Slice[Unique Dough],[@Unique Dough])*IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),\"\")",
+     "cell": [
+      "IF([@Bags By Unique Dough]<>\"\",SUMIFS(Mix_Slice[TH_Bags],Mix_Slice[Unique Dough],[@Unique Dough])*IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),\"\")",
+      "0"
+     ],
+     "header_row_cell": [
+      "IF([@Bags By Unique Dough]<>\"\",SUMIFS(Mix_Slice[TH_Bags],Mix_Slice[Unique Dough],[@Unique Dough])*IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),\"\")",
+      null
+     ]
+    },
+    {
+     "name": "TH_Optimal",
+     "col": "AW",
+     "stored": "IFERROR(CEILING([@TH_Raw],IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,[@optimal bags per mix])),\"\")",
+     "cell": [
+      "IFERROR(CEILING([@TH_Raw],IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,[@optimal bags per mix])),\"\")",
+      "0"
+     ],
+     "header_row_cell": [
+      "IFERROR(CEILING([@TH_Raw],IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,[@optimal bags per mix])),\"\")",
+      null
+     ]
+    },
+    {
+     "name": "TH_Planned",
+     "col": "AX",
+     "stored": "[@TH_Optimal]",
+     "cell": [
+      "[@TH_Optimal]",
+      "0"
+     ],
+     "header_row_cell": [
+      "[@TH_Optimal]",
+      null
+     ]
+    },
+    {
+     "name": "F_Needed",
+     "col": "AY",
+     "stored": "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(p,XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[F_Production]),IF(p<0,ABS(p),\"0\")),\"0\"))",
+     "cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(p,XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[F_Production]),IF(p<0,ABS(p),\"0\")),\"0\"))",
+      "36"
+     ],
+     "header_row_cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(LET(p,XLOOKUP([@Sku],DSD_DSnD[Sku],DSD_DSnD[F_Production]),IF(p<0,ABS(p),\"0\")),\"0\"))",
+      null
+     ]
+    },
+    {
+     "name": "F_Bags",
+     "col": "AZ",
+     "stored": "IFERROR(ROUND((XLOOKUP([@Sku],DoughWeight[Sku],DoughWeight[Fri])/XLOOKUP([@Dough],Dough[No.],Dough[Weight]))*[@Scrap Factor],2),\"\")",
+     "cell": [
+      "IFERROR(ROUND((XLOOKUP([@Sku],DoughWeight[Sku],DoughWeight[Fri])/XLOOKUP([@Dough],Dough[No.],Dough[Weight]))*[@Scrap Factor],2),\"\")",
+      "0.28999999999999998"
+     ],
+     "header_row_cell": [
+      "IFERROR(ROUND((XLOOKUP([@Sku],DoughWeight[Sku],DoughWeight[Fri])/XLOOKUP([@Dough],Dough[No.],Dough[Weight]))*[@Scrap Factor],2),\"\")",
+      null
+     ]
+    },
+    {
+     "name": "F_Raw",
+     "col": "BA",
+     "stored": "IF([@Bags By Unique Dough]<>\"\",SUMIFS(Mix_Slice[F_Bags],Mix_Slice[Unique Dough],[@Unique Dough])*IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),\"\")",
+     "cell": [
+      "IF([@Bags By Unique Dough]<>\"\",SUMIFS(Mix_Slice[F_Bags],Mix_Slice[Unique Dough],[@Unique Dough])*IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),\"\")",
+      "0.28999999999999998"
+     ],
+     "header_row_cell": [
+      "IF([@Bags By Unique Dough]<>\"\",SUMIFS(Mix_Slice[F_Bags],Mix_Slice[Unique Dough],[@Unique Dough])*IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),\"\")",
+      null
+     ]
+    },
+    {
+     "name": "F_Optimal",
+     "col": "BB",
+     "stored": "IFERROR(CEILING([@F_Raw],IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,[@optimal bags per mix])),\"\")",
+     "cell": [
+      "IFERROR(CEILING([@F_Raw],IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,[@optimal bags per mix])),\"\")",
+      "1"
+     ],
+     "header_row_cell": [
+      "IFERROR(CEILING([@F_Raw],IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,[@optimal bags per mix])),\"\")",
+      null
+     ]
+    },
+    {
+     "name": "F_Planned",
+     "col": "BC",
+     "stored": "[@F_Optimal]",
+     "cell": [
+      "[@F_Optimal]",
+      "1"
+     ],
+     "header_row_cell": [
+      "[@F_Optimal]",
+      null
+     ]
+    },
+    {
+     "name": "S_Minutes",
+     "col": "BD",
+     "stored": "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(([@S_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),0))",
+     "cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(([@S_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),0))",
+      "0"
+     ],
+     "header_row_cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(([@S_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),0))",
+      null
+     ]
+    },
+    {
+     "name": "M_Minutes",
+     "col": "BE",
+     "stored": "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(([@M_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),0))",
+     "cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(([@M_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),0))",
+      "0"
+     ],
+     "header_row_cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(([@M_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),0))",
+      null
+     ]
+    },
+    {
+     "name": "T_Minutes",
+     "col": "BF",
+     "stored": "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(([@T_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),0))",
+     "cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(([@T_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),0))",
+      "60"
+     ],
+     "header_row_cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(([@T_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),0))",
+      null
+     ]
+    },
+    {
+     "name": "W_Minutes",
+     "col": "BG",
+     "stored": "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(([@W_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),0))",
+     "cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(([@W_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),0))",
+      "60"
+     ],
+     "header_row_cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(([@W_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),0))",
+      null
+     ]
+    },
+    {
+     "name": "TH_Minutes",
+     "col": "BH",
+     "stored": "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(([@TH_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),0))",
+     "cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(([@TH_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),0))",
+      "0"
+     ],
+     "header_row_cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(([@TH_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),0))",
+      null
+     ]
+    },
+    {
+     "name": "F_Minutes",
+     "col": "BI",
+     "stored": "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(([@F_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),0))",
+     "cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(([@F_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),0))",
+      "30"
+     ],
+     "header_row_cell": [
+      "IF(LEFT([@Sku],1)=\"D\",\"\",IFERROR(([@F_Planned]/[@optimal bags per mix])*[@Run Time Per Mix (min)]/IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),2.5,1),0))",
+      null
+     ]
+    }
+   ]
+  },
+  "Products": {
+   "sheet": "Products",
+   "ref": "A1:T479",
+   "rows": 478,
+   "cols": [
+    {
+     "name": "No.",
+     "col": "A",
+     "stored": null,
+     "cell": [
+      null,
+      "F1000"
+     ]
+    },
+    {
+     "name": "Description",
+     "col": "B",
+     "stored": null,
+     "cell": [
+      null,
+      "Rye 1/2\""
+     ]
+    },
+    {
+     "name": "Production BOM No.",
+     "col": "C",
+     "stored": null,
+     "cell": [
+      null,
+      "F1000"
+     ]
+    },
+    {
+     "name": "Unit Cost",
+     "col": "D",
+     "stored": null,
+     "cell": [
+      null,
+      "0.97799999999999998"
+     ]
+    },
+    {
+     "name": "Unit Price",
+     "col": "E",
+     "stored": null,
+     "cell": [
+      null,
+      "0"
+     ]
+    },
+    {
+     "name": "Gen. Prod. Posting Group",
+     "col": "F",
+     "stored": null,
+     "cell": [
+      null,
+      "FG"
+     ]
+    },
+    {
+     "name": "Asset",
+     "col": "G",
+     "stored": null,
+     "cell": [
+      null,
+      "Breadline"
+     ]
+    },
+    {
+     "name": "Weight",
+     "col": "H",
+     "stored": null,
+     "cell": [
+      null,
+      "2.25"
+     ]
+    },
+    {
+     "name": "Unique Dough",
+     "col": "I",
+     "stored": null,
+     "cell": [
+      null,
+      "Rye Bread-Hearth"
+     ]
+    },
+    {
+     "name": "Packs Per Tray/Case",
+     "col": "J",
+     "stored": null,
+     "cell": [
+      null,
+      "8"
+     ]
+    },
+    {
+     "name": "Pieces Per Tray/Case",
+     "col": "K",
+     "stored": null,
+     "cell": [
+      null,
+      ""
+     ]
+    },
+    {
+     "name": "Dough",
+     "col": "L",
+     "stored": null,
+     "cell": [
+      null,
+      "D10009"
+     ]
+    },
+    {
+     "name": "Dough Description",
+     "col": "M",
+     "stored": "IFERROR(XLOOKUP([@Dough],Dough[No.],Dough[Description]),\"\")",
+     "cell": [
+      "IFERROR(XLOOKUP([@Dough],Dough[No.],Dough[Description]),\"\")",
+      "Rye Dough"
+     ]
+    },
+    {
+     "name": "Scrap Factor",
+     "col": "N",
+     "stored": null,
+     "cell": [
+      null,
+      "1.1000000000000001"
+     ]
+    },
+    {
+     "name": "Batch Size",
+     "col": "O",
+     "stored": null,
+     "cell": [
+      null,
+      "280"
+     ]
+    },
+    {
+     "name": "Asset Rank",
+     "col": "P",
+     "stored": "IFERROR(MATCH([@Asset],{\"Breadline\";\"Breadline/Artisan\";\"MCS LINE\";\"3rd Party\";\"3rd Party - Bake\";\"Third Party  - Repack\"},0),99)",
+     "cell": [
+      "IFERROR(MATCH([@Asset],{\"Breadline\";\"Breadline/Artisan\";\"MCS LINE\";\"3rd Party\";\"3rd Party - Bake\";\"Third Party  - Repack\"},0),99)",
+      "1"
+     ]
+    },
+    {
+     "name": "Pans/Boxes",
+     "col": "Q",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "Non Case Sku",
+     "col": "R",
+     "stored": "IF(LEFT([@No.],2)=\"F5\",\"F\"&MID([@No.],3,100),[@No.])",
+     "cell": [
+      "IF(LEFT([@No.],2)=\"F5\",\"F\"&MID([@No.],3,100),[@No.])",
+      "F1000"
+     ]
+    },
+    {
+     "name": "Topping",
+     "col": "S",
+     "stored": null,
+     "cell": [
+      null,
+      null
+     ]
+    },
+    {
+     "name": "Original Mix Order",
+     "col": "T",
+     "stored": null,
+     "cell": [
+      null,
+      "69"
+     ]
+    }
+   ]
+  },
+  "Dough": {
+   "sheet": "Dough",
+   "ref": "A1:L64",
+   "rows": 63,
+   "cols": [
+    {
+     "name": "No.",
+     "col": "A",
+     "stored": null,
+     "cell": [
+      null,
+      "D10001"
+     ]
+    },
+    {
+     "name": "Description",
+     "col": "B",
+     "stored": null,
+     "cell": [
+      null,
+      "Challah Dough"
+     ]
+    },
+    {
+     "name": "Type",
+     "col": "C",
+     "stored": null,
+     "cell": [
+      null,
+      "Inventory"
+     ]
+    },
+    {
+     "name": "Item Tracking Code",
+     "col": "D",
+     "stored": null,
+     "cell": [
+      null,
+      "RM-LOT-EXP"
+     ]
+    },
+    {
+     "name": "Production BOM No.",
+     "col": "E",
+     "stored": null,
+     "cell": [
+      null,
+      "D10001"
+     ]
+    },
+    {
+     "name": "Unit Cost",
+     "col": "F",
+     "stored": null,
+     "cell": [
+      null,
+      "0.27700000000000002"
+     ]
+    },
+    {
+     "name": "Unit Price",
+     "col": "G",
+     "stored": null,
+     "cell": [
+      null,
+      "0"
+     ]
+    },
+    {
+     "name": "Gen. Prod. Posting Group",
+     "col": "H",
+     "stored": null,
+     "cell": [
+      null,
+      "RAW-IG"
+     ]
+    },
+    {
+     "name": "Weight",
+     "col": "I",
+     "stored": "SUMIFS(BOMQty[BOMQty],BOMQty[No_Item],[@No.])",
+     "cell": [
+      "SUMIFS(BOMQty[BOMQty],BOMQty[No_Item],[@No.])",
+      "177.27"
+     ]
+    },
+    {
+     "name": "Uni Dou #",
+     "col": "J",
+     "stored": "COUNTIFS(UniqueDough[Dough Sku],[@No.])",
+     "cell": [
+      "COUNTIFS(UniqueDough[Dough Sku],[@No.])",
+      "4"
+     ]
+    },
+    {
+     "name": "Uni Dou Desc",
+     "col": "K",
+     "stored": "TEXTJOIN(\", \",TRUE,FILTER(UniqueDough[Dough],UniqueDough[Dough Sku]=[@No.],\"\"))",
+     "cell": [
+      "TEXTJOIN(\", \",TRUE,FILTER(UniqueDough[Dough],UniqueDough[Dough Sku]=[@No.],\"\"))",
+      "Challah- Hearth- (38 oz.), Challah-Lg Pullman, Challah 3 Braided, Challah Dough"
+     ]
+    },
+    {
+     "name": "Original Mix Order",
+     "col": "L",
+     "stored": null,
+     "cell": [
+      null,
+      "6"
+     ]
+    }
+   ]
+  },
+  "UniqueDough": {
+   "sheet": "Unique Dough",
+   "ref": "A1:S140",
+   "rows": 139,
+   "cols": [
+    {
+     "name": "Dough",
+     "col": "A",
+     "stored": null,
+     "cell": [
+      null,
+      "2# Sour Dough Batard"
+     ]
+    },
+    {
+     "name": "Pan Constraints",
+     "col": "B",
+     "stored": null,
+     "cell": [
+      null,
+      "None"
+     ]
+    },
+    {
+     "name": "Placement On Scedule",
+     "col": "C",
+     "stored": null,
+     "cell": [
+      null,
+      "Doesn't run on Big mixer, mixed in small mixer while larger mixes are running"
+     ]
+    },
+    {
+     "name": "Optimal Bag",
+     "col": "D",
+     "stored": null,
+     "cell": [
+      null,
+      "1"
+     ]
+    },
+    {
+     "name": "Optimal Time",
+     "col": "E",
+     "stored": null,
+     "cell": null
+    },
+    {
+     "name": "4 Bag Mix",
+     "col": "F",
+     "stored": null,
+     "cell": [
+      null,
+      "0"
+     ]
+    },
+    {
+     "name": "3 Bag Mix",
+     "col": "G",
+     "stored": null,
+     "cell": [
+      null,
+      "0"
+     ]
+    },
+    {
+     "name": "2 Bag Mix",
+     "col": "H",
+     "stored": null,
+     "cell": [
+      null,
+      "0"
+     ]
+    },
+    {
+     "name": "1 Bag Mix",
+     "col": "I",
+     "stored": null,
+     "cell": [
+      null,
+      "0"
+     ]
+    },
+    {
+     "name": "1.5 Bag Mix",
+     "col": "J",
+     "stored": null,
+     "cell": [
+      null,
+      "0"
+     ]
+    },
+    {
+     "name": "Dough Color",
+     "col": "K",
+     "stored": null,
+     "cell": [
+      null,
+      "White"
+     ]
+    },
+    {
+     "name": "Steamed?",
+     "col": "L",
+     "stored": null,
+     "cell": [
+      null,
+      "Not Steamed"
+     ]
+    },
+    {
+     "name": "Schedule Notes",
+     "col": "M",
+     "stored": null,
+     "cell": null
+    },
+    {
+     "name": "Schedule Notes2",
+     "col": "N",
+     "stored": null,
+     "cell": [
+      null,
+      "Keep 2-3 Hour Buffer in between Artisan Mixes"
+     ]
+    },
+    {
+     "name": "Notes",
+     "col": "O",
+     "stored": null,
+     "cell": null
+    },
+    {
+     "name": "Count",
+     "col": "P",
+     "stored": "COUNTIFS(Products[Unique Dough],[@Dough])",
+     "cell": [
+      "COUNTIFS(Products[Unique Dough],[@Dough])",
+      "8"
+     ]
+    },
+    {
+     "name": "List of Count",
+     "col": "Q",
+     "stored": "TEXTJOIN(\", \",TRUE,FILTER(Products[Description],IFERROR(Products[Unique Dough],\"\")=[@Dough],\"\"))",
+     "cell": [
+      "TEXTJOIN(\", \",TRUE,FILTER(Products[Description],IFERROR(Products[Unique Dough],\"\")=[@Dough],\"\"))",
+      "Sour Dough Batard 1/2\", Sour Dough Batard Unsliced, Sour Dough Batard 5/8\", Sour Dough Batard Horizontal 5/8\", Sour Dough Batard 3/4\", Cs. Sour Dough Batard 1/2\" 8lvs, Cs. Sour Dough Batard Unsliced 8lvs, Cs. Sour Dough Batard 5/8\" 8lvs"
+     ]
+    },
+    {
+     "name": "Dough Sku",
+     "col": "R",
+     "stored": "LET(r,IFERROR(MATCH([@Dough],'Mix-Slice-Oven'!$C:$C,0),0),rng,'Mix-Slice-Oven'!$H$1:INDEX('Mix-Slice-Oven'!$H:$H,MAX(r,1)),IF(r=0,\"\",IFERROR(XLOOKUP(TRUE,LEFT(rng,1)=\"D\",rng,\"\",0,-1),\"\")))",
+     "cell": [
+      "LET(r,IFERROR(MATCH([@Dough],'Mix-Slice-Oven'!$C:$C,0),0),rng,'Mix-Slice-Oven'!$H$1:INDEX('Mix-Slice-Oven'!$H:$H,MAX(r,1)),IF(r=0,\"\",IFERROR(XLOOKUP(TRUE,LEFT(rng,1)=\"D\",rng,\"\",0,-1),\"\")))",
+      "D10056"
+     ]
+    },
+    {
+     "name": "Dough Desc",
+     "col": "S",
+     "stored": "IFERROR(XLOOKUP([@Dough Sku],Dough[No.],Dough[Description]),\"\")",
+     "cell": [
+      "IFERROR(XLOOKUP([@Dough Sku],Dough[No.],Dough[Description]),\"\")",
+      "Artisan Sour Dough"
+     ]
+    }
+   ]
+  },
+  "Pans": {
+   "sheet": "Pans",
+   "ref": "B3:E44",
+   "rows": 41,
+   "cols": [
+    {
+     "name": "Pans/Boxes",
+     "col": "B",
+     "stored": null,
+     "cell": [
+      null,
+      "5\" Challah Sesame Buns"
+     ]
+    },
+    {
+     "name": "Pieces Per Pan",
+     "col": "C",
+     "stored": null,
+     "cell": [
+      null,
+      "15"
+     ]
+    },
+    {
+     "name": "Trays Per 1 bag Mix",
+     "col": "D",
+     "stored": null,
+     "cell": [
+      null,
+      "60"
+     ]
+    },
+    {
+     "name": "Unique Dough",
+     "col": "E",
+     "stored": null,
+     "cell": [
+      null,
+      "5\" Challah Bun"
+     ]
+    }
+   ]
+  },
   "Table14": {
    "sheet": "Business Central Items List",
    "ref": "A1:P1245",
@@ -4719,11 +4779,31 @@
   ],
   "Daily Supply & Demand!B1": [
    "TODAY()",
-   "46290"
+   "46291"
   ],
   "Daily Supply & Demand!W1": [
    "'Mix-Slice-Oven'!AD1",
    "48"
+  ],
+  "Daily Supply & Demand!AD1": [
+   "'Mix-Slice-Oven'!AI1",
+   "50.5"
+  ],
+  "Daily Supply & Demand!AK1": [
+   "'Mix-Slice-Oven'!AN1",
+   "54.5"
+  ],
+  "Daily Supply & Demand!AR1": [
+   "'Mix-Slice-Oven'!AS1",
+   "53.5"
+  ],
+  "Daily Supply & Demand!AY1": [
+   "'Mix-Slice-Oven'!AX1",
+   "76.5"
+  ],
+  "Daily Supply & Demand!BF1": [
+   "'Mix-Slice-Oven'!BC1",
+   "135.5"
   ],
   "Daily Supply & Demand!H2": [
    null,
@@ -4733,9 +4813,29 @@
    "'Mix-Slice-Oven'!BD1",
    "8.5"
   ],
+  "Daily Supply & Demand!AD2": [
+   "'Mix-Slice-Oven'!BE1",
+   "7.25"
+  ],
+  "Daily Supply & Demand!AK2": [
+   "'Mix-Slice-Oven'!BF1",
+   "9.9166666666666661"
+  ],
+  "Daily Supply & Demand!AR2": [
+   "'Mix-Slice-Oven'!BG1",
+   "9.1999999999999993"
+  ],
+  "Daily Supply & Demand!AY2": [
+   "'Mix-Slice-Oven'!BH1",
+   "13.083333333333334"
+  ],
+  "Daily Supply & Demand!BF2": [
+   "'Mix-Slice-Oven'!BI1",
+   "22.7"
+  ],
   "Daily Supply & Demand!DT2": [
    "IF(WEEKDAY(TODAY(),1)=7,1,WEEKDAY(TODAY(),1))",
-   "6"
+   "1"
   ],
   "Daily Supply & Demand!H3": [
    "H2-6",
@@ -4745,9 +4845,49 @@
    "'Mix-Slice-Oven'!AD2",
    "174"
   ],
+  "Daily Supply & Demand!AD3": [
+   "'Mix-Slice-Oven'!AI2",
+   "200"
+  ],
+  "Daily Supply & Demand!AK3": [
+   "'Mix-Slice-Oven'!AN2",
+   "180"
+  ],
+  "Daily Supply & Demand!AR3": [
+   "'Mix-Slice-Oven'!AS2",
+   "188"
+  ],
+  "Daily Supply & Demand!AY3": [
+   "'Mix-Slice-Oven'!AX2",
+   "219"
+  ],
+  "Daily Supply & Demand!BF3": [
+   "'Mix-Slice-Oven'!BC2",
+   "255"
+  ],
   "Daily Supply & Demand!W4": [
    "'Mix-Slice-Oven'!BD2",
    "16.083333333333332"
+  ],
+  "Daily Supply & Demand!AD4": [
+   "'Mix-Slice-Oven'!BE2",
+   "18.583333333333332"
+  ],
+  "Daily Supply & Demand!AK4": [
+   "'Mix-Slice-Oven'!BF2",
+   "16.916666666666668"
+  ],
+  "Daily Supply & Demand!AR4": [
+   "'Mix-Slice-Oven'!BG2",
+   "17.5"
+  ],
+  "Daily Supply & Demand!AY4": [
+   "'Mix-Slice-Oven'!BH2",
+   "20.416666666666668"
+  ],
+  "Daily Supply & Demand!BF4": [
+   "'Mix-Slice-Oven'!BI2",
+   "25.25"
   ],
   "Daily Supply & Demand!C5": [
    null,
@@ -4787,11 +4927,11 @@
   ],
   "Daily Supply & Demand!D287": [
    "IF($C287=\"(Case Only)\",\"(Case Only)\",IF(OR($DC287=\"\",$DD287=\"\",$DE287=\"\"),\"No DSD bread available\",IF($DC287>($DD287+$DE287),$DC287-($DD287+$DE287),\"No DSD bread available\")))",
-   "No DSD bread available"
+   "17"
   ],
   "Daily Supply & Demand!E287": [
    "IF($D287=\"No DSD bread available\",\"No DSD bread available\",IF($D287=\"(Case Only)\",\"(Case Only)\",ROUNDDOWN($D287/XLOOKUP($F287,'Critical Lookup Information'!$Q:$Q,'Critical Lookup Information'!$S:$S),0)))",
-   "No DSD bread available"
+   "2"
   ],
   "DoughWeights!F2": [
    "'Daily Supply & Demand'!H2",
@@ -4802,7 +4942,7 @@
    "D10001"
   ],
   "Mix-Slice-Oven!O1": [
-   "SUM(SUMIFS(Mix_Slice_Oven[Planned Total],Mix_Slice_Oven[Asset],{\"Breadline\",\"Breadline/Artisan\"}))",
+   "SUM(SUMIFS(Mix_Slice[Planned Total],Mix_Slice[Asset],{\"Breadline\",\"Breadline/Artisan\"}))",
    "54.5"
   ],
   "Mix-Slice-Oven!Y1": [
@@ -4810,19 +4950,59 @@
    "41"
   ],
   "Mix-Slice-Oven!AD1": [
-   "SUM(SUMIFS(Mix_Slice_Oven[S_Planned],Mix_Slice_Oven[Asset],{\"Breadline\",\"Breadline/Artisan\"}))",
+   "SUM(SUMIFS(Mix_Slice[S_Planned],Mix_Slice[Asset],{\"Breadline\",\"Breadline/Artisan\"}))",
    "48"
   ],
+  "Mix-Slice-Oven!AI1": [
+   "SUM(SUMIFS(Mix_Slice[M_Planned],Mix_Slice[Asset],{\"Breadline\",\"Breadline/Artisan\"}))",
+   "50.5"
+  ],
+  "Mix-Slice-Oven!AN1": [
+   "SUM(SUMIFS(Mix_Slice[T_Planned],Mix_Slice[Asset],{\"Breadline\",\"Breadline/Artisan\"}))",
+   "54.5"
+  ],
+  "Mix-Slice-Oven!AS1": [
+   "SUM(SUMIFS(Mix_Slice[W_Planned],Mix_Slice[Asset],{\"Breadline\",\"Breadline/Artisan\"}))",
+   "53.5"
+  ],
+  "Mix-Slice-Oven!AX1": [
+   "SUM(SUMIFS(Mix_Slice[TH_Planned],Mix_Slice[Asset],{\"Breadline\",\"Breadline/Artisan\"}))",
+   "76.5"
+  ],
+  "Mix-Slice-Oven!BC1": [
+   "SUM(SUMIFS(Mix_Slice[F_Planned],Mix_Slice[Asset],{\"Breadline\",\"Breadline/Artisan\"}))",
+   "135.5"
+  ],
   "Mix-Slice-Oven!BD1": [
-   "SUM(SUMIFS(Mix_Slice_Oven[S_Minutes],Mix_Slice_Oven[Asset],{\"Breadline\",\"Breadline/Artisan\"}))/60",
+   "SUM(SUMIFS(Mix_Slice[S_Minutes],Mix_Slice[Asset],{\"Breadline\",\"Breadline/Artisan\"}))/60",
    "8.5"
+  ],
+  "Mix-Slice-Oven!BE1": [
+   "SUM(SUMIFS(Mix_Slice[M_Minutes],Mix_Slice[Asset],{\"Breadline\",\"Breadline/Artisan\"}))/60",
+   "7.25"
+  ],
+  "Mix-Slice-Oven!BF1": [
+   "SUM(SUMIFS(Mix_Slice[T_Minutes],Mix_Slice[Asset],{\"Breadline\",\"Breadline/Artisan\"}))/60",
+   "9.9166666666666661"
+  ],
+  "Mix-Slice-Oven!BG1": [
+   "SUM(SUMIFS(Mix_Slice[W_Minutes],Mix_Slice[Asset],{\"Breadline\",\"Breadline/Artisan\"}))/60",
+   "9.1999999999999993"
+  ],
+  "Mix-Slice-Oven!BH1": [
+   "SUM(SUMIFS(Mix_Slice[TH_Minutes],Mix_Slice[Asset],{\"Breadline\",\"Breadline/Artisan\"}))/60",
+   "13.083333333333334"
+  ],
+  "Mix-Slice-Oven!BI1": [
+   "SUM(SUMIFS(Mix_Slice[F_Minutes],Mix_Slice[Asset],{\"Breadline\",\"Breadline/Artisan\"}))/60",
+   "22.7"
   ],
   "Mix-Slice-Oven!BK1": [
    "1453/60",
    "24.216666666666665"
   ],
   "Mix-Slice-Oven!O2": [
-   "SUM(SUMIFS(Mix_Slice_Oven[Planned Total],Mix_Slice_Oven[Asset],\"MCS LINE\"))",
+   "SUM(SUMIFS(Mix_Slice[Planned Total],Mix_Slice[Asset],\"MCS LINE\"))",
    "180"
   ],
   "Mix-Slice-Oven!T2": [
@@ -4830,20 +5010,60 @@
    "234.5"
   ],
   "Mix-Slice-Oven!AD2": [
-   "SUM(SUMIFS(Mix_Slice_Oven[S_Planned],Mix_Slice_Oven[Asset],\"MCS LINE\"))",
+   "SUM(SUMIFS(Mix_Slice[S_Planned],Mix_Slice[Asset],\"MCS LINE\"))",
    "174"
   ],
+  "Mix-Slice-Oven!AI2": [
+   "SUM(SUMIFS(Mix_Slice[M_Planned],Mix_Slice[Asset],\"MCS LINE\"))",
+   "200"
+  ],
+  "Mix-Slice-Oven!AN2": [
+   "SUM(SUMIFS(Mix_Slice[T_Planned],Mix_Slice[Asset],\"MCS LINE\"))",
+   "180"
+  ],
+  "Mix-Slice-Oven!AS2": [
+   "SUM(SUMIFS(Mix_Slice[W_Planned],Mix_Slice[Asset],\"MCS LINE\"))",
+   "188"
+  ],
+  "Mix-Slice-Oven!AX2": [
+   "SUM(SUMIFS(Mix_Slice[TH_Planned],Mix_Slice[Asset],\"MCS LINE\"))",
+   "219"
+  ],
+  "Mix-Slice-Oven!BC2": [
+   "SUM(SUMIFS(Mix_Slice[F_Planned],Mix_Slice[Asset],\"MCS LINE\"))",
+   "255"
+  ],
   "Mix-Slice-Oven!BD2": [
-   "SUM(SUMIFS(Mix_Slice_Oven[S_Minutes],Mix_Slice_Oven[Asset],\"MCS LINE\"))/60",
+   "SUM(SUMIFS(Mix_Slice[S_Minutes],Mix_Slice[Asset],\"MCS LINE\"))/60",
    "16.083333333333332"
+  ],
+  "Mix-Slice-Oven!BE2": [
+   "SUM(SUMIFS(Mix_Slice[M_Minutes],Mix_Slice[Asset],\"MCS LINE\"))/60",
+   "18.583333333333332"
+  ],
+  "Mix-Slice-Oven!BF2": [
+   "SUM(SUMIFS(Mix_Slice[T_Minutes],Mix_Slice[Asset],\"MCS LINE\"))/60",
+   "16.916666666666668"
+  ],
+  "Mix-Slice-Oven!BG2": [
+   "SUM(SUMIFS(Mix_Slice[W_Minutes],Mix_Slice[Asset],\"MCS LINE\"))/60",
+   "17.5"
+  ],
+  "Mix-Slice-Oven!BH2": [
+   "SUM(SUMIFS(Mix_Slice[TH_Minutes],Mix_Slice[Asset],\"MCS LINE\"))/60",
+   "20.416666666666668"
+  ],
+  "Mix-Slice-Oven!BI2": [
+   "SUM(SUMIFS(Mix_Slice[F_Minutes],Mix_Slice[Asset],\"MCS LINE\"))/60",
+   "25.25"
   ],
   "Mix-Slice-Oven!Q3": [
    "TODAY()",
-   "46290"
+   "46291"
   ],
   "Mix-Slice-Oven!R3": [
    "TEXT(Q3,\"dddd\")",
-   "Friday"
+   "Saturday"
   ],
   "Mix-Slice-Oven!K4": [
    null,
@@ -4854,15 +5074,15 @@
    "D10001"
   ],
   "Mix-Slice-Oven!N6": [
-   "IFERROR(IF(LEFT([@Sku],1)=\"D\",SUMIFS(Mix_Slice_Oven[Optimal Total],Mix_Slice_Oven[Dough],[@Sku],Mix_Slice_Oven[Asset],D7),IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),CEILING([@Bags By Unique Dough],[@optimal bags per mix])*2.5,CEILING([@Bags By Unique Dough],[@optimal bags per mix]))),\"\")",
+   "IFERROR(IF(LEFT([@Sku],1)=\"D\",SUMIFS(Mix_Slice[Optimal Total],Mix_Slice[Dough],[@Sku],Mix_Slice[Asset],D7),IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),CEILING([@Bags By Unique Dough],[@optimal bags per mix])*2.5,CEILING([@Bags By Unique Dough],[@optimal bags per mix]))),\"\")",
    "10"
   ],
   "Mix-Slice-Oven!M7": [
-   "IF(LEFT([@Sku],1)=\"D\",\"\",LET(u,[@Unique Dough],IF(C6=u,\"\",SUMIFS(Mix_Slice_Oven[Dough Weight],Mix_Slice_Oven[Unique Dough],u))))",
+   "IF(LEFT([@Sku],1)=\"D\",\"\",LET(u,[@Unique Dough],IF(C6=u,\"\",SUMIFS(Mix_Slice[Dough Weight],Mix_Slice[Unique Dough],u))))",
    "1.298"
   ],
   "Mix-Slice-Oven!N7": [
-   "IFERROR(IF(LEFT([@Sku],1)=\"D\",SUMIFS(Mix_Slice_Oven[Optimal Total],Mix_Slice_Oven[Dough],[@Sku],Mix_Slice_Oven[Asset],D8),IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),CEILING([@Bags By Unique Dough],[@optimal bags per mix])*2.5,CEILING([@Bags By Unique Dough],[@optimal bags per mix]))),\"\")",
+   "IFERROR(IF(LEFT([@Sku],1)=\"D\",SUMIFS(Mix_Slice[Optimal Total],Mix_Slice[Dough],[@Sku],Mix_Slice[Asset],D8),IF(OR([@Unique Dough]=\"Marble Hearth\",[@Unique Dough]=\"Marble Lg Pullman\"),CEILING([@Bags By Unique Dough],[@optimal bags per mix])*2.5,CEILING([@Bags By Unique Dough],[@optimal bags per mix]))),\"\")",
    "2"
   ],
   "Mix-Slice-Oven!ZZ7": [
@@ -4879,7 +5099,7 @@
   ],
   "MCS Schedule!A2": [
    "TODAY()",
-   "46290"
+   "46291"
   ],
   "MCS Schedule!H2": [
    "'Mix-Slice-Oven'!O2",
@@ -4894,11 +5114,11 @@
    "0.28125"
   ],
   "MCS Schedule!A5": [
-   "LET(ud,Mix_Slice_Oven[Unique Dough],pt,IFERROR(--Mix_Slice_Oven[Planned Total],0),as,Mix_Slice_Oven[Asset],keep,FILTER(ud,(pt>0)*(ud<>\"\")*(as=\"MCS LINE\"),\"\"),u,UNIQUE(keep),x,XLOOKUP(u,UniqueDough[Dough],UniqueDough[Placement On Scedule],\"\"),p,IF(x=\"\",9999,IFERROR(--x,9999)),s,SORTBY(u,p),ps,SORTBY(p,p),tot,SUMIFS(Mix_Slice_Oven[Planned Total],Mix_Slice_Oven[Unique Dough],s),bpm,IFERROR(--XLOOKUP(s,UniqueDough[Dough],UniqueDough[Optimal Bag],\"\"),0),tm,XLOOKUP(s,UniqueDough[Dough],UniqueDough[Optimal Time],\"\"),k,IF(bpm>0,ROUNDUP(tot/bpm,0),1),n,SUM(k),cum,SCAN(0,k,LAMBDA(a,v,a+v)),r,SEQUENCE(n),idx,MAP(r,LAMBDA(v,XMATCH(v,cum,1))),st,MAP(idx,LAMBDA(v,INDEX(s,v))),tt,MAP(idx,LAMBDA(v,INDEX(tot,v))),bb,MAP(idx,LAMBDA(v,INDEX(bpm,v))),mm,MAP(idx,LAMBDA(v,INDEX(tm,v))),ord,MAP(idx,LAMBDA(v,INDEX(ps,v))),dg,UniqueDough[Dough],upl,UniqueDough[Placement On Scedule],utm,UniqueDough[Optimal Time],rr,SEQUENCE(ROWS(dg)),ci,FILTER(rr,dg=\"Changeover\",0),co_ord,MAP(ci,LAMBDA(v,IF(v=0,0,IFERROR(--INDEX(upl,v-1),0)+0.5))),co_tm,MAP(ci,LAMBDA(v,IF(v=0,0,IFERROR(--INDEX(utm,v),0)))),co_nm,MAP(ci,LAMBDA(v,IF(v=0,\"\",INDEX(dg,v)))),okco,(co_ord>MIN(ord))*(co_ord<MAX(ord)),allrows,VSTACK(HSTACK(st,tt,bb,mm),HSTACK(co_nm,0*ci,0*ci,co_tm)),allkeys,VSTACK(ord,co_ord),flt,VSTACK(0*ord+1,okco),SORTBY(FILTER(allrows,flt=1),FILTER(allkeys,flt=1)))",
+   "LET(ud,Mix_Slice[Unique Dough],pt,IFERROR(--Mix_Slice[Planned Total],0),as,Mix_Slice[Asset],keep,FILTER(ud,(pt>0)*(ud<>\"\")*(as=\"MCS LINE\"),\"\"),u,UNIQUE(keep),x,XLOOKUP(u,UniqueDough[Dough],UniqueDough[Placement On Scedule],\"\"),p,IF(x=\"\",9999,IFERROR(--x,9999)),s,SORTBY(u,p),ps,SORTBY(p,p),tot,SUMIFS(Mix_Slice[Planned Total],Mix_Slice[Unique Dough],s),bpm,IFERROR(--XLOOKUP(s,UniqueDough[Dough],UniqueDough[Optimal Bag],\"\"),0),tm,XLOOKUP(s,UniqueDough[Dough],UniqueDough[Optimal Time],\"\"),k,IF(bpm>0,ROUNDUP(tot/bpm,0),1),n,SUM(k),cum,SCAN(0,k,LAMBDA(a,v,a+v)),r,SEQUENCE(n),idx,MAP(r,LAMBDA(v,XMATCH(v,cum,1))),st,MAP(idx,LAMBDA(v,INDEX(s,v))),tt,MAP(idx,LAMBDA(v,INDEX(tot,v))),bb,MAP(idx,LAMBDA(v,INDEX(bpm,v))),mm,MAP(idx,LAMBDA(v,INDEX(tm,v))),ord,MAP(idx,LAMBDA(v,INDEX(ps,v))),dg,UniqueDough[Dough],upl,UniqueDough[Placement On Scedule],utm,UniqueDough[Optimal Time],rr,SEQUENCE(ROWS(dg)),ci,FILTER(rr,dg=\"Changeover\",0),co_ord,MAP(ci,LAMBDA(v,IF(v=0,0,IFERROR(--INDEX(upl,v-1),0)+0.5))),co_tm,MAP(ci,LAMBDA(v,IF(v=0,0,IFERROR(--INDEX(utm,v),0)))),co_nm,MAP(ci,LAMBDA(v,IF(v=0,\"\",INDEX(dg,v)))),okco,(co_ord>MIN(ord))*(co_ord<MAX(ord)),allrows,VSTACK(HSTACK(st,tt,bb,mm),HSTACK(co_nm,0*ci,0*ci,co_tm)),allkeys,VSTACK(ord,co_ord),flt,VSTACK(0*ord+1,okco),SORTBY(FILTER(allrows,flt=1),FILTER(allkeys,flt=1)))",
    "6\" Italian Rolls"
   ],
   "MCS Schedule!F5": [
-   "LET(a,CHOOSECOLS(ANCHORARRAY(A5),1),c,CHOOSECOLS(ANCHORARRAY(A5),3),u,UNIQUE(a),sk,Mix_Slice_Oven[Sku],dw,IFERROR(--Mix_Slice_Oven[Dough Weight],0),ud,Mix_Slice_Oven[Unique Dough],g,XLOOKUP(sk,Products[No.],Products[Gen. Prod. Posting Group],\"\"),HSTACK(u,MAP(u,LAMBDA(v,SUM((a=v)*c))),MAP(u,LAMBDA(v,SUM((ud=v)*(g=\"FG\")*dw))),MAP(u,LAMBDA(v,SUM((ud=v)*(g=\"FG-DIST\")*dw)))))",
+   "LET(a,CHOOSECOLS(ANCHORARRAY(A5),1),c,CHOOSECOLS(ANCHORARRAY(A5),3),u,UNIQUE(a),sk,Mix_Slice[Sku],dw,IFERROR(--Mix_Slice[Dough Weight],0),ud,Mix_Slice[Unique Dough],g,XLOOKUP(sk,Products[No.],Products[Gen. Prod. Posting Group],\"\"),HSTACK(u,MAP(u,LAMBDA(v,SUM((a=v)*c))),MAP(u,LAMBDA(v,SUM((ud=v)*(g=\"FG\")*dw))),MAP(u,LAMBDA(v,SUM((ud=v)*(g=\"FG-DIST\")*dw)))))",
    "6\" Italian Rolls"
   ],
   "MCS Schedule!N5": [
@@ -4911,7 +5131,7 @@
   ],
   "Breadline Schedule!A2": [
    "TODAY()",
-   "46290"
+   "46291"
   ],
   "Breadline Schedule!H2": [
    "'Mix-Slice-Oven'!O1",
@@ -4926,11 +5146,11 @@
    "0.3263888888888889"
   ],
   "Breadline Schedule!A5": [
-   "LET(ud,Mix_Slice_Oven[Unique Dough],pt,IFERROR(--Mix_Slice_Oven[Planned Total],0),as,Mix_Slice_Oven[Asset],keep,FILTER(ud,(pt>0)*(ud<>\"\")*((as=\"Breadline\")+(as=\"Breadline/Artisan\")),\"\"),u,UNIQUE(keep),dnm,UniqueDough[Dough],ob,UniqueDough[Optimal Bag],ot,UniqueDough[Optimal Time],pl,UniqueDough[Placement On Scedule],mk,ISNUMBER(SEARCH(\"Marble\",u)),nu,FILTER(u,NOT(mk),\"\"),nt,IF(nu=\"\",0,SUMIFS(Mix_Slice_Oven[Planned Total],Mix_Slice_Oven[Unique Dough],nu)),nb,IFERROR(--XLOOKUP(nu,dnm,ob,\"\"),0),ntm,IFERROR(--XLOOKUP(nu,dnm,ot,\"\"),0),nk,IFERROR(--XLOOKUP(nu,dnm,pl,\"\"),9999),mu,FILTER(u,mk,\"\"),sfx,IF(ISNUMBER(SEARCH(\"Pullman\",mu)),\"Pullman\",\"Hearth\"),pnm,IF(mu=\"\",\"\",\"Pump for Marble \"&sfx),rnm,IF(mu=\"\",\"\",\"Rye for Marble \"&sfx),mt,IF(mu=\"\",0,SUMIFS(Mix_Slice_Oven[Planned Total],Mix_Slice_Oven[Unique Dough],mu)),pb,IFERROR(--XLOOKUP(pnm,dnm,ob,1),1),rb,IFERROR(--XLOOKUP(rnm,dnm,ob,1.5),1.5),ptm,IFERROR(--XLOOKUP(pnm,dnm,ot,0),0),rtm,IFERROR(--XLOOKUP(rnm,dnm,ot,0),0),pk,IFERROR(--XLOOKUP(pnm,dnm,pl,\"\"),9999),rk,IFERROR(--XLOOKUP(rnm,dnm,pl,\"\"),9999),sets,IF(mu=\"\",0,ROUNDUP(mt/(pb+rb),0)),anm,VSTACK(nu,pnm,rnm),ato,VSTACK(nt,sets*pb,sets*rb),abp,VSTACK(nb,pb,rb),atm,VSTACK(ntm,ptm,rtm),aky,VSTACK(nk,pk,rk),ok,anm<>\"\",fnm,FILTER(anm,ok),fto,FILTER(ato,ok),fbp,FILTER(abp,ok),ftm,FILTER(atm,ok),fky,FILTER(aky,ok),s,SORTBY(fnm,fky),tot,SORTBY(fto,fky),bpm,SORTBY(fbp,fky),tm,SORTBY(ftm,fky),k,IF(bpm>0,ROUNDUP(tot/bpm,0),1),n,SUM(k),cum,SCAN(0,k,LAMBDA(a,v,a+v)),r,SEQUENCE(n),idx,MAP(r,LAMBDA(v,XMATCH(v,cum,1))),nm,MAP(idx,LAMBDA(v,INDEX(s,v))),occ,MAP(r,LAMBDA(v,LET(i,INDEX(idx,v),v-INDEX(cum,i)+INDEX(k,i)))),mg,IF(ISNUMBER(SEARCH(\"for Marble\",nm)),TRIM(MID(nm,SEARCH(\"for Marble\",nm)+10,50)),\"\"),gk,MAP(r,LAMBDA(v,LET(m,INDEX(mg,v),IF(m=\"\",INDEX(idx,v),MIN(FILTER(idx,mg=m)))))),oc,IF(mg=\"\",0,occ),out,HSTACK(nm,MAP(idx,LAMBDA(v,INDEX(tot,v))),MAP(idx,LAMBDA(v,INDEX(bpm,v))),MAP(idx,LAMBDA(v,INDEX(tm,v)))),SORTBY(out,gk,1,oc,1,idx,1))",
+   "LET(ud,Mix_Slice[Unique Dough],pt,IFERROR(--Mix_Slice[Planned Total],0),as,Mix_Slice[Asset],keep,FILTER(ud,(pt>0)*(ud<>\"\")*((as=\"Breadline\")+(as=\"Breadline/Artisan\")),\"\"),u,UNIQUE(keep),dnm,UniqueDough[Dough],ob,UniqueDough[Optimal Bag],ot,UniqueDough[Optimal Time],pl,UniqueDough[Placement On Scedule],mk,ISNUMBER(SEARCH(\"Marble\",u)),nu,FILTER(u,NOT(mk),\"\"),nt,IF(nu=\"\",0,SUMIFS(Mix_Slice[Planned Total],Mix_Slice[Unique Dough],nu)),nb,IFERROR(--XLOOKUP(nu,dnm,ob,\"\"),0),ntm,IFERROR(--XLOOKUP(nu,dnm,ot,\"\"),0),nk,IFERROR(--XLOOKUP(nu,dnm,pl,\"\"),9999),mu,FILTER(u,mk,\"\"),sfx,IF(ISNUMBER(SEARCH(\"Pullman\",mu)),\"Pullman\",\"Hearth\"),pnm,IF(mu=\"\",\"\",\"Pump for Marble \"&sfx),rnm,IF(mu=\"\",\"\",\"Rye for Marble \"&sfx),mt,IF(mu=\"\",0,SUMIFS(Mix_Slice[Planned Total],Mix_Slice[Unique Dough],mu)),pb,IFERROR(--XLOOKUP(pnm,dnm,ob,1),1),rb,IFERROR(--XLOOKUP(rnm,dnm,ob,1.5),1.5),ptm,IFERROR(--XLOOKUP(pnm,dnm,ot,0),0),rtm,IFERROR(--XLOOKUP(rnm,dnm,ot,0),0),pk,IFERROR(--XLOOKUP(pnm,dnm,pl,\"\"),9999),rk,IFERROR(--XLOOKUP(rnm,dnm,pl,\"\"),9999),sets,IF(mu=\"\",0,ROUNDUP(mt/(pb+rb),0)),anm,VSTACK(nu,pnm,rnm),ato,VSTACK(nt,sets*pb,sets*rb),abp,VSTACK(nb,pb,rb),atm,VSTACK(ntm,ptm,rtm),aky,VSTACK(nk,pk,rk),ok,anm<>\"\",fnm,FILTER(anm,ok),fto,FILTER(ato,ok),fbp,FILTER(abp,ok),ftm,FILTER(atm,ok),fky,FILTER(aky,ok),s,SORTBY(fnm,fky),tot,SORTBY(fto,fky),bpm,SORTBY(fbp,fky),tm,SORTBY(ftm,fky),k,IF(bpm>0,ROUNDUP(tot/bpm,0),1),n,SUM(k),cum,SCAN(0,k,LAMBDA(a,v,a+v)),r,SEQUENCE(n),idx,MAP(r,LAMBDA(v,XMATCH(v,cum,1))),nm,MAP(idx,LAMBDA(v,INDEX(s,v))),occ,MAP(r,LAMBDA(v,LET(i,INDEX(idx,v),v-INDEX(cum,i)+INDEX(k,i)))),mg,IF(ISNUMBER(SEARCH(\"for Marble\",nm)),TRIM(MID(nm,SEARCH(\"for Marble\",nm)+10,50)),\"\"),gk,MAP(r,LAMBDA(v,LET(m,INDEX(mg,v),IF(m=\"\",INDEX(idx,v),MIN(FILTER(idx,mg=m)))))),oc,IF(mg=\"\",0,occ),out,HSTACK(nm,MAP(idx,LAMBDA(v,INDEX(tot,v))),MAP(idx,LAMBDA(v,INDEX(bpm,v))),MAP(idx,LAMBDA(v,INDEX(tm,v)))),SORTBY(out,gk,1,oc,1,idx,1))",
    "Sour Dough Hearth"
   ],
   "Breadline Schedule!G5": [
-   "LET(a,CHOOSECOLS(ANCHORARRAY(A5),1),c,CHOOSECOLS(ANCHORARRAY(A5),3),u,UNIQUE(a),sk,Mix_Slice_Oven[Sku],dw,IFERROR(--Mix_Slice_Oven[Dough Weight],0),ud,Mix_Slice_Oven[Unique Dough],g,XLOOKUP(sk,Products[No.],Products[Gen. Prod. Posting Group],\"\"),HSTACK(u,MAP(u,LAMBDA(v,SUM((a=v)*c))),MAP(u,LAMBDA(v,SUM((ud=v)*(g=\"FG\")*dw))),MAP(u,LAMBDA(v,SUM((ud=v)*(g=\"FG-DIST\")*dw)))))",
+   "LET(a,CHOOSECOLS(ANCHORARRAY(A5),1),c,CHOOSECOLS(ANCHORARRAY(A5),3),u,UNIQUE(a),sk,Mix_Slice[Sku],dw,IFERROR(--Mix_Slice[Dough Weight],0),ud,Mix_Slice[Unique Dough],g,XLOOKUP(sk,Products[No.],Products[Gen. Prod. Posting Group],\"\"),HSTACK(u,MAP(u,LAMBDA(v,SUM((a=v)*c))),MAP(u,LAMBDA(v,SUM((ud=v)*(g=\"FG\")*dw))),MAP(u,LAMBDA(v,SUM((ud=v)*(g=\"FG-DIST\")*dw)))))",
    "Sour Dough Hearth"
   ],
   "Breadline Schedule!N5": [
@@ -5214,7 +5434,7 @@
    "Mix_Slice_Oven"
   ],
   "Recon!E13": [
-   "ROWS(Mix_Slice_Oven[])",
+   "ROWS(Mix_Slice[])",
    "391"
   ],
   "Recon!F13": [
@@ -5295,7 +5515,7 @@
   ],
   "Critical Lookup Information!V10": [
    "INDEX($V$2:$V$8,MATCH(WEEKDAY(TODAY()),$U$2:$U$8,0))",
-   "Friday-Inventory"
+   "Sunday - Inventory"
   ]
  }
 }

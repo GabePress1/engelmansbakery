@@ -67,6 +67,11 @@ def V(ref):
     return D['cells'][ref][1]
 
 
+def TV(table, name):
+    """Cached value of a table column in its representative row."""
+    return next(c for c in D['tables'][table]['cols'] if c['name'] == name)['cell'][1]
+
+
 def card(title, kind, text):
     return {'title': title, 'kind': kind, 'text': text}
 
@@ -102,7 +107,7 @@ FRAMES.append({
     DSD["DSD_DSnD&lt;br/&gt;275 pack SKUs"]:::calc
     DIST["Dist_DSnD&lt;br/&gt;120 case SKUs"]:::calc
     DW["DoughWeight&lt;br/&gt;lb of dough per day"]:::calc
-    MSO["Mix_Slice_Oven&lt;br/&gt;bags, planned, minutes"]:::calc
+    MSO["Mix_Slice&lt;br/&gt;bags, planned, minutes"]:::calc
     OVEN["Oven_Info&lt;br/&gt;pans to set out"]:::calc
     MCS["MCS Schedule"]:::output
     BL["Breadline Schedule"]:::output
@@ -142,10 +147,10 @@ FRAMES.append({
             card('Blue: formula on this sheet', 'calc', 'Calculated from cells on the same sheet or table.'),
             card('Orange: lookup from another sheet', 'lookup', 'Pulled from another sheet, table, or the external _BC.xlsm file (XLOOKUP, SUMIFS, VLOOKUP).'),
             card('Grey: printed output or not used', 'output', 'A printed run sheet or pivot, or a column no formula reads.'),
-            card('Red: known issue', 'issue', 'Something that gives a wrong or missing number today. The most important are ranked in section 9.'),
+            card('Red: known issue', 'issue', 'Something that gives a wrong or missing number today. The most important are ranked in section 10.'),
             card('Dark: note', 'note', 'Explanation, worked example or saved state. Not a cell in the workbook.'),
             card('How to read this board', 'note', 'Sections run left to right in data-flow order. In each: the flowchart on the left, then one card stack per table in column order, then a red Issues stack. Open a card to read the full formula and what it feeds.'),
-            card('What v2.5 fixed since v2.4', 'note', 'Line totals are now one SUMIFS on Asset (the 14 hand-typed total chains that disagreed are gone). Dough rows roll up by SUMIFS (the 16 missing SUM formulas are gone). Master data moved into Excel tables with structured references.'),
+            card('What v2.5 and v2.6 fixed', 'note', 'v2.5: line totals are one SUMIFS on Asset (the 14 disagreeing hand-typed chains are gone), dough rows roll up by SUMIFS, master data moved into Excel tables. v2.6: Mix Order Backup deleted (its order is now Original Mix Order in Products and Dough), Mix_Slice_Oven renamed Mix_Slice, Recon made a table.'),
         ]),
         ('Sheets 1/2', [
             card('Products', 'input', 'Table Products, 478 items. Master item list: line (Asset), dough, unique dough, weight, scrap, pans. Section 1.'),
@@ -167,12 +172,11 @@ FRAMES.append({
             card('Daily Supply & Demand', 'calc', 'Tables DSD_DSnD (packs) and Dist_DSnD (cases): demand, balance, production per day. Section 4.'),
             card('Dist Shipping Schedule', 'output', 'PivotTable on Open Sales Lines, DIST lines only. Last refreshed 2026-09-18. Section 4.'),
             card('DoughWeights', 'calc', 'Table DoughWeight: pounds of dough needed per day. Also holds the pasted BOMQty export in O:AJ. Section 5.'),
-            card('Mix-Slice-Oven', 'calc', 'Tables Mix_Slice_Oven and Oven_Info: bags, planned bags, minutes, slice sheet, pans to set out. K4 picks the day. Section 6.'),
-            card('MCS Schedule', 'output', 'Printed mixer run sheet for MCS LINE, built by one dynamic-array formula in A5. Section 7.'),
-            card('Breadline Schedule', 'output', 'Printed mixer run sheet for Breadline and Breadline/Artisan, built by A5. Section 7.'),
-            card('Recon', 'calc', 'Compares each spill-array row count with its table row count. Section 8.'),
+            card('Mix-Slice-Oven', 'calc', 'Two tables on one sheet. Mix_Slice: bags, planned bags, minutes and the slice sheet (section 6). Oven_Info: pans to set out (section 7). K4 picks the day.'),
+            card('MCS Schedule', 'output', 'Printed mixer run sheet for MCS LINE, built by one dynamic-array formula in A5. Section 8.'),
+            card('Breadline Schedule', 'output', 'Printed mixer run sheet for Breadline and Breadline/Artisan, built by A5. Section 8.'),
+            card('Recon', 'calc', 'Table Recon: compares each spill-array row count with its table row count. Section 9.'),
             card('Session Log', 'unused', 'Static notes. Nothing reads it and it reads nothing.'),
-            card('Mix Order Backup', 'unused', 'Static backup of an old mix order. Nothing reads it.'),
         ]),
         ('Control cells (typed)', [
             card("'Daily Supply & Demand'!H2 anchor date", 'input', f"Typed Sunday of the week being planned: 2026-09-20. H3:M3 sample dates start at H2-6. Sheet note: update this date in every new template. Feeds: every demand average, DoughWeights F2."),
@@ -181,8 +185,8 @@ FRAMES.append({
             card('Sunday!B1 week date', 'input', f"Typed date 2026-08-30. Monday to Friday B1 add one day each. Feeds only the Julian Date column."),
             card('Schedule E4 start times', 'input', 'Typed first-mix start: MCS 6:45, Breadline 7:50. Printed only; no finish times are calculated from it.'),
             card("Freeze columns (_Freeze)", 'input', 'Typed per day on DSD_DSnD and Dist_DSnD. All blank today. Floor already includes Freezer, so typing here would double count.'),
-            card('Planned Total override', 'input', "Mix_Slice_Oven[Planned Total] = Optimal Total until a person types a number over it. None are overridden today."),
-            card('Extra Bread (Runout)', 'issue', 'Mix_Slice_Oven column X is meant for typed runouts, but no formula reads it. Typing a runout changes nothing.'),
+            card('Planned Total override', 'input', "Mix_Slice[Planned Total] = Optimal Total until a person types a number over it. None are overridden today."),
+            card('Extra Bread (Runout)', 'issue', 'Mix_Slice column X is meant for typed runouts, but no formula reads it. Typing a runout changes nothing.'),
         ]),
     ],
 })
@@ -240,7 +244,7 @@ FRAMES.append({
         text Sku FK
         num Weight "from Products"
     }
-    Mix_Slice_Oven {
+    Mix_Slice {
         text Sku FK
         num optimal_bags_per_mix "from UniqueDough"
         num Run_Time "from UniqueDough"
@@ -260,8 +264,8 @@ FRAMES.append({
     UniqueDough ||--o| CriticalLookup : "duplicate copy"
     Products ||--o{ DSD_DSnD : "No."
     Products ||--o{ DoughWeight : "No."
-    Products ||--o{ Mix_Slice_Oven : "No."
-    UniqueDough ||--o{ Mix_Slice_Oven : "Dough"
+    Products ||--o{ Mix_Slice : "No."
+    UniqueDough ||--o{ Mix_Slice : "Dough"
     Pans ||--o{ Oven_Info : "Pans/Boxes"
     UniqueDough ||--o{ Schedules : "placement, bags, time"
     CriticalLookup ||--o{ Schedules : "N to S, D4"
@@ -273,7 +277,7 @@ FRAMES.append({
     class BOMQty export
     class DSD_DSnD calc
     class DoughWeight calc
-    class Mix_Slice_Oven calc
+    class Mix_Slice calc
     class Oven_Info calc
     class Schedules calc
 """,
@@ -282,32 +286,34 @@ FRAMES.append({
             card('No. (A)', 'input', 'Item number. F5xxxx is the case version of Fxxxx. The key for every lookup in the workbook. Feeds: row lists of Sunday to Friday (A3), DSD_DSnD (A8), Dist_DSnD (A287), DoughWeights (A4), Mix-Slice-Oven (A6), Oven_Info (A410).'),
             card('Description (B)', 'input', 'Item name. Feeds: every Description and _Desc column, UniqueDough List of Count. Also searched for the text OBS by the DoughWeights row list (see issue).'),
             card('Gen. Prod. Posting Group (F)', 'input', 'FG (277 packs), FG-DIST (122 cases), OBS (79 obsolete). Feeds: the row lists (day tables FG + FG-DIST, DSD_DSnD FG, Dist_DSnD FG-DIST, Mix-Slice-Oven and Oven_Info skip OBS), DSD_DSnD Gen. Prod., schedule Bag Count DSD vs DIST split.'),
-            card('Asset (G)', 'input', 'Production line: Breadline, Breadline/Artisan, MCS LINE, 3rd Party, 3rd Party - Bake, Third Party - Repack, Charges / Fees. Feeds: Asset Rank, DSD_DSnD Asset (3rd-party demand branch, Thursday rule), Mix_Slice_Oven Asset (line totals, schedule filters), Oven_Info Pans. Row lists drop Charges / Fees.'),
+            card('Asset (G)', 'input', 'Production line: Breadline, Breadline/Artisan, MCS LINE, 3rd Party, 3rd Party - Bake, Third Party - Repack, Charges / Fees. Feeds: Asset Rank, DSD_DSnD Asset (3rd-party demand branch, Thursday rule), Mix_Slice Asset (line totals, schedule filters), Oven_Info Pans. Row lists drop Charges / Fees.'),
             card('Weight (H)', 'input', 'Pounds of dough in one pack. Feeds: DoughWeight Weight (lb = packs short x Weight), DSD_DSnD Dough Weights (display).'),
-            card('Unique Dough (I)', 'input', 'The mixing run the item belongs to. Feeds: Mix_Slice_Oven Unique Dough (bags are summed per run), Oven_Info, UniqueDough Count and List of Count, Mix-Slice-Oven A6 sort.'),
-            card('Packs Per Tray/Case (J)', 'input', 'Feeds: Mix_Slice_Oven Units per case/Tray, then #of Trays/Cases Needed on the slice sheet.'),
+            card('Unique Dough (I)', 'input', 'The mixing run the item belongs to. Feeds: Mix_Slice Unique Dough (bags are summed per run), Oven_Info, UniqueDough Count and List of Count, Mix-Slice-Oven A6 sort.'),
+            card('Packs Per Tray/Case (J)', 'input', 'Feeds: Mix_Slice Units per case/Tray, then #of Trays/Cases Needed on the slice sheet.'),
             card('Pieces Per Tray/Case (K)', 'input', 'Feeds: Oven_Info # of pieces per tray/box, then # of Pans/Boxes to set out.'),
-            card('Dough (L)', 'input', 'Dough D-code. Feeds: Dough Description, DoughWeights A4 grouping (each dough followed by its products), Mix_Slice_Oven Dough (the Dough[Weight] divisor), Mix-Slice-Oven A6.'),
+            card('Dough (L)', 'input', 'Dough D-code. Feeds: Dough Description, DoughWeights A4 grouping (each dough followed by its products), Mix_Slice Dough (the Dough[Weight] divisor), Mix-Slice-Oven A6.'),
             card('Dough Description (M)', 'lookup', f"Formula: {T('Products', 'Dough Description')}. Feeds: DoughWeight Dough Desc, the key dough rows are summed on."),
-            card('Scrap Factor (N)', 'input', 'Multiplier for waste, for example 1.1. Feeds: Mix_Slice_Oven Scrap Factor (bags x scrap).'),
+            card('Scrap Factor (N)', 'input', 'Multiplier for waste, for example 1.1. Feeds: Mix_Slice Scrap Factor (bags x scrap).'),
             card('Asset Rank (P)', 'calc', f"Formula: {T('Products', 'Asset Rank')}. 1 Breadline, 2 Breadline/Artisan, 3 MCS LINE, 4 to 6 third party, 99 anything else. Feeds: Mix-Slice-Oven A6 keeps rank 1 to 3 and sorts by it."),
             card('Pans/Boxes (Q)', 'input', 'Pan or box the item is baked or packed in. Feeds: Oven_Info A410 row list and # of Pans/Boxes to set out.'),
-            card('Non Case Sku (R)', 'calc', f"Formula: {T('Products', 'Non Case Sku')}. F53070 becomes F3070. Feeds: Mix_Slice_Oven Notes (flags Case Total)."),
+            card('Non Case Sku (R)', 'calc', f"Formula: {T('Products', 'Non Case Sku')}. F53070 becomes F3070. Feeds: Mix_Slice Notes (flags Case Total)."),
+            card('Original Mix Order (T)', 'input', f"Typed mixing sequence carried over from the deleted Mix Order Backup sheet (e.g. {TV('Products', 'Original Mix Order')}). Filled for 366 of 478 items. Not yet read by any formula."),
             card('Not used: 5 columns', 'unused', 'Production BOM No. (C), Unit Cost (D), Unit Price (E), Batch Size (O), Topping (S). No formula reads them.'),
         ]),
         ('Dough (63 rows)', [
             card('No. (A)', 'input', 'Dough D-code. Feeds: DoughWeights A4 (one block per dough), the Dough Weight SUMIFS key, Products Dough Description.'),
-            card('Description (B)', 'input', 'Feeds: Products Dough Description, DoughWeight and Mix_Slice_Oven Description on dough rows, UniqueDough Dough Desc.'),
-            card('Weight (I)', 'lookup', f"Pounds in one bag (batch) of dough. Formula: {T('Dough', 'Weight')}. Feeds: Mix_Slice_Oven Weight, Dough Weight (L) and every _Bags column: bags = lb / this. See issue: multi-level BOMs are double counted."),
+            card('Description (B)', 'input', 'Feeds: Products Dough Description, DoughWeight and Mix_Slice Description on dough rows, UniqueDough Dough Desc.'),
+            card('Weight (I)', 'lookup', f"Pounds in one bag (batch) of dough. Formula: {T('Dough', 'Weight')}. Feeds: Mix_Slice Weight, Dough Weight (L) and every _Bags column: bags = lb / this. See issue: multi-level BOMs are double counted."),
             card('Uni Dou # (J)', 'calc', f"Formula: {T('Dough', 'Uni Dou #')}. Number of mixing runs that use this dough. Display only."),
             card('Uni Dou Desc (K)', 'calc', f"Formula: {T('Dough', 'Uni Dou Desc')}. Display only."),
+            card('Original Mix Order (L)', 'input', f"Typed mixing sequence per dough, carried over from the deleted Mix Order Backup sheet (e.g. {TV('Dough', 'Original Mix Order')}). Filled for all 63 doughs. Not yet read by any formula."),
             card('Not used: 6 columns', 'unused', 'Type, Item Tracking Code, Production BOM No., Unit Cost, Unit Price, Gen. Prod. Posting Group.'),
         ]),
         ('Unique Dough (139 rows)', [
-            card('Dough (A)', 'input', 'Mixing run name; must match Products Unique Dough exactly. Feeds: Mix_Slice_Oven bags-per-mix and run-time lookups, Oven_Info, the schedule A5 lookups.'),
+            card('Dough (A)', 'input', 'Mixing run name; must match Products Unique Dough exactly. Feeds: Mix_Slice bags-per-mix and run-time lookups, Oven_Info, the schedule A5 lookups.'),
             card('Placement On Scedule (C)', 'input', 'Order of the run on the day. Feeds: schedule A5 SORTBY; MCS Changeover rows sit at the placement above + 0.5. Text or blank sorts last (9999).'),
-            card('Optimal Bag (D)', 'input', 'Bags per mix. Feeds: Mix_Slice_Oven optimal bags per mix (CEILING step), Oven_Info Daily Bags Per Mix, schedule mixes per run = ROUNDUP(bags / this).'),
-            card('Optimal Time (E)', 'input', 'Minutes per mix. Feeds: Mix_Slice_Oven Run Time Per Mix, every _Minutes column, the schedule time column. 7 runs are blank.'),
+            card('Optimal Bag (D)', 'input', 'Bags per mix. Feeds: Mix_Slice optimal bags per mix (CEILING step), Oven_Info Daily Bags Per Mix, schedule mixes per run = ROUNDUP(bags / this).'),
+            card('Optimal Time (E)', 'input', 'Minutes per mix. Feeds: Mix_Slice Run Time Per Mix, every _Minutes column, the schedule time column. 7 runs are blank.'),
             card('Count (P)', 'calc', f"Formula: {T('UniqueDough', 'Count')}. Display only."),
             card('List of Count (Q)', 'calc', f"Formula: {T('UniqueDough', 'List of Count')}. Display only."),
             card('Dough Sku (R)', 'lookup', f"Finds the dough header row above this run on Mix-Slice-Oven. Formula: {T('UniqueDough', 'Dough Sku')}. Feeds: Dough Uni Dou # and Uni Dou Desc."),
@@ -353,7 +359,7 @@ FRAMES.append({
     GRID["Dist_DSnD order grids&lt;br/&gt;0_, 1_, 2_"]:::calc
     PIV["Dist Shipping Schedule&lt;br/&gt;PivotTable, DIST only"]:::output
     DW["Dough Weight&lt;br/&gt;lb per bag"]:::lookup
-    MSO["Mix_Slice_Oven&lt;br/&gt;bags = lb / Dough Weight"]:::calc
+    MSO["Mix_Slice&lt;br/&gt;bags = lb / Dough Weight"]:::calc
     NONE["no live formula"]:::issue
     SH -->|"No., Posting Date, Quantity"| DSD
     SO -->|"No., Quantity, Shipment Date"| GRID
@@ -390,7 +396,6 @@ FRAMES.append({
         ('Other pasted sheets', [
             card('Table14 (Items List)', 'unused', "Business Central Items List, 16 columns, 1,244 rows. No live formula reads it. Only DSD_DSnD Gen. Prod.'s stored table formula points here, so it would come back if that column were refilled."),
             card('Session Log', 'unused', 'Static text, unreferenced.'),
-            card('Mix Order Backup', 'unused', 'Static values, unreferenced.'),
         ]),
         ('Weekly routine', [
             card('1. Paste Sales History', 'input', 'At least 21 days before the anchor week plus the sample week, so all four same-weekday samples exist.'),
@@ -540,7 +545,7 @@ FRAMES.append({
             card('H2 anchor date', 'input', 'Typed planning Sunday, 2026-09-20. Sheet note: update this date in every new template.'),
             card('H3:M3 sample dates', 'calc', f"H3 {X('Daily Supply & Demand!H3')} = 9/14, then one day per column to 9/19. The demand formulas step back 0, 7, 14, 21 days from these."),
             card('C5 buffer', 'input', 'Typed 1.2. Multiplies every DSD _Demand.'),
-            card('DT2 weekday index', 'calc', f"{X('Daily Supply & Demand!DT2')} = {V('Daily Supply & Demand!DT2')} (Friday). Saturday counts as 1. Feeds: Dist_DSnD bridge columns DC:DE."),
+            card('DT2 weekday index', 'calc', f"{X('Daily Supply & Demand!DT2')} = {V('Daily Supply & Demand!DT2')} as saved (TODAY() was a Saturday, and Saturday counts as 1). Feeds: Dist_DSnD bridge columns DC:DE."),
             card('W1:W4 over each day', 'lookup', f"Planned bags and hours read back from Mix-Slice-Oven. Sunday: W1 {X('Daily Supply & Demand!W1')} = {V('Daily Supply & Demand!W1')} Breadline bags, W2 {X('Daily Supply & Demand!W2')} = {V('Daily Supply & Demand!W2')} h, W3 MCS bags {V('Daily Supply & Demand!W3')}, W4 MCS hours 16.08."),
             card('H283:M285 case totals by line', 'calc', f"H283 {X('Daily Supply & Demand!H283')} = {V('Daily Supply & Demand!H283')}; H284 MCS LINE = {V('Daily Supply & Demand!H284')}; H285 total = {V('Daily Supply & Demand!H285')} (Sun/Mon cases)."),
         ]),
@@ -562,7 +567,7 @@ FRAMES.append({
             card('_Demand', 'calc', f"Sunday: {T('DSD_DSnD', 'S_Demand')}. Mon uses Mon/Tue, Tue uses Tue/Wed, Wed uses Wed/Thur, Fri uses Fri/Sat."),
             card('TH_Demand (Thursday rule)', 'calc', f"{T('DSD_DSnD', 'TH_Demand')}. Lines other than MCS also bake Friday's (Fri/Sat) demand on Thursday."),
             card('_Balance', 'calc', f"{T('DSD_DSnD', 'S_Balanace')} (Sunday column is spelled S_Balanace)."),
-            card('_Production', 'calc', f"{T('DSD_DSnD', 'S_Production')}. Negative = packs to bake. Feeds: DoughWeight Sun to Fri, Mix_Slice_Oven K and _Needed, Oven_Info Demand."),
+            card('_Production', 'calc', f"{T('DSD_DSnD', 'S_Production')}. Negative = packs to bake. Feeds: DoughWeight Sun to Fri, Mix_Slice K and _Needed, Oven_Info Demand."),
             card('Worked example: F1000 Rye 1/2"', 'note', 'Sun/Mon avg 17.5: S_Demand ROUNDUP(21.0) = 21, Floor 79, Balance 58, nothing to bake. Thursday: ROUNDUP(27.75 x 1.2 + 9.5 x 1.2) = 45. Friday: Floor 0, Demand 12, Production -12, bake 12.'),
         ]),
         ('Dist_DSnD 1/2: cases', [
@@ -585,7 +590,7 @@ FRAMES.append({
         ]),
         ('Issues', [
             card('Stored table formulas differ from the cells', 'issue', "DSD_DSnD Asset, Gen. Prod., Dough Weights and the six demand columns: the table's stored formula is older (points at Mix-Slice-Oven, the Items List, or drops the 3rd-party branch). Extending or refilling the table brings the old logic back."),
-            card('Columns with no stored formula', 'issue', 'DSD_DSnD Avg of Previous 4, S_Sku, S_Desc, T_Sku, T_Desc; Dist_DSnD Column3; Mix_Slice_Oven Unique Dough, Asset, Scrap Factor, Sku, Description, Planned Total, T_Optimal; Oven_Info Daily Bags Per Mix, Finished Product. New rows come in blank.'),
+            card('Columns with no stored formula', 'issue', 'DSD_DSnD Avg of Previous 4, S_Sku, S_Desc, T_Sku, T_Desc; Dist_DSnD Column3; Mix_Slice Unique Dough, Asset, Scrap Factor, Sku, Description, Planned Total, T_Optimal; Oven_Info Daily Bags Per Mix, Finished Product. New rows come in blank.'),
             card('Row 264 typed over (F6502)', 'issue', 'Sku and all six demand averages (H264:M264 = 48) are typed numbers, not formulas.'),
             card('Thursday counts Fri/Sat twice', 'issue', 'For lines other than MCS, TH_Demand includes Fri/Sat and F_Demand includes it again.'),
             card('Order grids are all zero', 'issue', 'Row 284 dates are text (for example 8/31/2026), so SUMIFS never matches a Shipment Date. Distribution order visibility is zero.'),
@@ -613,7 +618,7 @@ FRAMES.append({
     ZERO["0 lb"]:::calc
     ROLL["Dough row = SUMIFS of its&lt;br/&gt;product rows by Dough Desc"]:::calc
     DWT["Dough Weight&lt;br/&gt;lb per bag, from BOMQty"]:::lookup
-    MSO["Mix_Slice_Oven&lt;br/&gt;bags = lb / Dough Weight x Scrap"]:::calc
+    MSO["Mix_Slice&lt;br/&gt;bags = lb / Dough Weight x Scrap"]:::calc
     ROWS --> GATE
     DSDP --> GATE
     DISTP --> GATE
@@ -634,12 +639,12 @@ FRAMES.append({
             card('Dough Desc (D)', 'lookup', f"Formula: {T('DoughWeight', 'Dough Desc')}. The key dough rows are summed on."),
             card('Weight (E)', 'lookup', f"Formula: {T('DoughWeight', 'Weight')}. lb of dough per pack."),
             card('Sun to Fri (F:K)', 'lookup', f"Pounds of dough needed that day. Sun: {T('DoughWeight', 'Sun')}. F Sun reads S_Production, G Mon M_, H Tue T_, I Wed W_, J Thur TH_, K Fri F_."),
-            card('Feeds', 'note', 'Mix_Slice_Oven Dough Weight (L, for the K4 day) and _Bags for every day, each divided by Dough Weight (lb per bag).'),
+            card('Feeds', 'note', 'Mix_Slice Dough Weight (L, for the K4 day) and _Bags for every day, each divided by Dough Weight (lb per bag).'),
         ]),
         ('How the numbers read', [
             card('The shortfall gate', 'note', 'Only a negative _Production creates dough. A product with stock left over contributes 0 lb, even if other days are short.'),
             card('Case SKUs', 'note', 'F5 codes read Dist_DSnD _Production, which is always minus demand (no stock is netted for cases).'),
-            card('Dough rows', 'note', 'D-code rows add up their products by Dough Desc. Mix_Slice_Oven sums product rows itself, so dough rows are for reading only.'),
+            card('Dough rows', 'note', 'D-code rows add up their products by Dough Desc. Mix_Slice sums product rows itself, so dough rows are for reading only.'),
             card('Worked example: D10001 Challah', 'note', 'Dough row: Sun 454, Mon 965, Tue 1,176, Wed 402.5, Thu 1,074, Fri 1,220.25 lb. F1127 Challah 3-Braid 21oz, Friday: 36 packs short x 1.3125 lb = 47.25 lb.'),
             card('Column L legacy check', 'unused', "VLOOKUP($C4,'Mix-Slice-Oven'!H:H,1,FALSE) on each row. Broken (444 #N/A, drifting references, #REF!). Nothing reads it."),
             card('BOMQty lives here too', 'export', 'Columns O:AJ hold the pasted BOMQty export. See section 2.'),
@@ -653,34 +658,42 @@ FRAMES.append({
     ],
 })
 
-# ---------------------------------------------------------------- 6 Mix-Slice-Oven
+# ---------------------------------------------------------------- 6 Mix_Slice
 DAYMAP_MSO = 'Sun Z:AD, Mon AE:AI, Tue AJ:AN, Wed AO:AS, Thu AT:AX, Fri AY:BC; minutes BD:BI'
+DAYS6 = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri']
+PLAN_COLS = ['AD', 'AI', 'AN', 'AS', 'AX', 'BC']
+MIN_COLS = ['BD', 'BE', 'BF', 'BG', 'BH', 'BI']
+
+
+def by_day(cols, row, hours=False):
+    vals = [float(V(f'Mix-Slice-Oven!{c}{row}')) for c in cols]
+    return ', '.join(f"{d} {round(v, 2):g}" for d, v in zip(DAYS6, vals))
+
+
 FRAMES.append({
-    'title': '6. Mix-Slice-Oven',
-    'subtitle': 'Pounds become bags, bags round up to whole mixes, mixes become minutes. K4 picks the day for the printed plan.',
+    'title': '6. Mix_Slice',
+    'subtitle': 'Pounds become bags, bags round up to whole mixes, mixes become minutes, and each line gets its bags and hours.',
     'mermaid': r"""flowchart LR
 {classdef}
     K4["K4 day selector&lt;br/&gt;Tuesday"]:::input
-    DW["DoughWeight lb&lt;br/&gt;for the K4 day"]:::lookup
+    DW["DoughWeight lb&lt;br/&gt;for the day"]:::lookup
     DWT["Dough Weight&lt;br/&gt;lb per bag"]:::lookup
-    L["L Dough Weight&lt;br/&gt;ROUND(lb / lb per bag, 2) x Scrap"]:::calc
-    M["M Bags By Unique Dough&lt;br/&gt;run total, first row only"]:::calc
-    UD["Unique Dough&lt;br/&gt;Optimal Bag, Optimal Time"]:::input
-    N["N Optimal Total&lt;br/&gt;CEILING to bags per mix&lt;br/&gt;Marble x 2.5"]:::calc
-    O["O Planned Total = Optimal&lt;br/&gt;type here to override"]:::calc
-    TOT["O1 Breadline, O2 MCS&lt;br/&gt;T2 total bags"]:::calc
-    SCH["MCS and Breadline&lt;br/&gt;schedules"]:::output
-    K["K packs short&lt;br/&gt;DSD or Dist"]:::lookup
-    SL["Slice sheet P:W&lt;br/&gt;trays or cases"]:::output
-    DAY["Per day: _Bags, _Raw,&lt;br/&gt;_Optimal, _Planned"]:::calc
-    MIN["_Minutes =&lt;br/&gt;Planned / bags per mix x time"]:::calc
-    HRS["Rows 1-2: bags and hours&lt;br/&gt;per line per day"]:::calc
-    DSD["Daily Supply and Demand&lt;br/&gt;W1:W4"]:::lookup
-    OD["Oven_Info Demand"]:::lookup
-    PANS["Pans&lt;br/&gt;pieces per pan"]:::input
-    OP["Pans/Boxes to set out"]:::calc
-    F29["MCS F29 pan list"]:::output
-    XB["X Extra Bread (Runout)&lt;br/&gt;read by nothing"]:::issue
+    L["L bags per SKU&lt;br/&gt;ROUND(lb / lb per bag, 2) x Scrap"]:::calc
+    M["M run total&lt;br/&gt;first row of each Unique Dough"]:::calc
+    UD["Unique Dough&lt;br/&gt;bags per mix, minutes per mix"]:::input
+    N["N Optimal Total&lt;br/&gt;CEILING to whole mixes&lt;br/&gt;Marble x 2.5"]:::calc
+    O["O Planned Total&lt;br/&gt;type here to override"]:::calc
+    AS["Asset from Products&lt;br/&gt;Breadline or MCS LINE"]:::lookup
+    O1["O1 Breadline bags&lt;br/&gt;K4 day"]:::output
+    O2["O2 MCS bags&lt;br/&gt;K4 day"]:::output
+    SCH["Schedules H2"]:::output
+    DAY["Each day: _Bags, _Raw,&lt;br/&gt;_Optimal, _Planned"]:::calc
+    MIN["_Minutes =&lt;br/&gt;Planned / bags per mix x minutes&lt;br/&gt;Marble / 2.5"]:::calc
+    R1["Row 1 Breadline&lt;br/&gt;bags and hours per day"]:::output
+    R2["Row 2 MCS&lt;br/&gt;bags and hours per day"]:::output
+    DSD["Daily Supply and Demand&lt;br/&gt;rows 1-4"]:::lookup
+    K["K packs short"]:::lookup
+    SL["Slice sheet P:W"]:::output
     K4 --> L
     K4 --> K
     DW --> L
@@ -689,80 +702,79 @@ FRAMES.append({
     M --> N
     UD --> N
     N --> O
-    O --> TOT
-    O --> SCH
+    O --> AS
+    AS --> O1
+    AS --> O2
+    O1 --> SCH
+    O2 --> SCH
     K --> SL
     DW --> DAY
     DAY --> MIN
     UD --> MIN
-    MIN --> HRS
-    HRS --> DSD
-    K4 --> OD
-    OD --> OP
-    PANS --> OP
-    OP --> F29
+    DAY --> R1
+    DAY --> R2
+    MIN --> R1
+    MIN --> R2
+    R1 --> DSD
+    R2 --> DSD
 """,
     'stacks': [
-        ('Controls and totals', [
+        ('Controls', [
             card('K4 day selector', 'input', f"Typed dropdown = {V('Mix-Slice-Oven!K4')}. Feeds: K, L (so M, N, O Planned Total), Oven_Info Demand and pans, and both schedules through Planned Total."),
             card('Q3, R3 header date', 'calc', f"Q3 {X('Mix-Slice-Oven!Q3')}, R3 {X('Mix-Slice-Oven!R3')} = {V('Mix-Slice-Oven!R3')}. Printed only; does not pick the day."),
-            card('O1 Breadline bags', 'calc', f"{X('Mix-Slice-Oven!O1')} = {V('Mix-Slice-Oven!O1')}. Feeds: Breadline Schedule H2."),
-            card('O2 MCS bags, T2 total', 'calc', f"O2 {X('Mix-Slice-Oven!O2')} = {V('Mix-Slice-Oven!O2')}. T2 {X('Mix-Slice-Oven!T2')} = 234.5. Feeds: MCS Schedule H2."),
-            card('Rows 1-2 per day', 'calc', f"Sunday: AD1 {X('Mix-Slice-Oven!AD1')} = {V('Mix-Slice-Oven!AD1')} bags; BD1 {X('Mix-Slice-Oven!BD1')} = 8.5 h; AD2, BD2 the same for MCS LINE ({V('Mix-Slice-Oven!AD2')} bags, 16.08 h). Feed Daily Supply and Demand W1:W4."),
-            card('Y1 pan count', 'calc', f"{X('Mix-Slice-Oven!Y1')} = {V('Mix-Slice-Oven!Y1')}."),
             card('Row list (A6 spill)', 'lookup', f"In-house lines only (Asset Rank 1 to 3), not OBS, sorted by rank, dough, unique dough, SKU, with a dough header row above each block. {X('Mix-Slice-Oven!A6')}"),
         ]),
-        ('Mix_Slice_Oven: setup', [
-            card('Sku (H)', 'calc', f"{T('Mix_Slice_Oven', 'Sku')}. D-codes are dough header rows."),
-            card('Dough (B)', 'lookup', f"{T('Mix_Slice_Oven', 'Dough')}."),
-            card('Unique Dough (C)', 'lookup', f"{T('Mix_Slice_Oven', 'Unique Dough')}. Groups rows into mixing runs."),
-            card('Asset (D)', 'lookup', f"{T('Mix_Slice_Oven', 'Asset')}. Line totals and schedule filters."),
-            card('Weight (E)', 'lookup', f"{T('Mix_Slice_Oven', 'Weight')}. Filled on dough header rows (lb per bag)."),
-            card('optimal bags per mix (F)', 'lookup', f"{T('Mix_Slice_Oven', 'optimal bags per mix')}."),
-            card('Scrap Factor (G)', 'lookup', f"{T('Mix_Slice_Oven', 'Scrap Factor')}."),
-            card('Description (I)', 'lookup', f"{T('Mix_Slice_Oven', 'Description')}."),
-            card('Units per case/Tray (J)', 'lookup', f"{T('Mix_Slice_Oven', 'Units per case/Tray')}."),
-            card('Run Time Per Mix (min) (Y)', 'lookup', f"{T('Mix_Slice_Oven', 'Run Time Per Mix (min)')}."),
+        ('Mix_Slice: setup', [
+            card('Sku (H)', 'calc', f"{T('Mix_Slice', 'Sku')}. D-codes are dough header rows."),
+            card('Dough (B)', 'lookup', f"{T('Mix_Slice', 'Dough')}."),
+            card('Unique Dough (C)', 'lookup', f"{T('Mix_Slice', 'Unique Dough')}. Groups rows into mixing runs."),
+            card('Asset (D)', 'lookup', f"{T('Mix_Slice', 'Asset')}. Line totals and schedule filters."),
+            card('Weight (E)', 'lookup', f"{T('Mix_Slice', 'Weight')}. Filled on dough header rows (lb per bag)."),
+            card('optimal bags per mix (F)', 'lookup', f"{T('Mix_Slice', 'optimal bags per mix')}."),
+            card('Scrap Factor (G)', 'lookup', f"{T('Mix_Slice', 'Scrap Factor')}."),
+            card('Description (I)', 'lookup', f"{T('Mix_Slice', 'Description')}."),
+            card('Units per case/Tray (J)', 'lookup', f"{T('Mix_Slice', 'Units per case/Tray')}."),
+            card('Run Time Per Mix (min) (Y)', 'lookup', f"{T('Mix_Slice', 'Run Time Per Mix (min)')}."),
         ]),
-        ('Mix_Slice_Oven: K4 day', [
-            card('K Individual Packaged Units Needed', 'lookup', f"Packs (or cases) short on the K4 day, as a positive number. {T('Mix_Slice_Oven', 'Number of  Individual Packaged Units Needed')}"),
-            card('L Dough Weight (bags)', 'lookup', f"Bags for this SKU: {T('Mix_Slice_Oven', 'Dough Weight')}"),
-            card('M Bags By Unique Dough', 'calc', f"Run total on the first row of each run, blank on the rest: {T('Mix_Slice_Oven', 'Bags By Unique Dough')}"),
-            card('N Optimal Total', 'calc', f"Rounds up to whole mixes; Marble x 2.5; dough rows sum their products: {T('Mix_Slice_Oven', 'Optimal Total')}"),
-            card('O Planned Total', 'calc', f"{T('Mix_Slice_Oven', 'Planned Total')}. The one place to override the plan by typing. None are overridden today. Feeds: O1, O2, both schedules."),
-            card('Slice sheet (P:V)', 'calc', f"P {T('Mix_Slice_Oven', 'Dough Desc')}, Q = Planned Total, R = Sku, S = Description, T = K. U {T('Mix_Slice_Oven', '#of Trays/Cases Needed')}. V Tray or Case."),
-            card('W Notes', 'calc', f"Flags Case Total when a case is needed but its pack is not: {T('Mix_Slice_Oven', 'Notes')}"),
+        ('Mix_Slice: K4 day', [
+            card('K Individual Packaged Units Needed', 'lookup', f"Packs (or cases) short on the K4 day, as a positive number. {T('Mix_Slice', 'Number of  Individual Packaged Units Needed')}"),
+            card('L Dough Weight (bags)', 'lookup', f"Bags for this SKU: {T('Mix_Slice', 'Dough Weight')}"),
+            card('M Bags By Unique Dough', 'calc', f"Run total on the first row of each run, blank on the rest: {T('Mix_Slice', 'Bags By Unique Dough')}"),
+            card('N Optimal Total', 'calc', f"Rounds up to whole mixes; Marble x 2.5; dough rows sum their products: {T('Mix_Slice', 'Optimal Total')}"),
+            card('O Planned Total', 'calc', f"{T('Mix_Slice', 'Planned Total')}. The one place to override the plan by typing. None are overridden today. Feeds: O1, O2, both schedules."),
+            card('Slice sheet (P:V)', 'calc', f"P {T('Mix_Slice', 'Dough Desc')}, Q = Planned Total, R = Sku, S = Description, T = K. U {T('Mix_Slice', '#of Trays/Cases Needed')}. V Tray or Case."),
+            card('W Notes', 'calc', f"Flags Case Total when a case is needed but its pack is not: {T('Mix_Slice', 'Notes')}"),
             card('X Extra Bread (Runout)', 'issue', 'Typed column meant for runouts. No formula reads it.'),
-            card('Worked example: Challah 3 Braided', 'note', 'Tuesday (K4): run total M = 1.298 bags, bags per mix 1, Optimal CEILING = 2, Planned 2, T_Minutes 2 / 1 x 30 = 60.'),
         ]),
-        ('Mix_Slice_Oven: by day', [
-            card('_Needed', 'lookup', f"{DAYMAP_MSO}. Sunday: {T('Mix_Slice_Oven', 'S_Needed')}. Reads DSD_DSnD only."),
-            card('_Bags', 'lookup', f"Sunday: {T('Mix_Slice_Oven', 'S_Bags')}. Rounds after scrap; L rounds before."),
-            card('_Raw', 'calc', f"Run total per day: {T('Mix_Slice_Oven', 'S_Raw')}"),
-            card('_Optimal', 'calc', f"{T('Mix_Slice_Oven', 'S_Optimal')}. T_Optimal holds the same formula in every cell."),
-            card('_Planned', 'calc', f"{T('Mix_Slice_Oven', 'S_Planned')}. Feeds: rows 1-2 totals."),
-            card('_Minutes', 'calc', f"Sunday: {T('Mix_Slice_Oven', 'S_Minutes')}. Rows 1-2 divide by 60 for hours."),
+        ('Mix_Slice: by day', [
+            card('_Needed', 'lookup', f"{DAYMAP_MSO}. Sunday: {T('Mix_Slice', 'S_Needed')}. Reads DSD_DSnD only."),
+            card('_Bags', 'lookup', f"Sunday: {T('Mix_Slice', 'S_Bags')}. Rounds after scrap; L rounds before."),
+            card('_Raw', 'calc', f"Run total per day: {T('Mix_Slice', 'S_Raw')}"),
+            card('_Optimal', 'calc', f"{T('Mix_Slice', 'S_Optimal')}. T_Optimal holds the same formula in every cell."),
+            card('_Planned', 'calc', f"{T('Mix_Slice', 'S_Planned')}. Feeds: rows 1-2 totals."),
+            card('_Minutes', 'calc', f"Sunday: {T('Mix_Slice', 'S_Minutes')}. Rows 1-2 divide by 60 for hours."),
             card('Worked example: F1127, Friday', 'note', 'F_Needed 36 packs. F_Bags ROUND(47.25 / 177.27 x 1.1, 2) = 0.29. F_Raw 0.29, F_Optimal CEILING(0.29, 1) = 1, F_Minutes 1 / 1 x 30 = 30.'),
         ]),
-        ('Oven_Info (86 rows)', [
-            card('Row list (A410 spill)', 'lookup', f"One block per pan: the pan name, then every non-OBS product whose Pans/Boxes is that pan. {X('Mix-Slice-Oven!A410')}"),
-            card('Finished Product (E)', 'calc', f"{T('Oven_Info', 'Finished Product')}."),
-            card('Pans (B)', 'lookup', f"{T('Oven_Info', 'Pans')}"),
-            card('Unique Dough (C), Daily Bags Per Mix (D)', 'lookup', f"C {T('Oven_Info', 'Unique Dough')}. D {T('Oven_Info', 'Daily Bags Per Mix')}."),
-            card('Finished Product Description (F)', 'lookup', f"{T('Oven_Info', 'Finished Product Description')}."),
-            card('Trays per 1 Bag Mix (G)', 'lookup', f"{T('Oven_Info', 'Trays per 1 Bag Mix')}. Filled on pan rows."),
-            card('Demand (H)', 'lookup', 'Packs short on the K4 day: the same formula as Mix_Slice_Oven K.'),
-            card('Sku (I), Today\'s Date (N)', 'calc', f"Mislabelled copies: Sku {T('Oven_Info', 'Sku')}, Today's Date {T('Oven_Info', TODAYS_DATE)}. Both just repeat Finished Product."),
-            card('#N/A (J)', 'unused', 'A column literally named #N/A holding a copy of Demand. Nothing reads it.'),
-            card('# of pieces per tray/box (K)', 'lookup', f"{T('Oven_Info', '# of pieces per tray/box')}."),
-            card('Pieces Per Pan (L)', 'lookup', f"{T('Oven_Info', 'Pieces Per Pan')}. Filled on pan rows."),
-            card('Pans / Boxes (O)', 'calc', f"{T('Oven_Info', 'Pans / Boxes')}."),
-            card('# of Pans/Boxes to set out (P)', 'calc', f"On pan rows: pieces needed by every product on that pan, divided by pieces per pan, rounded up. {T('Oven_Info', '# of Pans/Boxes to set out')} Feeds: MCS Schedule F29."),
-            card('Column4 (M), Notes/ Comments (Q)', 'unused', 'Blank. Nothing reads them.'),
-            card('CA500 pan listing', 'calc', f"Text list of each pan and its products: {X('Mix-Slice-Oven!CA500')}"),
+        ('Bags and time by line', [
+            card('Which line a row is on', 'lookup', f"Asset (D) from Products. Breadline = Breadline or Breadline/Artisan; MCS = MCS LINE. The A6 row list holds only Asset Rank 1 to 3, so every row is on one of these lines."),
+            card('Bags for one run', 'calc', 'L bags per SKU, M adds them over the Unique Dough run, N rounds up to whole mixes (CEILING to bags per mix), O Planned Total = N. Formulas in the K4 day stack.'),
+            card('Marble runs', 'calc', 'Marble Hearth and Marble Lg Pullman (Breadline) make Pump + Rye sets: bags x 2.5, minutes / 2.5, so one set costs one mix of time.'),
+            card('O1 Breadline bags (K4 day)', 'calc', f"{X('Mix-Slice-Oven!O1')} = {V('Mix-Slice-Oven!O1')}. Feeds: Breadline Schedule H2."),
+            card('O2 MCS bags (K4 day), T2', 'calc', f"{X('Mix-Slice-Oven!O2')} = {V('Mix-Slice-Oven!O2')}. T2 {X('Mix-Slice-Oven!T2')} = {V('Mix-Slice-Oven!T2')}. Feeds: MCS Schedule H2."),
+            card('_Minutes for one run', 'calc', f"Sunday: {T('Mix_Slice', 'S_Minutes')}. Counted on the run's first row only; other rows fall to 0."),
+            card('Breadline bags by day (row 1)', 'calc', f"Sunday AD1 {X('Mix-Slice-Oven!AD1')}. Bags: {by_day(PLAN_COLS, 1)}."),
+            card('Breadline hours by day (row 1)', 'calc', f"Sunday BD1 {X('Mix-Slice-Oven!BD1')}. Hours: {by_day(MIN_COLS, 1)}."),
+            card('MCS bags by day (row 2)', 'calc', f"Sunday AD2 {X('Mix-Slice-Oven!AD2')}. Bags: {by_day(PLAN_COLS, 2)}."),
+            card('MCS hours by day (row 2)', 'calc', f"Sunday BD2 {X('Mix-Slice-Oven!BD2')}. Hours: {by_day(MIN_COLS, 2)}."),
+            card('Read back on Daily Supply & Demand', 'lookup', f"Row 1 Breadline bags, row 2 Breadline hours, row 3 MCS bags, row 4 MCS hours, in W (Sun), AD, AK, AR, AY, BF (Fri). W1 {X('Daily Supply & Demand!W1')}, W2 {X('Daily Supply & Demand!W2')}."),
+            card('Worked example: MCS', 'note', '6" Italian Rolls, Tuesday: L F3091 2.849, F3094 0.759, F3092 0.011, F30941 0.022, case F53094 4.774. M 8.415, 4 bags per mix: N CEILING = 12, 3 mixes x 20 min = 60 min.'),
+            card('Worked example: Breadline', 'note', 'Challah 3 Braided, Tuesday: M 1.298, 1 bag per mix: N CEILING = 2, Planned 2, T_Minutes 2 / 1 x 30 = 60.'),
+            card('Worked example: Marble', 'note', 'Marble Hearth, Tuesday: M 1.672, 1 bag per mix: CEILING = 2, x 2.5 = 5 bags. T_Minutes 5 / 1 x 45 / 2.5 = 90.'),
+            card('Not in the hours', 'issue', f"No hours cell for the K4 day itself. BK1 is typed ({X('Mix-Slice-Oven!BK1')}). MCS changeovers exist only on the MCS Schedule, and runs with a blank Optimal Time count 0 minutes."),
+            card('K4 bags and day bags can differ', 'issue', 'O1/O2 come from L (rounded, then scrap); rows 1-2 come from _Bags (scrap, then rounded). 6" Italian Rolls: M 8.415 against T_Raw 8.41; both still round to 12.'),
         ]),
         ('Issues', [
-            card('K4 says Tuesday, sheets say Friday', 'issue', 'Planned Total, the slice sheet, Oven_Info and both schedules show Tuesday quantities under a Friday date. Nothing ties K4 to TODAY().'),
+            card('K4 says Tuesday, sheets say today', 'issue', f"Planned Total, the slice sheet and both schedules show Tuesday quantities under today's date ({V('Mix-Slice-Oven!R3')} as saved). Nothing ties K4 to TODAY()."),
             card('Extra Bread (Runout) wired to nothing', 'issue', 'Typing a runout in X changes no bag, minute or schedule.'),
             card('_Needed ignores cases', 'issue', 'Per-day _Needed reads DSD_DSnD only, so case rows show 0 packs needed even though their _Bags are counted.'),
             card('Two rounding orders', 'issue', 'L rounds bags before scrap; the _Bags columns round after scrap, so the K4 column and the same day block can differ by 0.01 bag per SKU.'),
@@ -770,19 +782,85 @@ FRAMES.append({
             card('3 LB. Braided Optimal Bag = dne', 'issue', 'Text in a number column: CEILING fails and the run gets no Optimal Total.'),
             card('BK1 hardcoded', 'issue', f"BK1 {X('Mix-Slice-Oven!BK1')}: a typed minutes figure, not a formula."),
             card('Numbers stored as text', 'issue', 'K, _Needed and Demand return the text "0" when nothing is short, which SUM ignores and lookups treat as text.'),
-            card('Print area cuts off Oven_Info', 'issue', 'Rows 453 to 477 fall outside the print area.'),
-            card('Tables longer than the row list', 'issue', 'Mix_Slice_Oven +1 row, Oven_Info +18 rows (see Recon).'),
+            card('Table one row longer than its list', 'issue', 'Mix_Slice has 391 rows for a 390-row list (see Recon).'),
         ]),
     ],
 })
 
-# ---------------------------------------------------------------- 7 Schedules
+# ---------------------------------------------------------------- 7 Oven_Info
 FRAMES.append({
-    'title': '7. MCS and Breadline schedules',
+    'title': '7. Oven_Info',
+    'subtitle': 'Pans to set out for the K4 day: packs short x pieces per pack, divided by pieces per pan, rounded up.',
+    'mermaid': r"""flowchart LR
+{classdef}
+    PANS["Pans table&lt;br/&gt;Pieces Per Pan"]:::input
+    PROD["Products&lt;br/&gt;Pans/Boxes, pieces per tray/box"]:::input
+    ROWS["A410 row list&lt;br/&gt;each pan, then its products"]:::calc
+    K4["K4 day selector"]:::input
+    DSD["DSD_DSnD / Dist_DSnD&lt;br/&gt;_Production for the K4 day"]:::lookup
+    DEM["Demand H&lt;br/&gt;packs short"]:::lookup
+    PCS["pieces = Demand x&lt;br/&gt;pieces per tray/box"]:::calc
+    SUM["Pan row: SUMPRODUCT over&lt;br/&gt;every product on that pan"]:::calc
+    SET["# to set out =&lt;br/&gt;ROUNDUP(pieces / Pieces Per Pan)"]:::calc
+    F29["MCS Schedule F29&lt;br/&gt;pan list"]:::output
+    PANS --> ROWS
+    PROD --> ROWS
+    K4 --> DEM
+    DSD --> DEM
+    ROWS --> DEM
+    DEM --> PCS
+    PROD --> PCS
+    PCS --> SUM
+    SUM --> SET
+    PANS --> SET
+    SET --> F29
+""",
+    'stacks': [
+        ('Oven_Info (86 rows)', [
+            card('Row list (A410 spill)', 'lookup', f"One block per pan: the pan name, then every non-OBS product whose Pans/Boxes is that pan. {X('Mix-Slice-Oven!A410')}"),
+            card('Finished Product (E)', 'calc', f"{T('Oven_Info', 'Finished Product')}."),
+            card('Pans (B)', 'lookup', f"{T('Oven_Info', 'Pans')}"),
+            card('Unique Dough (C), Daily Bags Per Mix (D)', 'lookup', f"C {T('Oven_Info', 'Unique Dough')}. D {T('Oven_Info', 'Daily Bags Per Mix')}."),
+            card('Finished Product Description (F)', 'lookup', f"{T('Oven_Info', 'Finished Product Description')}."),
+            card('Trays per 1 Bag Mix (G)', 'lookup', f"{T('Oven_Info', 'Trays per 1 Bag Mix')}. Filled on pan rows."),
+            card('# of pieces per tray/box (K)', 'lookup', f"{T('Oven_Info', '# of pieces per tray/box')}."),
+            card('Pieces Per Pan (L)', 'lookup', f"{T('Oven_Info', 'Pieces Per Pan')}. Filled on pan rows."),
+            card('Sku (I), Today\'s Date (N)', 'calc', f"Mislabelled copies: Sku {T('Oven_Info', 'Sku')}, Today's Date {T('Oven_Info', TODAYS_DATE)}. Both just repeat Finished Product."),
+            card('#N/A (J)', 'unused', 'A column literally named #N/A holding a copy of Demand. Nothing reads it.'),
+            card('Column4 (M), Notes/ Comments (Q)', 'unused', 'Blank. Nothing reads them.'),
+        ]),
+        ('Pans to set out', [
+            card('Demand (H)', 'lookup', 'Packs (or cases) short on the K4 day: the same formula as Mix_Slice K. Blank on pan rows.'),
+            card('Pans / Boxes (O)', 'calc', f"{T('Oven_Info', 'Pans / Boxes')}."),
+            card('# of Pans/Boxes to set out (P)', 'calc', f"On pan rows: pieces needed by every product on that pan, divided by pieces per pan, rounded up. {T('Oven_Info', '# of Pans/Boxes to set out')} Feeds: MCS Schedule F29."),
+            card('CA500 pan listing', 'calc', f"Text list of each pan and its products: {X('Mix-Slice-Oven!CA500')}"),
+            card('Y1 pan count', 'calc', f"{X('Mix-Slice-Oven!Y1')} = {V('Mix-Slice-Oven!Y1')} pans and boxes in the Pans table."),
+            card('MCS Schedule F29 pan list', 'output', f"Lists pans with something to set out when the product under the pan is on MCS LINE: {X('MCS Schedule!F29')}"),
+            card('Worked example: 3.5" Challah Onion Bun pan', 'note', 'Tuesday: F3082 is short 55 packs x 12 pieces = 660 pieces. 660 / 28 pieces per pan = 23.6, ROUNDUP = 24 pans to set out.'),
+        ]),
+        ('Reads and feeds', [
+            card('Reads: K4 day selector', 'input', f"Mix-Slice-Oven!K4 = {V('Mix-Slice-Oven!K4')}. Demand is the K4 day, like Mix_Slice."),
+            card('Reads: Products', 'lookup', 'Pans/Boxes (which pan a product goes on), Pieces Per Tray/Case, Asset, Unique Dough, Description.'),
+            card('Reads: Pans', 'lookup', 'Pieces Per Pan and Trays Per 1 bag Mix for each pan or box.'),
+            card('Feeds: MCS Schedule only', 'output', 'F29 on the MCS Schedule is the only formula that reads # of Pans/Boxes to set out. The Breadline Schedule has no pan list.'),
+        ]),
+        ('Issues', [
+            card('K4 day under today\'s date', 'issue', f"Pans are counted for Tuesday (K4) while headers print {V('Mix-Slice-Oven!R3')}."),
+            card('F29 checks one product per pan', 'issue', 'The pan is listed only when the row right under it is an MCS LINE product; a pan whose first product is on another line is skipped.'),
+            card('Table longer than its list', 'issue', 'Oven_Info has 86 rows for a 68-row list: 18 rows of #N/A (see Recon).'),
+            card('Print area cuts off Oven_Info', 'issue', 'Rows 453 to 477 fall outside the print area.'),
+            card('Croissant pans print nowhere', 'issue', 'Tuesday: (Grande) Large Croissant 8 pans, Mini Croissant 2, Mini Danish, Spinach Feta and Chocolate Croissant 1 each (3rd Party - Bake) are counted, but F29 lists MCS pans only and their rows are outside the print area.'),
+        ]),
+    ],
+})
+
+# ---------------------------------------------------------------- 8 Schedules
+FRAMES.append({
+    'title': '8. MCS and Breadline schedules',
     'subtitle': 'Each run sheet is one dynamic-array formula in A5 that turns Planned Total into one printed row per mix.',
     'mermaid': r"""flowchart TD
 {classdef}
-    MSO["Mix_Slice_Oven&lt;br/&gt;Planned Total, Asset, Unique Dough"]:::lookup
+    MSO["Mix_Slice&lt;br/&gt;Planned Total, Asset, Unique Dough"]:::lookup
     UD["Unique Dough&lt;br/&gt;Placement, Optimal Bag, Optimal Time"]:::input
     S1["1 Keep runs with Planned above 0&lt;br/&gt;on this line"]:::calc
     MB["Breadline only: Marble becomes&lt;br/&gt;Pump 1 bag + Rye 1.5 bag sets"]:::calc
@@ -855,7 +933,7 @@ FRAMES.append({
     ],
 })
 
-# ---------------------------------------------------------------- 8 Recon
+# ---------------------------------------------------------------- 9 Recon
 # Recon!A4:G15 is the Excel table "Recon". Its row-5 formulas are read from the workbook and
 # re-written with the table's structured references (C5 -> [@[Array Rows]], E5 -> [@[Table Rows]]).
 RECON_COLS = ['Sheet', 'Array Cell', 'Array Rows', 'Adjacent Table', 'Table Rows',
@@ -889,12 +967,12 @@ for r in range(5, 16):
     recon_rows.append(card(f'{table}: {status}', kind,
                            f'Sheet {sheet}, Array Cell {arr}: Array Rows {rows}, Table Rows {trows}, Difference {diff}. {status}: {note}'))
 FRAMES.append({
-    'title': '8. Recon',
+    'title': '9. Recon',
     'subtitle': 'The Recon table: one row per spilled row list, compared with the table built beside it.',
     'mermaid': r"""flowchart LR
 {classdef}
     SP["Sheet, Array Cell&lt;br/&gt;spilled row lists A3, A8, A287, A4, A6, A410"]:::lookup
-    TB["Adjacent Table&lt;br/&gt;Sunday to Friday, DSD_DSnD, Dist_DSnD,&lt;br/&gt;DoughWeight, Mix_Slice_Oven, Oven_Info"]:::lookup
+    TB["Adjacent Table&lt;br/&gt;Sunday to Friday, DSD_DSnD, Dist_DSnD,&lt;br/&gt;DoughWeight, Mix_Slice, Oven_Info"]:::lookup
     C["Array Rows =&lt;br/&gt;ROWS(ANCHORARRAY(spill))"]:::calc
     E["Table Rows =&lt;br/&gt;ROWS(Table[])"]:::calc
     F["Difference =&lt;br/&gt;Array Rows - Table Rows"]:::calc
@@ -914,27 +992,28 @@ FRAMES.append({
     'stacks': [
         ('Recon table columns', [
             card('Sheet', 'input', 'Typed label: the sheet that holds the spilled row list (Sunday to Friday, Daily Supply & Demand, DoughWeights, Mix-Slice-Oven).'),
-            card('Array Cell', 'calc', f"Reads the spill address out of the Array Rows formula: {RECON_F['Array Cell']}"),
+            card('Array Cell', 'calc', f"Reads the spill address out of the Array Rows formula. In the file: {X('Recon!B5')}, i.e. {RECON_F['Array Cell']}"),
             card('Array Rows', 'lookup', f"{RECON_F['Array Rows']} on the Sunday row; each row points at its own sheet's spill, so Excel flags the column as inconsistent. That is expected."),
-            card('Adjacent Table', 'input', 'Typed label: the Excel table built beside that row list (Sunday to Friday, DSD_DSnD, Dist_DSnD, DoughWeight, Mix_Slice_Oven, Oven_Info).'),
+            card('Adjacent Table', 'input', 'Typed label: the Excel table built beside that row list (Sunday to Friday, DSD_DSnD, Dist_DSnD, DoughWeight, Mix_Slice, Oven_Info).'),
             card('Table Rows', 'lookup', f"{RECON_F['Table Rows']} on the Sunday row; each row names its own table, so this column is not a calculated column either."),
-            card('Difference (Array − Table)', 'calc', f"{RECON_F['Difference (Array − Table)']}. Positive means SKUs are missing from the table."),
-            card('Status', 'calc', f"{RECON_F['Status']}"),
+            card('Difference (Array − Table)', 'calc', f"In the file: {X('Recon!F5')}, i.e. {RECON_F['Difference (Array − Table)']}. Positive means SKUs are missing from the table."),
+            card('Status', 'calc', f"In the file: {X('Recon!G5')}, i.e. {RECON_F['Status']}"),
+            card('Adjacent Table label out of date', 'issue', f"Row 13 still says {V('Recon!D13')}, but the table is now Mix_Slice and Table Rows reads ROWS(Mix_Slice[]). The count is right; only the label is stale."),
             card('What Recon does not check', 'note', 'It only counts rows. It would not catch the BOM double count, K4 not matching today, the stale Sunday!B1 date, the dead order grids or #N/A values inside matching tables.'),
         ]),
         ('Checks as saved', recon_rows),
     ],
 })
 
-# ---------------------------------------------------------------- 9 Known issues
+# ---------------------------------------------------------------- 10 Known issues
 FRAMES.append({
-    'title': '9. Known issues, ranked',
+    'title': '10. Known issues, ranked',
     'subtitle': 'Ranked by effect on what gets baked, with a suggested fix.',
     'mermaid': None,
     'stacks': [
         ('Wrong quantities', [
             card('1. Dough Weight double counts BOMs', 'issue', 'Up to about 22% too few bags on 11 doughs. Fix: SUMIFS only the level-1 lines (FormatLevel = 1), or sum raw materials only. Section 1.'),
-            card('2. K4 is Tuesday, sheets print Friday', 'issue', 'Schedules show the wrong day. Fix: default K4 to TEXT(TODAY(),"dddd") with a manual override cell. Section 6.'),
+            card('2. K4 is Tuesday, sheets print today', 'issue', 'Schedules show Tuesday quantities under today\'s date. Fix: default K4 to TEXT(TODAY(),"dddd") with a manual override cell. Section 6.'),
             card('3. Lobster rolls get no dough', 'issue', 'SEARCH("OBS") matches Lobster. Fix: filter on Gen. Prod. Posting Group <> OBS instead of the description. Sections 1 and 5.'),
             card('4. Extra Bread (Runout) does nothing', 'issue', 'Fix: add X to K (or to the K4-day pounds) before bags are calculated. Section 6.'),
             card('5. Thursday counts Fri/Sat twice', 'issue', 'Non-MCS lines. Fix: drop Fri/Sat from F_Demand for those lines, or from TH_Demand. Section 4.'),
@@ -943,15 +1022,15 @@ FRAMES.append({
             card('6. Sunday!B1 three weeks behind', 'issue', 'Julian dates wrong. Fix: Sunday!B1 = \'Daily Supply & Demand\'!H2. Section 3.'),
             card('7. Order grids dead', 'issue', 'Text dates in row 284, and grids 1_ and 2_ copy grid 0_. Fix: real dates from H2, and point each grid at its own columns. Section 4.'),
             card('8. BOMQty six months old', 'issue', 'As of 03/24/26. Fix: re-export Quantity Explosion of BOM. Section 2.'),
-            card('9. Two copies of the run list', 'issue', 'Schedules read Critical Lookup Information, not Unique Dough. Fix: point the N:S and D4 lookups at UniqueDough and retire D:O. Sections 1 and 7.'),
+            card('9. Two copies of the run list', 'issue', 'Schedules read Critical Lookup Information, not Unique Dough. Fix: point the N:S and D4 lookups at UniqueDough and retire D:O. Sections 1 and 8.'),
             card('10. Everything hangs on _BC.xlsm', 'issue', 'All inventory and Dist demand come from one linked SharePoint file. Fix: keep the link path fixed and tab names consistent, or bring the count into this workbook. Section 3.'),
         ]),
         ('Maintenance traps', [
             card('11. Stored table formulas are older', 'issue', 'Refilling DSD_DSnD columns brings back old logic; 15 columns have no stored formula. Fix: re-enter each column formula across the whole column. Section 4.'),
             card('12. Typed values over formulas', 'issue', 'Dough D10004, D10061; DSD row 264; Mix-Slice-Oven BK1. Fix: restore the formulas. Sections 1, 4, 6.'),
-            card('13. No start or finish times', 'issue', 'Fix: a running sum of minutes from E4 in the schedule spill. Section 7.'),
+            card('13. No start or finish times', 'issue', 'Fix: a running sum of minutes from E4 in the schedule spill. Section 8.'),
             card('14. Blank or text run data', 'issue', '7 blank Optimal Times, 3 LB. Braided = dne, 5 unknown run names, stray spaces. Fix: clean Unique Dough and Products. Section 1.'),
-            card('15. Row lists and tables out of step', 'issue', 'DoughWeight drops F2562; other tables carry #N/A rows. Fix: resize each table to its spill. Section 8.'),
+            card('15. Row lists and tables out of step', 'issue', 'DoughWeight drops F2562; other tables carry #N/A rows. Fix: resize each table to its spill. Section 9.'),
         ]),
     ],
 })
