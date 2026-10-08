@@ -3,52 +3,175 @@
 
 The Code nodes carry enough JS that hand-escaping them inside JSON is a good way to
 introduce a silent typo, so the JS lives here as plain strings and json.dump does the
-escaping.
+escaping. The page-splitting logic mirrors tools/split_pack.mjs, which is runnable
+standalone and has been checked against real packs.
 """
 import json
 import pathlib
 
-NORMALIZE_JS = """\
-// One item per address variant arrives here: billing, then shipping when they differ.
-// Normalise both the account fields and the name of the letter PDF's binary property, so
-// everything downstream can rely on a single shape.
-const j = $input.item.json;
-const binary = $input.item.binary ?? {};
+# --------------------------------------------------------------------------------------
+# Code node sources
+# --------------------------------------------------------------------------------------
 
-const accountNumber = (
-  j.accountNumber ?? j.Integration_Customer_No ?? j.integrationCustomerNo ??
-  j.No ?? j.number ?? j.customerNumber ?? ''
-).toString().trim();
+EXPLODE_JS = """\
+// Printing Letter_Invoices returns one PDF per address type - billing, and shipping when
+// any account's addresses differ - each holding every past-due account back to back.
+// Burst them into one item per page so n8n's own PDF text extractor can read each page.
+const { PDFDocument } = require('pdf-lib');
 
-const accountName = (
-  j.accountName ?? j.Company_Name ?? j.companyName ?? j.Name ?? j.displayName ?? ''
-).toString().trim();
+const packs = $input.all();
+const pages = [];
 
-// Billing vs shipping, used to order the pages inside the merged letter PDF.
-const addressType = (j.addressType ?? j.AddressType ?? j.addressKind ?? '').toString().trim();
+for (let packIndex = 0; packIndex < packs.length; packIndex++) {
+  const binary = packs[packIndex].binary ?? {};
+  const key = ['data', 'pdf', 'file', 'letterPdf'].find((k) => binary[k]) ?? Object.keys(binary)[0];
 
-// The letter workflow may name its binary property anything; settle on letterPdf.
-const letterKey = ['letterPdf', 'letter', 'data', 'pdf', 'file'].find((k) => binary[k]) ??
-  Object.keys(binary)[0];
+  if (!key) {
+    throw new Error(
+      `Item ${packIndex} from Printing Letter_Invoices carries no PDF. That workflow is ` +
+        'expected to return each pack as binary data.'
+    );
+  }
 
-if (!letterKey) {
+  const buffer = await this.helpers.getBinaryDataBuffer(packIndex, key);
+  const pack = await PDFDocument.load(buffer);
+
+  for (let pageIndex = 0; pageIndex < pack.getPageCount(); pageIndex++) {
+    const single = await PDFDocument.create();
+    const [page] = await single.copyPages(pack, [pageIndex]);
+    single.addPage(page);
+    const bytes = Buffer.from(await single.save());
+
+    pages.push({
+      json: {
+        packIndex,
+        pageIndex,
+        // Kept as base64 in JSON as well: JSON survives every node reliably, so the
+        // reassembly step can reach it without depending on binary storage mode.
+        pageBase64: bytes.toString('base64'),
+      },
+      binary: {
+        page: await this.helpers.prepareBinaryData(
+          bytes, `pack${packIndex}-page${pageIndex}.pdf`, 'application/pdf'),
+      },
+    });
+  }
+}
+
+if (pages.length === 0) {
+  throw new Error('Printing Letter_Invoices returned no pages.');
+}
+
+return pages;
+"""
+
+ASSEMBLE_JS = """\
+// Turn the exploded pages back into one letter PDF and one statement PDF per account.
+//
+// Each account occupies a block of: letter page -> address page -> statement page(s) ->
+// blank separator. The four-page stride is deliberately NOT assumed - blocks are cut at
+// each letter page instead, so a customer with enough open invoices to spill onto a second
+// statement page still splits correctly rather than silently shifting every account after
+// them by a page.
+const { PDFDocument } = require('pdf-lib');
+
+const LETTER_MARKER = /Subject: Past Due Balance/;
+const STATEMENT_MARKER = /Past Due Invoices/;
+const ACCOUNT_MARKER = /Account Number:\\s*(\\d+)/;
+
+const sources = $('Explode Packs to Pages').all();
+const extracted = $input.all();
+
+const classified = extracted.map((item, i) => {
+  const source = sources[i].json;
+  const flat = (item.json.pageText ?? item.json.text ?? '')
+    .toString().replace(/\\s+/g, ' ').trim();
+
+  let kind = 'blank';
+  if (LETTER_MARKER.test(flat)) kind = 'letter';
+  else if (STATEMENT_MARKER.test(flat)) kind = 'statement';
+  else if (flat.length > 0) kind = 'address';
+
+  return {
+    packIndex: source.packIndex,
+    pageBase64: source.pageBase64,
+    kind,
+    accountNumber: flat.match(ACCOUNT_MARKER)?.[1] ?? null,
+  };
+});
+
+// Cut a block at every letter page, and never let a block span two packs.
+const blocks = [];
+let current = null;
+for (const page of classified) {
+  if (page.kind === 'letter' || current === null || page.packIndex !== current.packIndex) {
+    current = { packIndex: page.packIndex, pages: [] };
+    blocks.push(current);
+  }
+  current.pages.push(page);
+}
+
+const accounts = new Map();
+for (const block of blocks) {
+  const accountNumber = block.pages.find((p) => p.accountNumber)?.accountNumber;
+  if (!accountNumber) continue;
+
+  if (!accounts.has(accountNumber)) {
+    accounts.set(accountNumber, { letter: [], statement: [], addressVariants: 0 });
+  }
+  const account = accounts.get(accountNumber);
+
+  // Letter side is the letter and its address page. Blank separators exist for duplex
+  // printing and are dropped.
+  account.letter.push(
+    ...block.pages.filter((p) => p.kind === 'letter' || p.kind === 'address').map((p) => p.pageBase64));
+
+  // One statement per address variant: an account whose billing and shipping addresses
+  // differ gets two packets, and each needs its own copy.
+  account.statement.push(...block.pages.filter((p) => p.kind === 'statement').map((p) => p.pageBase64));
+
+  account.addressVariants += 1;
+}
+
+if (accounts.size === 0) {
   throw new Error(
-    `No letter PDF on the item for account ${accountNumber || '(unknown)'}. ` +
-      'Printing Letter_Invoices is expected to return the letter as binary data.'
+    'No account numbers found in the packs. Pages are identified by the "Account Number:" ' +
+      'line on the statement page - check that the pack layout still carries it.'
   );
 }
 
-return {
-  json: {
-    ...j,
-    accountNumber,
-    accountName,
-    addressType,
-    // Only present if the letter workflow also emits text alongside the PDF.
-    letterHtml: (j.letterHtml ?? j.letter ?? j.html ?? '').toString(),
-  },
-  binary: { ...binary, letterPdf: binary[letterKey] },
+const concat = async (pagesBase64) => {
+  const out = await PDFDocument.create();
+  for (const pageBase64 of pagesBase64) {
+    const doc = await PDFDocument.load(Buffer.from(pageBase64, 'base64'));
+    const copied = await out.copyPages(doc, doc.getPageIndices());
+    for (const page of copied) out.addPage(page);
+  }
+  return Buffer.from(await out.save()).toString('base64');
 };
+
+const results = [];
+for (const [accountNumber, parts] of accounts) {
+  if (parts.letter.length === 0) {
+    throw new Error(`Account ${accountNumber} has a statement but no letter pages.`);
+  }
+  if (parts.statement.length === 0) {
+    throw new Error(`Account ${accountNumber} has letter pages but no statement.`);
+  }
+
+  results.push({
+    json: {
+      accountNumber,
+      addressVariants: parts.addressVariants,
+      letterPageCount: parts.letter.length,
+      statementPageCount: parts.statement.length,
+      letterBase64: await concat(parts.letter),
+      statementBase64: await concat(parts.statement),
+    },
+  });
+}
+
+return results;
 """
 
 ERP_FILTER_EXPR = (
@@ -56,132 +179,22 @@ ERP_FILTER_EXPR = (
     "?? '').toString().trim(); return !f || f === ($json.accountNumber ?? '').toString().trim(); })() }}"
 )
 
-GROUP_JS = """\
-// Collapse the per-address items into one item per account. Without this an account whose
-// billing and shipping addresses differ would produce two drafts, two Business Central
-// statement calls, and the same statement attached twice.
-const groups = new Map();
-
-for (const item of $input.all()) {
-  const j = item.json;
-  const key = (j.accountNumber || '').toString().trim();
-
-  if (!groups.has(key)) {
-    groups.set(key, { ...j, letters: [] });
-    delete groups.get(key).letterPdfBase64;
-    delete groups.get(key).addressType;
-  }
-
-  const group = groups.get(key);
-  group.letters.push({
-    addressType: (j.addressType || '').toString(),
-    pdfBase64: j.letterPdfBase64,
-  });
-
-  // Keep the first non-empty name and letter text we see across the variants.
-  if (!group.accountName && j.accountName) group.accountName = j.accountName;
-  if (!group.letterHtml && j.letterHtml) group.letterHtml = j.letterHtml;
-}
-
-// Billing page first, shipping second, anything unlabelled last, so the merged letter PDF
-// reads in the same order as the printed pack.
-const rank = (t) => {
-  const v = (t || '').toLowerCase();
-  if (v.includes('bill')) return 0;
-  if (v.includes('ship')) return 1;
-  return 2;
-};
-
-return [...groups.values()].map((group) => {
-  group.letters.sort((a, b) => rank(a.addressType) - rank(b.addressType));
-  group.letterPdfsBase64 = group.letters.map((l) => l.pdfBase64).filter(Boolean);
-  group.addressTypes = group.letters.map((l) => l.addressType);
-  group.addressVariantCount = group.letterPdfsBase64.length;
-  delete group.letters;
-  return { json: group };
-});
-"""
-
-REQUIRE_ACCOUNT_JS = """\
-// The account number is the join key for everything downstream: the Business Central
-// contact lookup and the statement render. Fail loudly here rather than letting an empty
-// key through - an empty $filter would match every contact in the company.
-const accountNumber = ($input.item.json.accountNumber || '').toString().trim();
-
-if (!accountNumber) {
-  throw new Error(
-    'No account number on this item. Everything downstream (the Business Central contact ' +
-      'lookup and the statement) is keyed on it. Check the accountNumber mapping in ' +
-      '"Normalize Letter Item" against what Printing Letter_Invoices actually emits.'
-  );
-}
-
-return { json: { ...$input.item.json, accountNumber } };
-"""
-
 ATTACH_EMAIL_JS = """\
 // Fold the Business Central contact lookup back onto the account item.
-const account = $('Require Account Number').item.json;
+const account = $('Matches ERP Filter?').item.json;
 const rows = $input.item.json.value ?? [];
 
 // Prefer a contact that actually has an email; otherwise take the first match.
 const contact = rows.find((r) => (r.E_Mail || '').toString().trim()) ?? rows[0] ?? {};
 
-const recipientEmail = (contact.E_Mail || account.recipientEmail || '').toString().trim();
-
 return {
   json: {
     ...account,
-    recipientEmail,
+    recipientEmail: (contact.E_Mail || '').toString().trim(),
+    accountName: (contact.Company_Name || contact.Name || '').toString().trim(),
     contactNumber: contact.No ?? '',
     contactName: contact.Name ?? '',
-    accountName: (account.accountName || contact.Company_Name || '').toString().trim(),
     contactMatchCount: rows.length,
-  },
-};
-"""
-
-MERGE_LETTERS_JS = """\
-// One letter PDF per draft, whatever the number of address variants.
-const json = $('Has Email on File?').item.json;
-const letters = json.letterPdfsBase64 ?? [];
-const accountNumber = json.accountNumber;
-
-if (letters.length === 0) {
-  throw new Error(`No letter PDF to attach for account ${accountNumber}.`);
-}
-
-// Single address: nothing to merge, so this path needs no external module at all.
-if (letters.length === 1) {
-  return { json: { ...json, letterBase64: letters[0], statementBase64: $input.item.json.value } };
-}
-
-// Billing and shipping differ, so the pages are concatenated into one document rather than
-// sent as two separate letter attachments.
-let PDFDocument;
-try {
-  ({ PDFDocument } = require('pdf-lib'));
-} catch (error) {
-  throw new Error(
-    `Account ${accountNumber} has ${letters.length} letter PDFs (billing and shipping ` +
-      'addresses) that need merging into one. That needs the pdf-lib module: set ' +
-      'NODE_FUNCTION_ALLOW_EXTERNAL=pdf-lib on the n8n instance and restart. Accounts with a ' +
-      'single address are unaffected and will keep drafting normally.'
-  );
-}
-
-const merged = await PDFDocument.create();
-for (const pdfBase64 of letters) {
-  const source = await PDFDocument.load(Buffer.from(pdfBase64, 'base64'));
-  const pages = await merged.copyPages(source, source.getPageIndices());
-  for (const page of pages) merged.addPage(page);
-}
-
-return {
-  json: {
-    ...json,
-    letterBase64: Buffer.from(await merged.save()).toString('base64'),
-    statementBase64: $input.item.json.value,
   },
 };
 """
@@ -192,46 +205,34 @@ const json = $input.item.json;
 
 const accountNumber = (json.accountNumber || '').toString().trim();
 const accountName = (json.accountName || '').toString().trim();
-const statementDate = new Date().toISOString().slice(0, 10);
-
-if (!json.statementBase64) {
-  throw new Error(
-    `Business Central returned no statement PDF for account ${accountNumber}. ` +
-      'Check that the StatementApi codeunit is published as a web service.'
-  );
-}
-
+const today = new Date().toISOString().slice(0, 10);
 const safeAccount = (accountNumber || 'account').replace(/[^A-Za-z0-9._-]/g, '_');
 
-// The letter arrives as a PDF, so it cannot be the HTML body. If Printing Letter_Invoices
-// also emits letter text, use it; otherwise the body is a short cover note and the letter
-// is read from its attachment.
-const letterHtml = (json.letterHtml || '').toString().trim();
-const bodyInner = letterHtml ||
+// The letter is a PDF, so it cannot be the HTML body. The body is a short cover note and
+// the letter is read from its attachment.
+const bodyInner =
   `<p>Dear ${accountName || 'Customer'},</p>` +
-  '<p>Please find attached your letter and your current account statement.</p>' +
-  "<p>Regards,<br/>Engelman's Bakery</p>";
-
-const emailBodyHtml = bodyInner.toLowerCase().includes('<html')
-  ? bodyInner
-  : `<!doctype html><html><body style="font-family:Arial,Helvetica,sans-serif;font-size:11pt;color:#000;">${bodyInner}</body></html>`;
+  '<p>Please find attached your past due notice and your account statement.</p>' +
+  '<p>If you have any questions, please contact us at 770-248-1444 ext. 2.</p>' +
+  "<p>Best Regards,<br/>Engelman's Bakery</p>";
 
 return {
   json: {
     ...json,
-    statementDate,
-    letterFileName: `Letter_${safeAccount}_${statementDate}.pdf`,
-    statementFileName: `Statement_${safeAccount}_${statementDate}.pdf`,
-    emailBodyHtml,
+    letterFileName: `Letter_${safeAccount}_${today}.pdf`,
+    statementFileName: `Statement_${safeAccount}_${today}.pdf`,
     emailSubject: accountName
-      ? `Engelman's Bakery \\u2014 Account Statement for ${accountName}`
-      : `Engelman's Bakery \\u2014 Account Statement (${accountNumber})`,
+      ? `Engelman's Bakery \\u2014 Past Due Balance for ${accountName}`
+      : `Engelman's Bakery \\u2014 Past Due Balance (${accountNumber})`,
+    emailBodyHtml:
+      '<!doctype html><html><body style="font-family:Arial,Helvetica,sans-serif;' +
+      `font-size:11pt;color:#000;">${bodyInner}</body></html>`,
   },
 };
 """
 
 ATTACH_PDFS_JS = """\
-// Turn both base64 strings into real binary PDFs: one letter, one statement.
+// Turn the two base64 strings into real binary PDFs: one letter, one statement.
 const json = $input.item.json;
 
 const letter = await this.helpers.prepareBinaryData(
@@ -240,12 +241,19 @@ const statement = await this.helpers.prepareBinaryData(
   Buffer.from(json.statementBase64, 'base64'), json.statementFileName, 'application/pdf');
 
 // Drop the base64 copies so the item does not carry each PDF twice.
-const { letterBase64, statementBase64, letterPdfsBase64, ...rest } = json;
+const { letterBase64, statementBase64, ...rest } = json;
 
 return { json: rest, binary: { letter, statement } };
 """
 
-BC_BASE = "https://api.businesscentral.dynamics.com/v2.0/{{ $vars.BC_TENANT_ID }}/{{ $vars.BC_ENVIRONMENT }}"
+BC_CONTACT_URL = (
+    "=https://api.businesscentral.dynamics.com/v2.0/{{ $vars.BC_TENANT_ID }}/"
+    "{{ $vars.BC_ENVIRONMENT }}/ODataV4/Company('{{ $vars.BC_COMPANY_NAME }}')/ContactList"
+)
+
+# --------------------------------------------------------------------------------------
+# Nodes
+# --------------------------------------------------------------------------------------
 
 nodes = [
     {
@@ -254,7 +262,7 @@ nodes = [
         "name": "When clicking 'Execute workflow'",
         "type": "n8n-nodes-base.manualTrigger",
         "typeVersion": 1,
-        "position": [-1760, 300],
+        "position": [-1320, 300],
     },
     {
         "parameters": {
@@ -266,12 +274,12 @@ nodes = [
             "includeOtherFields": False,
             "options": {},
         },
-        "id": "a1000000-0000-4000-8000-000000000017",
+        "id": "a1000000-0000-4000-8000-000000000002",
         "name": "ERP Account Number (Filter)",
         "type": "n8n-nodes-base.set",
         "typeVersion": 3.4,
-        "position": [-1540, 300],
-        "notes": "TYPE THE ERP ACCOUNT NUMBER HERE before running, e.g. 10981, to draft for that one customer. Leave it blank to draft for every account Printing Letter_Invoices returns.",
+        "position": [-1100, 300],
+        "notes": "TYPE THE ERP ACCOUNT NUMBER HERE before running, e.g. 13287, to draft for that one customer. Leave it blank to draft for every past-due account in the packs.",
     },
     {
         "parameters": {
@@ -284,35 +292,44 @@ nodes = [
             "mode": "once",
             "options": {"waitForSubWorkflow": True},
         },
-        "id": "a1000000-0000-4000-8000-000000000002",
+        "id": "a1000000-0000-4000-8000-000000000003",
         "name": "Printing Letter_Invoices",
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.2,
-        "position": [-1320, 300],
-        "notes": "Returns the letter as a PDF binary, one item per address variant - billing, then shipping when it differs. Those variants are collapsed to one item per account further down.",
+        "position": [-880, 300],
+        "notes": "Returns the Past Due packs as PDF binaries - one per address type (billing, and shipping when any account's addresses differ). Each pack holds every past-due account back to back.",
     },
     {
-        "parameters": {"mode": "runOnceForEachItem", "jsCode": NORMALIZE_JS},
-        "id": "a1000000-0000-4000-8000-000000000003",
-        "name": "Normalize Letter Item",
+        "parameters": {"mode": "runOnceForAllItems", "jsCode": EXPLODE_JS},
+        "id": "a1000000-0000-4000-8000-000000000004",
+        "name": "Explode Packs to Pages",
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
-        "position": [-1100, 300],
-        "notes": "Fallback chains cover both Business Central shapes: OData page fields (No, Name, Company_Name, Integration_Customer_No) and API v2.0 fields. Also settles the letter PDF under a known binary property name. accountNumber must resolve to the customer number (e.g. 10981) - it is the key for the contact lookup and the statement.",
+        "position": [-660, 300],
+        "notes": "One item per page, so n8n's own PDF text extractor can read each page separately. Needs the pdf-lib module: NODE_FUNCTION_ALLOW_EXTERNAL=pdf-lib.",
     },
     {
         "parameters": {
-            "operation": "binaryToPropery",
-            "binaryPropertyName": "letterPdf",
-            "destinationKey": "letterPdfBase64",
+            "operation": "pdf",
+            "binaryPropertyName": "page",
+            "destinationKey": "pageText",
             "options": {},
         },
-        "id": "a1000000-0000-4000-8000-000000000020",
-        "name": "Letter PDF → Base64",
+        "id": "a1000000-0000-4000-8000-000000000005",
+        "name": "Read Page Text",
         "type": "n8n-nodes-base.extractFromFile",
         "typeVersion": 1,
-        "position": [-880, 300],
-        "notes": "Moves the letter PDF into JSON as base64. Binary data does not survive the HTTP Request nodes further down, whereas JSON does, so the letter rides along as text and is turned back into a PDF at the end.",
+        "position": [-440, 300],
+        "notes": "n8n's built-in PDF text extractor, run per page. Used instead of a second external module - the page's text is all that is needed to tell a letter page from an address page from a statement page.",
+    },
+    {
+        "parameters": {"mode": "runOnceForAllItems", "jsCode": ASSEMBLE_JS},
+        "id": "a1000000-0000-4000-8000-000000000006",
+        "name": "Assemble Letter + Statement",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [-220, 300],
+        "notes": "One item per account from here on, each carrying a letter PDF and a statement PDF as base64. Blocks are cut at each letter page rather than on a fixed four-page stride, so an account whose statement spills onto a second page still splits correctly. Needs pdf-lib.",
     },
     {
         "parameters": {
@@ -329,43 +346,25 @@ nodes = [
             "looseTypeValidation": True,
             "options": {},
         },
-        "id": "a1000000-0000-4000-8000-000000000018",
+        "id": "a1000000-0000-4000-8000-000000000007",
         "name": "Matches ERP Filter?",
         "type": "n8n-nodes-base.if",
         "typeVersion": 2.2,
-        "position": [-660, 300],
-        "notes": "Blank filter lets every account through; a filter value keeps only the account whose number matches exactly. If you typed a number and everything lands in the 'Filtered Out' branch, the number does not match what Printing Letter_Invoices emits - check for leading zeros or padding.",
+        "position": [0, 300],
+        "notes": "Blank filter lets every account through; a filter value keeps only the account whose number matches exactly. If you typed a number and everything lands in the 'Filtered Out' branch, the number is not one of the past-due accounts in this run.",
     },
     {
         "parameters": {},
-        "id": "a1000000-0000-4000-8000-000000000019",
+        "id": "a1000000-0000-4000-8000-000000000008",
         "name": "Filtered Out — Different Account",
         "type": "n8n-nodes-base.noOp",
         "typeVersion": 1,
-        "position": [-660, 560],
+        "position": [0, 560],
         "notes": "Accounts excluded by the ERP filter. On a single-account run every other account lands here, which is expected. If ALL accounts land here, the ERP number you typed matched nothing.",
     },
     {
-        "parameters": {"mode": "runOnceForAllItems", "jsCode": GROUP_JS},
-        "id": "a1000000-0000-4000-8000-000000000021",
-        "name": "Group Letters by Account",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [-440, 300],
-        "notes": "One item per account from here on. Without this an account whose billing and shipping addresses differ would produce two drafts, two statement calls, and the same statement attached twice. Letter pages are ordered billing first, then shipping.",
-    },
-    {
-        "parameters": {"mode": "runOnceForEachItem", "jsCode": REQUIRE_ACCOUNT_JS},
-        "id": "a1000000-0000-4000-8000-000000000013",
-        "name": "Require Account Number",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [-220, 300],
-        "notes": "Guard: an empty account number would turn the BC $filter into a match-everything query and would render the wrong account's statement.",
-    },
-    {
         "parameters": {
-            "url": f"={BC_BASE}/ODataV4/Company('{{{{ $vars.BC_COMPANY_NAME }}}}')/ContactList",
+            "url": BC_CONTACT_URL,
             "authentication": "genericCredentialType",
             "genericAuthType": "oAuth2Api",
             "sendQuery": True,
@@ -375,24 +374,24 @@ nodes = [
             ]},
             "options": {},
         },
-        "id": "a1000000-0000-4000-8000-000000000011",
+        "id": "a1000000-0000-4000-8000-000000000009",
         "name": "Look Up AP Contact (Business Central)",
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
-        "position": [0, 300],
+        "position": [220, 300],
         "retryOnFail": True,
         "maxTries": 3,
         "waitBetweenTries": 2000,
         "credentials": {"oAuth2Api": {"id": "REPLACE_WITH_BUSINESS_CENTRAL_OAUTH2_CREDENTIAL_ID", "name": "Business Central OAuth2"}},
-        "notes": "Queries the Contact List page (5052 / table 5050) published as the OData web service 'ContactList', filtered to the contact whose Integration Customer No. matches this customer - the CT020141 -> 10981 link. If the published web service has a different name, change the last URL segment.",
+        "notes": "The only Business Central call left: it supplies the recipient address. Queries the Contact List page (5052 / table 5050) published as the OData web service 'ContactList', filtered to the contact whose Integration Customer No. matches this account - the CT020141 -> 10981 link. If the published web service has a different name, change the last URL segment.",
     },
     {
         "parameters": {"mode": "runOnceForEachItem", "jsCode": ATTACH_EMAIL_JS},
-        "id": "a1000000-0000-4000-8000-000000000012",
+        "id": "a1000000-0000-4000-8000-000000000010",
         "name": "Attach Contact Email",
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
-        "position": [220, 300],
+        "position": [440, 300],
     },
     {
         "parameters": {
@@ -409,79 +408,36 @@ nodes = [
             "looseTypeValidation": True,
             "options": {},
         },
-        "id": "a1000000-0000-4000-8000-000000000004",
+        "id": "a1000000-0000-4000-8000-000000000011",
         "name": "Has Email on File?",
         "type": "n8n-nodes-base.if",
         "typeVersion": 2.2,
-        "position": [440, 300],
+        "position": [660, 300],
     },
     {
         "parameters": {},
-        "id": "a1000000-0000-4000-8000-000000000010",
+        "id": "a1000000-0000-4000-8000-000000000012",
         "name": "Skipped — No Email on File",
         "type": "n8n-nodes-base.noOp",
         "typeVersion": 1,
-        "position": [440, 560],
-        "notes": "Accounts whose Business Central contact has no usable E-Mail land here instead of silently disappearing. Review this branch after each run - contactMatchCount of 0 means no contact matched the customer number at all.",
-    },
-    {
-        "parameters": {
-            "method": "POST",
-            "url": f"={BC_BASE}/ODataV4/StatementApi_GetCustomerStatementPdf",
-            "authentication": "genericCredentialType",
-            "genericAuthType": "oAuth2Api",
-            "sendQuery": True,
-            "queryParameters": {"parameters": [{"name": "company", "value": "={{ $vars.BC_COMPANY_NAME }}"}]},
-            "sendBody": True,
-            "specifyBody": "json",
-            "jsonBody": "={{ JSON.stringify({ customerNo: $json.accountNumber, reportId: Number($vars.BC_STATEMENT_REPORT_ID), requestPageXml: $vars.BC_STATEMENT_REQUEST_XML ?? '' }) }}",
-            "options": {},
-        },
-        "id": "a1000000-0000-4000-8000-000000000014",
-        "name": "Render Statement PDF (Business Central)",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.2,
-        "position": [660, 300],
-        "retryOnFail": True,
-        "maxTries": 3,
-        "waitBetweenTries": 2000,
-        "onError": "continueErrorOutput",
-        "credentials": {"oAuth2Api": {"id": "REPLACE_WITH_BUSINESS_CENTRAL_OAUTH2_CREDENTIAL_ID", "name": "Business Central OAuth2"}},
-        "notes": "Calls the Statement Api codeunit (businesscentral/StatementApi.Codeunit.al) as an OData V4 unbound action. BC cannot return a report as PDF over a plain OData query - $format=PDF is not supported on report web services - so the codeunit renders the report scoped to this customer and returns it base64 encoded in the 'value' property. Called once per account, so the statement is never duplicated. BC_STATEMENT_REPORT_ID must be set to 50042.",
-    },
-    {
-        "parameters": {},
-        "id": "a1000000-0000-4000-8000-000000000016",
-        "name": "Statement Not Rendered — Review",
-        "type": "n8n-nodes-base.noOp",
-        "typeVersion": 1,
         "position": [660, 560],
-        "notes": "Accounts whose statement could not be rendered land here so one bad account does not abort the whole batch. Two different things arrive here and the item's error message tells them apart: 'no open ledger entries' means the customer owes nothing, while anything else is a genuine Business Central or auth failure. Do not ignore this branch - a failure here means a customer who should have been chased was not.",
-    },
-    {
-        "parameters": {"mode": "runOnceForEachItem", "jsCode": MERGE_LETTERS_JS},
-        "id": "a1000000-0000-4000-8000-000000000022",
-        "name": "Merge Letter PDFs",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [880, 300],
-        "notes": "Produces exactly one letter PDF per draft. A single-address account passes straight through and needs no external module. Only accounts with differing billing and shipping addresses need pdf-lib, which requires NODE_FUNCTION_ALLOW_EXTERNAL=pdf-lib on the n8n instance.",
+        "notes": "Accounts whose Business Central contact has no usable E-Mail land here instead of silently disappearing. Review this branch after each run - contactMatchCount of 0 means no contact matched the account number at all, and these customers still need chasing by post.",
     },
     {
         "parameters": {"mode": "runOnceForEachItem", "jsCode": BUILD_PAYLOAD_JS},
-        "id": "a1000000-0000-4000-8000-000000000007",
+        "id": "a1000000-0000-4000-8000-000000000013",
         "name": "Build Draft Payload",
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
-        "position": [1100, 300],
+        "position": [880, 300],
     },
     {
         "parameters": {"mode": "runOnceForEachItem", "jsCode": ATTACH_PDFS_JS},
-        "id": "a1000000-0000-4000-8000-000000000015",
+        "id": "a1000000-0000-4000-8000-000000000014",
         "name": "Attach Letter + Statement PDFs",
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
-        "position": [1320, 300],
+        "position": [1100, 300],
         "notes": "Turns the two base64 strings back into binary PDFs under the binary properties 'letter' and 'statement', which is what the Outlook node attaches.",
     },
     {
@@ -499,51 +455,41 @@ nodes = [
                 ]},
             },
         },
-        "id": "a1000000-0000-4000-8000-000000000008",
+        "id": "a1000000-0000-4000-8000-000000000015",
         "name": "Create Outlook Draft (Do Not Send)",
         "type": "n8n-nodes-base.microsoftOutlook",
         "typeVersion": 2,
-        "position": [1540, 300],
+        "position": [1320, 300],
         "credentials": {"microsoftOutlookOAuth2Api": {"id": "REPLACE_WITH_OUTLOOK_CREDENTIAL_ID", "name": "Microsoft Outlook account (gpress@engelmansbakery.com)"}},
         "notes": "Creates an UNSENT draft only, with two attachments: one letter PDF and one statement PDF. The draft lands in the mailbox that owns the OAuth2 credential, so this credential must be gpress@engelmansbakery.com. There is deliberately no 'send' operation anywhere in this workflow.",
     },
     {
         "parameters": {},
-        "id": "a1000000-0000-4000-8000-000000000009",
+        "id": "a1000000-0000-4000-8000-000000000016",
         "name": "Drafts Ready for Review",
         "type": "n8n-nodes-base.noOp",
         "typeVersion": 1,
-        "position": [1760, 300],
+        "position": [1540, 300],
     },
 ]
-
-def main(node, *targets, out=0):
-    """One main-output connection entry."""
-    return {node: {"main": [[{"node": t, "type": "main", "index": 0} for t in targets]]}}
 
 connections = {
     "When clicking 'Execute workflow'": {"main": [[{"node": "ERP Account Number (Filter)", "type": "main", "index": 0}]]},
     "ERP Account Number (Filter)": {"main": [[{"node": "Printing Letter_Invoices", "type": "main", "index": 0}]]},
-    "Printing Letter_Invoices": {"main": [[{"node": "Normalize Letter Item", "type": "main", "index": 0}]]},
-    "Normalize Letter Item": {"main": [[{"node": "Letter PDF → Base64", "type": "main", "index": 0}]]},
-    "Letter PDF → Base64": {"main": [[{"node": "Matches ERP Filter?", "type": "main", "index": 0}]]},
+    "Printing Letter_Invoices": {"main": [[{"node": "Explode Packs to Pages", "type": "main", "index": 0}]]},
+    "Explode Packs to Pages": {"main": [[{"node": "Read Page Text", "type": "main", "index": 0}]]},
+    "Read Page Text": {"main": [[{"node": "Assemble Letter + Statement", "type": "main", "index": 0}]]},
+    "Assemble Letter + Statement": {"main": [[{"node": "Matches ERP Filter?", "type": "main", "index": 0}]]},
     "Matches ERP Filter?": {"main": [
-        [{"node": "Group Letters by Account", "type": "main", "index": 0}],
+        [{"node": "Look Up AP Contact (Business Central)", "type": "main", "index": 0}],
         [{"node": "Filtered Out — Different Account", "type": "main", "index": 0}],
     ]},
-    "Group Letters by Account": {"main": [[{"node": "Require Account Number", "type": "main", "index": 0}]]},
-    "Require Account Number": {"main": [[{"node": "Look Up AP Contact (Business Central)", "type": "main", "index": 0}]]},
     "Look Up AP Contact (Business Central)": {"main": [[{"node": "Attach Contact Email", "type": "main", "index": 0}]]},
     "Attach Contact Email": {"main": [[{"node": "Has Email on File?", "type": "main", "index": 0}]]},
     "Has Email on File?": {"main": [
-        [{"node": "Render Statement PDF (Business Central)", "type": "main", "index": 0}],
+        [{"node": "Build Draft Payload", "type": "main", "index": 0}],
         [{"node": "Skipped — No Email on File", "type": "main", "index": 0}],
     ]},
-    "Render Statement PDF (Business Central)": {"main": [
-        [{"node": "Merge Letter PDFs", "type": "main", "index": 0}],
-        [{"node": "Statement Not Rendered — Review", "type": "main", "index": 0}],
-    ]},
-    "Merge Letter PDFs": {"main": [[{"node": "Build Draft Payload", "type": "main", "index": 0}]]},
     "Build Draft Payload": {"main": [[{"node": "Attach Letter + Statement PDFs", "type": "main", "index": 0}]]},
     "Attach Letter + Statement PDFs": {"main": [[{"node": "Create Outlook Draft (Do Not Send)", "type": "main", "index": 0}]]},
     "Create Outlook Draft (Do Not Send)": {"main": [[{"node": "Drafts Ready for Review", "type": "main", "index": 0}]]},
