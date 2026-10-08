@@ -66,21 +66,42 @@ Manual trigger
 
 Leave `erpAccountNumber` blank to draft for every past-due account in the run.
 
-### Why there is no Business Central contact lookup
+### Where the recipient address comes from
 
-An earlier version called a `ContactList` OData web service for the recipient address. **It
-returned 404** — that page is not published as a web service, and nothing in
+The **standard API v2.0**, which needs no web service publishing. An earlier version called a
+`ContactList` OData web service and **returned 404** — that page is not published, and nothing in
 `Printing Letter_Invoices` uses it either.
 
-The email now comes from the **`Customer`** page that workflow already queries successfully, by
-adding `E_Mail` to its `$select`. The renderer builds an account-number → email map from
-`Get Customers` output, so there is no extra HTTP call and no endpoint that might not exist.
+The AP contact's address takes three calls, because no single v2.0 resource carries both the
+customer link and the email:
 
-If the addresses you actually want are the **AP contacts** (Contact table 5050, "ATTN: Accts
-Payable") rather than the Customer card's own email, that needs either the Contact List page
-published as a web service, or a switch to the standard API v2.0 `contacts` entity, which needs
-no publishing. Accounts whose Customer record has no email land in `Skipped — No Email on File`,
-so a run will show immediately whether the Customer card is populated.
+```
+Get Customer (API v2.0)          customers?$filter=number eq '13287'   → the customer's GUID
+Get Linked Contacts (API v2.0)   customers({id})/contactsInformation   → contactNumber(s), no email
+Get Contact Emails (API v2.0)    contacts?$filter=number eq 'CT…'      → displayName + email
+Pick Recipient Email             choose one
+```
+
+`contactInformation` is the customer-to-contact link but carries no email; `contacts` carries the
+email but no customer number. Hence the hop through contact numbers.
+
+**Pick Recipient Email** prefers, in order:
+
+1. a linked contact whose name looks like accounts payable (`ATTN: Accts Payable`, `Accounts
+   Payable Dept`, …) and has an email
+2. any linked contact with an email
+3. the **Customer card's** own `E_Mail`, which `Get Customers` already returns
+
+That last fallback means a customer with no linked contact still gets drafted rather than dropping
+out of the run. Every item carries `recipientSource` (`contact` / `customer` / `none`) so a run can
+be audited without guessing which path was taken.
+
+Accounts that reach `none` land in `Skipped — No Email on File`.
+
+The two contact calls use `onError: continueRegularOutput`, so a customer with no linked contacts
+degrades to the Customer email instead of failing the run.
+
+`node tools/test_recipient_pick.mjs` exercises the selection logic across all five cases.
 
 ### Billing and shipping addresses
 

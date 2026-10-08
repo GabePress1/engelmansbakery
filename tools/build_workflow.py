@@ -141,6 +141,48 @@ if (out.length === 0) {
 return out;
 '''
 
+BC_API_BASE = (
+    "https://api.businesscentral.dynamics.com/v2.0/"
+    "{{ $('Keys1').first().json.Tenant_ID }}/{{ $('Keys1').first().json.Environment }}"
+    "/api/v2.0/companies({{ $('Keys1').first().json.Company_ID }})"
+)
+
+AUTH_HEADER = {"name": "Authorization", "value": "=Bearer {{ $('Get Token1').first().json.access_token }}"}
+
+PICK_EMAIL_JS = """\
+// Choose the address the draft goes to.
+//
+// The contacts chain is preferred because that is where the AP contact lives, but the
+// Customer card's own E-Mail is kept as a fallback so a customer with no linked contact
+// still gets drafted rather than silently dropping out of the run. recipientSource says
+// which one was used, so a run can be audited without guessing.
+const account = $('Matches ERP Filter?').item.json;
+const contacts = $input.item.json.value ?? [];
+
+const withEmail = contacts.filter((c) => (c.email || '').toString().trim());
+
+// An accounts-payable contact is the right recipient for a past due notice when there is
+// one; otherwise take the first contact that has an address at all.
+const isPayable = (c) => /payable|accounts\\s*pay|\\bA\\/?P\\b/i.test(
+  `${c.displayName || ''} ${c.jobTitle || ''}`);
+const chosen = withEmail.find(isPayable) ?? withEmail[0] ?? null;
+
+const fromCustomer = (account.recipientEmail || '').toString().trim();
+const recipientEmail = chosen ? chosen.email.toString().trim() : fromCustomer;
+
+return {
+  json: {
+    ...account,
+    recipientEmail,
+    recipientSource: chosen ? 'contact' : (fromCustomer ? 'customer' : 'none'),
+    contactName: chosen ? chosen.displayName ?? '' : '',
+    contactNumber: chosen ? chosen.number ?? '' : '',
+    contactMatchCount: contacts.length,
+    contactsWithEmail: withEmail.length,
+  },
+};
+"""
+
 ERP_FILTER_EXPR = (
     "={{ (() => { const f = ($('ERP Account Number (Filter)').first().json.erpAccountNumber "
     "?? '').toString().trim(); return !f || f === ($json.accountNumber ?? '').toString().trim(); })() }}"
@@ -306,6 +348,77 @@ def build(source_path, with_secrets):
         },
         {
             "parameters": {
+                "url": "=" + BC_API_BASE + "/customers",
+                "sendHeaders": True,
+                "headerParameters": {"parameters": [AUTH_HEADER]},
+                "sendQuery": True,
+                "queryParameters": {"parameters": [
+                    {"name": "$filter", "value": "=number eq '{{ $json.accountNumber }}'"},
+                    {"name": "$select", "value": "id,number,displayName,email"},
+                ]},
+                "options": {},
+            },
+            "id": "b2000000-0000-4000-8000-000000000013",
+            "name": "Get Customer (API v2.0)",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [1680, 400],
+            "retryOnFail": True,
+            "maxTries": 3,
+            "waitBetweenTries": 2000,
+            "notes": "Standard API v2.0, which needs no web service publishing - unlike the ContactList OData page, which returned 404 because it is not published. Resolves the account number to the customer's GUID, which is what the contacts link is keyed on.",
+        },
+        {
+            "parameters": {
+                "url": "=" + BC_API_BASE + "/customers({{ $json.value?.[0]?.id ?? '00000000-0000-0000-0000-000000000000' }})/contactsInformation",
+                "sendHeaders": True,
+                "headerParameters": {"parameters": [AUTH_HEADER]},
+                "options": {},
+            },
+            "id": "b2000000-0000-4000-8000-000000000014",
+            "name": "Get Linked Contacts (API v2.0)",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [1904, 400],
+            "retryOnFail": True,
+            "maxTries": 3,
+            "waitBetweenTries": 2000,
+            "onError": "continueRegularOutput",
+            "notes": "contactsInformation is the customer-to-contact link. It carries contactNumber but NOT the email, so the numbers are resolved to addresses in the next node. An account with no linked contact falls through to the Customer card's own E-Mail rather than failing.",
+        },
+        {
+            "parameters": {
+                "url": "=" + BC_API_BASE + "/contacts",
+                "sendHeaders": True,
+                "headerParameters": {"parameters": [AUTH_HEADER]},
+                "sendQuery": True,
+                "queryParameters": {"parameters": [
+                    {"name": "$filter", "value": "={{ (($json.value ?? []).map(r => \"number eq '\" + r.contactNumber + \"'\").join(' or ')) || \"number eq ''\" }}"},
+                    {"name": "$select", "value": "id,number,displayName,email,companyNumber,type"},
+                ]},
+                "options": {},
+            },
+            "id": "b2000000-0000-4000-8000-000000000015",
+            "name": "Get Contact Emails (API v2.0)",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [2128, 400],
+            "retryOnFail": True,
+            "maxTries": 3,
+            "waitBetweenTries": 2000,
+            "onError": "continueRegularOutput",
+            "notes": "Resolves the linked contact numbers to addresses. The filter degrades to number eq '' when the customer has no linked contacts, which returns an empty set rather than erroring.",
+        },
+        {
+            "parameters": {"mode": "runOnceForEachItem", "jsCode": PICK_EMAIL_JS},
+            "id": "b2000000-0000-4000-8000-000000000016",
+            "name": "Pick Recipient Email",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [2352, 400],
+        },
+        {
+            "parameters": {
                 "conditions": {
                     "options": {"caseSensitive": True, "leftValue": "", "typeValidation": "loose", "version": 2},
                     "conditions": [
@@ -377,9 +490,13 @@ def build(source_path, with_secrets):
         "Transform (group + tokens)": {"main": [[link("Render Letter + Statement")]]},
         "Render Letter + Statement": {"main": [[link("Matches ERP Filter?")]]},
         "Matches ERP Filter?": {"main": [
-            [link("Has Email on File?")],
+            [link("Get Customer (API v2.0)")],
             [link("Filtered Out — Different Account")],
         ]},
+        "Get Customer (API v2.0)": {"main": [[link("Get Linked Contacts (API v2.0)")]]},
+        "Get Linked Contacts (API v2.0)": {"main": [[link("Get Contact Emails (API v2.0)")]]},
+        "Get Contact Emails (API v2.0)": {"main": [[link("Pick Recipient Email")]]},
+        "Pick Recipient Email": {"main": [[link("Has Email on File?")]]},
         "Has Email on File?": {"main": [
             [link("Build Draft Payload")],
             [link("Skipped — No Email on File")],
