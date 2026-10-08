@@ -8,7 +8,7 @@
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
       "position": [
-        -1320,
+        -1540,
         300
       ]
     },
@@ -34,17 +34,110 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
+        -1320,
+        300
+      ],
+      "notes": "TYPE THE ERP ACCOUNT NUMBER HERE before running, e.g. 13287, to draft for that one customer. Leave it blank to draft for every past-due account in the run."
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "duplicateItem": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "k-tenant",
+              "name": "Tenant_ID",
+              "value": "bddeba87-9d41-4063-a0e3-be9e6afcd2ba",
+              "type": "string"
+            },
+            {
+              "id": "k-env",
+              "name": "Environment",
+              "value": "Production",
+              "type": "string"
+            },
+            {
+              "id": "k-company",
+              "name": "Company",
+              "value": "Live-EB",
+              "type": "string"
+            },
+            {
+              "id": "k-clientid",
+              "name": "Client_ID",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "k-secret",
+              "name": "Client_Secret",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": false,
+        "options": {}
+      },
+      "id": "a1000000-0000-4000-8000-000000000003",
+      "name": "BC Keys",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
         -1100,
         300
       ],
-      "notes": "TYPE THE ERP ACCOUNT NUMBER HERE before running, e.g. 13287, to draft for that one customer. Leave it blank to draft for every past-due account in the packs."
+      "notes": "Tenant, environment and company match Printing Letter_Invoices. Client_ID and Client_Secret are deliberately BLANK - copy them from that workflow's Keys1 node, or better, move both workflows onto a stored credential so the secret is not sitting in a Set node."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://login.microsoftonline.com/{{ $('BC Keys').first().json.Tenant_ID }}/oauth2/v2.0/token",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "grant_type",
+              "value": "client_credentials"
+            },
+            {
+              "name": "client_id",
+              "value": "={{ $('BC Keys').first().json.Client_ID }}"
+            },
+            {
+              "name": "client_secret",
+              "value": "={{ $('BC Keys').first().json.Client_Secret }}"
+            },
+            {
+              "name": "scope",
+              "value": "https://api.businesscentral.dynamics.com/.default"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a1000000-0000-4000-8000-000000000004",
+      "name": "Get BC Token",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -880,
+        300
+      ],
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "notes": "Client credentials token for the Business Central API, the same pattern Printing Letter_Invoices uses. Runs once per execution, not once per account."
     },
     {
       "parameters": {
         "workflowId": {
           "__rl": true,
-          "value": "REPLACE_WITH_PRINTING_LETTER_INVOICES_WORKFLOW_ID",
-          "mode": "id",
+          "value": "Fn9PTTNOT2rSFwag",
+          "mode": "list",
           "cachedResultName": "Printing Letter_Invoices"
         },
         "mode": "once",
@@ -52,27 +145,27 @@
           "waitForSubWorkflow": true
         }
       },
-      "id": "a1000000-0000-4000-8000-000000000003",
+      "id": "a1000000-0000-4000-8000-000000000005",
       "name": "Printing Letter_Invoices",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
       "position": [
-        -880,
+        -660,
         300
       ],
-      "notes": "Returns the Past Due packs as PDF binaries - one per address type (billing, and shipping when any account's addresses differ). Each pack holds every past-due account back to back."
+      "notes": "Returns two items - type 'billing' and type 'shipping' - each carrying a pack PDF on binary property 'data'. Each pack holds every past-due account back to back."
     },
     {
       "parameters": {
         "mode": "runOnceForAllItems",
         "jsCode": "// Printing Letter_Invoices returns one PDF per address type - billing, and shipping when\n// any account's addresses differ - each holding every past-due account back to back.\n// Burst them into one item per page so n8n's own PDF text extractor can read each page.\nconst { PDFDocument } = require('pdf-lib');\n\nconst packs = $input.all();\nconst pages = [];\n\nfor (let packIndex = 0; packIndex < packs.length; packIndex++) {\n  const binary = packs[packIndex].binary ?? {};\n  const key = ['data', 'pdf', 'file', 'letterPdf'].find((k) => binary[k]) ?? Object.keys(binary)[0];\n\n  if (!key) {\n    throw new Error(\n      `Item ${packIndex} from Printing Letter_Invoices carries no PDF. That workflow is ` +\n        'expected to return each pack as binary data.'\n    );\n  }\n\n  const buffer = await this.helpers.getBinaryDataBuffer(packIndex, key);\n  const pack = await PDFDocument.load(buffer);\n\n  for (let pageIndex = 0; pageIndex < pack.getPageCount(); pageIndex++) {\n    const single = await PDFDocument.create();\n    const [page] = await single.copyPages(pack, [pageIndex]);\n    single.addPage(page);\n    const bytes = Buffer.from(await single.save());\n\n    pages.push({\n      json: {\n        packIndex,\n        pageIndex,\n        // Kept as base64 in JSON as well: JSON survives every node reliably, so the\n        // reassembly step can reach it without depending on binary storage mode.\n        pageBase64: bytes.toString('base64'),\n      },\n      binary: {\n        page: await this.helpers.prepareBinaryData(\n          bytes, `pack${packIndex}-page${pageIndex}.pdf`, 'application/pdf'),\n      },\n    });\n  }\n}\n\nif (pages.length === 0) {\n  throw new Error('Printing Letter_Invoices returned no pages.');\n}\n\nreturn pages;\n"
       },
-      "id": "a1000000-0000-4000-8000-000000000004",
+      "id": "a1000000-0000-4000-8000-000000000006",
       "name": "Explode Packs to Pages",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -660,
+        -440,
         300
       ],
       "notes": "One item per page, so n8n's own PDF text extractor can read each page separately. Needs the pdf-lib module: NODE_FUNCTION_ALLOW_EXTERNAL=pdf-lib."
@@ -84,12 +177,12 @@
         "destinationKey": "pageText",
         "options": {}
       },
-      "id": "a1000000-0000-4000-8000-000000000005",
+      "id": "a1000000-0000-4000-8000-000000000007",
       "name": "Read Page Text",
       "type": "n8n-nodes-base.extractFromFile",
       "typeVersion": 1,
       "position": [
-        -440,
+        -220,
         300
       ],
       "notes": "n8n's built-in PDF text extractor, run per page. Used instead of a second external module - the page's text is all that is needed to tell a letter page from an address page from a statement page."
@@ -99,12 +192,12 @@
         "mode": "runOnceForAllItems",
         "jsCode": "// Turn the exploded pages back into one letter PDF and one statement PDF per account.\n//\n// Each account occupies a block of: letter page -> address page -> statement page(s) ->\n// blank separator. The four-page stride is deliberately NOT assumed - blocks are cut at\n// each letter page instead, so a customer with enough open invoices to spill onto a second\n// statement page still splits correctly rather than silently shifting every account after\n// them by a page.\nconst { PDFDocument } = require('pdf-lib');\n\nconst LETTER_MARKER = /Subject: Past Due Balance/;\nconst STATEMENT_MARKER = /Past Due Invoices/;\nconst ACCOUNT_MARKER = /Account Number:\\s*(\\d+)/;\n\nconst sources = $('Explode Packs to Pages').all();\nconst extracted = $input.all();\n\nconst classified = extracted.map((item, i) => {\n  const source = sources[i].json;\n  const flat = (item.json.pageText ?? item.json.text ?? '')\n    .toString().replace(/\\s+/g, ' ').trim();\n\n  let kind = 'blank';\n  if (LETTER_MARKER.test(flat)) kind = 'letter';\n  else if (STATEMENT_MARKER.test(flat)) kind = 'statement';\n  else if (flat.length > 0) kind = 'address';\n\n  return {\n    packIndex: source.packIndex,\n    pageBase64: source.pageBase64,\n    kind,\n    accountNumber: flat.match(ACCOUNT_MARKER)?.[1] ?? null,\n  };\n});\n\n// Cut a block at every letter page, and never let a block span two packs.\nconst blocks = [];\nlet current = null;\nfor (const page of classified) {\n  if (page.kind === 'letter' || current === null || page.packIndex !== current.packIndex) {\n    current = { packIndex: page.packIndex, pages: [] };\n    blocks.push(current);\n  }\n  current.pages.push(page);\n}\n\nconst accounts = new Map();\nfor (const block of blocks) {\n  const accountNumber = block.pages.find((p) => p.accountNumber)?.accountNumber;\n  if (!accountNumber) continue;\n\n  if (!accounts.has(accountNumber)) {\n    accounts.set(accountNumber, { letter: [], statement: [], addressVariants: 0 });\n  }\n  const account = accounts.get(accountNumber);\n\n  // Letter side is the letter and its address page. Blank separators exist for duplex\n  // printing and are dropped.\n  account.letter.push(\n    ...block.pages.filter((p) => p.kind === 'letter' || p.kind === 'address').map((p) => p.pageBase64));\n\n  // One statement per address variant: an account whose billing and shipping addresses\n  // differ gets two packets, and each needs its own copy.\n  account.statement.push(...block.pages.filter((p) => p.kind === 'statement').map((p) => p.pageBase64));\n\n  account.addressVariants += 1;\n}\n\nif (accounts.size === 0) {\n  throw new Error(\n    'No account numbers found in the packs. Pages are identified by the \"Account Number:\" ' +\n      'line on the statement page - check that the pack layout still carries it.'\n  );\n}\n\nconst concat = async (pagesBase64) => {\n  const out = await PDFDocument.create();\n  for (const pageBase64 of pagesBase64) {\n    const doc = await PDFDocument.load(Buffer.from(pageBase64, 'base64'));\n    const copied = await out.copyPages(doc, doc.getPageIndices());\n    for (const page of copied) out.addPage(page);\n  }\n  return Buffer.from(await out.save()).toString('base64');\n};\n\nconst results = [];\nfor (const [accountNumber, parts] of accounts) {\n  if (parts.letter.length === 0) {\n    throw new Error(`Account ${accountNumber} has a statement but no letter pages.`);\n  }\n  if (parts.statement.length === 0) {\n    throw new Error(`Account ${accountNumber} has letter pages but no statement.`);\n  }\n\n  results.push({\n    json: {\n      accountNumber,\n      addressVariants: parts.addressVariants,\n      letterPageCount: parts.letter.length,\n      statementPageCount: parts.statement.length,\n      letterBase64: await concat(parts.letter),\n      statementBase64: await concat(parts.statement),\n    },\n  });\n}\n\nreturn results;\n"
       },
-      "id": "a1000000-0000-4000-8000-000000000006",
+      "id": "a1000000-0000-4000-8000-000000000008",
       "name": "Assemble Letter + Statement",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -220,
+        0,
         300
       ],
       "notes": "One item per account from here on, each carrying a letter PDF and a statement PDF as base64. Blocks are cut at each letter page rather than on a fixed four-page stride, so an account whose statement spills onto a second page still splits correctly. Needs pdf-lib."
@@ -135,33 +228,40 @@
         "looseTypeValidation": true,
         "options": {}
       },
-      "id": "a1000000-0000-4000-8000-000000000007",
+      "id": "a1000000-0000-4000-8000-000000000009",
       "name": "Matches ERP Filter?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        0,
+        220,
         300
       ],
-      "notes": "Blank filter lets every account through; a filter value keeps only the account whose number matches exactly. If you typed a number and everything lands in the 'Filtered Out' branch, the number is not one of the past-due accounts in this run."
+      "notes": "Blank filter lets every account through; a filter value keeps only the account whose number matches exactly. If you typed a number and everything lands in the 'Filtered Out' branch, that account is not past due in this run."
     },
     {
       "parameters": {},
-      "id": "a1000000-0000-4000-8000-000000000008",
+      "id": "a1000000-0000-4000-8000-000000000010",
       "name": "Filtered Out — Different Account",
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
       "position": [
-        0,
+        220,
         560
       ],
       "notes": "Accounts excluded by the ERP filter. On a single-account run every other account lands here, which is expected. If ALL accounts land here, the ERP number you typed matched nothing."
     },
     {
       "parameters": {
-        "url": "=https://api.businesscentral.dynamics.com/v2.0/{{ $vars.BC_TENANT_ID }}/{{ $vars.BC_ENVIRONMENT }}/ODataV4/Company('{{ $vars.BC_COMPANY_NAME }}')/ContactList",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "oAuth2Api",
+        "url": "=https://api.businesscentral.dynamics.com/v2.0/{{ $('BC Keys').first().json.Tenant_ID }}/{{ $('BC Keys').first().json.Environment }}/ODataV4/Company('{{ $('BC Keys').first().json.Company }}')/ContactList",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Get BC Token').first().json.access_token }}"
+            }
+          ]
+        },
         "sendQuery": true,
         "queryParameters": {
           "parameters": [
@@ -177,36 +277,30 @@
         },
         "options": {}
       },
-      "id": "a1000000-0000-4000-8000-000000000009",
+      "id": "a1000000-0000-4000-8000-000000000011",
       "name": "Look Up AP Contact (Business Central)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        220,
+        440,
         300
       ],
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 2000,
-      "credentials": {
-        "oAuth2Api": {
-          "id": "REPLACE_WITH_BUSINESS_CENTRAL_OAUTH2_CREDENTIAL_ID",
-          "name": "Business Central OAuth2"
-        }
-      },
-      "notes": "The only Business Central call left: it supplies the recipient address. Queries the Contact List page (5052 / table 5050) published as the OData web service 'ContactList', filtered to the contact whose Integration Customer No. matches this account - the CT020141 -> 10981 link. If the published web service has a different name, change the last URL segment."
+      "notes": "The only Business Central call: it supplies the recipient address. Queries the Contact List page (5052 / table 5050) published as the OData web service 'ContactList', filtered to the contact whose Integration Customer No. matches this account. NOTE: Printing Letter_Invoices does not use this endpoint, so confirm ContactList is actually published as a web service - a 404 here means it is not."
     },
     {
       "parameters": {
         "mode": "runOnceForEachItem",
         "jsCode": "// Fold the Business Central contact lookup back onto the account item.\nconst account = $('Matches ERP Filter?').item.json;\nconst rows = $input.item.json.value ?? [];\n\n// Prefer a contact that actually has an email; otherwise take the first match.\nconst contact = rows.find((r) => (r.E_Mail || '').toString().trim()) ?? rows[0] ?? {};\n\nreturn {\n  json: {\n    ...account,\n    recipientEmail: (contact.E_Mail || '').toString().trim(),\n    accountName: (contact.Company_Name || contact.Name || '').toString().trim(),\n    contactNumber: contact.No ?? '',\n    contactName: contact.Name ?? '',\n    contactMatchCount: rows.length,\n  },\n};\n"
       },
-      "id": "a1000000-0000-4000-8000-000000000010",
+      "id": "a1000000-0000-4000-8000-000000000012",
       "name": "Attach Contact Email",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        440,
+        660,
         300
       ]
     },
@@ -245,23 +339,23 @@
         "looseTypeValidation": true,
         "options": {}
       },
-      "id": "a1000000-0000-4000-8000-000000000011",
+      "id": "a1000000-0000-4000-8000-000000000013",
       "name": "Has Email on File?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        660,
+        880,
         300
       ]
     },
     {
       "parameters": {},
-      "id": "a1000000-0000-4000-8000-000000000012",
+      "id": "a1000000-0000-4000-8000-000000000014",
       "name": "Skipped — No Email on File",
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
       "position": [
-        660,
+        880,
         560
       ],
       "notes": "Accounts whose Business Central contact has no usable E-Mail land here instead of silently disappearing. Review this branch after each run - contactMatchCount of 0 means no contact matched the account number at all, and these customers still need chasing by post."
@@ -269,72 +363,47 @@
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "// Name the attachments and write the subject and body.\nconst json = $input.item.json;\n\nconst accountNumber = (json.accountNumber || '').toString().trim();\nconst accountName = (json.accountName || '').toString().trim();\nconst today = new Date().toISOString().slice(0, 10);\nconst safeAccount = (accountNumber || 'account').replace(/[^A-Za-z0-9._-]/g, '_');\n\n// The letter is a PDF, so it cannot be the HTML body. The body is a short cover note and\n// the letter is read from its attachment.\nconst bodyInner =\n  `<p>Dear ${accountName || 'Customer'},</p>` +\n  '<p>Please find attached your past due notice and your account statement.</p>' +\n  '<p>If you have any questions, please contact us at 770-248-1444 ext. 2.</p>' +\n  \"<p>Best Regards,<br/>Engelman's Bakery</p>\";\n\nreturn {\n  json: {\n    ...json,\n    letterFileName: `Letter_${safeAccount}_${today}.pdf`,\n    statementFileName: `Statement_${safeAccount}_${today}.pdf`,\n    emailSubject: accountName\n      ? `Engelman's Bakery \\u2014 Past Due Balance for ${accountName}`\n      : `Engelman's Bakery \\u2014 Past Due Balance (${accountNumber})`,\n    emailBodyHtml:\n      '<!doctype html><html><body style=\"font-family:Arial,Helvetica,sans-serif;' +\n      `font-size:11pt;color:#000;\">${bodyInner}</body></html>`,\n  },\n};\n"
+        "jsCode": "// Build the Microsoft Graph message payload for the draft.\n//\n// This follows the same shape the RT 21 - Daily Email workflow uses, except it is POSTed\n// to /me/messages rather than /me/sendMail, which creates an unsent draft.\nconst json = $input.item.json;\n\nconst accountNumber = (json.accountNumber || '').toString().trim();\nconst accountName = (json.accountName || '').toString().trim();\nconst today = new Date().toISOString().slice(0, 10);\nconst safeAccount = (accountNumber || 'account').replace(/[^A-Za-z0-9._-]/g, '_');\n\nconst esc = (s) => String(s == null ? '' : s)\n  .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\n\n// The letter is a PDF, so it cannot be the HTML body. The body is a short cover note and\n// the letter is read from its attachment.\nconst html =\n  '<div style=\"font:14px Segoe UI,Arial,sans-serif;color:#1a1a1a\">' +\n  `<p>Dear ${esc(accountName) || 'Customer'},</p>` +\n  \"<p>Your account with Engelman's Bakery is currently past due. Attached are your past \" +\n  'due notice and your account statement.</p>' +\n  '<p>Please contact us at 770-248-1444 ext. 2 to arrange payment or discuss any questions ' +\n  'regarding your account.</p>' +\n  \"<p>Best Regards,<br/>Engelman's Bakery<br/>770-248-1444</p>\" +\n  '</div>';\n\nconst attachment = (name, contentBytes) => ({\n  '@odata.type': '#microsoft.graph.fileAttachment',\n  name,\n  contentType: 'application/pdf',\n  contentBytes,\n});\n\nreturn {\n  json: {\n    accountNumber,\n    accountName,\n    recipientEmail: json.recipientEmail,\n    addressVariants: json.addressVariants,\n    letterPageCount: json.letterPageCount,\n    statementPageCount: json.statementPageCount,\n    payload: {\n      subject: accountName\n        ? `Engelman's Bakery — Past Due Balance for ${accountName}`\n        : `Engelman's Bakery — Past Due Balance (${accountNumber})`,\n      body: { contentType: 'HTML', content: html },\n      toRecipients: [{ emailAddress: { address: json.recipientEmail } }],\n      attachments: [\n        attachment(`Letter_${safeAccount}_${today}.pdf`, json.letterBase64),\n        attachment(`Statement_${safeAccount}_${today}.pdf`, json.statementBase64),\n      ],\n    },\n  },\n};\n"
       },
-      "id": "a1000000-0000-4000-8000-000000000013",
+      "id": "a1000000-0000-4000-8000-000000000015",
       "name": "Build Draft Payload",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        880,
-        300
-      ]
-    },
-    {
-      "parameters": {
-        "mode": "runOnceForEachItem",
-        "jsCode": "// Turn the two base64 strings into real binary PDFs: one letter, one statement.\nconst json = $input.item.json;\n\nconst letter = await this.helpers.prepareBinaryData(\n  Buffer.from(json.letterBase64, 'base64'), json.letterFileName, 'application/pdf');\nconst statement = await this.helpers.prepareBinaryData(\n  Buffer.from(json.statementBase64, 'base64'), json.statementFileName, 'application/pdf');\n\n// Drop the base64 copies so the item does not carry each PDF twice.\nconst { letterBase64, statementBase64, ...rest } = json;\n\nreturn { json: rest, binary: { letter, statement } };\n"
-      },
-      "id": "a1000000-0000-4000-8000-000000000014",
-      "name": "Attach Letter + Statement PDFs",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
         1100,
         300
-      ],
-      "notes": "Turns the two base64 strings back into binary PDFs under the binary properties 'letter' and 'statement', which is what the Outlook node attaches."
+      ]
     },
     {
       "parameters": {
-        "resource": "draft",
-        "operation": "create",
-        "subject": "={{ $json.emailSubject }}",
-        "bodyContent": "={{ $json.emailBodyHtml }}",
-        "additionalFields": {
-          "bodyContentType": "html",
-          "toRecipients": "={{ $json.recipientEmail }}",
-          "attachments": {
-            "attachments": [
-              {
-                "binaryPropertyName": "letter"
-              },
-              {
-                "binaryPropertyName": "statement"
-              }
-            ]
-          }
-        }
+        "method": "POST",
+        "url": "https://graph.microsoft.com/v1.0/me/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftOutlookOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.payload) }}",
+        "options": {}
       },
-      "id": "a1000000-0000-4000-8000-000000000015",
+      "id": "a1000000-0000-4000-8000-000000000016",
       "name": "Create Outlook Draft (Do Not Send)",
-      "type": "n8n-nodes-base.microsoftOutlook",
-      "typeVersion": 2,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [
         1320,
         300
       ],
       "credentials": {
         "microsoftOutlookOAuth2Api": {
-          "id": "REPLACE_WITH_OUTLOOK_CREDENTIAL_ID",
-          "name": "Microsoft Outlook account (gpress@engelmansbakery.com)"
+          "id": "xQT64Ugiue2WLNks",
+          "name": "Microsoft Outlook account (Gabe Press)"
         }
       },
-      "notes": "Creates an UNSENT draft only, with two attachments: one letter PDF and one statement PDF. The draft lands in the mailbox that owns the OAuth2 credential, so this credential must be gpress@engelmansbakery.com. There is deliberately no 'send' operation anywhere in this workflow."
+      "notes": "POSTs to /me/messages, which CREATES A DRAFT. The RT 21 - Daily Email workflow POSTs the same payload shape to /me/sendMail, which sends; this deliberately does not. The draft lands in the Drafts folder of the mailbox owning the credential, with the letter and statement attached as fileAttachments."
     },
     {
       "parameters": {},
-      "id": "a1000000-0000-4000-8000-000000000016",
+      "id": "a1000000-0000-4000-8000-000000000017",
       "name": "Drafts Ready for Review",
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
@@ -357,6 +426,28 @@
       ]
     },
     "ERP Account Number (Filter)": {
+      "main": [
+        [
+          {
+            "node": "BC Keys",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BC Keys": {
+      "main": [
+        [
+          {
+            "node": "Get BC Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get BC Token": {
       "main": [
         [
           {
@@ -473,17 +564,6 @@
       "main": [
         [
           {
-            "node": "Attach Letter + Statement PDFs",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Attach Letter + Statement PDFs": {
-      "main": [
-        [
-          {
             "node": "Create Outlook Draft (Do Not Send)",
             "type": "main",
             "index": 0
@@ -505,10 +585,5 @@
   },
   "settings": {
     "executionOrder": "v1"
-  },
-  "pinData": {},
-  "meta": {
-    "instanceId": ""
-  },
-  "tags": []
+  }
 }
