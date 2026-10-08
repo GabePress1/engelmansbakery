@@ -1,0 +1,13 @@
+{
+  "name": "engelmansbakery-tools",
+  "private": true,
+  "type": "module",
+  "description": "Reference implementations of logic that runs inside n8n Code nodes, kept runnable so it can be checked against real files.",
+  "scripts": {
+    "split": "node split_pack.mjs"
+  },
+  "dependencies": {
+    "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^4.10.38"
+  }
+}
