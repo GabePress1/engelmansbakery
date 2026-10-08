@@ -61,6 +61,17 @@ const o = { pad: false };
 const out = [];
 const excluded = [];
 
+// Recipient addresses come from the Customer page this workflow already queries, rather
+// than a separate contact lookup: Customer is published as a web service and proven to
+// work here, and an endpoint that is not published fails the whole run.
+const emailByAccount = new Map();
+for (const it of $('Get Customers').all()) {
+  const rows = Array.isArray(it.json && it.json.value) ? it.json.value : [it.json];
+  for (const c of rows) {
+    if (c && c.No) emailByAccount.set(String(c.No).trim(), clean(c.E_Mail).trim());
+  }
+}
+
 for (const rec of records) {
   const billing = rec.tokens;
   const accountNumber = clean(billing.AccountNumber);
@@ -104,6 +115,7 @@ for (const rec of records) {
     json: {
       accountNumber,
       accountName: name,
+      recipientEmail: emailByAccount.get(accountNumber) || "",
       addressVariants: variants.length,
       letterPageCount: letterContents.length,
       statementPageCount: statementContents.length,
@@ -133,25 +145,6 @@ ERP_FILTER_EXPR = (
     "={{ (() => { const f = ($('ERP Account Number (Filter)').first().json.erpAccountNumber "
     "?? '').toString().trim(); return !f || f === ($json.accountNumber ?? '').toString().trim(); })() }}"
 )
-
-ATTACH_EMAIL_JS = """\
-// Fold the Business Central contact lookup back onto the account item.
-const account = $('Matches ERP Filter?').item.json;
-const rows = $input.item.json.value ?? [];
-
-// Prefer a contact that actually has an email; otherwise take the first match.
-const contact = rows.find((r) => (r.E_Mail || '').toString().trim()) ?? rows[0] ?? {};
-
-return {
-  json: {
-    ...account,
-    recipientEmail: (contact.E_Mail || '').toString().trim(),
-    contactNumber: contact.No ?? '',
-    contactName: contact.Name ?? '',
-    contactMatchCount: rows.length,
-  },
-};
-"""
 
 BUILD_PAYLOAD_JS = """\
 // Build the Microsoft Graph message payload for the draft.
@@ -211,12 +204,6 @@ return {
 };
 """
 
-BC_CONTACT_URL = (
-    "=https://api.businesscentral.dynamics.com/v2.0/"
-    "{{ $('Keys1').first().json.Tenant_ID }}/{{ $('Keys1').first().json.Environment }}"
-    "/ODataV4/Company('{{ $('Keys1').first().json.Company }}')/ContactList"
-)
-
 
 def link(name, index=0):
     return {"node": name, "type": "main", "index": index}
@@ -234,8 +221,12 @@ def build(source_path, with_secrets):
 
     for i, name in enumerate(COPIED_CHAIN):
         node = json.loads(json.dumps(by_name[name]))
-        node["position"] = [-1980 + i * 220, 300]
         node.pop("webhookId", None)
+        if name == "Get Customers":
+            # One added column: the address the draft goes to.
+            for q in node["parameters"]["queryParameters"]["parameters"]:
+                if q["name"] == "$select" and "E_Mail" not in q["value"]:
+                    q["value"] = q["value"] + ",E_Mail"
         if name == "Keys1" and not with_secrets:
             for a in node["parameters"]["assignments"]["assignments"]:
                 if a["name"] in ("Client_ID", "Client_Secret"):
@@ -247,7 +238,6 @@ def build(source_path, with_secrets):
     renderer["parameters"]["jsCode"] = code[:code.index("// --- n8n driver")] + NEW_DRIVER
     renderer["name"] = "Render Letter + Statement"
     renderer["id"] = "b2000000-0000-4000-8000-000000000001"
-    renderer["position"] = [-220, 300]
     renderer["notes"] = (
         "Copied from Printing Letter_Invoices with only the n8n driver at the bottom "
         "replaced, so every page-building helper is identical and the output looks exactly "
@@ -313,38 +303,6 @@ def build(source_path, with_secrets):
             "typeVersion": 1,
             "position": [0, 560],
             "notes": "Accounts excluded by the ERP filter. On a single-account run every other account lands here, which is expected. If ALL accounts land here, the number you typed matched nothing.",
-        },
-        {
-            "parameters": {
-                "url": BC_CONTACT_URL,
-                "sendHeaders": True,
-                "headerParameters": {"parameters": [
-                    {"name": "Authorization", "value": "=Bearer {{ $('Get Token1').first().json.access_token }}"},
-                ]},
-                "sendQuery": True,
-                "queryParameters": {"parameters": [
-                    {"name": "$filter", "value": "=Integration_Customer_No eq '{{ $json.accountNumber }}' and Business_Relation eq 'Customer'"},
-                    {"name": "$select", "value": "No,Name,Company_Name,E_Mail,Integration_Customer_No"},
-                ]},
-                "options": {},
-            },
-            "id": "b2000000-0000-4000-8000-000000000006",
-            "name": "Look Up AP Contact (Business Central)",
-            "type": "n8n-nodes-base.httpRequest",
-            "typeVersion": 4.2,
-            "position": [220, 300],
-            "retryOnFail": True,
-            "maxTries": 3,
-            "waitBetweenTries": 2000,
-            "notes": "Supplies the recipient address, reusing the token Get Token1 already fetched. Queries the Contact List page (5052 / table 5050) published as the OData web service 'ContactList', filtered on Integration Customer No. NOTE: the printing workflow never calls this endpoint, so confirm ContactList is published - a 404 means it is not.",
-        },
-        {
-            "parameters": {"mode": "runOnceForEachItem", "jsCode": ATTACH_EMAIL_JS},
-            "id": "b2000000-0000-4000-8000-000000000007",
-            "name": "Attach Contact Email",
-            "type": "n8n-nodes-base.code",
-            "typeVersion": 2,
-            "position": [440, 300],
         },
         {
             "parameters": {
@@ -419,11 +377,9 @@ def build(source_path, with_secrets):
         "Transform (group + tokens)": {"main": [[link("Render Letter + Statement")]]},
         "Render Letter + Statement": {"main": [[link("Matches ERP Filter?")]]},
         "Matches ERP Filter?": {"main": [
-            [link("Look Up AP Contact (Business Central)")],
+            [link("Has Email on File?")],
             [link("Filtered Out — Different Account")],
         ]},
-        "Look Up AP Contact (Business Central)": {"main": [[link("Attach Contact Email")]]},
-        "Attach Contact Email": {"main": [[link("Has Email on File?")]]},
         "Has Email on File?": {"main": [
             [link("Build Draft Payload")],
             [link("Skipped — No Email on File")],

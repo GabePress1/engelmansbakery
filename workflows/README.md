@@ -5,177 +5,132 @@ n8n workflow exports. These live in n8n under
 
 ## Emailing Letter + Statement Draft Workflow
 
-Creates an **unsent Outlook draft** per past-due account with **two attachments**:
+**Live:** https://engelmansbakery.app.n8n.cloud/workflow/HKwXwbVcl26PVl9J
+
+This is **`Printing Letter_Invoices` with one change**. That workflow renders two combined
+PDFs — `Past-Due-Billing` and `Past-Due-Shipping` — each holding every past-due account back to
+back. This one renders two PDFs *per account* instead:
 
 | Attachment | Contents |
 |---|---|
 | `Letter_<account>_<date>.pdf` | The past due letter and its address page |
 | `Statement_<account>_<date>.pdf` | The Past Due Invoices statement |
 
-Both come from the packs `Printing Letter_Invoices` already produces — they are re-cut from
-billing/shipping into letter/statement.
+and creates an **unsent Outlook draft** per account carrying both.
 
-Nothing is ever sent. The workflow contains no `send` operation — only `draft: create`.
+Nothing is ever sent. The draft node POSTs to `/me/messages`, which creates a draft;
+`RT 21 - Daily Email` POSTs the same payload shape to `/me/sendMail`, which sends. This
+deliberately does not.
 
-### What the packs look like
+### How it relates to Printing Letter_Invoices
 
-`Printing Letter_Invoices` returns **one PDF per address type** — billing, and shipping when any
-account's addresses differ — each holding every past-due account back to back:
+Everything from `Settings` through `Transform (group + tokens)` is **copied verbatim** by
+`tools/build_workflow.py`, so the two stay in step on how customers qualify, how addresses are
+cleaned and how statements are built. There are exactly two deliberate differences:
 
+1. **`Get Customers`** asks for one extra column, `E_Mail` — the address the draft goes to.
+2. **`Render & Merge PDFs`** becomes **`Render Letter + Statement`**: only the n8n driver at the
+   bottom of that Code node is replaced. Every page-building helper above it is untouched, so the
+   letters and statements look exactly like the printed ones.
+
+To regenerate after the printing workflow changes:
+
+```sh
+python3 tools/build_workflow.py <printing-letter-invoices-export.json>
 ```
-pack (billing, 20 pages)                   pack (shipping, 8 pages)
- ├ p1  letter        ┐                      ├ p1  letter        ┐ acct 12723
- ├ p2  address       │ acct 13287           ├ p2  address       │
- ├ p3  statement     │                      ├ p3  statement     │
- ├ p4  blank         ┘                      ├ p4  blank         ┘
- ├ p5… next account                         ├ p5… acct 12308 (also in billing)
-```
-
-The workflow cuts those into one letter PDF and one statement PDF per account.
-
-**Blocks are cut at each letter page, not on a fixed four-page stride.** A customer with enough
-open invoices to spill onto a second statement page would otherwise shift every account after them
-by a page, silently attaching the wrong statement to the wrong customer.
-
-**An account in both packs** has differing billing and shipping addresses. Its letter PDF carries
-both variants, and its statement is repeated once per variant, so each printed packet stays
-self-contained.
 
 ### Flow
 
 ```
 Manual trigger
-  └─ ERP Account Number (Filter)          ← type the account number here
-       └─ Printing Letter_Invoices        (returns the billing / shipping packs)
-            └─ Explode Packs to Pages     (one item per page)
-                 └─ Read Page Text        (n8n's built-in PDF text extractor)
-                      └─ Assemble Letter + Statement   ← one item per account
+  └─ ERP Account Number (Filter)       ← type the account number here
+       └─ Settings → Keys1 → Get Token1 → Get Open Invoices
+            → Qualifying Customer Nos → Get Customers → Get Ship-to Addresses
+                 └─ Transform (group + tokens)          [all copied verbatim]
+                      └─ Render Letter + Statement      ← the one changed node
                            └─ Matches ERP Filter?
                                 ├─ false ─ Filtered Out — Different Account
-                                └─ true ── Look Up AP Contact (Business Central)
-                                     └─ Attach Contact Email
-                                          └─ Has Email on File?
-                                               ├─ false ─ Skipped — No Email on File
-                                               └─ true ── Build Draft Payload
-                                                    └─ Attach Letter + Statement PDFs
-                                                         └─ Create Outlook Draft (Do Not Send)
-                                                              └─ Drafts Ready for Review
+                                └─ true ── Has Email on File?
+                                     ├─ false ─ Skipped — No Email on File
+                                     └─ true ── Build Draft Payload
+                                          └─ Create Outlook Draft (Do Not Send)
+                                               └─ Drafts Ready for Review
 ```
-
-Pages are classified by their text: a letter page carries `Subject: Past Due Balance`, a statement
-page carries `Past Due Invoices` and the `Account Number:` line that ties the block to an account.
-If the pack layout changes those strings, `Assemble Letter + Statement` fails loudly rather than
-producing mismatched attachments.
 
 ### Running it
 
 1. Open the workflow and click into **ERP Account Number (Filter)**.
 2. Type the ERP account number — e.g. `13287` — into `erpAccountNumber`.
-3. Click **Execute workflow**.
-4. The draft appears in **gpress@engelmansbakery.com**'s Drafts, addressed to that account's AP
-   contact, with the letter and statement attached.
+3. **Execute workflow**.
+4. The draft appears in the Drafts folder of the mailbox owning the Outlook credential.
 
-Nothing is sent. Open the draft, check it, and send it yourself.
+Leave `erpAccountNumber` blank to draft for every past-due account in the run.
 
-Leave `erpAccountNumber` **blank** to draft for every past-due account in the run.
+### Why there is no Business Central contact lookup
 
-### Importing it into n8n
+An earlier version called a `ContactList` OData web service for the recipient address. **It
+returned 404** — that page is not published as a web service, and nothing in
+`Printing Letter_Invoices` uses it either.
 
-This repo holds the workflow as a JSON export. It does not exist in n8n until you import it:
+The email now comes from the **`Customer`** page that workflow already queries successfully, by
+adding `E_Mail` to its `$select`. The renderer builds an account-number → email map from
+`Get Customers` output, so there is no extra HTTP call and no endpoint that might not exist.
 
-1. In n8n, open the **Engelman's Bakery / Printing Letter_Invoices** folder.
-2. **Create workflow**.
-3. Top-right **⋮** menu → **Import from File…**
-4. Pick `workflows/emailing-letter-statement-draft.json`.
-5. Save. It appears as **Emailing Letter + Statement Draft Workflow**.
+If the addresses you actually want are the **AP contacts** (Contact table 5050, "ATTN: Accts
+Payable") rather than the Customer card's own email, that needs either the Contact List page
+published as a web service, or a switch to the standard API v2.0 `contacts` entity, which needs
+no publishing. Accounts whose Customer record has no email land in `Skipped — No Email on File`,
+so a run will show immediately whether the Customer card is populated.
 
-The JSON is generated by `tools/build_workflow.py` — edit that and re-run it rather than hand
-editing the export, since the Code nodes are easier to get right unescaped.
+### Billing and shipping addresses
 
-### Before first run
+Where an account's shipping address genuinely differs from its billing address, the letter PDF
+carries **both address variants** and the statement is **repeated once per variant**, so each
+packet stays self-contained. `sameAddress()` — the same comparison the printing workflow uses to
+decide who goes in the Shipping pack — decides what "different" means, so the two agree.
 
-**Two credential/ID placeholders:**
+Blank filler pages are dropped (`pad: false`). They exist so a double-sided print run folds into
+envelopes; an attachment does not need them.
 
-| Node | Placeholder | Replace with |
-|---|---|---|
-| `Printing Letter_Invoices` | `REPLACE_WITH_PRINTING_LETTER_INVOICES_WORKFLOW_ID` | that workflow's n8n ID |
-| `Look Up AP Contact` | `REPLACE_WITH_BUSINESS_CENTRAL_OAUTH2_CREDENTIAL_ID` | a generic OAuth2 credential for the BC API |
-| `Create Outlook Draft (Do Not Send)` | `REPLACE_WITH_OUTLOOK_CREDENTIAL_ID` | the Outlook OAuth2 credential for **gpress@engelmansbakery.com** |
-
-The draft is created in whichever mailbox owns the Outlook OAuth2 credential, so that credential
-must be gpress@engelmansbakery.com.
-
-**Three project Variables** (Project settings → Variables):
-
-| Variable | Value |
-|---|---|
-| `BC_TENANT_ID` | your Entra tenant GUID |
-| `BC_ENVIRONMENT` | `Production` |
-| `BC_COMPANY_NAME` | the BC company name, as it appears in the OData URL |
-
-**One BC prerequisite:** Contact List page (5052) published as a web service named `ContactList`.
-
-**One n8n prerequisite:** `NODE_FUNCTION_ALLOW_EXTERNAL=pdf-lib` on the n8n instance. The two Code
-nodes that cut and reassemble PDFs need it. This is the one hard blocker — n8n Cloud does not allow
-external modules in Code nodes, so on Cloud the split would have to move into
-`Printing Letter_Invoices` or a small external service instead.
-
-### Where the recipient address comes from
-
-Business Central supplies the email address, and nothing else:
-
-```
-Customer Card  10981 · Berkeley Hills Country Club
-  └─ Integration Customer No. ──→ Contact CT020141   (Contact table 5050, "ATTN: Accts Payable")
-                                    └─ E-Mail  ← the address the draft goes to
-```
-
-```
-GET .../ODataV4/Company('{BC_COMPANY_NAME}')/ContactList
-    ?$filter=Integration_Customer_No eq '13287' and Business_Relation eq 'Customer'
-    &$select=No,Name,Company_Name,E_Mail,Integration_Customer_No
-```
-
-If more than one contact matches, `Attach Contact Email` prefers the first with an actual email.
-The match count rides along as `contactMatchCount`, so a zero-match account is diagnosable from
-the skip branch.
-
-### Checking it without n8n
-
-Both Code nodes can be run against real packs on a laptop:
+### Checking the renderer without n8n
 
 ```sh
 cd tools && npm install && cd ..
-node tools/test_workflow_nodes.mjs Past-Due-Billing.pdf Past-Due-Shipping.pdf
+node tools/test_renderer.mjs
 ```
 
-It lifts the `Explode Packs to Pages` and `Assemble Letter + Statement` sources straight out of the
-export, stubs n8n's `$input` / `$()` / `this.helpers`, and reports the page counts per account.
+Runs the `Render Letter + Statement` Code node verbatim out of the export against mock records,
+with n8n stubbed, and reports page counts per account. A single-address account yields a 2-page
+letter and a 1-page statement; a two-address account yields 4 and 2.
 
-`tools/split_pack.mjs` does the same split standalone and writes the PDFs to `out/` so they can be
-opened and eyeballed.
+### Known issue in the address comparison
 
-### Notes
+Account `12308` ("That Burger Spot Riverdale") is treated as having different billing and shipping
+addresses when it does not:
 
-- Two review branches. `Skipped — No Email on File` means a past-due customer was *not* chased and
-  still needs contacting — check it after every run. `Filtered Out — Different Account` is normal
-  traffic on a single-account run; only worry if *everything* lands there, which means the ERP
-  number matched nothing.
-- `Has Email on File?` requires the address to be non-empty *and* contain `@`.
-- Blank separator pages exist for duplex printing and are dropped from both attachments.
-- The email body is a short cover note. The letter arrives as a PDF and cannot be an HTML body, so
-  it is read from its attachment.
-- Page PDFs are carried as base64 in JSON as well as binary, because JSON survives every node
-  reliably regardless of the instance's binary storage mode.
+```
+billing:   723 Highway 138 Unit C        shipping:   723 Highway 138
+                                                     Unit C
+```
+
+`normAddr()` joins the address lines with `|` before comparing, so the same address split across
+two lines does not match one on a single line. That account gets a duplicate letter and statement
+it does not need. This is in `Printing Letter_Invoices` and affects the printed run too.
+
+### Secrets
+
+`Client_ID` and `Client_Secret` in `Keys1` are **blanked in the committed copy**.
+`tools/build_workflow.py --with-secrets` carries them through from the source export for pushing
+to n8n, and writes to `tools/_with-secrets.json`, which is gitignored.
+
+Both workflows would be better off with those on a stored n8n credential than in a Set node.
 
 ### Not currently used
 
-`businesscentral/StatementApi.Codeunit.al` renders statement report **50042** from Business Central
-and returns it base64 over an OData V4 unbound action. It was built when the statement was going to
-come from BC rather than from the pack.
+`businesscentral/StatementApi.Codeunit.al` renders statement report **50042** from Business
+Central over an OData V4 unbound action. It was built when the statement was going to come from
+BC rather than from the renderer.
 
-It is **not wired into the workflow** and needs no deployment. It is kept because switching the
-statement attachment to the real BC report is a live option — the pack's statement page is a
-generated Past Due Invoices table, not report 50042. To switch, replace the pack's statement pages
-in `Assemble Letter + Statement` with a call to that codeunit. Its own header documents the
-publishing steps.
+It is **not wired into the workflow** and needs no deployment. Kept because switching the
+statement attachment to the real BC report remains an option — the statement here is the renderer's
+own Past Due Invoices layout, not report 50042.
