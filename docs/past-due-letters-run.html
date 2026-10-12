@@ -1,0 +1,343 @@
+<title>Past Due Letters Run</title>
+<style>
+  /* Layout: a single reading column; the two settings get full-width explainer panels. */
+  :root {
+    --paper: #fbfaf7;
+    --surface: #ffffff;
+    --ink: #1b1a17;
+    --ink-soft: #5d5a52;
+    --rule: #e2ded4;
+    --accent: #b4551f;
+    --accent-soft: #fdf1e8;
+    --flag: #8a6d1f;
+    --flag-soft: #fdf6e0;
+    --font-display: "Fraunces", Georgia, "Times New Roman", serif;
+    --font-body: "Source Sans 3", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #16150f;
+      --surface: #1e1d16;
+      --ink: #f2efe6;
+      --ink-soft: #b0aa9a;
+      --rule: #343126;
+      --accent: #e8a06a;
+      --accent-soft: #2b2118;
+      --flag: #d8bb63;
+      --flag-soft: #2a2415;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #16150f;
+    --surface: #1e1d16;
+    --ink: #f2efe6;
+    --ink-soft: #b0aa9a;
+    --rule: #343126;
+    --accent: #e8a06a;
+    --accent-soft: #2b2118;
+    --flag: #d8bb63;
+    --flag-soft: #2a2415;
+    color-scheme: dark;
+  }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 1.0625rem;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap {
+    max-width: 44rem;
+    margin: 0 auto;
+    padding-inline: 1.25rem;
+    padding-block: 3rem 4.5rem;
+  }
+
+  h1 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(2rem, 6vw, 2.75rem);
+    line-height: 1.1;
+    letter-spacing: -0.015em;
+    margin: 0;
+    text-wrap: balance;
+  }
+  .eyebrow {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 0.75rem;
+  }
+  .standfirst {
+    font-size: 1.1875rem;
+    color: var(--ink-soft);
+    margin: 1rem 0 0;
+    text-wrap: pretty;
+  }
+
+  h2 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.5rem;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    margin: 3.25rem 0 0.25rem;
+    text-wrap: balance;
+  }
+  h3 {
+    font-size: 1.0625rem;
+    font-weight: 700;
+    margin: 1.75rem 0 0.25rem;
+  }
+  p { margin: 0.75rem 0; }
+  strong { font-weight: 700; }
+
+  hr {
+    border: 0;
+    border-top: 1px solid var(--rule);
+    margin: 2.5rem 0 0;
+  }
+
+  /* The two settings: each gets a panel with a worked example. */
+  .setting {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    padding: 1.375rem 1.5rem;
+    margin: 1.25rem 0;
+  }
+  .setting h3 { margin-top: 0; }
+  .field-label {
+    display: inline-block;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.8125rem;
+    background: var(--accent-soft);
+    color: var(--accent);
+    border-radius: 5px;
+    padding: 0.15rem 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .example {
+    border-left: 3px solid var(--accent);
+    padding-left: 1rem;
+    margin: 1rem 0 0;
+  }
+  .example-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin: 0 0 0.5rem;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9375rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .scroll { overflow-x: auto; margin: 1rem 0; }
+  th, td {
+    text-align: left;
+    padding: 0.5rem 0.75rem 0.5rem 0;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+  }
+  th {
+    font-size: 0.75rem;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    font-weight: 700;
+  }
+  td.num { text-align: right; padding-right: 0; white-space: nowrap; }
+  th.num { text-align: right; padding-right: 0; }
+  tr:last-child td { border-bottom: 0; }
+  .total td { font-weight: 700; border-top: 2px solid var(--ink); border-bottom: 0; }
+
+  ol, ul { margin: 0.75rem 0; padding-left: 1.25rem; }
+  li { margin: 0.4rem 0; }
+  li::marker { color: var(--accent); font-weight: 700; }
+
+  .check { list-style: none; padding-left: 0; }
+  .check li {
+    position: relative;
+    padding-left: 1.75rem;
+    margin: 0.6rem 0;
+  }
+  .check li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.45em;
+    width: 0.85rem;
+    height: 0.85rem;
+    border: 1.5px solid var(--accent);
+    border-radius: 3px;
+  }
+
+  .flag {
+    background: var(--flag-soft);
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--flag);
+    border-radius: 0 8px 8px 0;
+    padding: 1rem 1.25rem;
+    margin: 1.5rem 0;
+  }
+  .flag p:first-child { margin-top: 0; }
+  .flag p:last-child { margin-bottom: 0; }
+  .flag-title {
+    font-weight: 700;
+    color: var(--flag);
+  }
+
+  .footer {
+    margin-top: 3.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--rule);
+    font-size: 0.9375rem;
+    color: var(--ink-soft);
+  }
+  @media (max-width: 30rem) {
+    .setting { padding: 1.125rem 1rem; }
+  }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;600;700&display=swap">
+
+<div class="wrap">
+
+  <p class="eyebrow">Accounts Receivable &middot; Standard Operating Procedure</p>
+  <h1>Past Due Letters Run</h1>
+  <p class="standfirst">How to produce the past-due collection letters and statements for mailing, and what the two settings on the page actually do.</p>
+
+  <hr>
+
+  <h2>What this does</h2>
+  <p>It finds every customer who owes you money past its due date, and produces the mail to chase them: a letter and an account statement for each one.</p>
+  <p>It only reads from Business Central. It changes nothing, posts nothing and sends nothing. If a run goes wrong, or you want to try different settings, just run it again.</p>
+
+  <h2>The two settings</h2>
+  <p>These decide who gets a letter. A customer must pass <strong>both</strong> to be included &mdash; passing only one is not enough.</p>
+
+  <div class="setting">
+    <span class="field-label">Minimum overdue balance ($)</span>
+    <h3>How much they must owe</h3>
+    <p>Only customers who owe at least this much are chased. It is a net figure: overdue invoices, less any payments or credits sitting unapplied on the account.</p>
+    <p>Raise it to chase only the larger debts. Lower it to cast a wider net.</p>
+
+    <div class="example">
+      <p class="example-title">Example &mdash; with the minimum set to $5,000</p>
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr><th>Customer</th><th>What's on the account</th><th class="num">Net owed</th><th>Letter?</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Cosm</td><td>$6,661 of overdue invoices</td><td class="num">$6,661</td><td>Yes</td></tr>
+            <tr><td>Six Flags</td><td>$5,400 overdue, less a $900 unapplied credit</td><td class="num">$4,500</td><td>No</td></tr>
+            <tr><td>That Burger Spot</td><td>$4,900 of overdue invoices</td><td class="num">$4,900</td><td>No</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Six Flags owes more than $5,000 on paper, but the unapplied credit brings the net below the line. If you expect someone to be chased and they are not, an unapplied payment or credit is the usual reason.</p>
+    </div>
+  </div>
+
+  <div class="setting">
+    <span class="field-label">Oldest open invoice date</span>
+    <h3>How long it must have been outstanding</h3>
+    <p>The customer must have at least one unpaid invoice dated <strong>on or before</strong> this date. It is a way of saying &ldquo;only chase people with genuinely old debt&rdquo;.</p>
+    <p><strong>Leave it blank to include anyone with an overdue balance</strong>, however recent. That is the right setting for a routine monthly run.</p>
+
+    <div class="example">
+      <p class="example-title">Example &mdash; with the date set to 1 June 2026</p>
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr><th>Customer</th><th>Oldest unpaid invoice</th><th>Letter?</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Cosm</td><td>4 August 2026</td><td>No &mdash; nothing older than 1 June</td></tr>
+            <tr><td>Morehouse</td><td>12 March 2026</td><td>Yes</td></tr>
+            <tr><td>Friends Table</td><td>2 January 2026</td><td>Yes</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Cosm owes plenty, but all of it is recent, so this date rules them out. Set the date earlier to chase only the oldest debt; clear it to chase everyone overdue.</p>
+    </div>
+  </div>
+
+  <h3>Reading them together</h3>
+  <p>Think of it as: <strong>&ldquo;owes at least <em>this much</em>, and has owed some of it since at least <em>this date</em>.&rdquo;</strong> Tightening either one shortens the list.</p>
+
+  <h2>Running it</h2>
+  <ol>
+    <li>Set the minimum overdue balance.</li>
+    <li>Set or clear the oldest open invoice date.</li>
+    <li>Leave <strong>Format for double-sided printing</strong> ticked. It keeps each customer on their own sheet, which is what makes the stuffing work. Untick it only for a quick copy to read on screen.</li>
+    <li>Click <strong>Generate PDFs</strong> and leave the page open. A large run takes a few minutes.</li>
+  </ol>
+  <p>Two files download on their own.</p>
+
+  <h2>What you get</h2>
+  <div class="scroll">
+    <table>
+      <thead>
+        <tr><th>File</th><th>What's in it</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Letters</strong></td><td>One letter per customer, with their address page behind it</td></tr>
+        <tr><td><strong>Statements</strong></td><td>One statement per customer, listing every unpaid invoice and the total</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p><strong>The two files are in the same order.</strong> The third customer in the letters file is the third customer in the statements file. That is how you pair them up when stuffing envelopes, so keep both stacks in the order they printed.</p>
+  <p>A customer whose delivery address differs from their billing address appears twice, once for each address, with a copy of their statement each time.</p>
+
+  <h2>Before you post</h2>
+  <ul class="check">
+    <li>Both files have the same number of sheets. If they don't, don't post the run &mdash; something is wrong.</li>
+    <li>Pick a sheet at random, say the fifth, and check it is the same customer in both files.</li>
+    <li>Check one statement total against the customer's balance in Business Central.</li>
+    <li>Check an address sits correctly in the envelope window.</li>
+    <li>Check the date in the file names is today's.</li>
+  </ul>
+
+  <h2>Who doesn't get a letter</h2>
+  <p>Two different things, and only one of them needs you to act.</p>
+  <h3>Below the thresholds</h3>
+  <p>Customers who don't meet the balance or the date. Nothing to do &mdash; these are the accounts you chose to pass over.</p>
+  <h3>Pulled out of the run</h3>
+  <p>Customers who <em>should</em> have been chased but couldn't be mailed, almost always because the address on their record is incomplete. <strong>These people still owe you money and have not been contacted.</strong> They come back on a list with the reason for each, and need chasing another way &mdash; and the customer record fixing in Business Central.</p>
+
+  <div class="flag">
+    <p><span class="flag-title">One to be aware of.</span> If the billing and delivery addresses on an account are the same but typed slightly differently &mdash; say one has &ldquo;Unit C&rdquo; on the end of the street line and the other on its own line &mdash; the run treats them as two addresses and mails that customer twice. It is wasteful rather than harmful, and it can be fixed by tidying the addresses on the customer record.</p>
+  </div>
+
+  <h2>If something goes wrong</h2>
+  <div class="scroll">
+    <table>
+      <thead>
+        <tr><th>What you see</th><th>What it means</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>&ldquo;Could not start the run&rdquo;</td><td>The page couldn't reach the system. Nothing ran. Pass it to IT &mdash; it isn't a settings problem</td></tr>
+        <tr><td>Far more customers than expected</td><td>Check the minimum balance is the figure you meant</td></tr>
+        <tr><td>Nobody at all</td><td>The minimum is too high, or the oldest invoice date is too far back. Try clearing the date first</td></tr>
+        <tr><td>The two files are different lengths</td><td>Don't post it. Report it</td></tr>
+        <tr><td>It stops partway</td><td>Nothing was changed or sent. Safe to run again</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="footer">Keep the run's two files until the post has gone out, so a query can be checked against exactly what the customer received.</p>
+
+</div>
